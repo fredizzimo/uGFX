@@ -19,438 +19,1526 @@
 /* Include the low level driver information */
 #include "gdisp/lld/gdisp_lld.h"
 
+#if !GDISP_HARDWARE_STREAM && !GDISP_HARDWARE_DRAWPIXEL
+	#error "GDISP Driver: Either GDISP_HARDWARE_STREAM or GDISP_HARDWARE_DRAWPIXEL must be defined"
+#endif
+
+#if 1
+	#undef INLINE
+	#define INLINE	inline
+#else
+	#undef INLINE
+	#define INLINE
+#endif
+
 /*===========================================================================*/
 /* Driver local variables.                                                   */
 /*===========================================================================*/
 
-#if GDISP_NEED_MULTITHREAD || GDISP_NEED_ASYNC
-	static gfxMutex			gdispMutex;
+#define	GC				((GDISPDriver *)GDISP)
+GDISPControl			*GDISP = &GDISP_DRIVER_STRUCT.g;
+
+#if GDISP_NEED_MULTITHREAD
+	#define MUTEX_INIT()		gfxMutexInit(&GC->mutex)
+	#define MUTEX_ENTER()		gfxMutexEnter(&GC->mutex)
+	#define MUTEX_EXIT()		gfxMutexExit(&GC->mutex)
+#else
+	#define MUTEX_INIT()
+	#define MUTEX_ENTER()
+	#define MUTEX_EXIT()
 #endif
 
-#if GDISP_NEED_ASYNC
-	#define GDISP_THREAD_STACK_SIZE	256		/* Just a number - not yet a reflection of actual use */
-	#define GDISP_QUEUE_SIZE		8		/* We only allow a short queue */
-
-	static gfxQueue 		gdispQueue;
-	static gfxMutex			gdispMsgsMutex;
-	static gfxSem			gdispMsgsSem;
-	static gdisp_lld_msg_t	gdispMsgs[GDISP_QUEUE_SIZE];
-	static 					DECLARE_THREAD_STACK(waGDISPThread, GDISP_THREAD_STACK_SIZE);
+#if GDISP_HARDWARE_STREAM_END
+	#define STREAM_CLEAR()		if ((GC->flags & GDISP_FLG_INSTREAM)) {	\
+									gdisp_lld_stream_end();				\
+									GC->flags &= ~GDISP_FLG_INSTREAM;	\
+								}
+#else
+	#define STREAM_CLEAR()		GC->flags &= ~GDISP_FLG_INSTREAM
 #endif
 
-/*===========================================================================*/
-/* Driver local functions.                                                   */
-/*===========================================================================*/
+#define NEED_CLIPPING	(!GDISP_HARDWARE_CLIP && (GDISP_NEED_VALIDATION || GDISP_NEED_CLIP))
 
-#if GDISP_NEED_ASYNC
-	static DECLARE_THREAD_FUNCTION(GDISPThreadHandler, arg) {
-		(void)arg;
-		gdisp_lld_msg_t	*pmsg;
+/*==========================================================================*/
+/* Internal functions.														*/
+/*==========================================================================*/
 
-		while(1) {
-			/* Wait for msg with work to do. */
-			pmsg = (gdisp_lld_msg_t *)gfxQueueGet(&gdispQueue, TIME_INFINITE);
-
-			/* OK - we need to obtain the mutex in case a synchronous operation is occurring */
-			gfxMutexEnter(&gdispMutex);
-
-			gdisp_lld_msg_dispatch(pmsg);
-
-			/* Mark the message as free */
-			pmsg->action = GDISP_LLD_MSG_NOP;
-
-			gfxMutexExit(&gdispMutex);
+// drawpixel_clip()
+// Parameters:	x,y
+// Alters:		cx, cy (if using streaming)
+#if GDISP_HARDWARE_DRAWPIXEL
+	// Best is hardware accelerated pixel draw
+	#if NEED_CLIPPING
+		static INLINE void drawpixel_clip(void) {
+			if (GC->p.x >= GC->clipx0 && GC->p.x < GC->clipx1 && GC->p.y >= GC->clipy0 && GC->p.y < GC->clipy1)
+				gdisp_lld_draw_pixel();
 		}
-		return 0;
+	#else
+		#define drawpixel_clip()	gdisp_lld_draw_pixel()
+	#endif
+#else
+	// Worst is streaming
+	static INLINE void drawpixel_clip(void) {
+		#if NEED_CLIPPING
+			if (GC->p.x < GC->clipx0 || GC->p.x >= GC->clipx1 || GC->p.y < GC->clipy0 || GC->p.y >= GC->clipy1)
+				return;
+		#endif
+
+		GC->cx = GC->cy = 1;
+		gdisp_lld_stream_start();
+		gdisp_lld_stream_color();
+		#if GDISP_HARDWARE_STREAM_END
+			gdisp_lld_stream_end();
+		#endif
+	}
+#endif
+
+// fillarea()
+// Parameters:	x,y cx,cy and color
+// Alters:		nothing
+// Note:		This is not clipped
+#if GDISP_HARDWARE_FILLS
+	// Best is hardware accelerated area fill
+	#define fillarea()	gdisp_lld_fill_area()
+#elif GDISP_HARDWARE_STREAM
+	// Next best is hardware streaming
+	static INLINE void fillarea(void) {
+		uint32_t	area;
+
+		area = (uint32_t)GC->p.cx * GC->p.cy;
+
+		gdisp_lld_stream_start();
+		for(; area; area--)
+			gdisp_lld_stream_color();
+		#if GDISP_HARDWARE_STREAM_END
+			gdisp_lld_stream_end(gc);
+		#endif
+	}
+#else
+	// Worst is drawing pixels
+	static INLINE void fillarea(void) {
+		coord_t x0, y0, x1, y1;
+
+		x0 = GC->p.x;
+		y0 = GC->p.y;
+		x1 = GC->p.x + GC->p.cx;
+		y1 = GC->p.y + GC->p.cy;
+		for(; GC->p.y < y1; GC->p.y++, GC->p.x = x0)
+			for(; GC->p.x < x1; GC->p.x++)
+				gdisp_lld_draw_pixel();
+		GC->p.y = y0;
+	}
+#endif
+
+#if NEED_CLIPPING
+	#define TEST_CLIP_AREA(x,y,cx,cy)													\
+				if ((x) < GC->clipx0) { (cx) -= GC->clipx0 - (x); (x) = GC->clipx0; }	\
+				if ((y) < GC->clipy0) { (cy) -= GC->clipy0 - (y); (y) = GC->clipy0; }	\
+				if ((x) + (cx) > GC->clipx1)	(cx) = GC->clipx1 - (x);				\
+				if ((y) + (cy) > GC->clipy1)	(cy) = GC->clipy1 - (y);				\
+				if ((cx) > 0 && (cy) > 0)
+#else
+	#define TEST_CLIP_AREA(x,y,cx,cy)
+#endif
+
+// Parameters:	x,y and x1
+// Alters:		x,y x1,y1 cx,cy
+static void hline_clip(void) {
+	// Swap the points if necessary so it always goes from x to x1
+	if (GC->p.x1 < GC->p.x) {
+		GC->p.cx = GC->p.x; GC->p.x = GC->p.x1; GC->p.x1 = GC->p.cx;
 	}
 
-	static gdisp_lld_msg_t *gdispAllocMsg(gdisp_msgaction_t action) {
-		gdisp_lld_msg_t	*p;
+	// Clipping
+	#if NEED_CLIPPING
+		if (GC->p.y < GC->clipy0 || GC->p.y >= GC->clipy1) return;
+		if (GC->p.x < GC->clipx0) GC->p.x = GC->clipx0;
+		if (GC->p.x1 >= GC->clipx1) GC->p.x1 = GC->clipx1 - 1;
+		if (GC->p.x1 < GC->p.x) return;
+	#endif
 
-		while(1) {		/* To be sure, to be sure */
+	// This is an optimization for the point case. It is only worthwhile however if we
+	// have hardware fills or if we support both hardware pixel drawing and hardware streaming
+	#if GDISP_HARDWARE_FILLS || (GDISP_HARDWARE_DRAWPIXEL && GDISP_HARDWARE_STREAM)
+		// Is this a point
+		if (GC->p.x == GC->p.x1) {
+			#if GDISP_HARDWARE_DRAWPIXEL
+				// Best is hardware accelerated pixel draw
+				gdisp_lld_draw_pixel();
+			#else
+				// Worst is streaming
+				GC->p.cx = GC->p.cy = 1;
+				gdisp_lld_stream_start();
+				gdisp_lld_stream_color();
+				#if GDISP_HARDWARE_STREAM_END
+					gdisp_lld_stream_end();
+				#endif
+			#endif
+			return;
+		}
+	#endif
 
-			/* Wait for a slot */
-			gfxSemWait(&gdispMsgsSem, TIME_INFINITE);
+	#if GDISP_HARDWARE_FILLS
+		// Best is hardware accelerated area fill
+		GC->p.cx = GC->p.x1 - GC->p.x + 1;
+		GC->p.cy = 1;
+		gdisp_lld_fill_area();
+	#elif GDISP_HARDWARE_STREAM
+		// Next best is streaming
+		GC->p.cx = GC->p.x1 - GC->p.x;
+		gdisp_lld_stream_start();
+		do { gdisp_lld_stream_color(); } while(GC->p.cx--);
+		#if GDISP_HARDWARE_STREAM_END
+			gdisp_lld_stream_end();
+		#endif
+	#else
+		// Worst is drawing pixels
+		for(; GC->p.x <= GC->p.x1; GC->p.x++)
+			gdisp_lld_draw_pixel();
+	#endif
+}
 
-			/* Find the slot */
-			gfxMutexEnter(&gdispMsgsMutex);
-			for(p=gdispMsgs; p < &gdispMsgs[GDISP_QUEUE_SIZE]; p++) {
-				if (p->action == GDISP_LLD_MSG_NOP) {
-					/* Allocate it */
-					p->action = action;
-					gfxMutexExit(&gdispMsgsMutex);
-					return p;
-				}
+// Parameters:	x,y and y1
+// Alters:		x,y x1,y1 cx,cy
+static void vline_clip(void) {
+	// Swap the points if necessary so it always goes from y to y1
+	if (GC->p.y1 < GC->p.y) {
+		GC->p.cy = GC->p.y; GC->p.y = GC->p.y1; GC->p.y1 = GC->p.cy;
+	}
+
+	// Clipping
+	#if NEED_CLIPPING
+		if (GC->p.x < GC->clipx0 || GC->p.x >= GC->clipx1) return;
+		if (GC->p.y < GC->clipy0) GC->p.y = GC->clipy0;
+		if (GC->p.y1 >= GC->clipy1) GC->p.y1 = GC->clipy1 - 1;
+		if (GC->p.y1 < GC->p.y) return;
+	#endif
+
+	// This is an optimization for the point case. It is only worthwhile however if we
+	// have hardware fills or if we support both hardware pixel drawing and hardware streaming
+	#if GDISP_HARDWARE_FILLS || (GDISP_HARDWARE_DRAWPIXEL && GDISP_HARDWARE_STREAM)
+		// Is this a point
+		if (GC->p.y == GC->p.y1) {
+			#if GDISP_HARDWARE_DRAWPIXEL
+				// Best is hardware accelerated pixel draw
+				gdisp_lld_draw_pixel();
+			#else
+				// Worst is streaming
+				GC->p.cx = GC->p.cy = 1;
+				gdisp_lld_stream_start();
+				gdisp_lld_stream_color();
+				#if GDISP_HARDWARE_STREAM_END
+					gdisp_lld_stream_end();
+				#endif
+			#endif
+			return;
+		}
+	#endif
+
+	#if GDISP_HARDWARE_FILLS
+		// Best is hardware accelerated area fill
+		GC->p.cy = GC->p.y1 - GC->p.y + 1;
+		GC->p.cx = 1;
+		gdisp_lld_fill_area();
+	#elif GDISP_HARDWARE_STREAM
+		// Next best is streaming
+		GC->p.cy = GC->p.y1 - GC->p.y;
+		gdisp_lld_stream_start();
+		do { gdisp_lld_stream_color(); } while(GC->p.cy--);
+		#if GDISP_HARDWARE_STREAM_END
+			gdisp_lld_stream_end();
+		#endif
+	#else
+		// Worst is drawing pixels
+		for(; GC->p.y <= GC->p.y1; GC->p.y++)
+			gdisp_lld_draw_pixel();
+	#endif
+}
+
+// Parameters:	x,y and x1,y1
+// Alters:		x,y x1,y1 cx,cy
+static void line_clip(void) {
+	int16_t dy, dx;
+	int16_t addx, addy;
+	int16_t P, diff, i;
+
+	// Is this a horizontal line (or a point)
+	if (GC->p.y == GC->p.y1) {
+		hline_clip();
+		return;
+	}
+
+	// Is this a vertical line (or a point)
+	if (GC->p.x == GC->p.x1) {
+		vline_clip();
+		return;
+	}
+
+	// Not horizontal or vertical
+
+	// Use Bresenham's line drawing algorithm.
+	//	This should be replaced with fixed point slope based line drawing
+	//	which is more efficient on modern processors as it branches less.
+	//	When clipping is needed, all the clipping could also be done up front
+	//	instead of on each pixel.
+
+	if (GC->p.x1 >= GC->p.x) {
+		dx = GC->p.x1 - GC->p.x;
+		addx = 1;
+	} else {
+		dx = GC->p.x - GC->p.x1;
+		addx = -1;
+	}
+	if (GC->p.y1 >= GC->p.y) {
+		dy = GC->p.y1 - GC->p.y;
+		addy = 1;
+	} else {
+		dy = GC->p.y - GC->p.y1;
+		addy = -1;
+	}
+
+	if (dx >= dy) {
+		dy <<= 1;
+		P = dy - dx;
+		diff = P - dx;
+
+		for(i=0; i<=dx; ++i) {
+			drawpixel_clip();
+			if (P < 0) {
+				P  += dy;
+				GC->p.x += addx;
+			} else {
+				P  += diff;
+				GC->p.x += addx;
+				GC->p.y += addy;
 			}
-			gfxMutexExit(&gdispMsgsMutex);
+		}
+	} else {
+		dx <<= 1;
+		P = dx - dy;
+		diff = P - dy;
 
-			/* Oops - none found, try again */
-			gfxSemSignal(&gdispMsgsSem);
+		for(i=0; i<=dy; ++i) {
+			drawpixel_clip();
+			if (P < 0) {
+				P  += dx;
+				GC->p.y += addy;
+			} else {
+				P  += diff;
+				GC->p.x += addx;
+				GC->p.y += addy;
+			}
 		}
 	}
-#endif
+}
 
 /*===========================================================================*/
 /* Driver exported functions.                                                */
 /*===========================================================================*/
 
 /* Our module initialiser */
-#if GDISP_NEED_MULTITHREAD
-	void _gdispInit(void) {
-		/* Initialise Mutex */
-		gfxMutexInit(&gdispMutex);
+void _gdispInit(void) {
+	MUTEX_INIT();
 
-		/* Initialise driver */
-		gfxMutexEnter(&gdispMutex);
-		gdisp_lld_init();
-		gfxMutexExit(&gdispMutex);
-	}
-#elif GDISP_NEED_ASYNC
-	void _gdispInit(void) {
-		unsigned		i;
-		gfxThreadHandle	hth;
+	/* Initialise driver */
+	MUTEX_ENTER();
+	gdisp_lld_init();
+	#if GDISP_NEED_VALIDATION || GDISP_NEED_CLIP
+		#if GDISP_HARDWARE_CLIP
+			GC->p.x = x;
+			GC->p.y = y;
+			GC->p.cx = cx;
+			GC->p.cy = cy;
+			gdisp_lld_set_clip();
+		#else
+			GC->clipx0 = 0;
+			GC->clipy0 = 0;
+			GC->clipx1 = GC->g.Width;
+			GC->clipy1 = GC->g.Height;
+		#endif
+	#endif
+	MUTEX_EXIT();
+}
 
-		/* Mark all the Messages as free */
-		for(i=0; i < GDISP_QUEUE_SIZE; i++)
-			gdispMsgs[i].action = GDISP_LLD_MSG_NOP;
+void gdispStreamStart(coord_t x, coord_t y, coord_t cx, coord_t cy) {
+	MUTEX_ENTER();
 
-		/* Initialise our Queue, Mutex's and Counting Semaphore.
-		 * 	A Mutex is required as well as the Queue and Thread because some calls have to be synchronous.
-		 *	Synchronous calls get handled by the calling thread, asynchronous by our worker thread.
-		 */
-		gfxQueueInit(&gdispQueue);
-		gfxMutexInit(&gdispMutex);
-		gfxMutexInit(&gdispMsgsMutex);
-		gfxSemInit(&gdispMsgsSem, GDISP_QUEUE_SIZE, GDISP_QUEUE_SIZE);
+	#if NEED_CLIPPING
+		// Test if the area is valid - if not then exit
+		if (x < GC->clipx0 || x+cx >= GC->clipx1 || y < GC->clipy0 || y+cy >= GC->clipy1) {
+			MUTEX_EXIT();
+			return;
+		}
+	#endif
 
-		hth = gfxThreadCreate(waGDISPThread, sizeof(waGDISPThread), NORMAL_PRIORITY, GDISPThreadHandler, NULL);
-		if (hth) gfxThreadClose(hth);
+	GC->flags |= GDISP_FLG_INSTREAM;
 
-		/* Initialise driver - synchronous */
-		gfxMutexEnter(&gdispMutex);
-		gdisp_lld_init();
-		gfxMutexExit(&gdispMutex);
-	}
-#else
-	void _gdispInit(void) {
-		gdisp_lld_init();
-	}
-#endif
+	#if GDISP_HARDWARE_STREAM
+		// Best is hardware streaming
+		GC->p.x = x;
+		GC->p.y = y;
+		GC->p.cx = cx;
+		GC->p.cy = cy;
+		gdisp_lld_stream_start();
+	#else
+		// Worst - save the parameters and use pixel drawing
 
-#if GDISP_NEED_MULTITHREAD
-	bool_t gdispIsBusy(void) {
-		return FALSE;
-	}
-#elif GDISP_NEED_ASYNC
-	bool_t gdispIsBusy(void) {
-		return !gfxQueueIsEmpty(&gdispQueue);
-	}
-#endif
+		// Use x,y as the current position, x1,y1 as the save position and x2,y2 as the end position
+		GC->p.x1 = GC->p.x = x;
+		GC->p.y1 = GC->p.y = y;
+		GC->p.x2 = GC->p.x + GC->p.cx;
+		GC->p.x2 = GC->p.x + GC->p.cx;
+	#endif
 
-#if GDISP_NEED_MULTITHREAD
-	void gdispClear(color_t color) {
-		gfxMutexEnter(&gdispMutex);
-		gdisp_lld_clear(color);
-		gfxMutexExit(&gdispMutex);
-	}
-#elif GDISP_NEED_ASYNC
-	void gdispClear(color_t color) {
-		gdisp_lld_msg_t *p = gdispAllocMsg(GDISP_LLD_MSG_CLEAR);
-		p->clear.color = color;
-		gfxQueuePut(&gdispQueue, &p->qi, TIME_IMMEDIATE);
-	}
-#endif
+	// Don't release the mutex as gdispStreamEnd() will do that.
+}
 
-#if GDISP_NEED_MULTITHREAD
-	void gdispDrawPixel(coord_t x, coord_t y, color_t color) {
-		gfxMutexEnter(&gdispMutex);
-		gdisp_lld_draw_pixel(x, y, color);
-		gfxMutexExit(&gdispMutex);
-	}
-#elif GDISP_NEED_ASYNC
-	void gdispDrawPixel(coord_t x, coord_t y, color_t color) {
-		gdisp_lld_msg_t *p = gdispAllocMsg(GDISP_LLD_MSG_DRAWPIXEL);
-		p->drawpixel.x = x;
-		p->drawpixel.y = y;
-		p->drawpixel.color = color;
-		gfxQueuePut(&gdispQueue, &p->qi, TIME_IMMEDIATE);
-	}
-#endif
+void gdispStreamColor(color_t color) {
+	// Don't touch the mutex as we should already own it
+
+	// Ignore this call if we are not streaming
+	if (!(GC->flags & GDISP_FLG_INSTREAM))
+		return;
+
+	#if GDISP_HARDWARE_STREAM
+		// Best is hardware streaming
+		GC->p.color = color;
+		gdisp_lld_stream_color();
+	#else
+		// Worst is using pixel drawing
+		GC->p.color = color;
+		gdisp_lld_draw_pixel();
+
+		// Just wrap at end-of-line and end-of-buffer
+		if (++GC->p.x >= GC->p.x2) {
+			GC->p.x = GC->p.x1;
+			if (++GC->p.y >= GC->p.x2)
+				GC->p.y = GC->p.y1;
+		}
+	#endif
+}
+
+void gdispStreamEnd(void) {
+	// Only release the mutex and end the stream if we are actually streaming.
+	if (!(GC->flags & GDISP_FLG_INSTREAM))
+		return;
+
+	#if GDISP_HARDWARE_STREAM && GDISP_HARDWARE_STREAM_END
+		gdisp_lld_stream_end();
+	#endif
+	GC->flags &= ~GDISP_FLG_INSTREAM;
+	MUTEX_EXIT();
+}
+
+void gdispDrawPixel(coord_t x, coord_t y, color_t color) {
+	MUTEX_ENTER();
+	GC->p.x		= x;
+	GC->p.y		= y;
+	GC->p.color	= color;
+	drawpixel_clip();
+	MUTEX_EXIT();
+}
 	
-#if GDISP_NEED_MULTITHREAD
-	void gdispDrawLine(coord_t x0, coord_t y0, coord_t x1, coord_t y1, color_t color) {
-		gfxMutexEnter(&gdispMutex);
-		gdisp_lld_draw_line(x0, y0, x1, y1, color);
-		gfxMutexExit(&gdispMutex);
-	}
-#elif GDISP_NEED_ASYNC
-	void gdispDrawLine(coord_t x0, coord_t y0, coord_t x1, coord_t y1, color_t color) {
-		gdisp_lld_msg_t *p = gdispAllocMsg(GDISP_LLD_MSG_DRAWLINE);
-		p->drawline.x0 = x0;
-		p->drawline.y0 = y0;
-		p->drawline.x1 = x1;
-		p->drawline.y1 = y1;
-		p->drawline.color = color;
-		gfxQueuePut(&gdispQueue, &p->qi, TIME_IMMEDIATE);
-	}
-#endif
+void gdispDrawLine(coord_t x0, coord_t y0, coord_t x1, coord_t y1, color_t color) {
+	MUTEX_ENTER();
+	GC->p.x = x0;
+	GC->p.y = y0;
+	GC->p.x1 = x1;
+	GC->p.y1 = y1;
+	GC->p.color = color;
+	line_clip();
+	MUTEX_EXIT();
+}
 
-#if GDISP_NEED_MULTITHREAD
-	void gdispFillArea(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color) {
-		gfxMutexEnter(&gdispMutex);
-		gdisp_lld_fill_area(x, y, cx, cy, color);
-		gfxMutexExit(&gdispMutex);
+void gdispClear(color_t color) {
+	// Note - clear() ignores the clipping area. It clears the screen.
+	MUTEX_ENTER();
+
+	#if GDISP_HARDWARE_CLEARS
+		// Best is hardware accelerated clear
+		GC->p.color = color;
+		gdisp_lld_clear();
+	#elif GDISP_HARDWARE_FILLS
+		// Next best is hardware accelerated area fill
+		GC->p.x = GC->p.y = 0;
+		GC->p.cx = GC->g.Width;
+		GC->p.cy = GC->g.Height;
+		GC->p.color = color;
+		gdisp_lld_fill_area();
+	#elif GDISP_HARDWARE_STREAM
+		// Next best is streaming
+		uint32_t	area;
+
+		GC->p.x = GC->p.y = 0;
+		GC->p.cx = GC->g.Width;
+		GC->p.cy = GC->g.Height;
+		GC->p.color = color;
+		area = (uint32_t)GC->p.cx * GC->p.cy;
+
+		gdisp_lld_stream_start();
+		for(; area; area--)
+			gdisp_lld_stream_color();
+		#if GDISP_HARDWARE_STREAM_END
+			gdisp_lld_stream_end(gc);
+		#endif
+	#else
+		// Worst is drawing pixels
+		GC->p.color = color;
+		for(GC->p.y = 0; GC->p.y < GC->g.Height; GC->p.y++)
+			for(GC->p.x = 0; GC->p.x < GC->g.Width; GC->p.x++)
+				gdisp_lld_draw_pixel();
+	#endif
+	MUTEX_EXIT();
+}
+
+void gdispFillArea(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color) {
+	MUTEX_ENTER();
+	TEST_CLIP_AREA(x,y,cx,cy) {
+		GC->p.x = x;
+		GC->p.y = y;
+		GC->p.cx = cx;
+		GC->p.cy = cy;
+		GC->p.color = color;
+		fillarea();
 	}
-#elif GDISP_NEED_ASYNC
-	void gdispFillArea(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color) {
-		gdisp_lld_msg_t *p = gdispAllocMsg(GDISP_LLD_MSG_FILLAREA);
-		p->fillarea.x = x;
-		p->fillarea.y = y;
-		p->fillarea.cx = cx;
-		p->fillarea.cy = cy;
-		p->fillarea.color = color;
-		gfxQueuePut(&gdispQueue, &p->qi, TIME_IMMEDIATE);
-	}
-#endif
+	MUTEX_EXIT();
+}
 	
-#if GDISP_NEED_MULTITHREAD
-	void gdispBlitAreaEx(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx, coord_t srcy, coord_t srccx, const pixel_t *buffer) {
-		gfxMutexEnter(&gdispMutex);
-		gdisp_lld_blit_area_ex(x, y, cx, cy, srcx, srcy, srccx, buffer);
-		gfxMutexExit(&gdispMutex);
-	}
-#elif GDISP_NEED_ASYNC
-	void gdispBlitAreaEx(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx, coord_t srcy, coord_t srccx, const pixel_t *buffer) {
-		gdisp_lld_msg_t *p = gdispAllocMsg(GDISP_LLD_MSG_BLITAREA);
-		p->blitarea.x = x;
-		p->blitarea.y = y;
-		p->blitarea.cx = cx;
-		p->blitarea.cy = cy;
-		p->blitarea.srcx = srcx;
-		p->blitarea.srcy = srcy;
-		p->blitarea.srccx = srccx;
-		p->blitarea.buffer = buffer;
-		gfxQueuePut(&gdispQueue, &p->qi, TIME_IMMEDIATE);
-	}
-#endif
+void gdispBlitAreaEx(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx, coord_t srcy, coord_t srccx, const pixel_t *buffer) {
+	MUTEX_ENTER();
+
+	#if NEED_CLIPPING
+		// This is a different cliping to fillarea() as it needs to take into account srcx,srcy
+		if (x < GC->clipx0) { cx -= GC->clipx0 - x; srcx += GC->clipx0 - x; x = GC->clipx0; }
+		if (y < GC->clipy0) { cy -= GC->clipy0 - y; srcy += GC->clipy0 - x; y = GC->clipy0; }
+		if (x+cx > GC->clipx1)	cx = GC->clipx1 - x;
+		if (y+cy > GC->clipy1)	cy = GC->clipy1 - y;
+		if (srcx+cx > srccx) cx = srccx - srcx;
+		if (cx <= 0 || cy <= 0) { MUTEX_EXIT(); return; }
+	#endif
+
+	#if GDISP_HARDWARE_BITFILLS
+		// Best is hardware bitfills
+		GC->p.x = x;
+		GC->p.y = y;
+		GC->p.cx = cx;
+		GC->p.cy = cy;
+		GC->p.x1 = srcx;
+		GC->p.y1 = srcy;
+		GC->p.x2 = srccx;
+		GC->p.ptr = (void *)buffer;
+		gdisp_lld_blit_area_ex();
+	#elif GDISP_HARDWARE_STREAM
+		// Next best is hardware streaming
+
+		// Translate buffer to the real image data, use srcx,srcy as the end point, srccx as the buffer line gap
+		buffer += srcy*srccx+srcx;
+		srcx = x + cx;
+		srcy = y + cy;
+		srccx -= cx;
+
+		gdisp_lld_stream_start(gc);
+		for(GC->p.y = y; GC->p.y < srcy; GC->p.y++, buffer += srccx) {
+			for(GC->p.x = x; GC->p.x < srcx; GC->p.x++) {
+				GC->p.color = *buffer++;
+				gdisp_lld_stream_color();
+			}
+		}
+		#if GDISP_HARDWARE_STREAM_END
+			gdisp_lld_stream_end(gc);
+		#endif
+	#else
+		// Worst is drawing pixels
+
+		// Translate buffer to the real image data, use srcx,srcy as the end point, srccx as the buffer line gap
+		buffer += srcy*srccx+srcx;
+		srcx = x + cx;
+		srcy = y + cy;
+		srccx -= cx;
+
+		for(GC->p.y = y; GC->p.y < srcy; GC->p.y++, buffer += srccx) {
+			for(GC->p.x=x; GC->p.x < srcx; GC->p.x++) {
+				GC->p.color = *buffer++;
+				gdisp_lld_draw_pixel();
+			}
+		}
+	#endif
+	MUTEX_EXIT();
+}
 	
-#if (GDISP_NEED_CLIP && GDISP_NEED_MULTITHREAD)
+#if GDISP_NEED_CLIP
 	void gdispSetClip(coord_t x, coord_t y, coord_t cx, coord_t cy) {
-		gfxMutexEnter(&gdispMutex);
-		gdisp_lld_set_clip(x, y, cx, cy);
-		gfxMutexExit(&gdispMutex);
-	}
-#elif GDISP_NEED_CLIP && GDISP_NEED_ASYNC
-	void gdispSetClip(coord_t x, coord_t y, coord_t cx, coord_t cy) {
-		gdisp_lld_msg_t *p = gdispAllocMsg(GDISP_LLD_MSG_SETCLIP);
-		p->setclip.x = x;
-		p->setclip.y = y;
-		p->setclip.cx = cx;
-		p->setclip.cy = cy;
-		gfxQueuePut(&gdispQueue, &p->qi, TIME_IMMEDIATE);
+		MUTEX_ENTER();
+		#if GDISP_HARDWARE_CLIP
+			// Best is using hardware clipping
+			GC->p.x = x;
+			GC->p.y = y;
+			GC->p.cx = cx;
+			GC->p.cy = cy;
+			gdisp_lld_set_clip();
+		#else
+			// Worst is using software clipping
+			if (x < 0) { cx += x; x = 0; }
+			if (y < 0) { cy += y; y = 0; }
+			if (cx <= 0 || cy <= 0 || x >= GC->g.Width || y >= GC->g.Height) { MUTEX_EXIT(); return; }
+			GC->clipx0 = x;
+			GC->clipy0 = y;
+			GC->clipx1 = x+cx;	if (GC->clipx1 > GC->g.Width) GC->clipx1 = GC->g.Width;
+			GC->clipy1 = y+cy;	if (GC->clipy1 > GC->g.Height) GC->clipy1 = GC->g.Height;
+		#endif
+		MUTEX_EXIT();
 	}
 #endif
 
-#if (GDISP_NEED_CIRCLE && GDISP_NEED_MULTITHREAD)
+#if GDISP_NEED_CIRCLE
 	void gdispDrawCircle(coord_t x, coord_t y, coord_t radius, color_t color) {
-		gfxMutexEnter(&gdispMutex);
-		gdisp_lld_draw_circle(x, y, radius, color);
-		gfxMutexExit(&gdispMutex);
+		coord_t a, b, P;
+
+		MUTEX_ENTER();
+
+		// Calculate intermediates
+		a = 1;
+		b = radius;
+		P = 4 - radius;
+		GC->p.color = color;
+
+		// Away we go using Bresenham's circle algorithm
+		// Optimized to prevent double drawing
+		GC->p.x = x; GC->p.y = y + b; drawpixel_clip();
+		GC->p.x = x; GC->p.y = y - b; drawpixel_clip();
+		GC->p.x = x + b; GC->p.y = y; drawpixel_clip();
+		GC->p.x = x - b; GC->p.y = y; drawpixel_clip();
+		do {
+			GC->p.x = x + a; GC->p.y = y + b; drawpixel_clip();
+			GC->p.x = x + a; GC->p.y = y - b; drawpixel_clip();
+			GC->p.x = x + b; GC->p.y = y + a; drawpixel_clip();
+			GC->p.x = x - b; GC->p.y = y + a; drawpixel_clip();
+			GC->p.x = x - a; GC->p.y = y + b; drawpixel_clip();
+			GC->p.x = x - a; GC->p.y = y - b; drawpixel_clip();
+			GC->p.x = x + b; GC->p.y = y - a; drawpixel_clip();
+			GC->p.x = x - b; GC->p.y = y - a; drawpixel_clip();
+			if (P < 0)
+				P += 3 + 2*a++;
+			else
+				P += 5 + 2*(a++ - b--);
+		} while(a < b);
+		GC->p.x = x + a; GC->p.y = y + b; drawpixel_clip();
+		GC->p.x = x + a; GC->p.y = y - b; drawpixel_clip();
+		GC->p.x = x - a; GC->p.y = y + b; drawpixel_clip();
+		GC->p.x = x - a; GC->p.y = y - b; drawpixel_clip();
+		MUTEX_EXIT();
 	}
-#elif GDISP_NEED_CIRCLE && GDISP_NEED_ASYNC
-	void gdispDrawCircle(coord_t x, coord_t y, coord_t radius, color_t color) {
-		gdisp_lld_msg_t *p = gdispAllocMsg(GDISP_LLD_MSG_DRAWCIRCLE);
-		p->drawcircle.x = x;
-		p->drawcircle.y = y;
-		p->drawcircle.radius = radius;
-		p->drawcircle.color = color;
-		gfxQueuePut(&gdispQueue, &p->qi, TIME_IMMEDIATE);
+#endif
+
+#if GDISP_NEED_CIRCLE
+	void gdispFillCircle(coord_t x, coord_t y, coord_t radius, color_t color) {
+		coord_t a, b, P;
+
+		MUTEX_ENTER();
+
+		// Calculate intermediates
+		a = 1;
+		b = radius;
+		P = 4 - radius;
+		GC->p.color = color;
+
+		// Away we go using Bresenham's circle algorithm
+		// This is optimized to prevent overdrawing by drawing a line only when a variable is about to change value
+		GC->p.y = y; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();
+		GC->p.y = y+b; GC->p.x = x; drawpixel_clip();
+		GC->p.y = y-b; GC->p.x = x; drawpixel_clip();
+		do {
+			GC->p.y = y+a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();
+			GC->p.y = y-a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();
+			if (P < 0) {
+				P += 3 + 2*a++;
+			} else {
+				GC->p.y = y+b; GC->p.x = x-a; GC->p.x1 = x+a; hline_clip();
+				GC->p.y = y-b; GC->p.x = x-a; GC->p.x1 = x+a; hline_clip();
+				P += 5 + 2*(a++ - b--);
+			}
+		} while(a < b);
+		GC->p.y = y+a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();
+		GC->p.y = y-a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();
+		MUTEX_EXIT();
+	}
+#endif
+
+#if GDISP_NEED_ELLIPSE
+	void gdispDrawEllipse(coord_t x, coord_t y, coord_t a, coord_t b, color_t color) {
+		coord_t	dx, dy;
+		int32_t	a2, b2;
+		int32_t	err, e2;
+
+		MUTEX_ENTER();
+
+		// Calculate intermediates
+		dx = 0;
+		dy = b;
+		a2 = a*a;
+		b2 = b*b;
+		err = b2-(2*b-1)*a2;
+		GC->p.color = color;
+
+		// Away we go using Bresenham's ellipse algorithm
+		do {
+			GC->p.x = x + dx; GC->p.y = y + dy; drawpixel_clip();
+			GC->p.x = x - dx; GC->p.y = y + dy; drawpixel_clip();
+			GC->p.x = x - dx; GC->p.y = y - dy; drawpixel_clip();
+			GC->p.x = x + dx; GC->p.y = y - dy; drawpixel_clip();
+
+			e2 = 2*err;
+			if(e2 <  (2*dx+1)*b2) {
+				dx++;
+				err += (2*dx+1)*b2;
+			}
+			if(e2 > -(2*dy-1)*a2) {
+				dy--;
+				err -= (2*dy-1)*a2;
+			}
+		} while(dy >= 0);
+		MUTEX_EXIT();
 	}
 #endif
 	
-#if (GDISP_NEED_CIRCLE && GDISP_NEED_MULTITHREAD)
-	void gdispFillCircle(coord_t x, coord_t y, coord_t radius, color_t color) {
-		gfxMutexEnter(&gdispMutex);
-		gdisp_lld_fill_circle(x, y, radius, color);
-		gfxMutexExit(&gdispMutex);
-	}
-#elif GDISP_NEED_CIRCLE && GDISP_NEED_ASYNC
-	void gdispFillCircle(coord_t x, coord_t y, coord_t radius, color_t color) {
-		gdisp_lld_msg_t *p = gdispAllocMsg(GDISP_LLD_MSG_FILLCIRCLE);
-		p->fillcircle.x = x;
-		p->fillcircle.y = y;
-		p->fillcircle.radius = radius;
-		p->fillcircle.color = color;
-		gfxQueuePut(&gdispQueue, &p->qi, TIME_IMMEDIATE);
-	}
-#endif
-
-#if (GDISP_NEED_ELLIPSE && GDISP_NEED_MULTITHREAD)
-	void gdispDrawEllipse(coord_t x, coord_t y, coord_t a, coord_t b, color_t color) {
-		gfxMutexEnter(&gdispMutex);
-		gdisp_lld_draw_ellipse(x, y, a, b, color);
-		gfxMutexExit(&gdispMutex);
-	}
-#elif GDISP_NEED_ELLIPSE && GDISP_NEED_ASYNC
-	void gdispDrawEllipse(coord_t x, coord_t y, coord_t a, coord_t b, color_t color) {
-		gdisp_lld_msg_t *p = gdispAllocMsg(GDISP_LLD_MSG_DRAWELLIPSE);
-		p->drawellipse.x = x;
-		p->drawellipse.y = y;
-		p->drawellipse.a = a;
-		p->drawellipse.b = b;
-		p->drawellipse.color = color;
-		gfxQueuePut(&gdispQueue, &p->qi, TIME_IMMEDIATE);
-	}
-#endif
-	
-#if (GDISP_NEED_ELLIPSE && GDISP_NEED_MULTITHREAD)
+#if GDISP_NEED_ELLIPSE
 	void gdispFillEllipse(coord_t x, coord_t y, coord_t a, coord_t b, color_t color) {
-		gfxMutexEnter(&gdispMutex);
-		gdisp_lld_fill_ellipse(x, y, a, b, color);
-		gfxMutexExit(&gdispMutex);
-	}
-#elif GDISP_NEED_ELLIPSE && GDISP_NEED_ASYNC
-	void gdispFillEllipse(coord_t x, coord_t y, coord_t a, coord_t b, color_t color) {
-		gdisp_lld_msg_t *p = gdispAllocMsg(GDISP_LLD_MSG_FILLELLIPSE);
-		p->fillellipse.x = x;
-		p->fillellipse.y = y;
-		p->fillellipse.a = a;
-		p->fillellipse.b = b;
-		p->fillellipse.color = color;
-		gfxQueuePut(&gdispQueue, &p->qi, TIME_IMMEDIATE);
-	}
-#endif
+		coord_t	dx, dy;
+		int32_t	a2, b2;
+		int32_t	err, e2;
 
-#if (GDISP_NEED_ARC && GDISP_NEED_MULTITHREAD)
-	void gdispDrawArc(coord_t x, coord_t y, coord_t radius, coord_t start, coord_t end, color_t color) {
-		gfxMutexEnter(&gdispMutex);
-		gdisp_lld_draw_arc(x, y, radius, start, end, color);
-		gfxMutexExit(&gdispMutex);
-	}
-#elif GDISP_NEED_ARC && GDISP_NEED_ASYNC
-	void gdispDrawArc(coord_t x, coord_t y, coord_t radius, coord_t start, coord_t end, color_t color) {
-		gdisp_lld_msg_t *p = gdispAllocMsg(GDISP_LLD_MSG_DRAWARC);
-		p->drawarc.x = x;
-		p->drawarc.y = y;
-		p->drawarc.radius = radius;
-		p->drawarc.start = start;
-		p->drawarc.end = end;
-		p->drawarc.color = color;
-		gfxQueuePut(&gdispQueue, &p->qi, TIME_IMMEDIATE);
-	}
-#endif
+		MUTEX_ENTER();
 
-#if (GDISP_NEED_ARC && GDISP_NEED_MULTITHREAD)
-	void gdispFillArc(coord_t x, coord_t y, coord_t radius, coord_t start, coord_t end, color_t color) {
-		gfxMutexEnter(&gdispMutex);
-		gdisp_lld_fill_arc(x, y, radius, start, end, color);
-		gfxMutexExit(&gdispMutex);
-	}
-#elif GDISP_NEED_ARC && GDISP_NEED_ASYNC
-	void gdispFillArc(coord_t x, coord_t y, coord_t radius, coord_t start, coord_t end, color_t color) {
-		gdisp_lld_msg_t *p = gdispAllocMsg(GDISP_LLD_MSG_FILLARC);
-		p->fillarc.x = x;
-		p->fillarc.y = y;
-		p->fillarc.radius = radius;
-		p->fillarc.start = start;
-		p->fillarc.end = end;
-		p->fillarc.color = color;
-		gfxQueuePut(&gdispQueue, &p->qi, TIME_IMMEDIATE);
+		// Calculate intermediates
+		dx = 0;
+		dy = b;
+		a2 = a*a;
+		b2 = b*b;
+		err = b2-(2*b-1)*a2;
+		GC->p.color = color;
+
+		// Away we go using Bresenham's ellipse algorithm
+		// This is optimized to prevent overdrawing by drawing a line only when a y is about to change value
+		do {
+			e2 = 2*err;
+			if(e2 <  (2*dx+1)*b2) {
+				dx++;
+				err += (2*dx+1)*b2;
+			}
+			if(e2 > -(2*dy-1)*a2) {
+				GC->p.y = y + dy; GC->p.x = x - dx; GC->p.x1 = x + dx; hline_clip();
+				if (y) { GC->p.y = y - dy; GC->p.x = x - dx; GC->p.x1 = x + dx; hline_clip(); }
+				dy--;
+				err -= (2*dy-1)*a2;
+			}
+		} while(dy >= 0);
+		MUTEX_EXIT();
 	}
 #endif
 
 #if GDISP_NEED_ARC
-void gdispDrawRoundedBox(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t radius, color_t color) {
-	if (2*radius > cx || 2*radius > cy) {
-		gdispDrawBox(x, y, cx, cy, color);
-		return;
+	#if !GMISC_NEED_FIXEDTRIG && !GMISC_NEED_FASTTRIG
+		#include <math.h>
+	#endif
+
+	void gdispDrawArc(coord_t x, coord_t y, coord_t radius, coord_t start, coord_t end, color_t color) {
+		coord_t a, b, P, sedge, eedge;
+		uint8_t	full, sbit, ebit, tbit;
+
+		// Normalize the angles
+		if (start < 0)
+			start -= (start/360-1)*360;
+		else if (start >= 360)
+			start %= 360;
+		if (end < 0)
+			end -= (end/360-1)*360;
+		else if (end >= 360)
+			end %= 360;
+
+		sbit = 1<<(start/45);
+		ebit = 1<<(end/45);
+		full = 0;
+		if (start == end) {
+			full = 0xFF;
+		} else if (end < start) {
+			for(tbit=sbit<<1; tbit; tbit<<=1) full |= tbit;
+			for(tbit=ebit>>1; tbit; tbit>>=1) full |= tbit;
+		} else if (sbit < 0x80) {
+			for(tbit=sbit<<1; tbit < ebit; tbit<<=1) full |= tbit;
+		}
+
+		MUTEX_ENTER();
+		GC->p.color = color;
+
+		if (full) {
+			// Draw full sectors
+			// Optimized to prevent double drawing
+			a = 1;
+			b = radius;
+			P = 4 - radius;
+			if (full & 0x60) { GC->p.y = y+b; GC->p.x = x; drawpixel_clip(); }
+			if (full & 0x06) { GC->p.y = y-b; GC->p.x = x; drawpixel_clip(); }
+			if (full & 0x81) { GC->p.y = y; GC->p.x = x+b; drawpixel_clip(); }
+			if (full & 0x18) { GC->p.y = y; GC->p.x = x-b; drawpixel_clip(); }
+			do {
+				if (full & 0x01) { GC->p.x = x+b; GC->p.y = y-a; drawpixel_clip(); }
+				if (full & 0x02) { GC->p.x = x+a; GC->p.y = y-b; drawpixel_clip(); }
+				if (full & 0x04) { GC->p.x = x-a; GC->p.y = y-b; drawpixel_clip(); }
+				if (full & 0x08) { GC->p.x = x-b; GC->p.y = y-a; drawpixel_clip(); }
+				if (full & 0x10) { GC->p.x = x-b; GC->p.y = y+a; drawpixel_clip(); }
+				if (full & 0x20) { GC->p.x = x-a; GC->p.y = y+b; drawpixel_clip(); }
+				if (full & 0x40) { GC->p.x = x+a; GC->p.y = y+b; drawpixel_clip(); }
+				if (full & 0x80) { GC->p.x = x+b; GC->p.y = y+a; drawpixel_clip(); }
+				if (P < 0)
+					P += 3 + 2*a++;
+				else
+					P += 5 + 2*(a++ - b--);
+			} while(a < b);
+			if (full & 0xC0) { GC->p.x = x+a; GC->p.y = y+b; drawpixel_clip(); }
+			if (full & 0x0C) { GC->p.x = x-a; GC->p.y = y-b; drawpixel_clip(); }
+			if (full & 0x03) { GC->p.x = x+a; GC->p.y = y-b; drawpixel_clip(); }
+			if (full & 0x30) { GC->p.x = x-a; GC->p.y = y+b; drawpixel_clip(); }
+			if (full == 0xFF)
+				return;
+		}
+
+		#if GFX_USE_GMISC && GMISC_NEED_FIXEDTRIG
+			sedge = NONFIXED(radius * ((sbit & 0x99) ? ffsin(start) : ffcos(start)) + FIXED0_5);
+			eedge = NONFIXED(radius * ((ebit & 0x99) ? ffsin(end) : ffcos(end)) + FIXED0_5);
+		#elif GFX_USE_GMISC && GMISC_NEED_FASTTRIG
+			sedge = round(radius * ((sbit & 0x99) ? fsin(start) : fcos(start)));
+			eedge = round(radius * ((ebit & 0x99) ? fsin(end) : fcos(end)));
+		#else
+			sedge = round(radius * ((sbit & 0x99) ? sin(start*M_PI/180) : cos(start*M_PI/180)));
+			eedge = round(radius * ((ebit & 0x99) ? sin(end*M_PI/180) : cos(end*M_PI/180)));
+		#endif
+		if (sbit & 0xB4) sedge = -sedge;
+		if (ebit & 0xB4) eedge = -eedge;
+
+		if (sbit != ebit) {
+			// Draw start and end sectors
+			// Optimized to prevent double drawing
+			a = 1;
+			b = radius;
+			P = 4 - radius;
+			if ((sbit & 0x20) || (ebit & 0x40)) { GC->p.x = x; GC->p.y = y+b; drawpixel_clip(); }
+			if ((sbit & 0x02) || (ebit & 0x04)) { GC->p.x = x; GC->p.y = y-b; drawpixel_clip(); }
+			if ((sbit & 0x80) || (ebit & 0x01)) { GC->p.x = x+b; GC->p.y = y; drawpixel_clip(); }
+			if ((sbit & 0x08) || (ebit & 0x10)) { GC->p.x = x-b; GC->p.y = y; drawpixel_clip(); }
+			do {
+				if (((sbit & 0x01) && a >= sedge) || ((ebit & 0x01) && a <= eedge)) { GC->p.x = x+b; GC->p.y = y-a; drawpixel_clip(); }
+				if (((sbit & 0x02) && a <= sedge) || ((ebit & 0x02) && a >= eedge)) { GC->p.x = x+a; GC->p.y = y-b; drawpixel_clip(); }
+				if (((sbit & 0x04) && a >= sedge) || ((ebit & 0x04) && a <= eedge)) { GC->p.x = x-a; GC->p.y = y-b; drawpixel_clip(); }
+				if (((sbit & 0x08) && a <= sedge) || ((ebit & 0x08) && a >= eedge)) { GC->p.x = x-b; GC->p.y = y-a; drawpixel_clip(); }
+				if (((sbit & 0x10) && a >= sedge) || ((ebit & 0x10) && a <= eedge)) { GC->p.x = x-b; GC->p.y = y+a; drawpixel_clip(); }
+				if (((sbit & 0x20) && a <= sedge) || ((ebit & 0x20) && a >= eedge)) { GC->p.x = x-a; GC->p.y = y+b; drawpixel_clip(); }
+				if (((sbit & 0x40) && a >= sedge) || ((ebit & 0x40) && a <= eedge)) { GC->p.x = x+a; GC->p.y = y+b; drawpixel_clip(); }
+				if (((sbit & 0x80) && a <= sedge) || ((ebit & 0x80) && a >= eedge)) { GC->p.x = x+b; GC->p.y = y+a; drawpixel_clip(); }
+				if (P < 0)
+					P += 3 + 2*a++;
+				else
+					P += 5 + 2*(a++ - b--);
+			} while(a < b);
+			if (((sbit & 0x40) && a >= sedge) || ((ebit & 0x40) && a <= eedge) || ((sbit & 0x80) && a <= sedge) || ((ebit & 0x80) && a >= eedge))
+				{ GC->p.x = x+a; GC->p.y = y+b; drawpixel_clip(); }
+			if (((sbit & 0x04) && a >= sedge) || ((ebit & 0x04) && a <= eedge) || ((sbit & 0x08) && a <= sedge) || ((ebit & 0x08) && a >= eedge))
+				{ GC->p.x = x-a; GC->p.y = y-b; drawpixel_clip(); }
+			if (((sbit & 0x01) && a >= sedge) || ((ebit & 0x01) && a <= eedge) || ((sbit & 0x02) && a <= sedge) || ((ebit & 0x02) && a >= eedge))
+				{ GC->p.x = x+a; GC->p.y = y-b; drawpixel_clip(); }
+			if (((sbit & 0x10) && a >= sedge) || ((ebit & 0x10) && a <= eedge) || ((sbit & 0x20) && a <= sedge) || ((ebit & 0x20) && a >= eedge))
+				{ GC->p.x = x-a; GC->p.y = y+b; drawpixel_clip(); }
+		} else if (end < start) {
+			// Draw start/end sector where it is a non-internal angle
+			// Optimized to prevent double drawing
+			a = 1;
+			b = radius;
+			P = 4 - radius;
+			if (sbit & 0x60) { GC->p.x = x; GC->p.y = y+b; drawpixel_clip(); }
+			if (sbit & 0x06) { GC->p.x = x; GC->p.y = y-b; drawpixel_clip(); }
+			if (sbit & 0x81) { GC->p.x = x+b; GC->p.y = y; drawpixel_clip(); }
+			if (sbit & 0x18) { GC->p.x = x-b; GC->p.y = y; drawpixel_clip(); }
+			do {
+				if ((sbit & 0x01) && (a >= sedge || a <= eedge)) { GC->p.x = x+b; GC->p.y = y-a; drawpixel_clip(); }
+				if ((sbit & 0x02) && (a <= sedge || a >= eedge)) { GC->p.x = x+a; GC->p.y = y-b; drawpixel_clip(); }
+				if ((sbit & 0x04) && (a >= sedge || a <= eedge)) { GC->p.x = x-a; GC->p.y = y-b; drawpixel_clip(); }
+				if ((sbit & 0x08) && (a <= sedge || a >= eedge)) { GC->p.x = x-b; GC->p.y = y-a; drawpixel_clip(); }
+				if ((sbit & 0x10) && (a >= sedge || a <= eedge)) { GC->p.x = x-b; GC->p.y = y+a; drawpixel_clip(); }
+				if ((sbit & 0x20) && (a <= sedge || a >= eedge)) { GC->p.x = x-a; GC->p.y = y+b; drawpixel_clip(); }
+				if ((sbit & 0x40) && (a >= sedge || a <= eedge)) { GC->p.x = x+a; GC->p.y = y+b; drawpixel_clip(); }
+				if ((sbit & 0x80) && (a <= sedge || a >= eedge)) { GC->p.x = x+b; GC->p.y = y+a; drawpixel_clip(); }
+				if (P < 0)
+					P += 3 + 2*a++;
+				else
+					P += 5 + 2*(a++ - b--);
+			} while(a < b);
+			if (((sbit & 0x04) && (a >= sedge || a <= eedge)) || ((sbit & 0x08) && (a <= sedge || a >= eedge)))
+				{ GC->p.x = x-a; GC->p.y = y-b; drawpixel_clip(); }
+			if (((sbit & 0x40) && (a >= sedge || a <= eedge)) || ((sbit & 0x80) && (a <= sedge || a >= eedge)))
+				{ GC->p.x = x+a; GC->p.y = y+b; drawpixel_clip(); }
+			if (((sbit & 0x01) && (a >= sedge || a <= eedge)) || ((sbit & 0x02) && (a <= sedge || a >= eedge)))
+				{ GC->p.x = x+a; GC->p.y = y-b; drawpixel_clip(); }
+			if (((sbit & 0x10) && (a >= sedge || a <= eedge)) || ((sbit & 0x20) && (a <= sedge || a >= eedge)))
+				{ GC->p.x = x-a; GC->p.y = y+b; drawpixel_clip(); }
+		} else {
+			// Draw start/end sector where it is a internal angle
+			// Optimized to prevent double drawing
+			a = 1;
+			b = radius;
+			P = 4 - radius;
+			if (((sbit & 0x20) && !eedge) || ((sbit & 0x40) && !sedge)) { GC->p.x = x; GC->p.y = y+b; drawpixel_clip(); }
+			if (((sbit & 0x02) && !eedge) || ((sbit & 0x04) && !sedge)) { GC->p.x = x; GC->p.y = y-b; drawpixel_clip(); }
+			if (((sbit & 0x80) && !eedge) || ((sbit & 0x01) && !sedge)) { GC->p.x = x+b; GC->p.y = y; drawpixel_clip(); }
+			if (((sbit & 0x08) && !eedge) || ((sbit & 0x10) && !sedge)) { GC->p.x = x-b; GC->p.y = y; drawpixel_clip(); }
+			do {
+				if (((sbit & 0x01) && a >= sedge && a <= eedge)) { GC->p.x = x+b; GC->p.y = y-a; drawpixel_clip(); }
+				if (((sbit & 0x02) && a <= sedge && a >= eedge)) { GC->p.x = x+a; GC->p.y = y-b; drawpixel_clip(); }
+				if (((sbit & 0x04) && a >= sedge && a <= eedge)) { GC->p.x = x-a; GC->p.y = y-b; drawpixel_clip(); }
+				if (((sbit & 0x08) && a <= sedge && a >= eedge)) { GC->p.x = x-b; GC->p.y = y-a; drawpixel_clip(); }
+				if (((sbit & 0x10) && a >= sedge && a <= eedge)) { GC->p.x = x-b; GC->p.y = y+a; drawpixel_clip(); }
+				if (((sbit & 0x20) && a <= sedge && a >= eedge)) { GC->p.x = x-a; GC->p.y = y+b; drawpixel_clip(); }
+				if (((sbit & 0x40) && a >= sedge && a <= eedge)) { GC->p.x = x+a; GC->p.y = y+b; drawpixel_clip(); }
+				if (((sbit & 0x80) && a <= sedge && a >= eedge)) { GC->p.x = x+b; GC->p.y = y+a; drawpixel_clip(); }
+				if (P < 0)
+					P += 3 + 2*a++;
+				else
+					P += 5 + 2*(a++ - b--);
+			} while(a < b);
+			if (((sbit & 0x04) && a >= sedge && a <= eedge) || ((sbit & 0x08) && a <= sedge && a >= eedge))
+				{ GC->p.x = x-a; GC->p.y = y-b; drawpixel_clip(); }
+			if (((sbit & 0x40) && a >= sedge && a <= eedge) || ((sbit & 0x80) && a <= sedge && a >= eedge))
+				{ GC->p.x = x+a; GC->p.y = y+b; drawpixel_clip(); }
+			if (((sbit & 0x01) && a >= sedge && a <= eedge) || ((sbit & 0x02) && a <= sedge && a >= eedge))
+				{ GC->p.x = x+a; GC->p.y = y-b; drawpixel_clip(); }
+			if (((sbit & 0x10) && a >= sedge && a <= eedge) || ((sbit & 0x20) && a <= sedge && a >= eedge))
+				{ GC->p.x = x-a; GC->p.y = y+b; drawpixel_clip(); }
+		}
+		MUTEX_EXIT();
 	}
-	gdispDrawArc(x+radius, y+radius, radius, 90, 180, color);
-	gdispDrawLine(x+radius+1, y, x+cx-2-radius, y, color);
-	gdispDrawArc(x+cx-1-radius, y+radius, radius, 0, 90, color);
-	gdispDrawLine(x+cx-1, y+radius+1, x+cx-1, y+cy-2-radius, color);
-	gdispDrawArc(x+cx-1-radius, y+cy-1-radius, radius, 270, 360, color);
-	gdispDrawLine(x+radius+1, y+cy-1, x+cx-2-radius, y+cy-1, color);
-	gdispDrawArc(x+radius, y+cy-1-radius, radius, 180, 270, color);
-	gdispDrawLine(x, y+radius+1, x, y+cy-2-radius, color);
-}
 #endif
 
 #if GDISP_NEED_ARC
-void gdispFillRoundedBox(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t radius, color_t color) {
-	coord_t radius2;
+	void gdispFillArc(coord_t x, coord_t y, coord_t radius, coord_t start, coord_t end, color_t color) {
+		coord_t a, b, P;
+		coord_t	sy, ey;
+		fixed	sxa, sxb, sxd, exa, exb, exd;
+		uint8_t	qtr;
 
-	radius2 = radius*2;
-	if (radius2 > cx || radius2 > cy) {
-		gdispFillArea(x, y, cx, cy, color);
-		return;
+		MUTEX_ENTER();
+
+		// Do the trig to get the formulas for the start and end lines.
+		sxa = exa = FIXED(x)+FIXED0_5;
+		#if GFX_USE_GMISC && GMISC_NEED_FIXEDTRIG
+			sxb = radius*ffcos(start);	sy = -NONFIXED(radius*ffsin(start) + FIXED0_5);
+			exb = radius*ffcos(end);	ey = -NONFIXED(radius*ffsin(end) + FIXED0_5);
+		#elif GFX_USE_GMISC && GMISC_NEED_FASTTRIG
+			sxb = FP2FIXED(radius*fcos(start));	sy = -round(radius*fsin(start));
+			exb = FP2FIXED(radius*fcos(end));	ey = -round(radius*fsin(end));
+		#else
+			sxb = FP2FIXED(radius*cos(start*M_PI/180));	sy = -round(radius*sin(start*M_PI/180));
+			exb = FP2FIXED(radius*cos(end*M_PI/180));	ey = -round(radius*sin(end*M_PI/180));
+		#endif
+		sxd = sy ? sxb/sy : sxb;
+		exd = ey ? exb/ey : exb;
+
+		// Calculate which quarters and which direction we are traveling
+		qtr = 0;
+		if (sxb > 0)	qtr |= 0x01;		// S1=0001(1), S2=0000(0), S3=0010(2), S4=0011(3)
+		if (sy > 0) 	qtr |= 0x02;
+		if (exb > 0)	qtr |= 0x04;		// E1=0100(4), E2=0000(0), E3=1000(8), E4=1100(12)
+		if (ey > 0) 	qtr |= 0x08;
+		if (sy > ey)	qtr |= 0x10;		// order of start and end lines
+
+		// Calculate intermediates
+		a = 1;
+		b = radius;
+		P = 4 - radius;
+		GC->p.color = color;
+		sxb += sxa;
+		exb += exa;
+
+		// Away we go using Bresenham's circle algorithm
+		// This is optimized to prevent overdrawing by drawing a line only when a variable is about to change value
+
+		switch(qtr) {
+		case 0:		// S2E2 sy <= ey
+		case 1:		// S1E2 sy <= ey
+			if (ey && sy) {
+				GC->p.x = x; GC->p.x1 = x;									// E2S
+				sxa -= sxd; exa -= exd;
+			} else if (sy) {
+				GC->p.x = x-b; GC->p.x1 = x;								// C2S
+				sxa -= sxd;
+			} else if (ey) {
+				GC->p.x = x; GC->p.x1 = x+b;								// E2C
+				exa -= exd;
+			} else {
+				GC->p.x = x-b; GC->p.x1 = x+b;								// C2C
+			}
+			GC->p.y = y;
+			hline_clip();
+			do {
+				if (-a >= ey) {
+					GC->p.y = y-a; GC->p.x = NONFIXED(exa); GC->p.x1 = NONFIXED(sxa); hline_clip();		// E2S
+					sxa -= sxd; exa -= exd;
+				} else if (-a >= sy) {
+					GC->p.y = y-a; GC->p.x = x-b; GC->p.x1 = NONFIXED(sxa); hline_clip();				// C2S
+					sxa -= sxd;
+				} else if (qtr & 1) {
+					GC->p.y = y-a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();							// C2C
+				}
+				if (P < 0) {
+					P += 3 + 2*a++;
+				} else {
+					if (-b >= ey) {
+						GC->p.y = y-b; GC->p.x = NONFIXED(exb); GC->p.x1 = NONFIXED(sxb); hline_clip();	// E2S
+						sxb += sxd; exb += exd;
+					} else if (-b >= sy) {
+						GC->p.y = y-b; GC->p.x = x-a; GC->p.x1 = NONFIXED(sxb); hline_clip();			// C2S
+						sxb += sxd;
+					} else if (qtr & 1) {
+						GC->p.y = y-b; GC->p.x = x-a; GC->p.x1 = x+a; hline_clip();						// C2C
+					}
+					P += 5 + 2*(a++ - b--);
+				}
+			} while(a < b);
+			if (-a >= ey) {
+				GC->p.y = y-a; GC->p.x = NONFIXED(exa); GC->p.x1 = NONFIXED(sxa); hline_clip();			// E2S
+			} else if (-a >= sy) {
+				GC->p.y = y-a; GC->p.x = x-b; GC->p.x1 = NONFIXED(sxa); hline_clip();					// C2S
+			} else if (qtr & 1) {
+				GC->p.y = y-a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();								// C2C
+			}
+			break;
+
+		case 2:		// S3E2 sy <= ey
+		case 3:		// S4E2 sy <= ey
+		case 6:		// S3E1 sy <= ey
+		case 7:		// S4E1 sy <= ey
+		case 18:	// S3E2 sy > ey
+		case 19:	// S4E2 sy > ey
+		case 22:	// S3E1 sy > ey
+		case 23:	// S4E1 sy > ey
+			GC->p.y = y; GC->p.x = x; GC->p.x1 = x+b; hline_clip();								// SE2C
+			sxa += sxd; exa -= exd;
+			do {
+				if (-a >= ey) {
+					GC->p.y = y-a; GC->p.x = NONFIXED(exa); GC->p.x1 = x+b; hline_clip();		// E2C
+					exa -= exd;
+				} else if (!(qtr & 4)) {
+					GC->p.y = y-a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();					// C2C
+				}
+				if (a <= sy) {
+					GC->p.y = y+a; GC->p.x = NONFIXED(sxa); GC->p.x1 = x+b; hline_clip();		// S2C
+					sxa += sxd;
+				} else if (!(qtr & 1)) {
+					GC->p.y = y+a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();					// C2C
+				}
+				if (P < 0) {
+					P += 3 + 2*a++;
+				} else {
+					if (-b >= ey) {
+						GC->p.y = y-b; GC->p.x = NONFIXED(exb); GC->p.x1 = x+a; hline_clip();		// E2C
+						exb += exd;
+					} else if (!(qtr & 4)) {
+						GC->p.y = y-b; GC->p.x = x-a; GC->p.x1 = x+a; hline_clip();					// C2C
+					}
+					if (b <= sy) {
+						GC->p.y = y+b; GC->p.x = NONFIXED(sxb); GC->p.x1 = x+a; hline_clip();		// S2C
+						sxb -= sxd;
+					} else if (!(qtr & 1)) {
+						GC->p.y = y+b; GC->p.x = x-a; GC->p.x1 = x+a; hline_clip(); 				// C2C
+					}
+					P += 5 + 2*(a++ - b--);
+				}
+			} while(a < b);
+			if (-a >= ey) {
+				GC->p.y = y-a; GC->p.x = NONFIXED(exa); GC->p.x1 = x+b; hline_clip();				// E2C
+			} else if (!(qtr & 4)) {
+				GC->p.y = y-a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();							// C2C
+			}
+			if (a <= sy) {
+				GC->p.y = y+a; GC->p.x = NONFIXED(sxa); GC->p.x1 = x+a; hline_clip();				// S2C
+			} else if (!(qtr & 1)) {
+				GC->p.y = y+a; GC->p.x = x-b; GC->p.x1 = x+a; hline_clip();							// C2C
+			}
+			break;
+
+		case 4:		// S2E1 sy <= ey
+		case 5:		// S1E1 sy <= ey
+			GC->p.y = y; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();									// C2C
+			do {
+				if (-a >= ey) {
+					GC->p.y = y-a; GC->p.x = x-b; GC->p.x1 = NONFIXED(sxa); hline_clip();				// C2S
+					GC->p.y = y-a; GC->p.x = NONFIXED(exa); GC->p.x1 = x+b; hline_clip();				// E2C
+					sxa -= sxd; exa -= exd;
+				} else if (-a >= sy) {
+					GC->p.y = y-a; GC->p.x = x-b; GC->p.x1 = NONFIXED(sxa); hline_clip();				// C2S
+					sxa -= sxd;
+				} else if (qtr & 1) {
+					GC->p.y = y-a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();							// C2C
+				}
+				GC->p.y = y+a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();								// C2C
+				if (P < 0) {
+					P += 3 + 2*a++;
+				} else {
+					if (-b >= ey) {
+						GC->p.y = y-b; GC->p.x = x-a; GC->p.x1 = NONFIXED(sxb); hline_clip();			// C2S
+						GC->p.y = y-b; GC->p.x = NONFIXED(exb); GC->p.x1 = x+a; hline_clip();			// E2C
+						sxb += sxd; exb += exd;
+					} else if (-b >= sy) {
+						GC->p.y = y-b; GC->p.x = x-a; GC->p.x1 = NONFIXED(sxb); hline_clip();			// C2S
+						sxb += sxd;
+					} else if (qtr & 1) {
+						GC->p.y = y-b; GC->p.x = x-a; GC->p.x1 = x+a; hline_clip();						// C2C
+					}
+					GC->p.y = y+b; GC->p.x = x-a; GC->p.x1 = x+a; hline_clip();							// C2C
+					P += 5 + 2*(a++ - b--);
+				}
+			} while(a < b);
+			if (-a >= ey) {
+				GC->p.y = y-a; GC->p.x = x-b; GC->p.x1 = NONFIXED(sxa); hline_clip();					// C2S
+				GC->p.y = y-a; GC->p.x = NONFIXED(exa); GC->p.x1 = x+b; hline_clip();					// E2C
+			} else if (-a >= sy) {
+				GC->p.y = y-a; GC->p.x = x-b; GC->p.x1 = NONFIXED(sxa); hline_clip();					// C2S
+			} else if (qtr & 1) {
+				GC->p.y = y-a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();								// C2C
+			}
+			GC->p.y = y+b; GC->p.x = x-a; GC->p.x1 = x+a; hline_clip();									// C2C
+			break;
+
+		case 8:		// S2E3 sy <= ey
+		case 9:		// S1E3 sy <= ey
+		case 12:	// S2E4 sy <= ey
+		case 13:	// S1E4 sy <= ey
+		case 24:	// S2E3 sy > ey
+		case 25:	// S1E3 sy > ey
+		case 28:	// S2E3 sy > ey
+		case 29:	// S1E3 sy > ey
+			GC->p.y = y; GC->p.x = x-b; GC->p.x1 = x; hline_clip();								// C2SE
+			sxa -= sxd; exa += exd;
+			do {
+				if (-a >= sy) {
+					GC->p.y = y-a; GC->p.x = x-b; GC->p.x1 = NONFIXED(sxa); hline_clip();		// C2S
+					sxa -= sxd;
+				} else if (qtr & 1) {
+					GC->p.y = y-a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();					// C2C
+				}
+				if (a <= ey) {
+					GC->p.y = y+a; GC->p.x = x-b; GC->p.x1 = NONFIXED(exa); hline_clip();		// C2E
+					exa += exd;
+				} else if (qtr & 4) {
+					GC->p.y = y+a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();					// C2C
+				}
+				if (P < 0) {
+					P += 3 + 2*a++;
+				} else {
+					if (-b >= sy) {
+						GC->p.y = y-b; GC->p.x = x-a; GC->p.x1 = NONFIXED(sxb); hline_clip();		// C2S
+						sxb += sxd;
+					} else if (qtr & 1) {
+						GC->p.y = y-b; GC->p.x = x-a; GC->p.x1 = x+a; hline_clip();					// C2C
+					}
+					if (b <= ey) {
+						GC->p.y = y+b; GC->p.x = x-a; GC->p.x1 = NONFIXED(exb); hline_clip();		// C2E
+						exb -= exd;
+					} else if (qtr & 4) {
+						GC->p.y = y+b; GC->p.x = x-a; GC->p.x1 = x+a; hline_clip(); 				// C2C
+					}
+					P += 5 + 2*(a++ - b--);
+				}
+			} while(a < b);
+			if (-a >= sy) {
+				GC->p.y = y-a; GC->p.x = x-b; GC->p.x1 = NONFIXED(sxa); hline_clip();				// C2S
+			} else if (qtr & 1) {
+				GC->p.y = y-a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();							// C2C
+			}
+			if (a <= ey) {
+				GC->p.y = y+a; GC->p.x = x-b; GC->p.x1 = NONFIXED(exa); hline_clip();				// C2E
+			} else if (qtr & 4) {
+				GC->p.y = y+a; GC->p.x = x-b; GC->p.x1 = x+a; hline_clip();							// C2C
+			}
+			break;
+
+		case 10:	// S3E3 sy <= ey
+		case 14:	// S3E4 sy <= ey
+			GC->p.y = y; GC->p.x = x; drawpixel_clip();													// S2E
+			sxa += sxd; exa += exd;
+			do {
+				if (a <= sy) {
+					GC->p.y = y+a; GC->p.x = NONFIXED(sxa); GC->p.x1 = NONFIXED(exa); hline_clip();		// S2E
+					sxa += sxd; exa += exd;
+				} else if (a <= ey) {
+					GC->p.y = y+a; GC->p.x = x-b; GC->p.x1 = NONFIXED(exa); hline_clip();				// C2E
+					exa += exd;
+				} else if (qtr & 4) {
+					GC->p.y = y+a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();							// C2C
+				}
+				if (P < 0) {
+					P += 3 + 2*a++;
+				} else {
+					if (b <= sy) {
+						GC->p.y = y+b; GC->p.x = NONFIXED(sxb); GC->p.x1 = NONFIXED(exb); hline_clip();		// S2E
+						sxb -= sxd; exb -= exd;
+					} else if (b <= ey) {
+						GC->p.y = y+b; GC->p.x = x-a; GC->p.x1 = NONFIXED(exb); hline_clip();				// C2E
+						exb -= exd;
+					} else if (qtr & 4) {
+						GC->p.y = y+b; GC->p.x = x-a; GC->p.x1 = x+a; hline_clip();							// C2C
+					}
+					P += 5 + 2*(a++ - b--);
+				}
+			} while(a < b);
+			if (a <= sy) {
+				GC->p.y = y+a; GC->p.x = NONFIXED(sxa); GC->p.x1 = NONFIXED(exa); hline_clip();		// S2E
+			} else if (a <= ey) {
+				GC->p.y = y+a; GC->p.x = x-b; GC->p.x1 = NONFIXED(exa); hline_clip();				// C2E
+			} else if (qtr & 4) {
+				GC->p.y = y+a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();							// C2C
+			}
+			break;
+
+		case 11:	// S4E3 sy <= ey
+		case 15:	// S4E4 sy <= ey
+			GC->p.y = y; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();									// C2C
+			do {
+				GC->p.y = y-a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();								// C2C
+				if (a <= sy) {
+					GC->p.y = y+a; GC->p.x = x-b; GC->p.x1 = NONFIXED(exa); hline_clip();				// C2E
+					GC->p.y = y+a; GC->p.x = NONFIXED(sxa); GC->p.x1 = x+b; hline_clip();				// S2C
+					sxa += sxd; exa += exd;
+				} else if (a <= ey) {
+					GC->p.y = y+a; GC->p.x = x-b; GC->p.x1 = NONFIXED(exa); hline_clip();				// C2E
+					exa += exd;
+				} else if (qtr & 4) {
+					GC->p.y = y+a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();							// C2C
+				}
+				if (P < 0) {
+					P += 3 + 2*a++;
+				} else {
+					GC->p.y = y-b; GC->p.x = x-a; GC->p.x1 = x+a; hline_clip();							// C2C
+					if (b <= sy) {
+						GC->p.y = y+b; GC->p.x = x-a; GC->p.x1 = NONFIXED(exb); hline_clip();			// C2E
+						GC->p.y = y+b; GC->p.x = NONFIXED(sxb); GC->p.x1 = x+a; hline_clip();			// S2C
+						sxb -= sxd; exb -= exd;
+					} else if (b <= ey) {
+						GC->p.y = y+b; GC->p.x = x-a; GC->p.x1 = NONFIXED(exb); hline_clip();			// C2E
+						exb -= exd;
+					} else if (qtr & 4) {
+						GC->p.y = y+b; GC->p.x = x-a; GC->p.x1 = x+a; hline_clip();						// C2C
+					}
+					P += 5 + 2*(a++ - b--);
+				}
+			} while(a < b);
+			GC->p.y = y-a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();									// C2C
+			if (a <= sy) {
+				GC->p.y = y+a; GC->p.x = x-b; GC->p.x1 = NONFIXED(exa); hline_clip();					// C2E
+				GC->p.y = y+a; GC->p.x = NONFIXED(sxa); GC->p.x1 = x+b; hline_clip();					// S2C
+			} else if (a <= ey) {
+				GC->p.y = y+a; GC->p.x = x-b; GC->p.x1 = NONFIXED(exa); hline_clip();					// C2E
+			} else if (qtr & 4) {
+				GC->p.y = y+a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();								// C2C
+			}
+			break;
+
+		case 16:	// S2E2	sy > ey
+		case 20:	// S2E1 sy > ey
+			GC->p.y = y; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();									// C2C
+			sxa -= sxd; exa -= exd;
+			do {
+				if (-a >= sy) {
+					GC->p.y = y-a; GC->p.x = x-b; GC->p.x1 = NONFIXED(sxa); hline_clip();				// C2S
+					GC->p.y = y-a; GC->p.x = NONFIXED(exa); GC->p.x1 = x+b; hline_clip();				// E2C
+					sxa -= sxd; exa -= exd;
+				} else if (-a >= ey) {
+					GC->p.y = y-a; GC->p.x = NONFIXED(exa); GC->p.x1 = x+b; hline_clip();				// E2C
+					exa -= exd;
+				} else if (!(qtr & 4)){
+					GC->p.y = y-a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip(); 						// C2C
+				}
+				GC->p.y = y+a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip(); 							// C2C
+				if (P < 0) {
+					P += 3 + 2*a++;
+				} else {
+					if (-b >= sy) {
+						GC->p.y = y-b; GC->p.x = x-a; GC->p.x1 = NONFIXED(sxb); hline_clip();			// C2S
+						GC->p.y = y-b; GC->p.x = NONFIXED(exb); GC->p.x1 = x+a; hline_clip();			// E2C
+						sxb += sxd; exb += exd;
+					} else if (-b >= ey) {
+						GC->p.y = y-b; GC->p.x = NONFIXED(exb); GC->p.x1 = x+a; hline_clip();			// E2C
+						exb += exd;
+					} else if (!(qtr & 4)){
+						GC->p.y = y-b; GC->p.x = x-a; GC->p.x1 = x+a; hline_clip(); 					// C2C
+					}
+					GC->p.y = y+b; GC->p.x = x-a; GC->p.x1 = x+a; hline_clip(); 						// C2C
+					P += 5 + 2*(a++ - b--);
+				}
+			} while(a < b);
+			if (-a >= sy) {
+				GC->p.y = y-a; GC->p.x = x-b; GC->p.x1 = NONFIXED(sxa); hline_clip();					// C2S
+				GC->p.y = y-a; GC->p.x = NONFIXED(exa); GC->p.x1 = x+b; hline_clip();					// E2C
+			} else if (-a >= ey) {
+				GC->p.y = y-a; GC->p.x = NONFIXED(exa); GC->p.x1 = x+b; hline_clip();					// E2C
+			} else if (!(qtr & 4)){
+				GC->p.y = y-a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip(); 							// C2C
+			}
+			GC->p.y = y+a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip(); 								// C2C
+			break;
+
+		case 17:	// S1E2 sy > ey
+		case 21:	// S1E1 sy > ey
+			if (sy) {
+				GC->p.x = x; GC->p.x1 = x;																// E2S
+				sxa -= sxd; exa -= exd;
+			} else {
+				GC->p.x = x; GC->p.x1 = x+b;															// E2C
+				exa -= exd;
+			}
+			GC->p.y = y;
+			hline_clip();
+			do {
+				if (-a >= sy) {
+					GC->p.y = y-a; GC->p.x = NONFIXED(exa); GC->p.x1 = NONFIXED(sxa); hline_clip();		// E2S
+					sxa -= sxd; exa -= exd;
+				} else if (-a >= ey) {
+					GC->p.y = y-a; GC->p.x = NONFIXED(exa); GC->p.x1 = x+b; hline_clip();				// E2C
+					exa -= exd;
+				} else if (!(qtr & 4)) {
+					GC->p.y = y-a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();							// C2C
+				}
+				if (P < 0) {
+					P += 3 + 2*a++;
+				} else {
+					if (-b >= sy) {
+						GC->p.y = y-b; GC->p.x = NONFIXED(exb); GC->p.x1 = NONFIXED(sxb); hline_clip();	// E2S
+						sxb += sxd; exb += exd;
+					} else if (-b >= ey) {
+						GC->p.y = y-b; GC->p.x = NONFIXED(exb); GC->p.x1 = x+a; hline_clip();			// E2C
+						exb += exd;
+					} else if (!(qtr & 4)) {
+						GC->p.y = y-b; GC->p.x = x-a; GC->p.x1 = x+a; hline_clip();						// C2C
+					}
+					P += 5 + 2*(a++ - b--);
+				}
+			} while(a < b);
+			if (-a >= sy) {
+				GC->p.y = y-a; GC->p.x = NONFIXED(exa); GC->p.x1 = NONFIXED(sxa); hline_clip();			// E2S
+			} else if (-a >= ey) {
+				GC->p.y = y-a; GC->p.x = NONFIXED(exa); GC->p.x1 = x+b; hline_clip();					// E2C
+			} else if (!(qtr & 4)) {
+				GC->p.y = y-a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();								// C2C
+			}
+			break;
+
+		case 26:	// S3E3 sy > ey
+		case 27:	// S4E3 sy > ey
+			GC->p.y = y; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();									// C2C
+			do {
+				GC->p.y = y-a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();								// C2C
+				if (a <= ey) {
+					GC->p.y = y+a; GC->p.x = x-b; GC->p.x1 = NONFIXED(exa); hline_clip();				// C2E
+					GC->p.y = y+a; GC->p.x = NONFIXED(sxa); GC->p.x1 = x+b; hline_clip();				// S2C
+					sxa += sxd; exa += exd;
+				} else if (a <= sy) {
+					GC->p.y = y+a; GC->p.x = NONFIXED(sxa); GC->p.x1 = x+b; hline_clip();				// S2C
+					sxa += sxd;
+				} else if (!(qtr & 1)) {
+					GC->p.y = y+a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();							// C2C
+				}
+				if (P < 0) {
+					P += 3 + 2*a++;
+				} else {
+					GC->p.y = y-b; GC->p.x = x-a; GC->p.x1 = x+a; hline_clip();							// C2C
+					if (b <= ey) {
+						GC->p.y = y+b; GC->p.x = x-a; GC->p.x1 = NONFIXED(exb); hline_clip();			// C2E
+						GC->p.y = y+b; GC->p.x = NONFIXED(sxb); GC->p.x1 = x+a; hline_clip();			// S2C
+						sxb -= sxd; exb -= exd;
+					} else if (b <= sy) {
+						GC->p.y = y+b; GC->p.x = NONFIXED(sxb); GC->p.x1 = x+a; hline_clip();			// S2C
+						sxb -= sxd;
+					} else if (!(qtr & 1)) {
+						GC->p.y = y+b; GC->p.x = x-a; GC->p.x1 = x+a; hline_clip();						// C2C
+					}
+					P += 5 + 2*(a++ - b--);
+				}
+			} while(a < b);
+			GC->p.y = y-a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();									// C2C
+			if (a <= ey) {
+				GC->p.y = y+a; GC->p.x = x-b; GC->p.x1 = NONFIXED(exa); hline_clip();					// C2E
+				GC->p.y = y+a; GC->p.x = NONFIXED(sxa); GC->p.x1 = x+b; hline_clip();					// S2C
+			} else if (a <= sy) {
+				GC->p.y = y+a; GC->p.x = NONFIXED(sxa); GC->p.x1 = x+b; hline_clip();					// S2C
+			} else if (!(qtr & 4)) {
+				GC->p.y = y+a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();								// C2C
+			}
+			break;
+
+		case 30:	// S3E4 sy > ey
+		case 31:	// S4E4 sy > ey
+			do {
+				if (a <= ey) {
+					GC->p.y = y+a; GC->p.x = NONFIXED(sxa); GC->p.x1 = NONFIXED(exa); hline_clip();		// S2E
+					sxa += sxd; exa += exd;
+				} else if (a <= sy) {
+					GC->p.y = y+a; GC->p.x = NONFIXED(sxa); GC->p.x1 = x+b; hline_clip();				// S2C
+					sxa += sxd;
+				} else if (!(qtr & 1)) {
+					GC->p.y = y+a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();							// C2C
+				}
+				if (P < 0) {
+					P += 3 + 2*a++;
+				} else {
+					if (b <= ey) {
+						GC->p.y = y+b; GC->p.x = NONFIXED(sxb); GC->p.x1 = NONFIXED(exb); hline_clip();	// S2E
+						sxb -= sxd; exb -= exd;
+					} else if (b <= sy) {
+						GC->p.y = y+b; GC->p.x = NONFIXED(sxb); GC->p.x1 = x+a; hline_clip();			// S2C
+						sxb -= sxd;
+					} else if (!(qtr & 1)) {
+						GC->p.y = y+b; GC->p.x = x-a; GC->p.x1 = x+a; hline_clip();						// C2C
+					}
+					P += 5 + 2*(a++ - b--);
+				}
+			} while(a < b);
+			if (a <= ey) {
+				GC->p.y = y+a; GC->p.x = NONFIXED(sxa); GC->p.x1 = x+b; hline_clip();				// S2C
+			} else if (a <= sy) {
+				GC->p.y = y+a; GC->p.x = NONFIXED(sxa); GC->p.x1 = x+b; hline_clip();					// S2C
+			} else if (!(qtr & 4)) {
+				GC->p.y = y+a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();								// C2C
+			}
+			break;
+		}
+
+		MUTEX_EXIT();
 	}
-	gdispFillArc(x+radius, y+radius, radius, 90, 180, color);
-	gdispFillArea(x+radius+1, y, cx-radius2, radius, color);
-	gdispFillArc(x+cx-1-radius, y+radius, radius, 0, 90, color);
-	gdispFillArc(x+cx-1-radius, y+cy-1-radius, radius, 270, 360, color);
-	gdispFillArea(x+radius+1, y+cy-radius, cx-radius2, radius, color);
-	gdispFillArc(x+radius, y+cy-1-radius, radius, 180, 270, color);
-	gdispFillArea(x, y+radius, cx, cy-radius2, color);
-}
+
 #endif
 
-#if (GDISP_NEED_PIXELREAD && (GDISP_NEED_MULTITHREAD || GDISP_NEED_ASYNC))
+#if GDISP_NEED_ARC
+	void gdispDrawRoundedBox(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t radius, color_t color) {
+		if (2*radius > cx || 2*radius > cy) {
+			gdispDrawBox(x, y, cx, cy, color);
+			return;
+		}
+		gdispDrawArc(x+radius, y+radius, radius, 90, 180, color);
+		gdispDrawLine(x+radius+1, y, x+cx-2-radius, y, color);
+		gdispDrawArc(x+cx-1-radius, y+radius, radius, 0, 90, color);
+		gdispDrawLine(x+cx-1, y+radius+1, x+cx-1, y+cy-2-radius, color);
+		gdispDrawArc(x+cx-1-radius, y+cy-1-radius, radius, 270, 360, color);
+		gdispDrawLine(x+radius+1, y+cy-1, x+cx-2-radius, y+cy-1, color);
+		gdispDrawArc(x+radius, y+cy-1-radius, radius, 180, 270, color);
+		gdispDrawLine(x, y+radius+1, x, y+cy-2-radius, color);
+	}
+#endif
+
+#if GDISP_NEED_ARC
+	void gdispFillRoundedBox(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t radius, color_t color) {
+		coord_t radius2;
+
+		radius2 = radius*2;
+		if (radius2 > cx || radius2 > cy) {
+			gdispFillArea(x, y, cx, cy, color);
+			return;
+		}
+		gdispFillArc(x+radius, y+radius, radius, 90, 180, color);
+		gdispFillArea(x+radius+1, y, cx-radius2, radius, color);
+		gdispFillArc(x+cx-1-radius, y+radius, radius, 0, 90, color);
+		gdispFillArc(x+cx-1-radius, y+cy-1-radius, radius, 270, 360, color);
+		gdispFillArea(x+radius+1, y+cy-radius, cx-radius2, radius, color);
+		gdispFillArc(x+radius, y+cy-1-radius, radius, 180, 270, color);
+		gdispFillArea(x, y+radius, cx, cy-radius2, color);
+	}
+#endif
+
+#if GDISP_NEED_PIXELREAD
 	color_t gdispGetPixelColor(coord_t x, coord_t y) {
 		color_t		c;
 
 		/* Always synchronous as it must return a value */
-		gfxMutexEnter(&gdispMutex);
-		c = gdisp_lld_get_pixel_color(x, y);
-		gfxMutexExit(&gdispMutex);
+		MUTEX_ENTER();
+		GC->p.x = x;
+		GC->p.y = y;
+		c = gdisp_lld_get_pixel_color();
+		MUTEX_EXIT();
 
 		return c;
 	}
 #endif
 
-#if (GDISP_NEED_SCROLL && GDISP_NEED_MULTITHREAD)
+#if GDISP_NEED_SCROLL
 	void gdispVerticalScroll(coord_t x, coord_t y, coord_t cx, coord_t cy, int lines, color_t bgcolor) {
-		gfxMutexEnter(&gdispMutex);
-		gdisp_lld_vertical_scroll(x, y, cx, cy, lines, bgcolor);
-		gfxMutexExit(&gdispMutex);
-	}
-#elif GDISP_NEED_SCROLL && GDISP_NEED_ASYNC
-	void gdispVerticalScroll(coord_t x, coord_t y, coord_t cx, coord_t cy, int lines, color_t bgcolor) {
-		gdisp_lld_msg_t *p = gdispAllocMsg(GDISP_LLD_MSG_VERTICALSCROLL);
-		p->verticalscroll.x = x;
-		p->verticalscroll.y = y;
-		p->verticalscroll.cx = cx;
-		p->verticalscroll.cy = cy;
-		p->verticalscroll.lines = lines;
-		p->verticalscroll.bgcolor = bgcolor;
-		gfxQueuePut(&gdispQueue, &p->qi, TIME_IMMEDIATE);
+		MUTEX_ENTER();
+		#if NEED_CLIPPING
+			if (x < GC->clipx0) { cx -= GC->clipx0 - x; x = GC->clipx0; }
+			if (y < GC->clipy0) { cy -= GC->clipy0 - y; y = GC->clipy0; }
+			if (cx <= 0 || cy <= 0 || x >= GC->clipx1 || y >= GC->clipy1) { MUTEX_EXIT(); return; }
+			if (x+cx > GC->clipx1)	cx = GC->clipx1 - x;
+			if (y+cy > GC->clipy1)	cy = GC->clipy1 - y;
+		#endif
+		GC->p.x = x;
+		GC->p.y = y;
+		GC->p.cx = cx;
+		GC->p.cy = cy;
+		GC->p.y1 = lines;
+		GC->p.color = bgcolor;
+		gdisp_lld_vertical_scroll();
+		MUTEX_EXIT();
 	}
 #endif
 
-#if (GDISP_NEED_CONTROL && GDISP_NEED_MULTITHREAD)
-	void gdispControl(unsigned what, void *value) {
-		gfxMutexEnter(&gdispMutex);
-		gdisp_lld_control(what, value);
-		gfxMutexExit(&gdispMutex);
-	}
-#elif GDISP_NEED_CONTROL && GDISP_NEED_ASYNC
-	void gdispControl(unsigned what, void *value) {
-		gdisp_lld_msg_t *p = gdispAllocMsg(GDISP_LLD_MSG_CONTROL);
-		p->control.what = what;
-		p->control.value = value;
-		gfxQueuePut(&gdispQueue, &p->qi, TIME_IMMEDIATE);
-	}
+#if GDISP_NEED_CONTROL
+	#if GDISP_HARDWARE_CONTROL
+		void gdispControl(unsigned what, void *value) {
+			MUTEX_ENTER();
+			GC->p.x = what;
+			GC->p.ptr = value;
+			gdisp_lld_control();
+			#if GDISP_NEED_CLIP || GDISP_NEED_VALIDATION
+				if (what == GDISP_CONTROL_ORIENTATION) {
+					#if GDISP_HARDWARE_CLIP
+						// Best is hardware clipping
+						GC->p.x = 0;
+						GC->p.y = 0;
+						GC->p.cx = GC->g.Width;
+						GC->p.cy = GC->g.Height;
+						gdisp_lld_set_clip();
+					#else
+						// Worst is software clipping
+						GC->clipx0 = 0;
+						GC->clipy0 = 0;
+						GC->clipx1 = GC->g.Width;
+						GC->clipy1 = GC->g.Height;
+					#endif
+				}
+			#endif
+			MUTEX_EXIT();
+		}
+	#else
+		void gdispControl(unsigned what, void *value) {
+			(void)what;
+			(void)value;
+			/* Ignore everything */
+		}
+	#endif
 #endif
 
-#if (GDISP_NEED_MULTITHREAD || GDISP_NEED_ASYNC) && GDISP_NEED_QUERY
-	void *gdispQuery(unsigned what) {
-		void *res;
+#if GDISP_NEED_QUERY
+	#if GDISP_HARDWARE_QUERY
+		void *gdispQuery(unsigned what) {
+			void *res;
 
-		gfxMutexEnter(&gdispMutex);
-		res = gdisp_lld_query(what);
-		gfxMutexExit(&gdispMutex);
-		return res;
-	}
+			MUTEX_ENTER();
+			GC->p.x = (coord_t)what;
+			res = gdisp_lld_query();
+			MUTEX_EXIT();
+			return res;
+		}
+	#else
+		void *gdispQuery(unsigned what) {
+			(void) what;
+			return (void *)-1;
+		}
+	#endif
 #endif
 
 /*===========================================================================*/
@@ -458,29 +1546,30 @@ void gdispFillRoundedBox(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t r
 /*===========================================================================*/
 
 void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color) {
-	/* No mutex required as we only call high level functions which have their own mutex */
-	coord_t	x1, y1;
+	if (cx <= 0 || cy <= 0) return;
+	cx = x+cx-1; cy = y+cy-1;			// cx, cy are now the end point.
 
-	x1 = x+cx-1;
-	y1 = y+cy-1;
+	MUTEX_ENTER();
 
-	if (cx > 2) {
-		if (cy >= 1) {
-			gdispDrawLine(x, y, x1, y, color);
-			if (cy >= 2) {
-				gdispDrawLine(x, y1, x1, y1, color);
-				if (cy > 2) {
-					gdispDrawLine(x, y+1, x, y1-1, color);
-					gdispDrawLine(x1, y+1, x1, y1-1, color);
-				}
+	GC->p.color = color;
+
+	if (cx - x > 2) {
+		GC->p.x = x; GC->p.y = y; GC->p.x1 = cx; hline_clip();
+		if (y != cy) {
+			GC->p.x = x; GC->p.y = cy; GC->p.x1 = cx; hline_clip();
+			if (cy - y > 2) {
+				y++; cy--;
+				GC->p.x = x; GC->p.y = y; GC->p.y1 = cy; vline_clip();
+				GC->p.x = cx; GC->p.y = y; GC->p.y1 = cy; vline_clip();
 			}
 		}
-	} else if (cx == 2) {
-		gdispDrawLine(x, y, x, y1, color);
-		gdispDrawLine(x1, y, x1, y1, color);
-	} else if (cx == 1) {
-		gdispDrawLine(x, y, x, y1, color);
+	} else {
+		GC->p.x = x; GC->p.y = y; GC->p.y1 = cy; vline_clip();
+		if (x != cx) {
+			GC->p.x = cx; GC->p.y = y; GC->p.y1 = cy; vline_clip();
+		}
 	}
+	MUTEX_EXIT();
 }
 
 #if GDISP_NEED_CONVEX_POLYGON
@@ -488,9 +1577,14 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color) {
 		const point	*epnt, *p;
 
 		epnt = &pntarray[cnt-1];
-		for(p = pntarray; p < epnt; p++)
-			gdispDrawLine(tx+p->x, ty+p->y, tx+p[1].x, ty+p[1].y, color);
-		gdispDrawLine(tx+p->x, ty+p->y, tx+pntarray->x, ty+pntarray->y, color);
+
+		MUTEX_ENTER();
+		GC->p.color = color;
+		for(p = pntarray; p < epnt; p++) {
+			GC->p.x=tx+p->x; GC->p.y=ty+p->y; GC->p.x1=tx+p[1].x; GC->p.y1=ty+p[1].y; line_clip();
+		}
+		GC->p.x=tx+p->x; GC->p.y=ty+p->y; GC->p.x1=tx+pntarray->x; GC->p.y1=ty+pntarray->y; line_clip();
+		MUTEX_EXIT();
 	}
 
 	void gdispFillConvexPoly(coord_t tx, coord_t ty, const point *pntarray, unsigned cnt, color_t color) {
@@ -510,21 +1604,21 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color) {
 		y = rpnt->y;
 
 		/* Work out the slopes of the two attached line segs */
-		lpnt = rpnt <= pntarray ? epnts : rpnt-1;
-		while (lpnt->y == y) {
+		for (lpnt = rpnt <= pntarray ? epnts : rpnt-1; lpnt->y == y; cnt--) {
+			if (!cnt) return;
 			lx = FIXED(lpnt->x);
 			lpnt = lpnt <= pntarray ? epnts : lpnt-1;
-			if (!cnt--) return;
 		}
-		rpnt = rpnt >= epnts ? pntarray : rpnt+1;
-		while (rpnt->y == y) {
-			rx = rpnt->x<<16;
+		for (rpnt = rpnt >= epnts ? pntarray : rpnt+1; rpnt->y == y; cnt--) {
+			if (!cnt) return;
+			rx = FIXED(rpnt->x);
 			rpnt = rpnt >= epnts ? pntarray : rpnt+1;
-			if (!cnt--) return;
 		}
 		lk = (FIXED(lpnt->x) - lx) / (lpnt->y - y);
 		rk = (FIXED(rpnt->x) - rx) / (rpnt->y - y);
 
+		MUTEX_ENTER();
+		GC->p.color = color;
 		while(1) {
 			/* Determine our boundary */
 			ymax = rpnt->y < lpnt->y ? rpnt->y : lpnt->y;
@@ -539,38 +1633,40 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color) {
 				 * of pixels.
 				 */
 				if (lxc < rxc) {
-					if (rxc - lxc == 1)
-						gdispDrawPixel(tx+lxc, ty+y, color);
-					else
-						gdispDrawLine(tx+lxc, ty+y, tx+rxc-1, ty+y, color);
+					GC->p.x=tx+lxc; GC->p.y=ty+y; GC->p.x1=tx+rxc-1; hline_clip();
 				} else if (lxc > rxc) {
-					if (lxc - rxc == 1)
-						gdispDrawPixel(tx+rxc, ty+y, color);
-					else
-						gdispDrawLine(tx+rxc, ty+y, tx+lxc-1, ty+y, color);
+					GC->p.x=tx+rxc; GC->p.y=ty+y; GC->p.x1=tx+lxc-1; hline_clip();
 				}
 
 				lx += lk;
 				rx += rk;
 			}
 
-			if (!cnt--) return;
+			if (!cnt) {
+				MUTEX_EXIT();
+				return;
+			}
+			cnt--;
 
 			/* Replace the appropriate point */
 			if (ymax == lpnt->y) {
-				lpnt = lpnt <= pntarray ? epnts : lpnt-1;
-				while (lpnt->y == y) {
+				for (lpnt = lpnt <= pntarray ? epnts : lpnt-1; lpnt->y == y; cnt--) {
+					if (!cnt) {
+						MUTEX_EXIT();
+						return;
+					}
 					lx = FIXED(lpnt->x);
 					lpnt = lpnt <= pntarray ? epnts : lpnt-1;
-					if (!cnt--) return;
 				}
 				lk = (FIXED(lpnt->x) - lx) / (lpnt->y - y);
 			} else {
-				rpnt = rpnt >= epnts ? pntarray : rpnt+1;
-				while (rpnt->y == y) {
+				for (rpnt = rpnt >= epnts ? pntarray : rpnt+1; rpnt->y == y; cnt--) {
+					if (!cnt) {
+						MUTEX_EXIT();
+						return;
+					}
 					rx = FIXED(rpnt->x);
 					rpnt = rpnt >= epnts ? pntarray : rpnt+1;
-					if (!cnt--) return;
 				}
 				rk = (FIXED(rpnt->x) - rx) / (rpnt->y - y);
 			}
@@ -582,146 +1678,130 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color) {
 	#include "mcufont.h"
 
 	#if GDISP_NEED_ANTIALIAS && GDISP_NEED_PIXELREAD
-		static void text_draw_char_callback(int16_t x, int16_t y, uint8_t count, uint8_t alpha, void *state) {
+		static void drawcharline(int16_t x, int16_t y, uint8_t count, uint8_t alpha, void *state) {
+			if (y < GC->t.clipy0 || y >= GC->t.clipy1 || x < GC->t.clipx0 || x+count > GC->t.clipx1) return;
 			if (alpha == 255) {
-				if (count == 1)
-					gdispDrawPixel(x, y, ((color_t *)state)[0]);
-				else
-					gdispFillArea(x, y, count, 1, ((color_t *)state)[0]);
+				GC->p.x = x; GC->p.y = y; GC->p.x1 = x+count-1; GC->p.color = GC->t.color;
+				hline_clip();
 			} else {
-				while (count--) {
-					gdispDrawPixel(x, y, gdispBlendColor(((color_t *)state)[0], gdispGetPixelColor(x, y), alpha));
-					x++;
+				for (; count; count--, x++) {
+					GC->p.x = x; GC->p.y = y;
+					GC->p.color = gdispBlendColor(GC->t.color, gdisp_lld_get_pixel_color(), alpha);
+					drawpixel_clip();
 				}
 			}
 		}
 	#else
-		static void text_draw_char_callback(int16_t x, int16_t y, uint8_t count, uint8_t alpha, void *state) {
+		static void drawcharline(int16_t x, int16_t y, uint8_t count, uint8_t alpha, void *state) {
+			(void) state;
+			if (y < GC->t.clipy0 || y >= GC->t.clipy1 || x < GC->t.clipx0 || x+count > GC->t.clipx1) return;
 			if (alpha > 0x80) {			// A best approximation when using anti-aliased fonts but we can't actually draw them anti-aliased
-				if (count == 1)
-					gdispDrawPixel(x, y, ((color_t *)state)[0]);
-				else
-					gdispFillArea(x, y, count, 1, ((color_t *)state)[0]);
+				GC->p.x = x; GC->p.y = y; GC->p.x1 = x+count-1; GC->p.color = GC->t.color;
+				hline_clip();
 			}
 		}
 	#endif
-
-	void gdispDrawChar(coord_t x, coord_t y, uint16_t c, font_t font, color_t color) {
-		/* No mutex required as we only call high level functions which have their own mutex */
-		mf_render_character(font, x, y, c, text_draw_char_callback, &color);
-	}
 
 	#if GDISP_NEED_ANTIALIAS
-		static void text_fill_char_callback(int16_t x, int16_t y, uint8_t count, uint8_t alpha, void *state) {
+		static void fillcharline(int16_t x, int16_t y, uint8_t count, uint8_t alpha, void *state) {
+			(void) state;
+			if (y < GC->t.clipy0 || y >= GC->t.clipy1 || x < GC->t.clipx0 || x+count > GC->t.clipx1) return;
 			if (alpha == 255) {
-				if (count == 1)
-					gdispDrawPixel(x, y, ((color_t *)state)[0]);
-				else
-					gdispFillArea(x, y, count, 1, ((color_t *)state)[0]);
+				GC->p.color = GC->t.color;
 			} else {
-				while (count--) {
-					gdispDrawPixel(x, y, gdispBlendColor(((color_t *)state)[0], ((color_t *)state)[1], alpha));
-					x++;
-				}
+				GC->p.color = gdispBlendColor(GC->t.color, GC->t.bgcolor, alpha);
 			}
+			GC->p.x = x; GC->p.y = y; GC->p.x1 = x+count-1;
+			hline_clip();
 		}
 	#else
-		#define text_fill_char_callback	text_draw_char_callback
+		#define fillcharline	drawcharline
 	#endif
 
-	void gdispFillChar(coord_t x, coord_t y, uint16_t c, font_t font, color_t color, color_t bgcolor) {
-		/* No mutex required as we only call high level functions which have their own mutex */
-		color_t		state[2];
-
-		state[0] = color;
-		state[1] = bgcolor;
-
-		gdispFillArea(x, y, mf_character_width(font, c) + font->baseline_x, font->height, bgcolor);
-		mf_render_character(font, x, y, c, text_fill_char_callback, state);
+	/* Callback to render characters. */
+	static uint8_t drawcharglyph(int16_t x, int16_t y, mf_char ch, void *state) {
+		(void) state;
+		return mf_render_character(GC->t.font, x, y, ch, drawcharline, 0);
 	}
 
-	typedef struct
-	{
-		font_t font;
-		color_t color;
-		coord_t	x, y;
-		coord_t	cx, cy;
-	} gdispDrawString_state_t;
-
 	/* Callback to render characters. */
-	static uint8_t gdispDrawString_callback(int16_t x, int16_t y, mf_char character, void *state)
-	{
-		gdispDrawString_state_t *s = state;
-		uint8_t w;
-		
-		w = mf_character_width(s->font, character);
-		if (x >= s->x && x+w < s->x + s->cx && y >= s->y && y+s->font->height <= s->y + s->cy)
-			mf_render_character(s->font, x, y, character, text_draw_char_callback, &s->color);
-		return w;
+	static uint8_t fillcharglyph(int16_t x, int16_t y, mf_char ch, void *state) {
+		(void) state;
+		return mf_render_character(GC->t.font, x, y, ch, fillcharline, 0);
+	}
+
+	void gdispDrawChar(coord_t x, coord_t y, uint16_t c, font_t font, color_t color) {
+		MUTEX_ENTER();
+		GC->t.font = font;
+		GC->t.clipx0 = x;
+		GC->t.clipy0 = y;
+		GC->t.clipx1 = x + mf_character_width(font, c) + font->baseline_x;
+		GC->t.clipy1 = y + font->height;
+		GC->t.color = color;
+		mf_render_character(font, x, y, c, drawcharline, 0);
+		MUTEX_EXIT();
+	}
+
+	void gdispFillChar(coord_t x, coord_t y, uint16_t c, font_t font, color_t color, color_t bgcolor) {
+		MUTEX_ENTER();
+		GC->p.cx = mf_character_width(font, c) + font->baseline_x;
+		GC->p.cy = font->height;
+		GC->t.font = font;
+		GC->t.clipx0 = GC->p.x = x;
+		GC->t.clipy0 = GC->p.y = y;
+		GC->t.clipx1 = GC->p.x+GC->p.cx;
+		GC->t.clipy1 = GC->p.y+GC->p.cy;
+		GC->t.color = color;
+		GC->t.bgcolor = GC->p.color = bgcolor;
+
+		TEST_CLIP_AREA(GC->p.x, GC->p.y, GC->p.cx, GC->p.cy) {
+			fillarea();
+			mf_render_character(font, x, y, c, fillcharline, 0);
+		}
+		MUTEX_EXIT();
 	}
 
 	void gdispDrawString(coord_t x, coord_t y, const char *str, font_t font, color_t color) {
-		/* No mutex required as we only call high level functions which have their own mutex */
-		gdispDrawString_state_t state;
-		
-		state.font = font;
-		state.color = color;
-		state.x = x;
-		state.y = y;
-		state.cx = GDISP.Width - x;
-		state.cy = GDISP.Height - y;
-		
-		x += font->baseline_x;
-		mf_render_aligned(font, x, y, MF_ALIGN_LEFT, str, 0, gdispDrawString_callback, &state);
-	}
+		MUTEX_ENTER();
+		GC->t.font = font;
+		GC->t.clipx0 = x;
+		GC->t.clipy0 = y;
+		GC->t.clipx1 = x + mf_get_string_width(font, str, 0, 0);
+		GC->t.clipy1 = y + font->height;
+		GC->t.color = color;
 
-	typedef struct
-	{
-		font_t font;
-		color_t color[2];
-		coord_t	x, y;
-		coord_t	cx, cy;
-	} gdispFillString_state_t;
-
-	/* Callback to render characters. */
-	static uint8_t gdispFillString_callback(int16_t x, int16_t y, mf_char character, void *state)
-	{
-		gdispFillString_state_t *s = state;
-		uint8_t w;
-
-		w = mf_character_width(s->font, character);
-		if (x >= s->x && x+w < s->x + s->cx && y >= s->y && y+s->font->height <= s->y + s->cy)
-			mf_render_character(s->font, x, y, character, text_fill_char_callback, s->color);
-		return w;
+		mf_render_aligned(font, x+font->baseline_x, y, MF_ALIGN_LEFT, str, 0, drawcharglyph, 0);
+		MUTEX_EXIT();
 	}
 
 	void gdispFillString(coord_t x, coord_t y, const char *str, font_t font, color_t color, color_t bgcolor) {
-		/* No mutex required as we only call high level functions which have their own mutex */
-		gdispFillString_state_t state;
-		
-		state.font = font;
-		state.color[0] = color;
-		state.color[1] = bgcolor;
-		state.x = x;
-		state.y = y;
-		state.cx = mf_get_string_width(font, str, 0, 0);
-		state.cy = font->height;
-		
-		gdispFillArea(x, y, state.cx, state.cy, bgcolor);
-		mf_render_aligned(font, x+font->baseline_x, y, MF_ALIGN_LEFT, str, 0, gdispFillString_callback, &state);
+		MUTEX_ENTER();
+		GC->p.cx = mf_get_string_width(font, str, 0, 0);
+		GC->p.cy = font->height;
+		GC->t.font = font;
+		GC->t.clipx0 = GC->p.x = x;
+		GC->t.clipy0 = GC->p.y = y;
+		GC->t.clipx1 = GC->p.x+GC->p.cx;
+		GC->t.clipy1 = GC->p.y+GC->p.cy;
+		GC->t.color = color;
+		GC->t.bgcolor = GC->p.color = bgcolor;
+
+		TEST_CLIP_AREA(GC->p.x, GC->p.y, GC->p.cx, GC->p.cy) {
+			fillarea();
+			mf_render_aligned(font, x+font->baseline_x, y, MF_ALIGN_LEFT, str, 0, fillcharglyph, 0);
+		}
+		MUTEX_EXIT();
 	}
 
 	void gdispDrawStringBox(coord_t x, coord_t y, coord_t cx, coord_t cy, const char* str, font_t font, color_t color, justify_t justify) {
-		/* No mutex required as we only call high level functions which have their own mutex */
-		gdispDrawString_state_t state;
-		
-		state.font = font;
-		state.color = color;
-		state.x = x;
-		state.y = y;
-		state.cx = cx;
-		state.cy = cy;
-		
+		MUTEX_ENTER();
+		GC->t.font = font;
+		GC->t.clipx0 = x;
+		GC->t.clipy0 = y;
+		GC->t.clipx1 = x+cx;
+		GC->t.clipy1 = y+cy;
+		GC->t.color = color;
+
 		/* Select the anchor position */
 		switch(justify) {
 		case justifyCenter:
@@ -736,39 +1816,45 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color) {
 		}
 		y += (cy+1 - font->height)/2;
 
-		mf_render_aligned(font, x, y, justify, str, 0, gdispDrawString_callback, &state);
+		mf_render_aligned(font, x, y, justify, str, 0, drawcharglyph, 0);
+		MUTEX_EXIT();
 	}
 
 	void gdispFillStringBox(coord_t x, coord_t y, coord_t cx, coord_t cy, const char* str, font_t font, color_t color, color_t bgcolor, justify_t justify) {
-		/* No mutex required as we only call high level functions which have their own mutex */
-		gdispFillString_state_t state;
+		MUTEX_ENTER();
+		GC->p.cx = cx;
+		GC->p.cy = cy;
+		GC->t.font = font;
+		GC->t.clipx0 = GC->p.x = x;
+		GC->t.clipy0 = GC->p.y = y;
+		GC->t.clipx1 = x+cx;
+		GC->t.clipy1 = y+cy;
+		GC->t.color = color;
+		GC->t.bgcolor = GC->p.color = bgcolor;
 
-		state.font = font;
-		state.color[0] = color;
-		state.color[1] = bgcolor;
-		state.x = x;
-		state.y = y;
-		state.cx = cx;
-		state.cy = cy;
+		TEST_CLIP_AREA(GC->p.x, GC->p.y, GC->p.cx, GC->p.cy) {
 
-		gdispFillArea(x, y, cx, cy, bgcolor);
-		
-		/* Select the anchor position */
-		switch(justify) {
-		case justifyCenter:
-			x += (cx + 1) / 2;
-			break;
-		case justifyRight:
-			x += cx;
-			break;
-		default:	// justifyLeft
-			x += font->baseline_x;
-			break;
+			// background fill
+			fillarea();
+
+			/* Select the anchor position */
+			switch(justify) {
+			case justifyCenter:
+				x += (cx + 1) / 2;
+				break;
+			case justifyRight:
+				x += cx;
+				break;
+			default:	// justifyLeft
+				x += font->baseline_x;
+				break;
+			}
+			y += (cy+1 - font->height)/2;
+
+			/* Render */
+			mf_render_aligned(font, x, y, justify, str, 0, fillcharglyph, 0);
 		}
-		y += (cy+1 - font->height)/2;
-		
-		/* Render */
-		mf_render_aligned(font, x, y, justify, str, 0, gdispFillString_callback, &state);
+		MUTEX_EXIT();
 	}
 
 	coord_t gdispGetFontMetric(font_t font, fontmetric_t metric) {
@@ -830,6 +1916,7 @@ color_t gdispBlendColor(color_t fg, color_t bg, uint8_t alpha)
 		#endif
 	}
 #endif
+
 
 #endif /* GFX_USE_GDISP */
 /** @} */

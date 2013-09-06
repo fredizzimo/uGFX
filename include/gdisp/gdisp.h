@@ -76,20 +76,16 @@ typedef enum powermode {powerOff, powerSleep, powerDeepSleep, powerOn} gdisp_pow
  * Applications should always use the routines and macros defined
  * below to access it in case the implementation ever changed.
  */
-typedef struct GDISPDriver_t {
+typedef struct GDISPControl {
 		coord_t				Width;
 		coord_t				Height;
 		gdisp_orientation_t	Orientation;
 		gdisp_powermode_t	Powermode;
 		uint8_t				Backlight;
 		uint8_t				Contrast;
-		#if GDISP_NEED_CLIP || GDISP_NEED_VALIDATION
-			coord_t				clipx0, clipy0;
-			coord_t				clipx1, clipy1;		/* not inclusive */
-		#endif
-		} GDISPDriver;
+	} GDISPControl;
 
-extern GDISPDriver	GDISP;
+extern GDISPControl	*GDISP;
 
 /*===========================================================================*/
 /* Constants.                                                                */
@@ -129,6 +125,7 @@ extern GDISPDriver	GDISP;
  */
 #define GDISP_PIXELFORMAT_MONO		1
 #define GDISP_PIXELFORMAT_RGB565	565
+#define GDISP_PIXELFORMAT_BGR565	9565
 #define GDISP_PIXELFORMAT_RGB888	888
 #define GDISP_PIXELFORMAT_RGB444	444
 #define GDISP_PIXELFORMAT_RGB332	332
@@ -219,9 +216,19 @@ extern GDISPDriver	GDISP;
 	#define MASKCOLOR			FALSE
 	#define RGB2COLOR(r,g,b)	((color_t)((((r) & 0xF8)<<8) | (((g) & 0xFC)<<3) | (((b) & 0xF8)>>3)))
 	#define HTML2COLOR(h)		((color_t)((((h) & 0xF80000)>>8) | (((h) & 0x00FC00)>>5) | (((h) & 0x0000F8)>>3)))
-	#define RED_OF(c)			(((c) & 0xF800)>>8)
+	#define RED_OF(c)			(((c)&0xF800)>>8)
 	#define GREEN_OF(c)			(((c)&0x07E0)>>3)
 	#define BLUE_OF(c)			(((c)&0x001F)<<3)
+
+#elif GDISP_PIXELFORMAT == GDISP_PIXELFORMAT_BGR565
+	typedef uint16_t			color_t;
+	#define COLOR(c)			((color_t)(c))
+	#define MASKCOLOR			FALSE
+	#define RGB2COLOR(r,g,b)	((color_t)((((r) & 0xF8)>>3) | (((g) & 0xFC)<<3) | (((b) & 0xF8)<<8)))
+	#define HTML2COLOR(h)		((color_t)((((h) & 0x0000F8)>>3) | (((h) & 0x00FC00)>>5) | (((h) & 0xF80000)>>8)))
+	#define RED_OF(c)			(((c)&0x001F)<<3)
+	#define GREEN_OF(c)			(((c)&0x07E0)>>3)
+	#define BLUE_OF(c)			(((c)& 0xF800)>>8)
 
 #elif GDISP_PIXELFORMAT == GDISP_PIXELFORMAT_RGB888
 	typedef uint32_t color_t;
@@ -296,278 +303,82 @@ typedef color_t		pixel_t;
 extern "C" {
 #endif
 
-#if GDISP_NEED_MULTITHREAD || GDISP_NEED_ASYNC || defined(__DOXYGEN__)
-	/* These routines can be hardware accelerated
-	 *	- Do not add a routine here unless it has also been added to the hardware acceleration layer
-	 */
+/* Base Functions */
 
-	/* Base Functions */
-
-	/**
-	 * @brief   Test if the GDISP engine is currently drawing.
-	 * @note    This function will always return FALSE if
-	 * 			GDISP_NEED_ASYNC is not defined.
-	 *
-	 * @return	TRUE if gdisp is busy, FALSE otherwise
-	 *
-	 * @api
-	 */
-	bool_t gdispIsBusy(void);
-
-	/* Drawing Functions */
-
-	/**
-	 * @brief   Clear the display to the specified color.
-	 *
-	 * @param[in] color The color to use when clearing the screen
-	 *
-	 * @api
-	 */
-	void gdispClear(color_t color);
-
-	/**
-	 * @brief   Set a pixel in the specified color.
-	 *
-	 * @param[in] x,y   The position to set the pixel.
-	 * @param[in] color The color to use
-	 *
-	 * @api
-	 */
-	void gdispDrawPixel(coord_t x, coord_t y, color_t color);
-
-	/**
-	 * @brief   Draw a line.
-	 *
-	 * @param[in] x0,y0		The start position
-	 * @param[in] x1,y1 	The end position
-	 * @param[in] color		The color to use
-	 *
-	 * @api
-	 */
-	void gdispDrawLine(coord_t x0, coord_t y0, coord_t x1, coord_t y1, color_t color);
-
-	/**
-	 * @brief   Fill an area with a color.
-	 *
-	 * @param[in] x,y		The start position
-	 * @param[in] cx,cy		The size of the box (outside dimensions)
-	 * @param[in] color		The color to use
-	 *
-	 * @api
-	 */
-	void gdispFillArea(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color);
-
-	/**
-	 * @brief   Fill an area using the supplied bitmap.
-	 * @details The bitmap is in the pixel format specified by the low level driver
-	 * @note	If a packed pixel format is used and the width doesn't
-	 *			match a whole number of bytes, the next line will start on a
-	 *			non-byte boundary (no end-of-line padding).
-	 * @note	If GDISP_NEED_ASYNC is defined then the buffer must be static
-	 * 			or at least retained until this call has finished the blit. You can
-	 * 			tell when all graphics drawing is finished by @p gdispIsBusy() going FALSE.
-	 *
-	 * @param[in] x,y		The start position
-	 * @param[in] cx,cy		The size of the filled area
-	 * @param[in] srcx,srcy The bitmap position to start the fill form
-	 * @param[in] srccx		The width of a line in the bitmap
-	 * @param[in] buffer	The bitmap in the driver's pixel format
-	 *
-	 * @api
-	 */
-	void gdispBlitAreaEx(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx, coord_t srcy, coord_t srccx, const pixel_t *buffer);
-
-	/* Clipping Functions */
-
-	#if GDISP_NEED_CLIP || defined(__DOXYGEN__)
-		/**
-		 * @brief   Clip all drawing to the defined area.
-		 *
-		 * @param[in] x,y     The start position
-		 * @param[in] cx,cy   The size of the clip area
-		 *
-		 * @api
-		 */
-		void gdispSetClip(coord_t x, coord_t y, coord_t cx, coord_t cy);
-	#endif
-
-	/* Circle Functions */
-
-	#if GDISP_NEED_CIRCLE || defined(__DOXYGEN__)
-		/**
-		 * @brief   Draw a circle.
-		 *
-		 * @param[in] x,y		The center of the circle
-		 * @param[in] radius	The radius of the circle
-		 * @param[in] color		The color to use
-		 *
-		 * @api
-		 */
-		void gdispDrawCircle(coord_t x, coord_t y, coord_t radius, color_t color);
-
-		/**
-		 * @brief   Draw a filled circle.
-		 *
-		 * @param[in] x,y		The center of the circle
-		 * @param[in] radius	The radius of the circle
-		 * @param[in] color		The color to use
-		 *
-		 * @api
-		 */
-		void gdispFillCircle(coord_t x, coord_t y, coord_t radius, color_t color);
-	#endif
-	
-	/* Ellipse Functions */
-
-	#if GDISP_NEED_ELLIPSE || defined(__DOXYGEN__)
-		/**
-		 * @brief   Draw an ellipse.
-		 *
-		 * @param[in] x,y   The center of the ellipse
-		 * @param[in] a,b     The dimensions of the ellipse
-		 * @param[in] color   The color to use
-		 *
-		 * @api
-		 */
-		void gdispDrawEllipse(coord_t x, coord_t y, coord_t a, coord_t b, color_t color);
-
-		/**
-		 * @brief   Draw a filled ellipse.
-		 *
-		 * @param[in] x,y   The center of the ellipse
-		 * @param[in] a,b     The dimensions of the ellipse
-		 * @param[in] color   The color to use
-		 *
-		 * @api
-		 */
-		void gdispFillEllipse(coord_t x, coord_t y, coord_t a, coord_t b, color_t color);
-	#endif
-
-	/* Arc Functions */
-
-	#if GDISP_NEED_ARC || defined(__DOXYGEN__)
-		/*
-		 * @brief	Draw an arc.
-		 *
-		 * @param[in] x0,y0		The center point
-		 * @param[in] radius	The radius of the arc
-		 * @param[in] start		The start angle (0 to 360)
-		 * @param[in] end		The end angle (0 to 360)
-		 * @param[in] color		The color of the arc
-		 *
-		 * @api
-		 */
-		void gdispDrawArc(coord_t x, coord_t y, coord_t radius, coord_t startangle, coord_t endangle, color_t color);
-
-		/*
-		 * @brief	Draw a filled arc.
-		 * @note				Not very efficient currently - does lots of overdrawing
-		 *
-		 * @param[in] x0,y0		The center point
-		 * @param[in] radius	The radius of the arc
-		 * @param[in] start		The start angle (0 to 360)
-		 * @param[in] end		The end angle (0 to 360)
-		 * @param[in] color		The color of the arc
-		 *
-		 * @api
-		 */
-		void gdispFillArc(coord_t x, coord_t y, coord_t radius, coord_t startangle, coord_t endangle, color_t color);
-	#endif
-
-	/* Read a pixel Function */
-
-	#if GDISP_NEED_PIXELREAD || defined(__DOXYGEN__)
-		/**
-		 * @brief   Get the color of a pixel.
-		 * @return  The color of the pixel.
-		 *
-		 * @param[in] x,y     The position of the pixel
-		 *
-		 * @api
-		 */
-		color_t gdispGetPixelColor(coord_t x, coord_t y);
-	#endif
-
-	/* Scrolling Function - clears the area scrolled out */
-
-	#if GDISP_NEED_SCROLL || defined(__DOXYGEN__)
-		/**
-		 * @brief   Scroll vertically a section of the screen.
-		 * @pre		GDISP_NEED_SCROLL must be set to TRUE in gfxconf.h
-		 * @note    Optional.
-		 * @note    If lines is >= cy, it is equivelent to a area fill with bgcolor.
-		 *
-		 * @param[in] x, y     The start of the area to be scrolled
-		 * @param[in] cx, cy   The size of the area to be scrolled
-		 * @param[in] lines    The number of lines to scroll (Can be positive or negative)
-		 * @param[in] bgcolor  The color to fill the newly exposed area.
-		 *
-		 * @api
-		 */
-		void gdispVerticalScroll(coord_t x, coord_t y, coord_t cx, coord_t cy, int lines, color_t bgcolor);
-	#endif
-
-	/* Set driver specific control */
-
-	#if GDISP_NEED_CONTROL || defined(__DOXYGEN__)
-		/**
-		 * @brief   Control hardware specific parts of the display. eg powermodes, backlight etc
-		 * @note    Depending on the hardware implementation this function may not
-		 *          support some codes. They will be ignored.
-		 *
-		 * @param[in] what		what you want to control
-		 * @param[in] value		The value to be assigned
-		 *
-		 * @api
-		 */
-		void gdispControl(unsigned what, void *value);
-	#endif
-
-	/* Query driver specific data */
-
-	#if GDISP_NEED_QUERY || defined(__DOXYGEN__)
-		/**
-		 * @brief   Query a property of the display.
-		 * @note    The result must be typecast to the correct type.
-		 * @note    An unsupported query will return (void *)-1.
-		 *
-		 * @param[in] what		What to query
-		 *
-		 * @api
-		 */
-		void *gdispQuery(unsigned what);
-	#endif
-
-#else
-	/* Include the low level driver information */
-	#include "gdisp/lld/gdisp_lld.h"
-
-	/* The same as above but use the low level driver directly if no multi-thread support is needed */
-	#define gdispIsBusy()										FALSE
-	#define gdispClear(color)									gdisp_lld_clear(color)
-	#define gdispDrawPixel(x, y, color)							gdisp_lld_draw_pixel(x, y, color)
-	#define gdispDrawLine(x0, y0, x1, y1, color)				gdisp_lld_draw_line(x0, y0, x1, y1, color)
-	#define gdispFillArea(x, y, cx, cy, color)					gdisp_lld_fill_area(x, y, cx, cy, color)
-	#define gdispBlitAreaEx(x, y, cx, cy, sx, sy, scx, buf)		gdisp_lld_blit_area_ex(x, y, cx, cy, sx, sy, scx, buf)
-	#define gdispSetClip(x, y, cx, cy)							gdisp_lld_set_clip(x, y, cx, cy)
-	#define gdispDrawCircle(x, y, radius, color)				gdisp_lld_draw_circle(x, y, radius, color)
-	#define gdispFillCircle(x, y, radius, color)				gdisp_lld_fill_circle(x, y, radius, color)
-	#define gdispDrawArc(x, y, radius, sangle, eangle, color)	gdisp_lld_draw_arc(x, y, radius, sangle, eangle, color)
-	#define gdispFillArc(x, y, radius, sangle, eangle, color)	gdisp_lld_fill_arc(x, y, radius, sangle, eangle, color)
-	#define gdispDrawEllipse(x, y, a, b, color)					gdisp_lld_draw_ellipse(x, y, a, b, color)
-	#define gdispFillEllipse(x, y, a, b, color)					gdisp_lld_fill_ellipse(x, y, a, b, color)
-	#define gdispGetPixelColor(x, y)							gdisp_lld_get_pixel_color(x, y)
-	#define gdispVerticalScroll(x, y, cx, cy, lines, bgcolor)	gdisp_lld_vertical_scroll(x, y, cx, cy, lines, bgcolor)
-	#define gdispControl(what, value)							gdisp_lld_control(what, value)
-	#define gdispQuery(what)									gdisp_lld_query(what)
-
-#endif
-
-/* These routines are not hardware accelerated
- *	- Do not add a hardware accelerated routines here.
+/**
+ * @brief   Blend 2 colors according to the alpha
+ * @return	The combined color
+ *
+ * @param[in] fg		The foreground color
+ * @param[in] bg		The background color
+ * @param[in] alpha		The alpha value (0-255). 0 is all background, 255 is all foreground.
+ *
+ * @api
  */
+color_t gdispBlendColor(color_t fg, color_t bg, uint8_t alpha);
 
-/* Extra drawing functions */
+/* Drawing Functions */
+
+/**
+ * @brief   Clear the display to the specified color.
+ *
+ * @param[in] color The color to use when clearing the screen
+ *
+ * @api
+ */
+void gdispClear(color_t color);
+
+/**
+ * @brief   Set a pixel in the specified color.
+ *
+ * @param[in] x,y   The position to set the pixel.
+ * @param[in] color The color to use
+ *
+ * @api
+ */
+void gdispDrawPixel(coord_t x, coord_t y, color_t color);
+
+/**
+ * @brief   Draw a line.
+ *
+ * @param[in] x0,y0		The start position
+ * @param[in] x1,y1 	The end position
+ * @param[in] color		The color to use
+ *
+ * @api
+ */
+void gdispDrawLine(coord_t x0, coord_t y0, coord_t x1, coord_t y1, color_t color);
+
+/**
+ * @brief   Fill an area with a color.
+ *
+ * @param[in] x,y		The start position
+ * @param[in] cx,cy		The size of the box (outside dimensions)
+ * @param[in] color		The color to use
+ *
+ * @api
+ */
+void gdispFillArea(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color);
+
+/**
+ * @brief   Fill an area using the supplied bitmap.
+ * @details The bitmap is in the pixel format specified by the low level driver
+ * @note	If a packed pixel format is used and the width doesn't
+ *			match a whole number of bytes, the next line will start on a
+ *			non-byte boundary (no end-of-line padding).
+ * @note	If GDISP_NEED_ASYNC is defined then the buffer must be static
+ * 			or at least retained until this call has finished the blit. You can
+ * 			tell when all graphics drawing is finished by @p gdispIsBusy() going FALSE.
+ *
+ * @param[in] x,y		The start position
+ * @param[in] cx,cy		The size of the filled area
+ * @param[in] srcx,srcy The bitmap position to start the fill form
+ * @param[in] srccx		The width of a line in the bitmap
+ * @param[in] buffer	The bitmap in the driver's pixel format
+ *
+ * @api
+ */
+void gdispBlitAreaEx(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx, coord_t srcy, coord_t srccx, const pixel_t *buffer);
 
 /**
  * @brief   Draw a rectangular box.
@@ -579,6 +390,167 @@ extern "C" {
  * @api
  */
 void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color);
+
+/* Clipping Functions */
+
+#if GDISP_NEED_CLIP || defined(__DOXYGEN__)
+	/**
+	 * @brief   Clip all drawing to the defined area.
+	 *
+	 * @param[in] x,y     The start position
+	 * @param[in] cx,cy   The size of the clip area
+	 *
+	 * @api
+	 */
+	void gdispSetClip(coord_t x, coord_t y, coord_t cx, coord_t cy);
+#endif
+
+/* Circle Functions */
+
+#if GDISP_NEED_CIRCLE || defined(__DOXYGEN__)
+	/**
+	 * @brief   Draw a circle.
+	 *
+	 * @param[in] x,y		The center of the circle
+	 * @param[in] radius	The radius of the circle
+	 * @param[in] color		The color to use
+	 *
+	 * @api
+	 */
+	void gdispDrawCircle(coord_t x, coord_t y, coord_t radius, color_t color);
+
+	/**
+	 * @brief   Draw a filled circle.
+	 *
+	 * @param[in] x,y		The center of the circle
+	 * @param[in] radius	The radius of the circle
+	 * @param[in] color		The color to use
+	 *
+	 * @api
+	 */
+	void gdispFillCircle(coord_t x, coord_t y, coord_t radius, color_t color);
+#endif
+
+/* Ellipse Functions */
+
+#if GDISP_NEED_ELLIPSE || defined(__DOXYGEN__)
+	/**
+	 * @brief   Draw an ellipse.
+	 *
+	 * @param[in] x,y   The center of the ellipse
+	 * @param[in] a,b     The dimensions of the ellipse
+	 * @param[in] color   The color to use
+	 *
+	 * @api
+	 */
+	void gdispDrawEllipse(coord_t x, coord_t y, coord_t a, coord_t b, color_t color);
+
+	/**
+	 * @brief   Draw a filled ellipse.
+	 *
+	 * @param[in] x,y   The center of the ellipse
+	 * @param[in] a,b     The dimensions of the ellipse
+	 * @param[in] color   The color to use
+	 *
+	 * @api
+	 */
+	void gdispFillEllipse(coord_t x, coord_t y, coord_t a, coord_t b, color_t color);
+#endif
+
+/* Arc Functions */
+
+#if GDISP_NEED_ARC || defined(__DOXYGEN__)
+	/*
+	 * @brief	Draw an arc.
+	 *
+	 * @param[in] x0,y0		The center point
+	 * @param[in] radius	The radius of the arc
+	 * @param[in] start		The start angle (0 to 360)
+	 * @param[in] end		The end angle (0 to 360)
+	 * @param[in] color		The color of the arc
+	 *
+	 * @api
+	 */
+	void gdispDrawArc(coord_t x, coord_t y, coord_t radius, coord_t startangle, coord_t endangle, color_t color);
+
+	/*
+	 * @brief	Draw a filled arc.
+	 * @note				Not very efficient currently - does lots of overdrawing
+	 *
+	 * @param[in] x0,y0		The center point
+	 * @param[in] radius	The radius of the arc
+	 * @param[in] start		The start angle (0 to 360)
+	 * @param[in] end		The end angle (0 to 360)
+	 * @param[in] color		The color of the arc
+	 *
+	 * @api
+	 */
+	void gdispFillArc(coord_t x, coord_t y, coord_t radius, coord_t startangle, coord_t endangle, color_t color);
+#endif
+
+/* Read a pixel Function */
+
+#if GDISP_NEED_PIXELREAD || defined(__DOXYGEN__)
+	/**
+	 * @brief   Get the color of a pixel.
+	 * @return  The color of the pixel.
+	 *
+	 * @param[in] x,y     The position of the pixel
+	 *
+	 * @api
+	 */
+	color_t gdispGetPixelColor(coord_t x, coord_t y);
+#endif
+
+/* Scrolling Function - clears the area scrolled out */
+
+#if GDISP_NEED_SCROLL || defined(__DOXYGEN__)
+	/**
+	 * @brief   Scroll vertically a section of the screen.
+	 * @pre		GDISP_NEED_SCROLL must be set to TRUE in gfxconf.h
+	 * @note    Optional.
+	 * @note    If lines is >= cy, it is equivelent to a area fill with bgcolor.
+	 *
+	 * @param[in] x, y     The start of the area to be scrolled
+	 * @param[in] cx, cy   The size of the area to be scrolled
+	 * @param[in] lines    The number of lines to scroll (Can be positive or negative)
+	 * @param[in] bgcolor  The color to fill the newly exposed area.
+	 *
+	 * @api
+	 */
+	void gdispVerticalScroll(coord_t x, coord_t y, coord_t cx, coord_t cy, int lines, color_t bgcolor);
+#endif
+
+/* Set driver specific control */
+
+#if GDISP_NEED_CONTROL || defined(__DOXYGEN__)
+	/**
+	 * @brief   Control hardware specific parts of the display. eg powermodes, backlight etc
+	 * @note    Depending on the hardware implementation this function may not
+	 *          support some codes. They will be ignored.
+	 *
+	 * @param[in] what		what you want to control
+	 * @param[in] value		The value to be assigned
+	 *
+	 * @api
+	 */
+	void gdispControl(unsigned what, void *value);
+#endif
+
+/* Query driver specific data */
+
+#if GDISP_NEED_QUERY || defined(__DOXYGEN__)
+	/**
+	 * @brief   Query a property of the display.
+	 * @note    The result must be typecast to the correct type.
+	 * @note    An unsupported query will return (void *)-1.
+	 *
+	 * @param[in] what		What to query
+	 *
+	 * @api
+	 */
+	void *gdispQuery(unsigned what);
+#endif
 
 #if GDISP_NEED_CONVEX_POLYGON || defined(__DOXYGEN__)
 	/**
@@ -803,19 +775,6 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color);
 	void gdispFillRoundedBox(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t radius, color_t color);
 #endif
 
-
-/**
- * @brief   Blend 2 colors according to the alpha
- * @return	The combined color
- *
- * @param[in] fg		The foreground color
- * @param[in] bg		The background color
- * @param[in] alpha		The alpha value (0-255). 0 is all background, 255 is all foreground.
- *
- * @api
- */
-color_t gdispBlendColor(color_t fg, color_t bg, uint8_t alpha);
-
 /* Support routine for packed pixel formats */
 #if !defined(gdispPackPixels) || defined(__DOXYGEN__)
 	/**
@@ -890,42 +849,42 @@ color_t gdispBlendColor(color_t fg, color_t bg, uint8_t alpha);
  *
  * @api
  */
-#define gdispGetWidth()							(GDISP.Width)
+#define gdispGetWidth()							(GDISP->Width)
 
 /**
  * @brief   Get the display height in pixels.
  *
  * @api
  */
-#define gdispGetHeight()						(GDISP.Height)
+#define gdispGetHeight()						(GDISP->Height)
 
 /**
  * @brief   Get the current display power mode.
  *
  * @api
  */
-#define gdispGetPowerMode()						(GDISP.Powermode)
+#define gdispGetPowerMode()						(GDISP->Powermode)
 
 /**
  * @brief   Get the current display orientation.
  *
  * @api
  */
-#define gdispGetOrientation()					(GDISP.Orientation)
+#define gdispGetOrientation()					(GDISP->Orientation)
 
 /**
  * @brief   Get the current display backlight brightness.
  *
  * @api
  */
-#define gdispGetBacklight()						(GDISP.Backlight)
+#define gdispGetBacklight()						(GDISP->Backlight)
 
 /**
  * @brief   Get the current display contrast.
  *
  * @api
  */
-#define gdispGetContrast()						(GDISP.Contrast)
+#define gdispGetContrast()						(GDISP->Contrast)
 
 /* More interesting macro's */
 
@@ -935,7 +894,6 @@ color_t gdispBlendColor(color_t fg, color_t bg, uint8_t alpha);
  * @api
  */
 #define gdispUnsetClip()						gdispSetClip(0,0,gdispGetWidth(),gdispGetHeight())
-
 
 #ifdef __cplusplus
 }

@@ -27,16 +27,35 @@
  * @{
  */
 	/**
-	 * @brief   Hardware accelerated line drawing.
+	 * @brief   Hardware streaming interface is supported.
 	 * @details If set to @p FALSE software emulation is used.
+	 * @note	Either GDISP_HARDWARE_STREAM or GDISP_HARDWARE_DRAWPIXEL must be provided by the driver
 	 */
-	#ifndef GDISP_HARDWARE_LINES
-		#define GDISP_HARDWARE_LINES			FALSE
+	#ifndef GDISP_HARDWARE_STREAM
+		#define GDISP_HARDWARE_STREAM			FALSE
+	#endif
+
+	/**
+	 * @brief   Hardware streaming requires an explicit end call.
+	 * @details If set to @p FALSE if an explicit stream end call is not required.
+	 */
+	#ifndef GDISP_HARDWARE_STREAM_END
+		#define GDISP_HARDWARE_STREAM_END		FALSE
+	#endif
+
+	/**
+	 * @brief   Hardware accelerated draw pixel.
+	 * @details If set to @p FALSE software emulation is used.
+	 * @note	Either GDISP_HARDWARE_STREAM or GDISP_HARDWARE_DRAWPIXEL must be provided by the driver
+	 */
+	#ifndef GDISP_HARDWARE_DRAWPIXEL
+		#define GDISP_HARDWARE_DRAWPIXEL		FALSE
 	#endif
 
 	/**
 	 * @brief   Hardware accelerated screen clears.
 	 * @details If set to @p FALSE software emulation is used.
+	 * @note	This clears the entire display surface regardless of the clipping area currently set
 	 */
 	#ifndef GDISP_HARDWARE_CLEARS
 		#define GDISP_HARDWARE_CLEARS			FALSE
@@ -56,54 +75,6 @@
 	 */
 	#ifndef GDISP_HARDWARE_BITFILLS
 		#define GDISP_HARDWARE_BITFILLS			FALSE
-	#endif
-
-	/**
-	 * @brief   Hardware accelerated circles.
-	 * @details If set to @p FALSE software emulation is used.
-	 */
-	#ifndef GDISP_HARDWARE_CIRCLES
-		#define GDISP_HARDWARE_CIRCLES			FALSE
-	#endif
-
-	/**
-	 * @brief   Hardware accelerated filled circles.
-	 * @details If set to @p FALSE software emulation is used.
-	 */
-	#ifndef GDISP_HARDWARE_CIRCLEFILLS
-		#define GDISP_HARDWARE_CIRCLEFILLS		FALSE
-	#endif
-
-	/**
-	 * @brief   Hardware accelerated ellipses.
-	 * @details If set to @p FALSE software emulation is used.
-	 */
-	#ifndef GDISP_HARDWARE_ELLIPSES
-		#define GDISP_HARDWARE_ELLIPSES			FALSE
-	#endif
-
-	/**
-	 * @brief   Hardware accelerated filled ellipses.
-	 * @details If set to @p FALSE software emulation is used.
-	 */
-	#ifndef GDISP_HARDWARE_ELLIPSEFILLS
-		#define GDISP_HARDWARE_ELLIPSEFILLS		FALSE
-	#endif
-
-	/**
-	 * @brief   Hardware accelerated arc's.
-	 * @details If set to @p FALSE software emulation is used.
-	 */
-	#ifndef GDISP_HARDWARE_ARCS
-		#define GDISP_HARDWARE_ARCS			FALSE
-	#endif
-
-	/**
-	 * @brief   Hardware accelerated filled arcs.
-	 * @details If set to @p FALSE software emulation is used.
-	 */
-	#ifndef GDISP_HARDWARE_ARCFILLS
-		#define GDISP_HARDWARE_ARCFILLS		FALSE
 	#endif
 
 	/**
@@ -141,9 +112,14 @@
 	/**
 	 * @brief   The driver supports a clipping in hardware.
 	 * @details If set to @p FALSE there is no support for non-standard queries.
+	 * @note	If this is defined the driver must perform its own clipping on all calls to
+	 * 			the driver and respond appropriately if a parameter is outside the display area.
+	 * @note	If this is not defined then the software ensures that all calls to the
+	 * 			driver do not exceed the display area (provided GDISP_NEED_CLIP or GDISP_NEED_VALIDATION
+	 * 			has been set).
 	 */
 	#ifndef GDISP_HARDWARE_CLIP
-		#define GDISP_HARDWARE_CLIP			FALSE
+		#define GDISP_HARDWARE_CLIP				FALSE
 	#endif
 /** @} */
 
@@ -161,6 +137,7 @@
 	 * @brief   The native pixel format for this device
 	 * @note	Should be set to one of the following:
 	 *				GDISP_PIXELFORMAT_RGB565
+	 *				GDISP_PIXELFORMAT_BGR565
 	 *				GDISP_PIXELFORMAT_RGB888
 	 *				GDISP_PIXELFORMAT_RGB444
 	 *				GDISP_PIXELFORMAT_RGB332
@@ -208,76 +185,85 @@
 /* External declarations.                                                    */
 /*===========================================================================*/
 
+typedef struct GDISPDriver {
+	GDISPControl			g;
+
+	uint16_t				flags;
+		#define GDISP_FLG_INSTREAM		0x0001
+
+	// Multithread Mutex
+	#if GDISP_NEED_MULTITHREAD
+		gfxMutex			mutex;
+	#endif
+
+	// Software clipping
+	#if !GDISP_HARDWARE_CLIP && (GDISP_NEED_CLIP || GDISP_NEED_VALIDATION)
+		coord_t				clipx0, clipy0;
+		coord_t				clipx1, clipy1;		/* not inclusive */
+	#endif
+
+	// Driver call parameters
+	struct {
+		coord_t			x, y;
+		coord_t			cx, cy;
+		coord_t			x1, y1;
+		coord_t			x2, y2;
+		color_t			color;
+		void			*ptr;
+	} p;
+
+	// Text rendering parameters
+	#if GDISP_NEED_TEXT
+		struct {
+			font_t		font;
+			color_t		color;
+			color_t		bgcolor;
+			coord_t		clipx0, clipy0;
+			coord_t		clipx1, clipy1;
+		} t;
+	#endif
+} GDISPDriver;
+
+extern GDISPDriver	GDISP_DRIVER_STRUCT;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-	/* Core functions */
-	extern bool_t gdisp_lld_init(void);
-
-	/* Some of these functions will be implemented in software by the high level driver
-	   depending on the GDISP_HARDWARE_XXX macros defined in gdisp_lld_config.h.
-	 */
-
-	/* Drawing functions */
-	extern void gdisp_lld_clear(color_t color);
-	extern void gdisp_lld_draw_pixel(coord_t x, coord_t y, color_t color);
-	extern void gdisp_lld_fill_area(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color);
-	extern void gdisp_lld_blit_area_ex(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx, coord_t srcy, coord_t srccx, const pixel_t *buffer);
-	extern void gdisp_lld_draw_line(coord_t x0, coord_t y0, coord_t x1, coord_t y1, color_t color);
-
-	/* Circular Drawing Functions */
-	#if GDISP_NEED_CIRCLE
-	extern void gdisp_lld_draw_circle(coord_t x, coord_t y, coord_t radius, color_t color);
-	extern void gdisp_lld_fill_circle(coord_t x, coord_t y, coord_t radius, color_t color);
+	bool_t gdisp_lld_init(void);
+	#if GDISP_HARDWARE_STREAM
+		void gdisp_lld_stream_start(void);		// Uses p.x,p.y  p.cx,p.cy
+		void gdisp_lld_stream_color(void);		// Uses p.color
+		#if GDISP_HARDWARE_STREAM_END
+			void gdisp_lld_stream_stop(void);	// Uses no parameters
+		#endif
 	#endif
-
-	#if GDISP_NEED_ELLIPSE
-	extern void gdisp_lld_draw_ellipse(coord_t x, coord_t y, coord_t a, coord_t b, color_t color);
-	extern void gdisp_lld_fill_ellipse(coord_t x, coord_t y, coord_t a, coord_t b, color_t color);
+	#if GDISP_HARDWARE_DRAWPIXEL
+		void gdisp_lld_draw_pixel(void);		// Uses p.x,p.y  p.color
 	#endif
-
-	/* Arc Drawing Functions */
-	#if GDISP_NEED_ARC
-	extern void gdisp_lld_draw_arc(coord_t x, coord_t y, coord_t radius, coord_t startangle, coord_t endangle, color_t color);
-	extern void gdisp_lld_fill_arc(coord_t x, coord_t y, coord_t radius, coord_t startangle, coord_t endangle, color_t color);
+	#if GDISP_HARDWARE_CLEARS
+		void gdisp_lld_clear(void);				// Uses p.color
 	#endif
-
-	/* Text Rendering Functions */
-	#if GDISP_NEED_TEXT
-	extern void gdisp_lld_draw_char(coord_t x, coord_t y, uint16_t c, font_t font, color_t color);
-	extern void gdisp_lld_fill_char(coord_t x, coord_t y, uint16_t c, font_t font, color_t color, color_t bgcolor);
+	#if GDISP_HARDWARE_FILLS
+		void gdisp_lld_fill_area(void);			// Uses p.x,p.y  p.cx,p.cy  p.color
 	#endif
-
-	/* Pixel readback */
-	#if GDISP_NEED_PIXELREAD
-	extern color_t gdisp_lld_get_pixel_color(coord_t x, coord_t y);
+	#if GDISP_HARDWARE_BITFILLS
+		void gdisp_lld_blit_area_ex(void);		// Uses p.x,p.y  p.cx,p.cy  p.x1,p.y1 (=srcx,srcy)  p.x2 (=srccx), p.ptr (=buffer)
 	#endif
-
-	/* Scrolling Function - clears the area scrolled out */
-	#if GDISP_NEED_SCROLL
-	extern void gdisp_lld_vertical_scroll(coord_t x, coord_t y, coord_t cx, coord_t cy, int lines, color_t bgcolor);
+	#if GDISP_HARDWARE_PIXELREAD && GDISP_NEED_PIXELREAD
+		color_t gdisp_lld_get_pixel_color(void);	// Uses p.x,p.y
 	#endif
-
-	/* Set driver specific control */
-	#if GDISP_NEED_CONTROL
-	extern void gdisp_lld_control(unsigned what, void *value);
+	#if GDISP_HARDWARE_SCROLL && GDISP_NEED_SCROLL
+		void gdisp_lld_vertical_scroll(void);	// Uses p.x,p.y  p.cx,p.cy, p.y1 (=lines) p.color
 	#endif
-
-	/* Query driver specific data */
-	#if GDISP_NEED_QUERY
-	extern void *gdisp_lld_query(unsigned what);
+	#if GDISP_HARDWARE_CONTROL && GDISP_NEED_CONTROL
+		void gdisp_lld_control(void);			// Uses p.x (=what)  p.ptr (=value)
 	#endif
-
-	/* Clipping Functions */
-	#if GDISP_NEED_CLIP
-	extern void gdisp_lld_set_clip(coord_t x, coord_t y, coord_t cx, coord_t cy);
+	#if GDISP_HARDWARE_QUERY && GDISP_NEED_QUERY
+		void *gdisp_lld_query(void);			// Uses p.x (=what);
 	#endif
-
-	/* Messaging API */
-	#if GDISP_NEED_MSGAPI
-	#include "gdisp_lld_msgs.h"
-	extern void gdisp_lld_msg_dispatch(gdisp_lld_msg_t *msg);
+	#if GDISP_HARDWARE_CLIP && (GDISP_NEED_CLIP || GDISP_NEED_VALIDATION)
+		void gdisp_lld_set_clip(void);			// Uses p.x,p.y  p.cx,p.cy
 	#endif
 
 #ifdef __cplusplus
