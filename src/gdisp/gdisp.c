@@ -50,7 +50,7 @@ GDISPControl			*GDISP = &GDISP_DRIVER_STRUCT.g;
 
 #if GDISP_HARDWARE_STREAM_END
 	#define STREAM_CLEAR()		if ((GC->flags & GDISP_FLG_INSTREAM)) {	\
-									gdisp_lld_stream_end();				\
+									gdisp_lld_stream_end(GC);				\
 									GC->flags &= ~GDISP_FLG_INSTREAM;	\
 								}
 #else
@@ -71,10 +71,10 @@ GDISPControl			*GDISP = &GDISP_DRIVER_STRUCT.g;
 	#if NEED_CLIPPING
 		static INLINE void drawpixel_clip(void) {
 			if (GC->p.x >= GC->clipx0 && GC->p.x < GC->clipx1 && GC->p.y >= GC->clipy0 && GC->p.y < GC->clipy1)
-				gdisp_lld_draw_pixel();
+				gdisp_lld_draw_pixel(GC);
 		}
 	#else
-		#define drawpixel_clip()	gdisp_lld_draw_pixel()
+		#define drawpixel_clip()	gdisp_lld_draw_pixel(GC)
 	#endif
 #else
 	// Worst is streaming
@@ -85,10 +85,10 @@ GDISPControl			*GDISP = &GDISP_DRIVER_STRUCT.g;
 		#endif
 
 		GC->cx = GC->cy = 1;
-		gdisp_lld_stream_start();
-		gdisp_lld_stream_color();
+		gdisp_lld_stream_start(GC);
+		gdisp_lld_stream_color(GC);
 		#if GDISP_HARDWARE_STREAM_END
-			gdisp_lld_stream_end();
+			gdisp_lld_stream_end(GC);
 		#endif
 	}
 #endif
@@ -99,7 +99,7 @@ GDISPControl			*GDISP = &GDISP_DRIVER_STRUCT.g;
 // Note:		This is not clipped
 #if GDISP_HARDWARE_FILLS
 	// Best is hardware accelerated area fill
-	#define fillarea()	gdisp_lld_fill_area()
+	#define fillarea()	gdisp_lld_fill_area(GC)
 #elif GDISP_HARDWARE_STREAM
 	// Next best is hardware streaming
 	static INLINE void fillarea(void) {
@@ -107,11 +107,11 @@ GDISPControl			*GDISP = &GDISP_DRIVER_STRUCT.g;
 
 		area = (uint32_t)GC->p.cx * GC->p.cy;
 
-		gdisp_lld_stream_start();
+		gdisp_lld_stream_start(GC);
 		for(; area; area--)
-			gdisp_lld_stream_color();
+			gdisp_lld_stream_color(GC);
 		#if GDISP_HARDWARE_STREAM_END
-			gdisp_lld_stream_end(gc);
+			gdisp_lld_stream_end(GC);
 		#endif
 	}
 #else
@@ -125,7 +125,7 @@ GDISPControl			*GDISP = &GDISP_DRIVER_STRUCT.g;
 		y1 = GC->p.y + GC->p.cy;
 		for(; GC->p.y < y1; GC->p.y++, GC->p.x = x0)
 			for(; GC->p.x < x1; GC->p.x++)
-				gdisp_lld_draw_pixel();
+				gdisp_lld_draw_pixel(GC);
 		GC->p.y = y0;
 	}
 #endif
@@ -164,14 +164,14 @@ static void hline_clip(void) {
 		if (GC->p.x == GC->p.x1) {
 			#if GDISP_HARDWARE_DRAWPIXEL
 				// Best is hardware accelerated pixel draw
-				gdisp_lld_draw_pixel();
+				gdisp_lld_draw_pixel(GC);
 			#else
 				// Worst is streaming
 				GC->p.cx = GC->p.cy = 1;
-				gdisp_lld_stream_start();
-				gdisp_lld_stream_color();
+				gdisp_lld_stream_start(GC);
+				gdisp_lld_stream_color(GC);
 				#if GDISP_HARDWARE_STREAM_END
-					gdisp_lld_stream_end();
+					gdisp_lld_stream_end(GC);
 				#endif
 			#endif
 			return;
@@ -182,19 +182,19 @@ static void hline_clip(void) {
 		// Best is hardware accelerated area fill
 		GC->p.cx = GC->p.x1 - GC->p.x + 1;
 		GC->p.cy = 1;
-		gdisp_lld_fill_area();
+		gdisp_lld_fill_area(GC);
 	#elif GDISP_HARDWARE_STREAM
 		// Next best is streaming
 		GC->p.cx = GC->p.x1 - GC->p.x;
-		gdisp_lld_stream_start();
-		do { gdisp_lld_stream_color(); } while(GC->p.cx--);
+		gdisp_lld_stream_start(GC);
+		do { gdisp_lld_stream_color(GC); } while(GC->p.cx--);
 		#if GDISP_HARDWARE_STREAM_END
-			gdisp_lld_stream_end();
+			gdisp_lld_stream_end(GC);
 		#endif
 	#else
 		// Worst is drawing pixels
 		for(; GC->p.x <= GC->p.x1; GC->p.x++)
-			gdisp_lld_draw_pixel();
+			gdisp_lld_draw_pixel(GC);
 	#endif
 }
 
@@ -221,14 +221,14 @@ static void vline_clip(void) {
 		if (GC->p.y == GC->p.y1) {
 			#if GDISP_HARDWARE_DRAWPIXEL
 				// Best is hardware accelerated pixel draw
-				gdisp_lld_draw_pixel();
+				gdisp_lld_draw_pixel(GC);
 			#else
 				// Worst is streaming
 				GC->p.cx = GC->p.cy = 1;
-				gdisp_lld_stream_start();
-				gdisp_lld_stream_color();
+				gdisp_lld_stream_start(GC);
+				gdisp_lld_stream_color(GC);
 				#if GDISP_HARDWARE_STREAM_END
-					gdisp_lld_stream_end();
+					gdisp_lld_stream_end(GC);
 				#endif
 			#endif
 			return;
@@ -239,19 +239,19 @@ static void vline_clip(void) {
 		// Best is hardware accelerated area fill
 		GC->p.cy = GC->p.y1 - GC->p.y + 1;
 		GC->p.cx = 1;
-		gdisp_lld_fill_area();
+		gdisp_lld_fill_area(GC);
 	#elif GDISP_HARDWARE_STREAM
 		// Next best is streaming
 		GC->p.cy = GC->p.y1 - GC->p.y;
-		gdisp_lld_stream_start();
-		do { gdisp_lld_stream_color(); } while(GC->p.cy--);
+		gdisp_lld_stream_start(GC);
+		do { gdisp_lld_stream_color(GC); } while(GC->p.cy--);
 		#if GDISP_HARDWARE_STREAM_END
-			gdisp_lld_stream_end();
+			gdisp_lld_stream_end(GC);
 		#endif
 	#else
 		// Worst is drawing pixels
 		for(; GC->p.y <= GC->p.y1; GC->p.y++)
-			gdisp_lld_draw_pixel();
+			gdisp_lld_draw_pixel(GC);
 	#endif
 }
 
@@ -342,14 +342,15 @@ void _gdispInit(void) {
 
 	/* Initialise driver */
 	MUTEX_ENTER();
-	gdisp_lld_init();
+	GC->flags = 0;
+	gdisp_lld_init(GC);
 	#if GDISP_NEED_VALIDATION || GDISP_NEED_CLIP
 		#if GDISP_HARDWARE_CLIP
 			GC->p.x = x;
 			GC->p.y = y;
 			GC->p.cx = cx;
 			GC->p.cy = cy;
-			gdisp_lld_set_clip();
+			gdisp_lld_set_clip(GC);
 		#else
 			GC->clipx0 = 0;
 			GC->clipy0 = 0;
@@ -360,75 +361,140 @@ void _gdispInit(void) {
 	MUTEX_EXIT();
 }
 
-void gdispStreamStart(coord_t x, coord_t y, coord_t cx, coord_t cy) {
-	MUTEX_ENTER();
+#if GDISP_NEED_STREAMING
+	void gdispStreamStart(coord_t x, coord_t y, coord_t cx, coord_t cy) {
+		MUTEX_ENTER();
 
-	#if NEED_CLIPPING
-		// Test if the area is valid - if not then exit
-		if (x < GC->clipx0 || x+cx >= GC->clipx1 || y < GC->clipy0 || y+cy >= GC->clipy1) {
-			MUTEX_EXIT();
+		#if NEED_CLIPPING
+			// Test if the area is valid - if not then exit
+			if (x < GC->clipx0 || x+cx >= GC->clipx1 || y < GC->clipy0 || y+cy >= GC->clipy1) {
+				MUTEX_EXIT();
+				return;
+			}
+		#endif
+
+		GC->flags |= GDISP_FLG_INSTREAM;
+
+		#if GDISP_HARDWARE_STREAM
+			// Best is hardware streaming
+			GC->p.x = x;
+			GC->p.y = y;
+			GC->p.cx = cx;
+			GC->p.cy = cy;
+			gdisp_lld_stream_start(GC);
+		#else
+			// Worst - save the parameters and use pixel drawing
+
+			// Use x,y as the current position, x1,y1 as the save position and x2,y2 as the end position, cx = bufpos
+			GC->p.x1 = GC->p.x = x;
+			GC->p.y1 = GC->p.y = y;
+			GC->p.x2 = x + cx;
+			GC->p.y2 = y + cy;
+			GC->p.cx = 0;
+		#endif
+
+		// Don't release the mutex as gdispStreamEnd() will do that.
+	}
+
+	void gdispStreamColor(color_t color) {
+		#if !GDISP_HARDWARE_STREAM && GDISP_LINEBUF_SIZE != 0 && GDISP_HARDWARE_BITFILLS
+			coord_t	 pos, sx1, sy1, sx2;
+		#endif
+
+		// Don't touch the mutex as we should already own it
+
+		// Ignore this call if we are not streaming
+		if (!(GC->flags & GDISP_FLG_INSTREAM))
 			return;
-		}
-	#endif
 
-	GC->flags |= GDISP_FLG_INSTREAM;
+		#if GDISP_HARDWARE_STREAM
+			// Best is hardware streaming
+			GC->p.color = color;
+			gdisp_lld_stream_color(GC);
+		#elif GDISP_LINEBUF_SIZE != 0 && GDISP_HARDWARE_BITFILLS
+			GC->linebuf[GC->p.cx++] = color;
+			if (GC->p.cx >= GDISP_LINEBUF_SIZE) {
+				pos = GC->p.cx;
+				sx1 = GC->p.x1;
+				sy1 = GC->p.y1;
+				sx2 = GC->p.x2;
+				GC->p.x -= pos;
+				GC->p.cx = pos;
+				GC->p.cy = 1;
+				GC->p.x1 = 0;
+				GC->p.y1 = 0;
+				GC->p.x2 = pos;
+				GC->p.ptr = (void *)GC->linebuf;
+				gdisp_lld_blit_area(GC);
+				GC->p.x1 = sx1;
+				GC->p.y1 = sy1;
+				GC->p.x2 = sx2;
+				GC->p.x += pos;
+				GC->p.cx = 0;
+			}
 
-	#if GDISP_HARDWARE_STREAM
-		// Best is hardware streaming
-		GC->p.x = x;
-		GC->p.y = y;
-		GC->p.cx = cx;
-		GC->p.cy = cy;
-		gdisp_lld_stream_start();
-	#else
-		// Worst - save the parameters and use pixel drawing
+			// Just wrap at end-of-line and end-of-buffer
+			if (++GC->p.x >= GC->p.x2) {
+				if (GC->p.cx) {
+					pos = GC->p.cx;
+					sx1 = GC->p.x1;
+					sy1 = GC->p.y1;
+					sx2 = GC->p.x2;
+					GC->p.x -= pos;
+					GC->p.cx = pos;
+					GC->p.cy = 1;
+					GC->p.x1 = 0;
+					GC->p.y1 = 0;
+					GC->p.x2 = pos;
+					GC->p.ptr = (void *)GC->linebuf;
+					gdisp_lld_blit_area(GC);
+					GC->p.x1 = sx1;
+					GC->p.y1 = sy1;
+					GC->p.x2 = sx2;
+					GC->p.cx = 0;
+				}
+				GC->p.x = GC->p.x1;
+				if (++GC->p.y >= GC->p.x2)
+					GC->p.y = GC->p.y1;
+			}
+		#else
+			// Worst is using pixel drawing
+			GC->p.color = color;
+			gdisp_lld_draw_pixel(GC);
 
-		// Use x,y as the current position, x1,y1 as the save position and x2,y2 as the end position
-		GC->p.x1 = GC->p.x = x;
-		GC->p.y1 = GC->p.y = y;
-		GC->p.x2 = GC->p.x + GC->p.cx;
-		GC->p.x2 = GC->p.x + GC->p.cx;
-	#endif
+			// Just wrap at end-of-line and end-of-buffer
+			if (++GC->p.x >= GC->p.x2) {
+				GC->p.x = GC->p.x1;
+				if (++GC->p.y >= GC->p.x2)
+					GC->p.y = GC->p.y1;
+			}
+		#endif
+	}
 
-	// Don't release the mutex as gdispStreamEnd() will do that.
-}
+	void gdispStreamEnd(void) {
+		// Only release the mutex and end the stream if we are actually streaming.
+		if (!(GC->flags & GDISP_FLG_INSTREAM))
+			return;
 
-void gdispStreamColor(color_t color) {
-	// Don't touch the mutex as we should already own it
-
-	// Ignore this call if we are not streaming
-	if (!(GC->flags & GDISP_FLG_INSTREAM))
-		return;
-
-	#if GDISP_HARDWARE_STREAM
-		// Best is hardware streaming
-		GC->p.color = color;
-		gdisp_lld_stream_color();
-	#else
-		// Worst is using pixel drawing
-		GC->p.color = color;
-		gdisp_lld_draw_pixel();
-
-		// Just wrap at end-of-line and end-of-buffer
-		if (++GC->p.x >= GC->p.x2) {
-			GC->p.x = GC->p.x1;
-			if (++GC->p.y >= GC->p.x2)
-				GC->p.y = GC->p.y1;
-		}
-	#endif
-}
-
-void gdispStreamEnd(void) {
-	// Only release the mutex and end the stream if we are actually streaming.
-	if (!(GC->flags & GDISP_FLG_INSTREAM))
-		return;
-
-	#if GDISP_HARDWARE_STREAM && GDISP_HARDWARE_STREAM_END
-		gdisp_lld_stream_end();
-	#endif
-	GC->flags &= ~GDISP_FLG_INSTREAM;
-	MUTEX_EXIT();
-}
+		#if GDISP_HARDWARE_STREAM
+			#if GDISP_HARDWARE_STREAM_END
+				gdisp_lld_stream_end(GC);
+			#endif
+		#elif GDISP_LINEBUF_SIZE != 0 && GDISP_HARDWARE_BITFILLS
+			if (GC->p.cx) {
+				GC->p.x -= GC->p.cx;
+				GC->p.cy = 1;
+				GC->p.x1 = 0;
+				GC->p.y1 = 0;
+				GC->p.x2 = GC->p.cx;
+				GC->p.ptr = (void *)GC->linebuf;
+				gdisp_lld_blit_area(GC);
+			}
+		#endif
+		GC->flags &= ~GDISP_FLG_INSTREAM;
+		MUTEX_EXIT();
+	}
+#endif
 
 void gdispDrawPixel(coord_t x, coord_t y, color_t color) {
 	MUTEX_ENTER();
@@ -457,14 +523,14 @@ void gdispClear(color_t color) {
 	#if GDISP_HARDWARE_CLEARS
 		// Best is hardware accelerated clear
 		GC->p.color = color;
-		gdisp_lld_clear();
+		gdisp_lld_clear(GC);
 	#elif GDISP_HARDWARE_FILLS
 		// Next best is hardware accelerated area fill
 		GC->p.x = GC->p.y = 0;
 		GC->p.cx = GC->g.Width;
 		GC->p.cy = GC->g.Height;
 		GC->p.color = color;
-		gdisp_lld_fill_area();
+		gdisp_lld_fill_area(GC);
 	#elif GDISP_HARDWARE_STREAM
 		// Next best is streaming
 		uint32_t	area;
@@ -475,18 +541,18 @@ void gdispClear(color_t color) {
 		GC->p.color = color;
 		area = (uint32_t)GC->p.cx * GC->p.cy;
 
-		gdisp_lld_stream_start();
+		gdisp_lld_stream_start(GC);
 		for(; area; area--)
-			gdisp_lld_stream_color();
+			gdisp_lld_stream_color(GC);
 		#if GDISP_HARDWARE_STREAM_END
-			gdisp_lld_stream_end(gc);
+			gdisp_lld_stream_end(GC);
 		#endif
 	#else
 		// Worst is drawing pixels
 		GC->p.color = color;
 		for(GC->p.y = 0; GC->p.y < GC->g.Height; GC->p.y++)
 			for(GC->p.x = 0; GC->p.x < GC->g.Width; GC->p.x++)
-				gdisp_lld_draw_pixel();
+				gdisp_lld_draw_pixel(GC);
 	#endif
 	MUTEX_EXIT();
 }
@@ -527,7 +593,7 @@ void gdispBlitAreaEx(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx,
 		GC->p.y1 = srcy;
 		GC->p.x2 = srccx;
 		GC->p.ptr = (void *)buffer;
-		gdisp_lld_blit_area_ex();
+		gdisp_lld_blit_area(GC);
 	#elif GDISP_HARDWARE_STREAM
 		// Next best is hardware streaming
 
@@ -537,15 +603,15 @@ void gdispBlitAreaEx(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx,
 		srcy = y + cy;
 		srccx -= cx;
 
-		gdisp_lld_stream_start(gc);
+		gdisp_lld_stream_start(GC);
 		for(GC->p.y = y; GC->p.y < srcy; GC->p.y++, buffer += srccx) {
 			for(GC->p.x = x; GC->p.x < srcx; GC->p.x++) {
 				GC->p.color = *buffer++;
-				gdisp_lld_stream_color();
+				gdisp_lld_stream_color(GC);
 			}
 		}
 		#if GDISP_HARDWARE_STREAM_END
-			gdisp_lld_stream_end(gc);
+			gdisp_lld_stream_end(GC);
 		#endif
 	#else
 		// Worst is drawing pixels
@@ -559,7 +625,7 @@ void gdispBlitAreaEx(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx,
 		for(GC->p.y = y; GC->p.y < srcy; GC->p.y++, buffer += srccx) {
 			for(GC->p.x=x; GC->p.x < srcx; GC->p.x++) {
 				GC->p.color = *buffer++;
-				gdisp_lld_draw_pixel();
+				gdisp_lld_draw_pixel(GC);
 			}
 		}
 	#endif
@@ -575,7 +641,7 @@ void gdispBlitAreaEx(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx,
 			GC->p.y = y;
 			GC->p.cx = cx;
 			GC->p.cy = cy;
-			gdisp_lld_set_clip();
+			gdisp_lld_set_clip(GC);
 		#else
 			// Worst is using software clipping
 			if (x < 0) { cx += x; x = 0; }
@@ -1456,9 +1522,26 @@ void gdispBlitAreaEx(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx,
 
 		/* Always synchronous as it must return a value */
 		MUTEX_ENTER();
-		GC->p.x = x;
-		GC->p.y = y;
-		c = gdisp_lld_get_pixel_color();
+		#if GDISP_HARDWARE_PIXELREAD
+			// Best is direct pixel read
+			GC->p.x = x;
+			GC->p.y = y;
+			c = gdisp_lld_get_pixel_color(GC);
+		#elif GDISP_HARDWARE_STREAM && GDISP_HARDWARE_STREAM_READ
+			// Next best is hardware streaming
+			GC->p.x = x;
+			GC->p.y = y;
+			GC->p.cx = 1;
+			GC->p.cy = 1;
+			gdisp_lld_stream_start(GC);
+			c = gdisp_lld_stream_read(GC);
+			#if GDISP_HARDWARE_STREAM_END
+				gdisp_lld_stream_end(GC);
+			#endif
+		#else
+			// Worst is "not possible"
+			#error "GDISP: GDISP_NEED_PIXELREAD has been set but there is no hardware support for reading the display"
+		#endif
 		MUTEX_EXIT();
 
 		return c;
@@ -1467,21 +1550,127 @@ void gdispBlitAreaEx(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx,
 
 #if GDISP_NEED_SCROLL
 	void gdispVerticalScroll(coord_t x, coord_t y, coord_t cx, coord_t cy, int lines, color_t bgcolor) {
+		coord_t		abslines;
+		#if !GDISP_HARDWARE_SCROLL
+			coord_t 	fy, dy, ix, fx, i, j;
+		#endif
+
 		MUTEX_ENTER();
 		#if NEED_CLIPPING
 			if (x < GC->clipx0) { cx -= GC->clipx0 - x; x = GC->clipx0; }
 			if (y < GC->clipy0) { cy -= GC->clipy0 - y; y = GC->clipy0; }
-			if (cx <= 0 || cy <= 0 || x >= GC->clipx1 || y >= GC->clipy1) { MUTEX_EXIT(); return; }
+			if (!lines || cx <= 0 || cy <= 0 || x >= GC->clipx1 || y >= GC->clipy1) { MUTEX_EXIT(); return; }
 			if (x+cx > GC->clipx1)	cx = GC->clipx1 - x;
 			if (y+cy > GC->clipy1)	cy = GC->clipy1 - y;
 		#endif
+
+		abslines = lines < 0 ? -lines : lines;
+		if (abslines >= cy) {
+			abslines = cy;
+			cy = 0;
+		} else {
+			#if GDISP_HARDWARE_SCROLL
+				GC->p.x = x;
+				GC->p.y = y;
+				GC->p.cx = cx;
+				GC->p.cy = cy;
+				GC->p.y1 = lines;
+				GC->p.color = bgcolor;
+				gdisp_lld_vertical_scroll(GC);
+				cy -= abslines;
+			#elif GDISP_LINEBUF_SIZE == 0
+				#error "GDISP: GDISP_NEED_SCROLL is set but there is no hardware support and GDISP_LINEBUF_SIZE is zero."
+			#else
+				cy -= abslines;
+				if (lines < 0) {
+					fy = y+cx-1;
+					dy = -1;
+				} else {
+					fy = y;
+					dy = 1;
+				}
+				// Move the screen - one line at a time
+				for(i = 0; i < cy; i++, fy += dy) {
+
+					// Handle where the buffer is smaller than a line
+					for(ix=0; ix < cx; ix += GDISP_LINEBUF_SIZE) {
+
+						// Calculate the data we can move in one operation
+						fx = cx - ix;
+						if (fx > GDISP_LINEBUF_SIZE)
+							fx = GDISP_LINEBUF_SIZE;
+
+						// Read one line of data from the screen
+						#if GDISP_HARDWARE_STREAM && GDISP_HARDWARE_STREAM_READ
+							// Best is hardware streaming
+							GC->p.x = x+ix;
+							GC->p.y = fy+lines;
+							GC->p.cx = fx;
+							GC->p.cy = 1;
+							gdisp_lld_stream_start(GC);
+							for(j=0; j < fx; j++)
+								GC->linebuf[j] = gdisp_lld_stream_read(GC);
+							#if GDISP_HARDWARE_STREAM_END
+								gdisp_lld_stream_end(GC);
+							#endif
+						#elif GDISP_HARDWARE_PIXELREAD
+							// Next best is single pixel reads
+							for(j=0; j < fx; j++) {
+								GC->p.x = x+ix+j;
+								GC->p.y = fy+lines;
+								GC->linebuf[j] = gdisp_lld_get_pixel_color(GC);
+							}
+						#else
+							// Worst is "not possible"
+							#error "GDISP: GDISP_NEED_SCROLL is set but there is no hardware support for scrolling or reading pixels."
+						#endif
+
+						// Write that line to the new location
+						#if GDISP_HARDWARE_BITFILLS
+							// Best is hardware bitfills
+							GC->p.x = x+ix;
+							GC->p.y = fy;
+							GC->p.cx = fx;
+							GC->p.cy = 1;
+							GC->p.x1 = 0;
+							GC->p.y1 = 0;
+							GC->p.x2 = fx;
+							GC->p.ptr = (void *)GC->linebuf;
+							gdisp_lld_blit_area(GC);
+						#elif GDISP_HARDWARE_STREAM
+							// Next best is hardware streaming
+							GC->p.x = x+ix;
+							GC->p.y = fy;
+							GC->p.cx = fx;
+							GC->p.cy = 1;
+							gdisp_lld_stream_start(GC);
+							for(j = 0; j < fx; j++) {
+								GC->p.color = GC->linebuf[j];
+								gdisp_lld_stream_color(GC);
+							}
+							#if GDISP_HARDWARE_STREAM_END
+								gdisp_lld_stream_end(GC);
+							#endif
+						#else
+							// Worst is drawing pixels
+							GC->p.y = fy;
+							for(GC->p.x = x+ix, j = 0; j < fx; GC->p.x++, j++) {
+								GC->p.color = GC->linebuf[j];
+								gdisp_lld_draw_pixel(GC);
+							}
+						#endif
+					}
+				}
+			#endif
+		}
+
+		/* fill the remaining gap */
 		GC->p.x = x;
-		GC->p.y = y;
+		GC->p.y = lines > 0 ? (y+cy) : y;
 		GC->p.cx = cx;
-		GC->p.cy = cy;
-		GC->p.y1 = lines;
+		GC->p.cy = abslines;
 		GC->p.color = bgcolor;
-		gdisp_lld_vertical_scroll();
+		fillarea();
 		MUTEX_EXIT();
 	}
 #endif
@@ -1492,7 +1681,7 @@ void gdispBlitAreaEx(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx,
 			MUTEX_ENTER();
 			GC->p.x = what;
 			GC->p.ptr = value;
-			gdisp_lld_control();
+			gdisp_lld_control(GC);
 			#if GDISP_NEED_CLIP || GDISP_NEED_VALIDATION
 				if (what == GDISP_CONTROL_ORIENTATION) {
 					#if GDISP_HARDWARE_CLIP
@@ -1501,7 +1690,7 @@ void gdispBlitAreaEx(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx,
 						GC->p.y = 0;
 						GC->p.cx = GC->g.Width;
 						GC->p.cy = GC->g.Height;
-						gdisp_lld_set_clip();
+						gdisp_lld_set_clip(GC);
 					#else
 						// Worst is software clipping
 						GC->clipx0 = 0;
@@ -1529,7 +1718,7 @@ void gdispBlitAreaEx(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx,
 
 			MUTEX_ENTER();
 			GC->p.x = (coord_t)what;
-			res = gdisp_lld_query();
+			res = gdisp_lld_query(GC);
 			MUTEX_EXIT();
 			return res;
 		}
@@ -1677,42 +1866,46 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color) {
 #if GDISP_NEED_TEXT
 	#include "mcufont.h"
 
-	#if GDISP_NEED_ANTIALIAS && GDISP_NEED_PIXELREAD
+	#if GDISP_NEED_ANTIALIAS && GDISP_HARDWARE_PIXELREAD
 		static void drawcharline(int16_t x, int16_t y, uint8_t count, uint8_t alpha, void *state) {
-			if (y < GC->t.clipy0 || y >= GC->t.clipy1 || x < GC->t.clipx0 || x+count > GC->t.clipx1) return;
+			#define GD	((GDISPDriver *)state)
+			if (y < GD->t.clipy0 || y >= GD->t.clipy1 || x < GD->t.clipx0 || x+count > GD->t.clipx1) return;
 			if (alpha == 255) {
-				GC->p.x = x; GC->p.y = y; GC->p.x1 = x+count-1; GC->p.color = GC->t.color;
+				GD->p.x = x; GD->p.y = y; GD->p.x1 = x+count-1; GD->p.color = GD->t.color;
 				hline_clip();
 			} else {
 				for (; count; count--, x++) {
-					GC->p.x = x; GC->p.y = y;
-					GC->p.color = gdispBlendColor(GC->t.color, gdisp_lld_get_pixel_color(), alpha);
+					GD->p.x = x; GD->p.y = y;
+					GD->p.color = gdispBlendColor(GD->t.color, gdisp_lld_get_pixel_color(GD), alpha);
 					drawpixel_clip();
 				}
 			}
+			#undef GD
 		}
 	#else
 		static void drawcharline(int16_t x, int16_t y, uint8_t count, uint8_t alpha, void *state) {
-			(void) state;
-			if (y < GC->t.clipy0 || y >= GC->t.clipy1 || x < GC->t.clipx0 || x+count > GC->t.clipx1) return;
+			#define GD	((GDISPDriver *)state)
+			if (y < GD->t.clipy0 || y >= GD->t.clipy1 || x < GD->t.clipx0 || x+count > GD->t.clipx1) return;
 			if (alpha > 0x80) {			// A best approximation when using anti-aliased fonts but we can't actually draw them anti-aliased
-				GC->p.x = x; GC->p.y = y; GC->p.x1 = x+count-1; GC->p.color = GC->t.color;
+				GD->p.x = x; GD->p.y = y; GD->p.x1 = x+count-1; GD->p.color = GD->t.color;
 				hline_clip();
 			}
+			#undef GD
 		}
 	#endif
 
 	#if GDISP_NEED_ANTIALIAS
 		static void fillcharline(int16_t x, int16_t y, uint8_t count, uint8_t alpha, void *state) {
-			(void) state;
-			if (y < GC->t.clipy0 || y >= GC->t.clipy1 || x < GC->t.clipx0 || x+count > GC->t.clipx1) return;
+			#define GD	((GDISPDriver *)state)
+			if (y < GD->t.clipy0 || y >= GD->t.clipy1 || x < GD->t.clipx0 || x+count > GD->t.clipx1) return;
 			if (alpha == 255) {
-				GC->p.color = GC->t.color;
+				GD->p.color = GD->t.color;
 			} else {
-				GC->p.color = gdispBlendColor(GC->t.color, GC->t.bgcolor, alpha);
+				GD->p.color = gdispBlendColor(GD->t.color, GD->t.bgcolor, alpha);
 			}
-			GC->p.x = x; GC->p.y = y; GC->p.x1 = x+count-1;
+			GD->p.x = x; GD->p.y = y; GD->p.x1 = x+count-1;
 			hline_clip();
+			#undef GD
 		}
 	#else
 		#define fillcharline	drawcharline
@@ -1720,14 +1913,12 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color) {
 
 	/* Callback to render characters. */
 	static uint8_t drawcharglyph(int16_t x, int16_t y, mf_char ch, void *state) {
-		(void) state;
-		return mf_render_character(GC->t.font, x, y, ch, drawcharline, 0);
+		return mf_render_character(GC->t.font, x, y, ch, drawcharline, state);
 	}
 
 	/* Callback to render characters. */
 	static uint8_t fillcharglyph(int16_t x, int16_t y, mf_char ch, void *state) {
-		(void) state;
-		return mf_render_character(GC->t.font, x, y, ch, fillcharline, 0);
+		return mf_render_character(GC->t.font, x, y, ch, fillcharline, state);
 	}
 
 	void gdispDrawChar(coord_t x, coord_t y, uint16_t c, font_t font, color_t color) {
@@ -1738,7 +1929,7 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color) {
 		GC->t.clipx1 = x + mf_character_width(font, c) + font->baseline_x;
 		GC->t.clipy1 = y + font->height;
 		GC->t.color = color;
-		mf_render_character(font, x, y, c, drawcharline, 0);
+		mf_render_character(font, x, y, c, drawcharline, GC);
 		MUTEX_EXIT();
 	}
 
@@ -1756,7 +1947,7 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color) {
 
 		TEST_CLIP_AREA(GC->p.x, GC->p.y, GC->p.cx, GC->p.cy) {
 			fillarea();
-			mf_render_character(font, x, y, c, fillcharline, 0);
+			mf_render_character(font, x, y, c, fillcharline, GC);
 		}
 		MUTEX_EXIT();
 	}
@@ -1770,7 +1961,7 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color) {
 		GC->t.clipy1 = y + font->height;
 		GC->t.color = color;
 
-		mf_render_aligned(font, x+font->baseline_x, y, MF_ALIGN_LEFT, str, 0, drawcharglyph, 0);
+		mf_render_aligned(font, x+font->baseline_x, y, MF_ALIGN_LEFT, str, 0, drawcharglyph, GC);
 		MUTEX_EXIT();
 	}
 
@@ -1788,7 +1979,7 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color) {
 
 		TEST_CLIP_AREA(GC->p.x, GC->p.y, GC->p.cx, GC->p.cy) {
 			fillarea();
-			mf_render_aligned(font, x+font->baseline_x, y, MF_ALIGN_LEFT, str, 0, fillcharglyph, 0);
+			mf_render_aligned(font, x+font->baseline_x, y, MF_ALIGN_LEFT, str, 0, fillcharglyph, GC);
 		}
 		MUTEX_EXIT();
 	}
@@ -1816,7 +2007,7 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color) {
 		}
 		y += (cy+1 - font->height)/2;
 
-		mf_render_aligned(font, x, y, justify, str, 0, drawcharglyph, 0);
+		mf_render_aligned(font, x, y, justify, str, 0, drawcharglyph, GC);
 		MUTEX_EXIT();
 	}
 
@@ -1852,7 +2043,7 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color) {
 			y += (cy+1 - font->height)/2;
 
 			/* Render */
-			mf_render_aligned(font, x, y, justify, str, 0, fillcharglyph, 0);
+			mf_render_aligned(font, x, y, justify, str, 0, fillcharglyph, GC);
 		}
 		MUTEX_EXIT();
 	}

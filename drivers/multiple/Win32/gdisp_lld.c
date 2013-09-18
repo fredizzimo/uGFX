@@ -8,21 +8,14 @@
 /**
  * @file    drivers/multiple/Win32/gdisp_lld.c
  * @brief   GDISP Graphics Driver subsystem low level driver source for Win32.
- *
- * @addtogroup GDISP
- * @{
  */
 
 #include "gfx.h"
 
-#if GFX_USE_GDISP /*|| defined(__DOXYGEN__)*/
+#if GFX_USE_GDISP
 
+#define GDISP_LLD_DECLARATIONS
 #include "gdisp/lld/gdisp_lld.h"
-
-// Declare our driver object
-GDISPDriver	GDISP_Win32;
-
-#define GC	(&GDISP_Win32)
 
 #include <stdio.h>
 #include <string.h>
@@ -41,10 +34,6 @@ GDISPDriver	GDISP_Win32;
 #if GINPUT_NEED_TOGGLE
 	/* Include toggle support code */
 	#include "ginput/lld/toggle.h"
-
-	const GToggleConfig GInputToggleConfigTable[GINPUT_TOGGLE_CONFIG_ENTRIES] = {
-		{0,	0xFF, 0x00, 0},
-	};
 #endif
 
 #if GINPUT_NEED_MOUSE
@@ -298,19 +287,13 @@ static DECLARE_THREAD_FUNCTION(WindowThread, param) {
 /* Driver exported functions.                                                */
 /*===========================================================================*/
 
-/* ---- Required Routines ---- */
-/*
-	The following 2 routines are required.
-	All other routines are optional.
-*/
-
 /**
- * @brief   Low level GDISP driver initialisation.
+ * @brief   Low level GDISP driver initialization.
  * @return	TRUE if successful, FALSE on error.
  *
  * @notapi
  */
-bool_t gdisp_lld_init(void) {
+LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 	RECT			rect;
 	gfxThreadHandle	hth;
 
@@ -333,45 +316,45 @@ bool_t gdisp_lld_init(void) {
 		Sleep(1);
 
 	/* Initialise the GDISP structure to match */
-	GC->g.Orientation = GDISP_ROTATE_0;
-	GC->g.Powermode = powerOn;
-	GC->g.Backlight = 100;
-	GC->g.Contrast = 50;
-	GC->g.Width = wWidth;
-	GC->g.Height = wHeight;
+	g->g.Orientation = GDISP_ROTATE_0;
+	g->g.Powermode = powerOn;
+	g->g.Backlight = 100;
+	g->g.Contrast = 50;
+	g->g.Width = wWidth;
+	g->g.Height = wHeight;
 	return TRUE;
 }
 
 #if GDISP_HARDWARE_DRAWPIXEL
-	void gdisp_lld_draw_pixel(void) {
+	LLDSPEC void gdisp_lld_draw_pixel(GDISPDriver *g) {
 		HDC			dcScreen;
 		int			x, y;
 		COLORREF	color;
 	
-		color = COLOR2BGR(GC->p.color);
+		color = COLOR2BGR(g->p.color);
 	
 		#if GDISP_NEED_CONTROL
-			switch(GC->g.Orientation) {
+			switch(g->g.Orientation) {
 			case GDISP_ROTATE_0:
-				x = GC->p.x;
-				y = GC->p.y;
+				x = g->p.x;
+				y = g->p.y;
 				break;
 			case GDISP_ROTATE_90:
-				x = GC->g.Height - 1 - GC->p.y;
-				y = GC->p.x;
+				x = g->g.Height - 1 - g->p.y;
+				y = g->p.x;
 				break;
 			case GDISP_ROTATE_180:
-				x = GC->g.Width - 1 - GC->p.x;
-				y = GC->g.Height - 1 - GC->p.y;
+				x = g->g.Width - 1 - g->p.x;
+				y = g->g.Height - 1 - g->p.y;
 				break;
 			case GDISP_ROTATE_270:
-				x = GC->p.y;
-				y = GC->g.Width - 1 - GC->p.x;
+				x = g->p.y;
+				y = g->g.Width - 1 - g->p.x;
 				break;
 			}
 		#else
-			x = GC->p.x;
-			y = GC->p.y;
+			x = g->p.x;
+			y = g->p.y;
 		#endif
 
 		// Draw the pixel on the screen and in the buffer.
@@ -384,176 +367,46 @@ bool_t gdisp_lld_init(void) {
 
 /* ---- Optional Routines ---- */
 
-#if 0
-#if GDISP_HARDWARE_LINES
-	/**
-	 * @brief   Draw a line.
-	 * @note    Optional - The high level driver can emulate using software.
-	 *
-	 * @param[in] x0, y0   The start of the line
-	 * @param[in] x1, y1   The end of the line
-	 * @param[in] color    The color of the line
-	 *
-	 * @notapi
-	 */
-	void gdisp_lld_draw_line(coord_t x0, coord_t y0, coord_t x1, coord_t y1, color_t color) {
-		POINT p;
-		HPEN pen;
-		HDC dc;
-		HGDIOBJ old;
-		#if GDISP_NEED_CLIP
-			HRGN	clip;
-		#endif
-		#if WIN32_USE_MSG_REDRAW
-			RECT	rect;
-		#endif
-		#if GDISP_NEED_CONTROL
-			coord_t	t;
-		#endif
-
-		#if GDISP_NEED_CLIP
-			clip = NULL;
-		#endif
-
-		#if GDISP_NEED_CONTROL
-			switch(GC->g.Orientation) {
-			case GDISP_ROTATE_0:
-				#if GDISP_NEED_CLIP
-					// Clip post orientation change
-					if (GC->g.clipx0 != 0 || GC->g.clipy0 != 0 || GC->g.clipx1 != GC->g.Width || GC->g.clipy1 != GC->g.Height)
-						clip = CreateRectRgn(GC->g.clipx0, GC->g.clipy0, GC->g.clipx1, GC->g.clipy1);
-				#endif
-				break;
-			case GDISP_ROTATE_90:
-				t = GC->g.Height - 1 - y0;
-				y0 = x0;
-				x0 = t;
-				t = GC->g.Height - 1 - y1;
-				y1 = x1;
-				x1 = t;
-				#if GDISP_NEED_CLIP
-					// Clip post orientation change
-					if (GC->g.clipx0 != 0 || GC->g.clipy0 != 0 || GC->g.clipx1 != GC->g.Width || GC->g.clipy1 != GC->g.Height)
-						clip = CreateRectRgn(GC->g.Height-1-GC->g.clipy1, GC->g.clipx0, GC->g.Height-1-GC->g.clipy0, GC->g.clipx1);
-				#endif
-				break;
-			case GDISP_ROTATE_180:
-				x0 = GC->g.Width - 1 - x0;
-				y0 = GC->g.Height - 1 - y0;
-				x1 = GC->g.Width - 1 - x1;
-				y1 = GC->g.Height - 1 - y1;
-				#if GDISP_NEED_CLIP
-					// Clip post orientation change
-					if (GC->g.clipx0 != 0 || GC->g.clipy0 != 0 || GC->g.clipx1 != GC->g.Width || GC->g.clipy1 != GC->g.Height)
-						clip = CreateRectRgn(GC->g.Width-1-GC->g.clipx1, GC->g.Height-1-GC->g.clipy1, GC->g.Width-1-GC->g.clipx0, GC->g.Height-1-GC->g.clipy0);
-				#endif
-				break;
-			case GDISP_ROTATE_270:
-				t = GC->g.Width - 1 - x0;
-				x0 = y0;
-				y0 = t;
-				t = GC->g.Width - 1 - x1;
-				x1 = y1;
-				y1 = t;
-				#if GDISP_NEED_CLIP
-					// Clip post orientation change
-					if (GC->g.clipx0 != 0 || GC->g.clipy0 != 0 || GC->g.clipx1 != GC->g.Width || GC->g.clipy1 != GC->g.Height)
-						clip = CreateRectRgn(GC->g.clipy0, GC->g.Width-1-GC->g.clipx1, GC->g.clipy1, GC->g.Width-1-GC->g.clipx0);
-				#endif
-				break;
-			}
-		#else
-			#if GDISP_NEED_CLIP
-				clip = NULL;
-				if (GC->g.clipx0 != 0 || GC->g.clipy0 != 0 || GC->g.clipx1 != GC->g.Width || GC->g.clipy1 != GC->g.Height)
-					clip = CreateRectRgn(GC->g.clipx0, GC->g.clipy0, GC->g.clipx1, GC->g.clipy1);
-			#endif
-		#endif
-	
-		color = COLOR2BGR(color);
-		pen = CreatePen(PS_SOLID, 1, color);
-		if (pen) {
-			// Draw the line in the buffer
-			#if GDISP_NEED_CLIP
-				if (clip) SelectClipRgn(dcBuffer, clip);
-			#endif
-			old = SelectObject(dcBuffer, pen);
-			MoveToEx(dcBuffer, x0, y0, &p);
-			LineTo(dcBuffer, x1, y1);
-			SelectObject(dcBuffer, old);
-			SetPixel(dcBuffer, x1, y1, color);
-			#if GDISP_NEED_CLIP
-				if (clip) SelectClipRgn(dcBuffer, NULL);
-			#endif
-
-			#if WIN32_USE_MSG_REDRAW
-				rect.left = x0; rect.right = x1+1;
-				rect.top = y0; rect.bottom = y1+1;
-				InvalidateRect(winRootWindow, &rect, FALSE);
-				UpdateWindow(winRootWindow);
-			#else
-				// Redrawing the line on the screen is cheaper than invalidating the whole rectangular area
-				dc = GetDC(winRootWindow);
-				#if GDISP_NEED_CLIP
-					if (clip) SelectClipRgn(dc, clip);
-				#endif
-				old = SelectObject(dc, pen);
-				MoveToEx(dc, x0, y0, &p);
-				LineTo(dc, x1, y1);
-				SelectObject(dc, old);
-				SetPixel(dc, x1, y1, color);
-				#if GDISP_NEED_CLIP
-					if (clip) SelectClipRgn(dc, NULL);
-				#endif
-				ReleaseDC(winRootWindow, dc);
-			#endif
-
-			DeleteObject(pen);
-		}
-	}
-#endif
-#endif
-
 #if GDISP_HARDWARE_FILLS
-	void gdisp_lld_fill_area(void) {
+	LLDSPEC void gdisp_lld_fill_area(GDISPDriver *g) {
 		HDC			dcScreen;
 		RECT		rect;
 		HBRUSH		hbr;
 		COLORREF	color;
 
-		color = COLOR2BGR(GC->p.color);
+		color = COLOR2BGR(g->p.color);
 		#if GDISP_NEED_CONTROL
-			switch(GC->g.Orientation) {
+			switch(g->g.Orientation) {
 			case GDISP_ROTATE_0:
-				rect.top = GC->p.y;
-				rect.bottom = rect.top + GC->p.cy;
-				rect.left = GC->p.x;
-				rect.right = rect.left + GC->p.cx;
+				rect.top = g->p.y;
+				rect.bottom = rect.top + g->p.cy;
+				rect.left = g->p.x;
+				rect.right = rect.left + g->p.cx;
 				break;
 			case GDISP_ROTATE_90:
-				rect.top = GC->p.x;
-				rect.bottom = rect.top + GC->p.cx;
-				rect.right = GC->g.Height - GC->p.y;
-				rect.left = rect.right - GC->p.cy;
+				rect.top = g->p.x;
+				rect.bottom = rect.top + g->p.cx;
+				rect.right = g->g.Height - g->p.y;
+				rect.left = rect.right - g->p.cy;
 				break;
 			case GDISP_ROTATE_180:
-				rect.bottom = GC->g.Height - GC->p.y;
-				rect.top = rect.bottom - GC->p.cy;
-				rect.right = GC->g.Width - GC->p.x;
-				rect.left = rect.right - GC->p.cx;
+				rect.bottom = g->g.Height - g->p.y;
+				rect.top = rect.bottom - g->p.cy;
+				rect.right = g->g.Width - g->p.x;
+				rect.left = rect.right - g->p.cx;
 				break;
 			case GDISP_ROTATE_270:
-				rect.bottom = GC->g.Width - GC->p.x;
-				rect.top = rect.bottom - GC->p.cx;
-				rect.left = GC->p.y;
-				rect.right = rect.left + GC->p.cy;
+				rect.bottom = g->g.Width - g->p.x;
+				rect.top = rect.bottom - g->p.cx;
+				rect.left = g->p.y;
+				rect.right = rect.left + g->p.cy;
 				break;
 			}
 		#else
-			rect.top = GC->p.y;
-			rect.bottom = rect.top + GC->p.cy;
-			rect.left = GC->p.x;
-			rect.right = rect.left + GC->p.cx;
+			rect.top = g->p.y;
+			rect.bottom = rect.top + g->p.cy;
+			rect.left = g->p.x;
+			rect.right = rect.left + g->p.cx;
 		#endif
 
 		hbr = CreateSolidBrush(color);
@@ -567,7 +420,7 @@ bool_t gdisp_lld_init(void) {
 	}
 #endif
 
-#if (GDISP_HARDWARE_BITFILLS && GDISP_NEED_CONTROL) || defined(__DOXYGEN__)
+#if 0 && (GDISP_HARDWARE_BITFILLS && GDISP_NEED_CONTROL)
 	static pixel_t *rotateimg(coord_t cx, coord_t cy, coord_t srcx, coord_t srccx, const pixel_t *buffer) {
 		pixel_t	*dstbuf;
 		pixel_t	*dst;
@@ -615,7 +468,7 @@ bool_t gdisp_lld_init(void) {
 	}
 #endif
 	
-#if GDISP_HARDWARE_BITFILLS
+#if 0 && GDISP_HARDWARE_BITFILLS
 	/**
 	 * @brief   Fill an area with a bitmap.
 	 * @note    Optional - The high level driver can emulate using software.
@@ -628,21 +481,11 @@ bool_t gdisp_lld_init(void) {
 	 *
 	 * @notapi
 	 */
-	void gdisp_lld_blit_area_ex(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx, coord_t srcy, coord_t srccx, const pixel_t *buffer) {
+	void gdisp_lld_blit_area(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx, coord_t srcy, coord_t srccx, const pixel_t *buffer) {
 		BITMAPV4HEADER bmpInfo;
 		RECT	rect;
 		#if GDISP_NEED_CONTROL
 			pixel_t	*srcimg;
-		#endif
-
-		#if GDISP_NEED_VALIDATION || GDISP_NEED_CLIP
-			// Clip pre orientation change
-			if (x < GC->g.clipx0) { cx -= GC->g.clipx0 - x; srcx += GC->g.clipx0 - x; x = GC->g.clipx0; }
-			if (y < GC->g.clipy0) { cy -= GC->g.clipy0 - y; srcy += GC->g.clipy0 - y; y = GC->g.clipy0; }
-			if (srcx+cx > srccx)		cx = srccx - srcx;
-			if (cx <= 0 || cy <= 0 || x >= GC->g.clipx1 || y >= GC->g.clipy1) return;
-			if (x+cx > GC->g.clipx1)	cx = GC->g.clipx1 - x;
-			if (y+cy > GC->g.clipy1)	cy = GC->g.clipy1 - y;
 		#endif
 
 		// Make everything relative to the start of the line
@@ -724,225 +567,142 @@ bool_t gdisp_lld_init(void) {
 	}
 #endif
 
-#if (GDISP_NEED_PIXELREAD && GDISP_HARDWARE_PIXELREAD) || defined(__DOXYGEN__)
-	/**
-	 * @brief   Get the color of a particular pixel.
-	 * @note    Optional.
-	 * @note    If x,y is off the screen, the result is undefined.
-	 * @return	The color of the specified pixel.
-	 *
-	 * @param[in] x, y     The start of the text
-	 *
-	 * @notapi
-	 */
-	color_t gdisp_lld_get_pixel_color(coord_t x, coord_t y) {
-		color_t color;
-		#if GDISP_NEED_CONTROL
-			coord_t		t;
-		#endif
-
-		#if GDISP_NEED_VALIDATION || GDISP_NEED_CLIP
-			// Clip pre orientation change
-			if (x < 0 || x >= GC->g.Width || y < 0 || y >= GC->g.Height) return 0;
-		#endif
+#if GDISP_HARDWARE_PIXELREAD
+	LLDSPEC	color_t gdisp_lld_get_pixel_color(GDISPDriver *g) {
+		COLORREF	color;
 
 		#if GDISP_NEED_CONTROL
-			switch(GC->g.Orientation) {
+			switch(g->g.Orientation) {
 			case GDISP_ROTATE_0:
+				color = GetPixel(dcBuffer, g->p.x, g->p.y);
 				break;
 			case GDISP_ROTATE_90:
-				t = GC->g.Height - 1 - y;
-				y = x;
-				x = t;
+				color = GetPixel(dcBuffer, g->g.Height - 1 - g->p.y, g->p.x);
 				break;
 			case GDISP_ROTATE_180:
-				x = GC->g.Width - 1 - x;
-				y = GC->g.Height - 1 - y;
+				color = GetPixel(dcBuffer, g->g.Width - 1 - g->p.x, g->g.Height - 1 - g->p.y);
 				break;
 			case GDISP_ROTATE_270:
-				t = GC->g.Width - 1 - x;
-				x = y;
-				y = t;
+				color = GetPixel(dcBuffer, g->p.y, g->g.Width - 1 - g->p.x);
 				break;
 			}
+		#else
+			color = GetPixel(dcBuffer, g->p.x, g->p.y);
 		#endif
 		
-		color = GetPixel(dcBuffer, x, y);
 		return BGR2COLOR(color);
 	}
 #endif
 
-#if (GDISP_NEED_SCROLL && GDISP_HARDWARE_SCROLL) || defined(__DOXYGEN__)
-	/**
-	 * @brief   Scroll vertically a section of the screen.
-	 * @note    Optional.
-	 * @note    If x,y + cx,cy is off the screen, the result is undefined.
-	 * @note    If lines is >= cy, it is equivelent to a area fill with bgcolor.
-	 *
-	 * @param[in] x, y     The start of the area to be scrolled
-	 * @param[in] cx, cy   The size of the area to be scrolled
-	 * @param[in] lines    The number of lines to scroll (Can be positive or negative)
-	 * @param[in] bgcolor  The color to fill the newly exposed area.
-	 *
-	 * @notapi
-	 */
-	void gdisp_lld_vertical_scroll(coord_t x, coord_t y, coord_t cx, coord_t cy, int lines, color_t bgcolor) {
-		RECT	rect, frect, srect;
-		HBRUSH	hbr;
+#if GDISP_NEED_SCROLL && GDISP_HARDWARE_SCROLL
+	void gdisp_lld_vertical_scroll(GDISPDriver *g) {
+		HDC			dcScreen;
+		RECT		rect;
+		coord_t		lines;
 		
-		#if GDISP_NEED_VALIDATION || GDISP_NEED_CLIP
-			// Clip pre orientation change
-			if (x < GC->g.clipx0) { cx -= GC->g.clipx0 - x; x = GC->g.clipx0; }
-			if (y < GC->g.clipy0) { cy -= GC->g.clipy0 - y; y = GC->g.clipy0; }
-			if (!lines || cx <= 0 || cy <= 0 || x >= GC->g.clipx1 || y >= GC->g.clipy1) return;
-			if (x+cx > GC->g.clipx1)	cx = GC->g.clipx1 - x;
-			if (y+cy > GC->g.clipy1)	cy = GC->g.clipy1 - y;
-		#endif
-		
-		if (lines > cy) lines = cy;
-		else if (-lines > cy) lines = -cy;
-
-		bgcolor = COLOR2BGR(bgcolor);
-		hbr = CreateSolidBrush(bgcolor);
-
 		#if GDISP_NEED_CONTROL
 			switch(GC->g.Orientation) {
 			case GDISP_ROTATE_0:
-				rect.top = y;
-				rect.bottom = rect.top+cy;
-				rect.left = x;
-				rect.right = rect.left+cx;
-				lines = -lines;
+				rect.top = g->p.y;
+				rect.bottom = rect.top+g->p.cy;
+				rect.left = g->p.x;
+				rect.right = rect.left+g->p.cx;
+				lines = -g->p.y1;
 				goto vertical_scroll;
 			case GDISP_ROTATE_90:
-				rect.top = x;
-				rect.bottom = rect.top+cx;
-				rect.right = GC->g.Height - y;
-				rect.left = rect.right-cy;
+				rect.top = g->p.x;
+				rect.bottom = rect.top+g->p.cx;
+				rect.right = g->g.Height - g->p.y;
+				rect.left = rect.right-g->p.cy;
+				lines = g->p.y1;
 				goto horizontal_scroll;
 			case GDISP_ROTATE_180:
-				rect.bottom = GC->g.Height - y;
-				rect.top = rect.bottom-cy;
-				rect.right = GC->g.Width - x;
-				rect.left = rect.right-cx;
+				rect.bottom = g->g.Height - g->p.y;
+				rect.top = rect.bottom-g->p.cy;
+				rect.right = GC->g.Width - g->p.x;
+				rect.left = rect.right-g->p.cx;
+				lines = g->p.y1;
 			vertical_scroll:
-				srect.left = frect.left = rect.left;
-				srect.right = frect.right = rect.right;
 				if (lines > 0) {
-					srect.top = frect.top = rect.top;
-					frect.bottom = rect.top+lines;
-					srect.bottom = rect.bottom-lines;
+					rect.bottom -= lines;
 				} else {
-					srect.bottom = frect.bottom = rect.bottom;
-					frect.top = rect.bottom+lines;
-					srect.top = rect.top-lines;
+					rect.top -= lines;
 				}
-				if (cy >= lines && cy >= -lines)
-					ScrollDC(dcBuffer, 0, lines, &srect, 0, 0, 0);
+				if (g->p.cy >= lines && g->p.cy >= -lines) {
+					dcScreen = GetDC(winRootWindow);
+					ScrollDC(dcBuffer, 0, lines, &rect, 0, 0, 0);
+					ScrollDC(dcScreen, 0, lines, &rect, 0, 0, 0);
+					ReleaseDC(winRootWindow, dcScreen);
+				}
 				break;
 			case GDISP_ROTATE_270:
-				rect.bottom = GC->g.Width - x;
-				rect.top = rect.bottom-cx;
-				rect.left = y;
-				rect.right = rect.left+cy;
-				lines = -lines;
+				rect.bottom = g->g.Width - g->p.x;
+				rect.top = rect.bottom-g->p.cx;
+				rect.left = g->p.y;
+				rect.right = rect.left+g->p.cy;
+				lines = -g->p.y1;
 			horizontal_scroll:
-				srect.top = frect.top = rect.top;
-				srect.bottom = frect.bottom = rect.bottom;
 				if (lines > 0) {
-					srect.left = frect.left = rect.left;
-					frect.right = rect.left+lines;
-					srect.right = rect.right-lines;
+					rect.right -= lines;
 				} else {
-					srect.right = frect.right = rect.right;
-					frect.left = rect.right+lines;
-					srect.left = rect.left-lines;
+					rect.left -= lines;
 				}
-				if (cy >= lines && cy >= -lines)
-					ScrollDC(dcBuffer, lines, 0, &srect, 0, 0, 0);
+				if (g->p.cy >= lines && g->p.cy >= -lines) {
+					dcScreen = GetDC(winRootWindow);
+					ScrollDC(dcBuffer, lines, 0, &rect, 0, 0, 0);
+					ScrollDC(dcScreen, lines, 0, &rect, 0, 0, 0);
+					ReleaseDC(winRootWindow, dcScreen);
+				}
 				break;
 			}
 		#else
-			rect.top = y;
-			rect.bottom = rect.top+cy;
-			rect.left = x;
-			rect.right = rect.left+cx;
-			lines = -lines;
-			srect.left = frect.left = rect.left;
-			srect.right = frect.right = rect.right;
+			rect.top = g->p.y;
+			rect.bottom = rect.top+g->p.cy;
+			rect.left = g->p.x;
+			rect.right = rect.left+g->p.cx;
+			lines = -g->p.y1;
 			if (lines > 0) {
-				srect.top = frect.top = rect.top;
-				frect.bottom = rect.top+lines;
-				srect.bottom = rect.bottom-lines;
+				rect.bottom -= lines;
 			} else {
-				srect.bottom = frect.bottom = rect.bottom;
-				frect.top = rect.bottom+lines;
-				srect.top = rect.top-lines;
+				rect.top -= lines;
 			}
-			if (cy >= lines && cy >= -lines)
-				ScrollDC(dcBuffer, 0, lines, &srect, 0, 0, 0);
+			if (g->p.cy >= lines && g->p.cy >= -lines) {
+				dcScreen = GetDC(winRootWindow);
+				ScrollDC(dcBuffer, 0, lines, &rect, 0, 0, 0);
+				ScrollDC(dcScreen, 0, lines, &rect, 0, 0, 0);
+				ReleaseDC(winRootWindow, dcScreen);
+			}
 		#endif
-		
-		if (hbr)
-			FillRect(dcBuffer, &frect, hbr);
-		InvalidateRect(winRootWindow, &rect, FALSE);
-		UpdateWindow(winRootWindow);
 	}
 #endif
 
-#if (GDISP_NEED_CONTROL && GDISP_HARDWARE_CONTROL) || defined(__DOXYGEN__)
-	/**
-	 * @brief   Driver Control
-	 * @detail	Unsupported control codes are ignored.
-	 * @note	The value parameter should always be typecast to (void *).
-	 * @note	There are some predefined and some specific to the low level driver.
-	 * @note	GDISP_CONTROL_POWER			- Takes a gdisp_powermode_t
-	 * 			GDISP_CONTROL_ORIENTATION	- Takes a gdisp_orientation_t
-	 * 			GDISP_CONTROL_BACKLIGHT -	 Takes an int from 0 to 100. For a driver
-	 * 											that only supports off/on anything other
-	 * 											than zero is on.
-	 * 			GDISP_CONTROL_CONTRAST		- Takes an int from 0 to 100.
-	 * 			GDISP_CONTROL_LLD			- Low level driver control constants start at
-	 * 											this value.
-	 *
-	 * @param[in] what		What to do.
-	 * @param[in] value		The value to use (always cast to a void *).
-	 *
-	 * @notapi
-	 */
-	void gdisp_lld_control(unsigned what, void *value) {
-		switch(what) {
+#if GDISP_NEED_CONTROL && GDISP_HARDWARE_CONTROL
+	LLDSPEC void gdisp_lld_control(GDISPDriver *g) {
+		switch(g->p.x) {
 		case GDISP_CONTROL_ORIENTATION:
-			if (GC->g.Orientation == (gdisp_orientation_t)value)
+			if (g->g.Orientation == (orientation_t)g->p.ptr)
 				return;
-			switch((gdisp_orientation_t)value) {
+			switch((orientation_t)g->p.ptr) {
 				case GDISP_ROTATE_0:
-					GC->g.Width = wWidth;
-					GC->g.Height = wHeight;
+					g->g.Width = wWidth;
+					g->g.Height = wHeight;
 					break;
 				case GDISP_ROTATE_90:
-					GC->g.Height = wWidth;
-					GC->g.Width = wHeight;
+					g->g.Height = wWidth;
+					g->g.Width = wHeight;
 					break;
 				case GDISP_ROTATE_180:
-					GC->g.Width = wWidth;
-					GC->g.Height = wHeight;
+					g->g.Width = wWidth;
+					g->g.Height = wHeight;
 					break;
 				case GDISP_ROTATE_270:
-					GC->g.Height = wWidth;
-					GC->g.Width = wHeight;
+					g->g.Height = wWidth;
+					g->g.Width = wHeight;
 					break;
 				default:
 					return;
 			}
-
-			#if GDISP_NEED_CLIP || GDISP_NEED_VALIDATION
-				GC->g.clipx0 = 0;
-				GC->g.clipy0 = 0;
-				GC->g.clipx1 = GC->g.Width;
-				GC->g.clipy1 = GC->g.Height;
-			#endif
-			GC->g.Orientation = (gdisp_orientation_t)value;
+			g->g.Orientation = (orientation_t)g->p.ptr;
 			return;
 /*
 		case GDISP_CONTROL_POWER:
@@ -954,25 +714,22 @@ bool_t gdisp_lld_init(void) {
 #endif
 
 #if GINPUT_NEED_MOUSE
-
 	void ginput_lld_mouse_init(void) {}
-
 	void ginput_lld_mouse_get_reading(MouseReading *pt) {
 		pt->x = mousex;
 		pt->y = mousey > wHeight ? wHeight : mousey;
 		pt->z = (mousebuttons & GINPUT_MOUSE_BTN_LEFT) ? 100 : 0;
 		pt->buttons = mousebuttons;
 	}
-
 #endif /* GINPUT_NEED_MOUSE */
 
 #if GINPUT_NEED_TOGGLE
-
+	const GToggleConfig GInputToggleConfigTable[GINPUT_TOGGLE_CONFIG_ENTRIES] = {
+		{0,	0xFF, 0x00, 0},
+	};
 	void ginput_lld_toggle_init(const GToggleConfig *ptc) { (void) ptc; }
 	unsigned ginput_lld_toggle_getbits(const GToggleConfig *ptc) { (void) ptc; return toggles; }
-
 #endif /* GINPUT_NEED_MOUSE */
 
 #endif /* GFX_USE_GDISP */
-/** @} */
 

@@ -134,17 +134,13 @@
 #endif
 
 #if GFX_USE_GDISP
-	#if GDISP_NEED_MULTITHREAD && GDISP_NEED_ASYNC
-		#error "GDISP: Only one of GDISP_NEED_MULTITHREAD and GDISP_NEED_ASYNC should be defined."
-	#endif
-	#if GDISP_NEED_ASYNC && !(GFX_USE_GQUEUE && GQUEUE_NEED_GSYNC)
-		#if GFX_DISPLAY_RULE_WARNINGS
-			#warning "GDISP: GDISP_NEED_ASYNC requires GFX_USE_GQUEUE and GQUEUE_NEED_GSYNC. They have been turned on for you."
+	#if GDISP_MULTIPLE_DRIVERS
+		#ifndef GDISP_PIXELFORMAT
+			#if GFX_DISPLAY_RULE_WARNINGS
+				#warning "GDISP: GDISP_MULTIPLE_DRIVERS requires GDISP_PIXELFORMAT to be set. It has been defaulted to GDISP_PIXELFORMAT_RGB565."
+			#endif
+			#define GDISP_PIXELFORMAT 			GDISP_PIXELFORMAT_RGB565
 		#endif
-		#undef GFX_USE_GQUEUE
-		#define	GFX_USE_GQUEUE		TRUE
-		#undef GQUEUE_NEED_GSYNC
-		#define	GQUEUE_NEED_GSYNC	TRUE
 	#endif
 	#if GDISP_NEED_ANTIALIAS && !GDISP_NEED_PIXELREAD
 		#if GDISP_HARDWARE_PIXELREAD
@@ -161,11 +157,11 @@
 	#endif
 	#if (defined(GDISP_INCLUDE_FONT_SMALL) && GDISP_INCLUDE_FONT_SMALL) || (defined(GDISP_INCLUDE_FONT_LARGER) && GDISP_INCLUDE_FONT_LARGER)
 		#if GFX_DISPLAY_RULE_WARNINGS
-			#warning "GDISP: An old font (Small or Larger) has been defined. A single default font of DEJAVUSANS12 has been added instead."
+			#warning "GDISP: An old font (Small or Larger) has been defined. A single default font of UI2 has been added instead."
 			#warning "GDISP: Please see <$(GFXLIB)/include/gdisp/fonts/fonts.h> for a list of available font names."
 		#endif
-		#undef GDISP_INCLUDE_FONT_DEJAVUSANS12
-		#define GDISP_INCLUDE_FONT_DEJAVUSANS12		TRUE
+		#undef GDISP_INCLUDE_FONT_UI2
+		#define GDISP_INCLUDE_FONT_UI2		TRUE
 	#endif
 #endif
 

@@ -43,21 +43,15 @@ typedef int16_t	coord_t;
 /**
  * @brief   Type for a 2D point on the screen.
  */
-typedef struct point_t {
-	coord_t		x, y;
-	} point;
+typedef struct point { coord_t x, y; } point, point_t;
 /**
  * @brief   Type for the text justification.
  */
-typedef enum justify {
-	justifyLeft = 0,
-	justifyCenter = 1,
-	justifyRight = 2
-} justify_t;
+typedef enum justify { justifyLeft=0, justifyCenter=1, justifyRight=2 } justify_t;
 /**
  * @brief   Type for the font metric.
  */
-typedef enum fontmetric {fontHeight, fontDescendersHeight, fontLineSpacing, fontCharPadding, fontMinWidth, fontMaxWidth} fontmetric_t;
+typedef enum fontmetric { fontHeight, fontDescendersHeight, fontLineSpacing, fontCharPadding, fontMinWidth, fontMaxWidth } fontmetric_t;
 /**
  * @brief   The type of a font.
  */
@@ -65,11 +59,11 @@ typedef const struct mf_font_s* font_t;
 /**
  * @brief   Type for the screen orientation.
  */
-typedef enum orientation {GDISP_ROTATE_0, GDISP_ROTATE_90, GDISP_ROTATE_180, GDISP_ROTATE_270} gdisp_orientation_t;
+typedef enum orientation { GDISP_ROTATE_0=0, GDISP_ROTATE_90=90, GDISP_ROTATE_180=180, GDISP_ROTATE_270=270 } orientation_t;
 /**
  * @brief   Type for the available power modes for the screen.
  */
-typedef enum powermode {powerOff, powerSleep, powerDeepSleep, powerOn} gdisp_powermode_t;
+typedef enum powermode { powerOff, powerSleep, powerDeepSleep, powerOn } powermode_t;
 
 /*
  * This is not documented in Doxygen as it is meant to be a black-box.
@@ -79,8 +73,8 @@ typedef enum powermode {powerOff, powerSleep, powerDeepSleep, powerOn} gdisp_pow
 typedef struct GDISPControl {
 		coord_t				Width;
 		coord_t				Height;
-		gdisp_orientation_t	Orientation;
-		gdisp_powermode_t	Powermode;
+		orientation_t		Orientation;
+		powermode_t			Powermode;
 		uint8_t				Backlight;
 		uint8_t				Contrast;
 	} GDISPControl;
@@ -110,15 +104,6 @@ extern GDISPControl	*GDISP;
 #define GDISP_CONTROL_BACKLIGHT		2
 #define GDISP_CONTROL_CONTRAST		3
 #define GDISP_CONTROL_LLD			1000
-
-/**
- * @brief   Driver Query Constants
- * @details	Unsupported query codes return (void *)-1.
- * @note	The result should be typecast the required type.
- * @note	GDISP_QUERY_LLD				- Low level driver control constants start at
- * 											this value.
- */
-#define GDISP_QUERY_LLD				1000
 
 /**
  * @brief   Driver Pixel Format Constants
@@ -160,6 +145,80 @@ extern GDISPControl	*GDISP;
 #define Pink			HTML2COLOR(0xFFC0CB)
 #define SkyBlue			HTML2COLOR(0x87CEEB)
 /** @} */
+
+/*===========================================================================*/
+/* Defines relating to the display hardware									 */
+/*===========================================================================*/
+
+#if GDISP_MULTIPLE_DRIVERS || defined(__DOXYGEN__)
+	/**
+	 * @name    GDISP pixel format choices
+	 * @{
+	 */
+		/**
+		 * @brief   The pixel format.
+		 * @default	It generally defaults to the hardware pixel format.
+		 * @note	This doesn't need to match the hardware pixel format.
+		 * 			It is definitely more efficient when it does.
+		 * @note	When GDISP_MULTIPLE_DRIVERS is defined, this should
+		 * 			also be explicitly defined to ensure the best match
+		 * 			with your hardware across all devices.
+		 * @note	Should be set to one of the following:
+		 *				GDISP_PIXELFORMAT_RGB565
+		 *				GDISP_PIXELFORMAT_BGR565
+		 *				GDISP_PIXELFORMAT_RGB888
+		 *				GDISP_PIXELFORMAT_RGB444
+		 *				GDISP_PIXELFORMAT_RGB332
+		 *				GDISP_PIXELFORMAT_RGB666
+		 *				GDISP_PIXELFORMAT_CUSTOM
+		 * @note	If you set GDISP_PIXELFORMAT_CUSTOM you need to also define
+		 *				color_t, RGB2COLOR(r,g,b), HTML2COLOR(h),
+		 *              RED_OF(c), GREEN_OF(c), BLUE_OF(c),
+		 *              COLOR(c) and MASKCOLOR.
+		 */
+		#ifndef GDISP_PIXELFORMAT
+			#define GDISP_PIXELFORMAT 			GDISP_PIXELFORMAT_ERROR
+		#endif
+		/**
+		 * @brief   Do pixels require packing for a blit
+		 * @note	Is only valid for a pixel format that doesn't fill it's datatype. ie formats:
+		 *				GDISP_PIXELFORMAT_RGB888
+		 *				GDISP_PIXELFORMAT_RGB444
+		 *				GDISP_PIXELFORMAT_RGB666
+		 *				GDISP_PIXELFORMAT_CUSTOM
+		 * @note	If you use GDISP_PIXELFORMAT_CUSTOM and packed bit fills
+		 *				you need to also define @p gdispPackPixels(buf,cx,x,y,c)
+		 * @note	If you are using GDISP_HARDWARE_BITFILLS = FALSE then the pixel
+		 *				format must not be a packed format as the software blit does
+		 *				not support packed pixels
+		 * @note	Very few cases should actually require packed pixels as the low
+		 *				level driver can also pack on the fly as it is sending it
+		 *				to the graphics device.
+		 */
+		#ifndef GDISP_PACKED_PIXELS
+			#define GDISP_PACKED_PIXELS			FALSE
+		#endif
+
+		/**
+		 * @brief   Do lines of pixels require packing for a blit
+		 * @note	Ignored if GDISP_PACKED_PIXELS is FALSE
+		 */
+		#ifndef GDISP_PACKED_LINES
+			#define GDISP_PACKED_LINES			FALSE
+		#endif
+	/** @} */
+#else
+	#include "gdisp_lld_config.h"
+	#ifndef GDISP_PIXELFORMAT
+		#define GDISP_PIXELFORMAT			GDISP_LLD_PIXELFORMAT
+	#endif
+	#ifndef GDISP_PACKED_PIXELS
+		#define GDISP_PACKED_PIXELS			FALSE
+	#endif
+	#ifndef GDISP_PACKED_LINES
+		#define GDISP_PACKED_LINES			FALSE
+	#endif
+#endif
 
 /*===========================================================================*/
 /* Defines related to the pixel format										 */
@@ -272,26 +331,6 @@ extern GDISPControl	*GDISP;
 
 #elif GDISP_PIXELFORMAT != GDISP_PIXELFORMAT_CUSTOM
 	#error "GDISP: No supported pixel format has been specified."
-#endif
-
-/* Verify information for packed pixels and define a non-packed pixel macro */
-#if !GDISP_PACKED_PIXELS
-	#define gdispPackPixels(buf,cx,x,y,c)	{ ((color_t *)(buf))[(y)*(cx)+(x)] = (c); }
-#elif !GDISP_HARDWARE_BITFILLS
-	#error "GDISP: packed pixel formats are only supported for hardware accelerated drivers."
-#elif GDISP_PIXELFORMAT != GDISP_PIXELFORMAT_RGB888 \
-		&& GDISP_PIXELFORMAT != GDISP_PIXELFORMAT_RGB444 \
-		&& GDISP_PIXELFORMAT != GDISP_PIXELFORMAT_RGB666 \
-		&& GDISP_PIXELFORMAT != GDISP_PIXELFORMAT_CUSTOM
-	#error "GDISP: A packed pixel format has been specified for an unsupported pixel format."
-#endif
-
-#if GDISP_NEED_SCROLL && !GDISP_HARDWARE_SCROLL
-	#error "GDISP: Hardware scrolling is wanted but not supported."
-#endif
-
-#if GDISP_NEED_PIXELREAD && !GDISP_HARDWARE_PIXELREAD
-	#error "GDISP: Pixel read-back is wanted but not supported."
 #endif
 
 /**
@@ -773,23 +812,6 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color);
 	 * @api
 	 */
 	void gdispFillRoundedBox(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t radius, color_t color);
-#endif
-
-/* Support routine for packed pixel formats */
-#if !defined(gdispPackPixels) || defined(__DOXYGEN__)
-	/**
-	 * @brief   Pack a pixel into a pixel buffer.
-	 * @note    This function performs no buffer boundary checking
-	 *			regardless of whether GDISP_NEED_CLIP has been specified.
-	 *
-	 * @param[in] buf		The buffer to put the pixel in
-	 * @param[in] cx		The width of a pixel line
-	 * @param[in] x, y		The location of the pixel to place
-	 * @param[in] color		The color to put into the buffer
-	 *
-	 * @api
-	 */
-	void gdispPackPixels(const pixel_t *buf, coord_t cx, coord_t x, coord_t y, color_t color);
 #endif
 
 /* 
