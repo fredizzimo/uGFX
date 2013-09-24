@@ -142,5 +142,23 @@
 
 #endif
 
+#if GMISC_NEED_INVSQRT
+	// Algorithm based on Quake code
+	float invsqrt(float n) {
+		long i;
+		float x2, y;
+		const float threehalfs = 1.5F;
+
+		x2 = n * 0.5F;
+		y  = n;
+		i  = * ( long * ) &y;						// evil floating point bit level hacking
+		i  = 0x5f3759df - ( i >> 1 );				// what the?
+		y  = * ( float * ) &i;
+		y  = y * ( threehalfs - ( x2 * y * y ) );	// 1st iteration
+		//y  = y * ( threehalfs - ( x2 * y * y ) );	// 2nd iteration for extra precision, this can be removed
+		return y;
+	}
+#endif
+
 #endif /* GFX_USE_GMISC */
 /** @} */
