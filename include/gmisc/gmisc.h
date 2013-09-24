@@ -184,6 +184,23 @@ extern "C" {
 		/** @} */
 #endif
 
+#if GMISC_NEED_INVSQRT
+		/**
+		 * @brief	Fast inverse square root function (x^-1/2)
+		 * @return	The approximate inverse square root
+		 *
+		 * @param[in] n	The number to find the inverse square root of
+		 *
+		 * @note	This function generates an approximate result. Higher accuracy (at the expense
+		 * 			of speed) can be obtained by modifying the source code (the necessary line
+		 * 			is already there - just commented out).
+		 * @note	This function relies on the internal machine format of a float and a long.
+		 * 			If your machine architecture is very unusual this function may not work.
+		 *
+		 * @api
+		 */
+		float invsqrt(float n);
+#endif
 #ifdef __cplusplus
 }
 #endif

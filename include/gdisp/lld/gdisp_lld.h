@@ -184,7 +184,7 @@ typedef struct GDISPDriver {
 
 } GDISPDriver;
 
-#if !GDISP_MULTIPLE_DRIVERS || defined(GDISP_LLD_DECLARATIONS)
+#if !GDISP_MULTIPLE_DRIVERS || defined(GDISP_LLD_DECLARATIONS) || defined(__DOXYGEN__)
 	#if GDISP_MULTIPLE_DRIVERS
 		#define LLDSPEC			static
 	#else
@@ -203,7 +203,7 @@ typedef struct GDISPDriver {
 	 */
 	LLDSPEC	bool_t gdisp_lld_init(GDISPDriver *g);
 
-	#if GDISP_HARDWARE_STREAM
+	#if GDISP_HARDWARE_STREAM || defined(__DOXYGEN__)
 		/**
 		 * @brief   Start a streamed operation
 		 * @pre		GDISP_HARDWARE_STREAM is TRUE
@@ -228,7 +228,7 @@ typedef struct GDISPDriver {
 		 */
 		LLDSPEC	void gdisp_lld_stream_color(GDISPDriver *g);
 
-		#if GDISP_HARDWARE_STREAM_READ
+		#if GDISP_HARDWARE_STREAM_READ || defined(__DOXYGEN__)
 			/**
 			 * @brief   Read a pixel from the current streaming position and then increment that position
 			 * @return	The color at the current position
@@ -241,7 +241,7 @@ typedef struct GDISPDriver {
 			LLDSPEC	color_t gdisp_lld_stream_read(GDISPDriver *g);
 		#endif
 
-		#if GDISP_HARDWARE_STREAM_END
+		#if GDISP_HARDWARE_STREAM_END || defined(__DOXYGEN__)
 			/**
 			 * @brief   End the current streaming operation
 			 * @pre		GDISP_HARDWARE_STREAM and GDISP_HARDWARE_STREAM_END is TRUE
@@ -254,7 +254,7 @@ typedef struct GDISPDriver {
 		#endif
 	#endif
 
-	#if GDISP_HARDWARE_DRAWPIXEL
+	#if GDISP_HARDWARE_DRAWPIXEL || defined(__DOXYGEN__)
 		/**
 		 * @brief   Draw a pixel
 		 * @pre		GDISP_HARDWARE_DRAWPIXEL is TRUE
@@ -268,7 +268,7 @@ typedef struct GDISPDriver {
 		LLDSPEC	void gdisp_lld_draw_pixel(GDISPDriver *g);
 	#endif
 
-	#if GDISP_HARDWARE_CLEARS
+	#if GDISP_HARDWARE_CLEARS || defined(__DOXYGEN__)
 		/**
 		 * @brief   Clear the screen using the defined color
 		 * @pre		GDISP_HARDWARE_CLEARS is TRUE
@@ -281,7 +281,7 @@ typedef struct GDISPDriver {
 		LLDSPEC	void gdisp_lld_clear(GDISPDriver *g);
 	#endif
 
-	#if GDISP_HARDWARE_FILLS
+	#if GDISP_HARDWARE_FILLS || defined(__DOXYGEN__)
 		/**
 		 * @brief   Fill an area with a single color
 		 * @pre		GDISP_HARDWARE_FILLS is TRUE
@@ -296,7 +296,7 @@ typedef struct GDISPDriver {
 		LLDSPEC	void gdisp_lld_fill_area(GDISPDriver *g);
 	#endif
 
-	#if GDISP_HARDWARE_BITFILLS
+	#if GDISP_HARDWARE_BITFILLS || defined(__DOXYGEN__)
 		/**
 		 * @brief   Fill an area using a bitmap
 		 * @pre		GDISP_HARDWARE_BITFILLS is TRUE
@@ -313,7 +313,7 @@ typedef struct GDISPDriver {
 		LLDSPEC	void gdisp_lld_blit_area(GDISPDriver *g);
 	#endif
 
-	#if GDISP_HARDWARE_PIXELREAD
+	#if GDISP_HARDWARE_PIXELREAD || defined(__DOXYGEN__)
 		/**
 		 * @brief   Read a pixel from the display
 		 * @return	The color at the defined position
@@ -327,7 +327,7 @@ typedef struct GDISPDriver {
 		LLDSPEC	color_t gdisp_lld_get_pixel_color(GDISPDriver *g);
 	#endif
 
-	#if GDISP_HARDWARE_SCROLL && GDISP_NEED_SCROLL
+	#if (GDISP_HARDWARE_SCROLL && GDISP_NEED_SCROLL) || defined(__DOXYGEN__)
 		/**
 		 * @brief   Scroll an area of the screen
 		 * @pre		GDISP_HARDWARE_SCROLL is TRUE (and the application needs it)
@@ -346,7 +346,7 @@ typedef struct GDISPDriver {
 		LLDSPEC	void gdisp_lld_vertical_scroll(GDISPDriver *g);
 	#endif
 
-	#if GDISP_HARDWARE_CONTROL && GDISP_NEED_CONTROL
+	#if (GDISP_HARDWARE_CONTROL && GDISP_NEED_CONTROL) || defined(__DOXYGEN__)
 		/**
 		 * @brief   Control some feature of the hardware
 		 * @pre		GDISP_HARDWARE_CONTROL is TRUE (and the application needs it)
@@ -360,7 +360,7 @@ typedef struct GDISPDriver {
 		LLDSPEC	void gdisp_lld_control(GDISPDriver *g);
 	#endif
 
-	#if GDISP_HARDWARE_QUERY && GDISP_NEED_QUERY
+	#if (GDISP_HARDWARE_QUERY && GDISP_NEED_QUERY) || defined(__DOXYGEN__)
 		/**
 		 * @brief   Query some feature of the hardware
 		 * @return	The information requested (typecast as void *)
@@ -374,7 +374,7 @@ typedef struct GDISPDriver {
 		LLDSPEC	void *gdisp_lld_query(GDISPDriver *g);				// Uses p.x (=what);
 	#endif
 
-	#if GDISP_HARDWARE_CLIP && (GDISP_NEED_CLIP || GDISP_NEED_VALIDATION)
+	#if (GDISP_HARDWARE_CLIP && (GDISP_NEED_CLIP || GDISP_NEED_VALIDATION)) || defined(__DOXYGEN__)
 		/**
 		 * @brief   Set the hardware clipping area
 		 * @pre		GDISP_HARDWARE_CLIP is TRUE (and the application needs it)

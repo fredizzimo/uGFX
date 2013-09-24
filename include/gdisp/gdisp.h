@@ -430,6 +430,58 @@ void gdispBlitAreaEx(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx,
  */
 void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color);
 
+/* Streaming Functions */
+
+#if GDISP_NEED_STREAMING || defined(__DOXYGEN__)
+	/**
+	 * @brief   Start a streaming operation.
+	 * @details Stream data to a window on the display sequentially and very fast.
+	 * @note	While streaming is in operation - no other calls to GDISP functions
+	 * 			can be made (with the exception of @p gdispBlendColor() and streaming
+	 * 			functions). If a call is made (eg in a multi-threaded application) the other
+	 * 			call is blocked waiting for the streaming operation to finish.
+	 * @note	@p gdispStreamStop() must be called to finish the streaming operation.
+	 * @note	If more data is written than the defined area then the results are unspecified.
+	 * 			Some drivers may wrap back to the beginning of the area, others may just
+	 * 			ignore subsequent data.
+	 * @note	Unlike most operations that clip the defined area to the display to generate
+	 * 			a smaller active area, this call will just silently fail if any of the stream
+	 * 			region lies outside the current clipping area.
+	 * @note	A streaming operation may be terminated early (without writing to every location
+	 * 			in the stream area) by calling @p gdispStreamStop().
+	 *
+	 * @param[in] x,y		The start position
+	 * @param[in] cx,cy		The size of the streamable area
+	 *
+	 * @api
+	 */
+	void gdispStreamStart(coord_t x, coord_t y, coord_t cx, coord_t cy);
+
+	/**
+	 * @brief   Send pixel data to the stream.
+	 * @details Write a pixel to the next position in the streamed area and increment the position
+	 * @pre		@p gdispStreamStart() has been called.
+	 * @note	If the gdispStreamStart() has not been called (or failed due to clipping), the
+	 * 			data provided here is simply thrown away.
+	 *
+	 * @param[in] color		The color of the pixel to write
+	 *
+	 * @api
+	 */
+	void gdispStreamColor(color_t color);
+
+	/**
+	 * @brief   Finish the current streaming operation.
+	 * @details	Completes the current streaming operation and allows other GDISP calls to operate again.
+	 * @pre		@p gdispStreamStart() has been called.
+	 * @note	If the gdispStreamStart() has not been called (or failed due to clipping), this
+	 * 			call is simply ignored.
+	 *
+	 * @api
+	 */
+	void gdispStreamStop(void);
+#endif
+
 /* Clipping Functions */
 
 #if GDISP_NEED_CLIP || defined(__DOXYGEN__)

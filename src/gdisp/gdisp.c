@@ -367,7 +367,7 @@ void _gdispInit(void) {
 
 		#if NEED_CLIPPING
 			// Test if the area is valid - if not then exit
-			if (x < GC->clipx0 || x+cx >= GC->clipx1 || y < GC->clipy0 || y+cy >= GC->clipy1) {
+			if (x < GC->clipx0 || x+cx > GC->clipx1 || y < GC->clipy0 || y+cy > GC->clipy1) {
 				MUTEX_EXIT();
 				return;
 			}
@@ -398,7 +398,7 @@ void _gdispInit(void) {
 
 	void gdispStreamColor(color_t color) {
 		#if !GDISP_HARDWARE_STREAM && GDISP_LINEBUF_SIZE != 0 && GDISP_HARDWARE_BITFILLS
-			coord_t	 pos, sx1, sy1, sx2;
+			coord_t	 sx1, sy1, sx2;
 		#endif
 
 		// Don't touch the mutex as we should already own it
@@ -413,48 +413,45 @@ void _gdispInit(void) {
 			gdisp_lld_stream_color(GC);
 		#elif GDISP_LINEBUF_SIZE != 0 && GDISP_HARDWARE_BITFILLS
 			GC->linebuf[GC->p.cx++] = color;
+			GC->p.x++;
 			if (GC->p.cx >= GDISP_LINEBUF_SIZE) {
-				pos = GC->p.cx;
 				sx1 = GC->p.x1;
 				sy1 = GC->p.y1;
-				sx2 = GC->p.x2;
-				GC->p.x -= pos;
-				GC->p.cx = pos;
+				//sx2 = GC->p.x2;
+				GC->p.x -= GC->p.cx;
 				GC->p.cy = 1;
 				GC->p.x1 = 0;
 				GC->p.y1 = 0;
-				GC->p.x2 = pos;
+				//GC->p.x2 = GC->p.cx;
 				GC->p.ptr = (void *)GC->linebuf;
 				gdisp_lld_blit_area(GC);
 				GC->p.x1 = sx1;
 				GC->p.y1 = sy1;
-				GC->p.x2 = sx2;
-				GC->p.x += pos;
+				//GC->p.x2 = sx2;
+				GC->p.x += GC->p.cx;
 				GC->p.cx = 0;
 			}
 
 			// Just wrap at end-of-line and end-of-buffer
-			if (++GC->p.x >= GC->p.x2) {
+			if (GC->p.x >= GC->p.x2) {
 				if (GC->p.cx) {
-					pos = GC->p.cx;
 					sx1 = GC->p.x1;
 					sy1 = GC->p.y1;
-					sx2 = GC->p.x2;
-					GC->p.x -= pos;
-					GC->p.cx = pos;
+					//sx2 = GC->p.x2;
+					GC->p.x -= GC->p.cx;
 					GC->p.cy = 1;
 					GC->p.x1 = 0;
 					GC->p.y1 = 0;
-					GC->p.x2 = pos;
+					//GC->p.x2 = GC->p.cx;
 					GC->p.ptr = (void *)GC->linebuf;
 					gdisp_lld_blit_area(GC);
 					GC->p.x1 = sx1;
 					GC->p.y1 = sy1;
-					GC->p.x2 = sx2;
+					//GC->p.x2 = sx2;
 					GC->p.cx = 0;
 				}
 				GC->p.x = GC->p.x1;
-				if (++GC->p.y >= GC->p.x2)
+				if (++GC->p.y >= GC->p.y2)
 					GC->p.y = GC->p.y1;
 			}
 		#else
@@ -465,13 +462,13 @@ void _gdispInit(void) {
 			// Just wrap at end-of-line and end-of-buffer
 			if (++GC->p.x >= GC->p.x2) {
 				GC->p.x = GC->p.x1;
-				if (++GC->p.y >= GC->p.x2)
+				if (++GC->p.y >= GC->p.y2)
 					GC->p.y = GC->p.y1;
 			}
 		#endif
 	}
 
-	void gdispStreamEnd(void) {
+	void gdispStreamStop(void) {
 		// Only release the mutex and end the stream if we are actually streaming.
 		if (!(GC->flags & GDISP_FLG_INSTREAM))
 			return;
@@ -486,7 +483,7 @@ void _gdispInit(void) {
 				GC->p.cy = 1;
 				GC->p.x1 = 0;
 				GC->p.y1 = 0;
-				GC->p.x2 = GC->p.cx;
+				//GC->p.x2 = GC->p.cx;
 				GC->p.ptr = (void *)GC->linebuf;
 				gdisp_lld_blit_area(GC);
 			}

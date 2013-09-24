@@ -340,16 +340,16 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 				y = g->p.y;
 				break;
 			case GDISP_ROTATE_90:
-				x = g->g.Height - 1 - g->p.y;
-				y = g->p.x;
+				x = g->p.y;
+				y = g->g.Width - 1 - g->p.x;
 				break;
 			case GDISP_ROTATE_180:
 				x = g->g.Width - 1 - g->p.x;
 				y = g->g.Height - 1 - g->p.y;
 				break;
 			case GDISP_ROTATE_270:
-				x = g->p.y;
-				y = g->g.Width - 1 - g->p.x;
+				x = g->g.Height - 1 - g->p.y;
+				y = g->p.x;
 				break;
 			}
 		#else
@@ -384,10 +384,10 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 				rect.right = rect.left + g->p.cx;
 				break;
 			case GDISP_ROTATE_90:
-				rect.top = g->p.x;
-				rect.bottom = rect.top + g->p.cx;
-				rect.right = g->g.Height - g->p.y;
-				rect.left = rect.right - g->p.cy;
+				rect.bottom = g->g.Width - g->p.x;
+				rect.top = rect.bottom - g->p.cx;
+				rect.left = g->p.y;
+				rect.right = rect.left + g->p.cy;
 				break;
 			case GDISP_ROTATE_180:
 				rect.bottom = g->g.Height - g->p.y;
@@ -396,10 +396,10 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 				rect.left = rect.right - g->p.cx;
 				break;
 			case GDISP_ROTATE_270:
-				rect.bottom = g->g.Width - g->p.x;
-				rect.top = rect.bottom - g->p.cx;
-				rect.left = g->p.y;
-				rect.right = rect.left + g->p.cy;
+				rect.top = g->p.x;
+				rect.bottom = rect.top + g->p.cx;
+				rect.right = g->g.Height - g->p.y;
+				rect.left = rect.right - g->p.cy;
 				break;
 			}
 		#else
@@ -420,8 +420,8 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 	}
 #endif
 
-#if 0 && (GDISP_HARDWARE_BITFILLS && GDISP_NEED_CONTROL)
-	static pixel_t *rotateimg(coord_t cx, coord_t cy, coord_t srcx, coord_t srccx, const pixel_t *buffer) {
+#if GDISP_HARDWARE_BITFILLS && GDISP_NEED_CONTROL
+	static pixel_t *rotateimg(GDISPDriver *g, const pixel_t *buffer) {
 		pixel_t	*dstbuf;
 		pixel_t	*dst;
 		const pixel_t	*src;
@@ -429,37 +429,37 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 		coord_t	i, j;
 
 		// Shortcut.
-		if (GC->g.Orientation == GDISP_ROTATE_0 && srcx == 0 && cx == srccx)
+		if (g->g.Orientation == GDISP_ROTATE_0 && g->p.x1 == 0 && g->p.cx == g->p.x2)
 			return (pixel_t *)buffer;
 		
 		// Allocate the destination buffer
-		sz = (size_t)cx * (size_t)cy;
+		sz = (size_t)g->p.cx * (size_t)g->p.cy;
 		if (!(dstbuf = (pixel_t *)malloc(sz * sizeof(pixel_t))))
 			return 0;
 		
 		// Copy the bits we need
-		switch(GC->g.Orientation) {
+		switch(g->g.Orientation) {
 		case GDISP_ROTATE_0:
-			for(dst = dstbuf, src = buffer+srcx, j = 0; j < cy; j++)
-				for(i = 0; i < cx; i++, src += srccx - cx)
+			for(dst = dstbuf, src = buffer+g->p.x1, j = 0; j < g->p.cy; j++, src += g->p.x2 - g->p.cx)
+				for(i = 0; i < g->p.cx; i++)
 					*dst++ = *src++;
 			break;
 		case GDISP_ROTATE_90:
-			for(src = buffer+srcx, j = 0; j < cy; j++) {
-				dst = dstbuf+cy-j-1;
-				for(i = 0; i < cx; i++, src += srccx - cx, dst += cy)
+			for(src = buffer+g->p.x1, j = 0; j < g->p.cy; j++, src += g->p.x2 - g->p.cx) {
+				dst = dstbuf+sz-g->p.cy+j;
+				for(i = 0; i < g->p.cx; i++, dst -= g->p.cy)
 					*dst = *src++;
 			}
 			break;
 		case GDISP_ROTATE_180:
-			for(dst = dstbuf+sz, src = buffer+srcx, j = 0; j < cy; j++)
-				for(i = 0; i < cx; i++, src += srccx - cx)
+			for(dst = dstbuf+sz, src = buffer+g->p.x1, j = 0; j < g->p.cy; j++, src += g->p.x2 - g->p.cx)
+				for(i = 0; i < g->p.cx; i++)
 					*--dst = *src++;
 			break;
 		case GDISP_ROTATE_270:
-			for(src = buffer+srcx, j = 0; j < cy; j++) {
-				dst = dstbuf+sz-cy+j;
-				for(i = 0; i < cx; i++, src += srccx - cx, dst -= cy)
+			for(src = buffer+g->p.x1, j = 0; j < g->p.cy; j++, src += g->p.x2 - g->p.cx) {
+				dst = dstbuf+g->p.cy-j-1;
+				for(i = 0; i < g->p.cx; i++, dst += g->p.cy)
 					*dst = *src++;
 			}
 			break;
@@ -468,34 +468,24 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 	}
 #endif
 	
-#if 0 && GDISP_HARDWARE_BITFILLS
-	/**
-	 * @brief   Fill an area with a bitmap.
-	 * @note    Optional - The high level driver can emulate using software.
-	 *
-	 * @param[in] x, y     The start filled area
-	 * @param[in] cx, cy   The width and height to be filled
-	 * @param[in] srcx, srcy   The bitmap position to start the fill from
-	 * @param[in] srccx    The width of a line in the bitmap.
-	 * @param[in] buffer   The pixels to use to fill the area.
-	 *
-	 * @notapi
-	 */
-	void gdisp_lld_blit_area(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx, coord_t srcy, coord_t srccx, const pixel_t *buffer) {
+#if GDISP_HARDWARE_BITFILLS
+	void gdisp_lld_blit_area(GDISPDriver *g) {
 		BITMAPV4HEADER bmpInfo;
-		RECT	rect;
+		HDC			dcScreen;
+		pixel_t	*	buffer;
 		#if GDISP_NEED_CONTROL
-			pixel_t	*srcimg;
+			RECT		rect;
+			pixel_t	*	srcimg;
 		#endif
 
 		// Make everything relative to the start of the line
-		buffer += srccx*srcy;
-		srcy = 0;
+		buffer = g->p.ptr;
+		buffer += g->p.x2*g->p.y1;
 		
 		memset(&bmpInfo, 0, sizeof(bmpInfo));
 		bmpInfo.bV4Size = sizeof(bmpInfo);
 		bmpInfo.bV4Planes = 1;
-		bmpInfo.bV4BitCount = 32;
+		bmpInfo.bV4BitCount = sizeof(pixel_t)*8;
 		bmpInfo.bV4AlphaMask = 0;
 		bmpInfo.bV4RedMask		= RGB2COLOR(255,0,0);
 		bmpInfo.bV4GreenMask	= RGB2COLOR(0,255,0);
@@ -508,62 +498,60 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 		bmpInfo.bV4CSType = 0; //LCS_sRGB;
 
 		#if GDISP_NEED_CONTROL
-			bmpInfo.bV4SizeImage = (cy*cx) * sizeof(pixel_t);
-			srcimg = rotateimg(cx, cy, srcx, srccx, buffer);
+			bmpInfo.bV4SizeImage = (g->p.cy*g->p.cx) * sizeof(pixel_t);
+			srcimg = rotateimg(g, buffer);
 			if (!srcimg) return;
 			
-			switch(GC->g.Orientation) {
+			switch(g->g.Orientation) {
 			case GDISP_ROTATE_0:
-				bmpInfo.bV4Width = cx;
-				bmpInfo.bV4Height = -cy; /* top-down image */
-				rect.top = y;
-				rect.bottom = rect.top+cy;
-				rect.left = x;
-				rect.right = rect.left+cx;
+				bmpInfo.bV4Width = g->p.cx;
+				bmpInfo.bV4Height = -g->p.cy; /* top-down image */
+				rect.top = g->p.y;
+				rect.bottom = rect.top+g->p.cy;
+				rect.left = g->p.x;
+				rect.right = rect.left+g->p.cx;
 				break;
 			case GDISP_ROTATE_90:
-				bmpInfo.bV4Width = cy;
-				bmpInfo.bV4Height = -cx; /* top-down image */
-				rect.top = x;
-				rect.bottom = rect.top+cx;
-				rect.right = GC->g.Height - y;
-				rect.left = rect.right-cy;
+				bmpInfo.bV4Width = g->p.cy;
+				bmpInfo.bV4Height = -g->p.cx; /* top-down image */
+				rect.bottom = g->g.Width - g->p.x;
+				rect.top = rect.bottom-g->p.cx;
+				rect.left = g->p.y;
+				rect.right = rect.left+g->p.cy;
 				break;
 			case GDISP_ROTATE_180:
-				bmpInfo.bV4Width = cx;
-				bmpInfo.bV4Height = -cy; /* top-down image */
-				rect.bottom = GC->g.Height - y;
-				rect.top = rect.bottom-cy;
-				rect.right = GC->g.Width - x;
-				rect.left = rect.right-cx;
+				bmpInfo.bV4Width = g->p.cx;
+				bmpInfo.bV4Height = -g->p.cy; /* top-down image */
+				rect.bottom = g->g.Height-1 - g->p.y;
+				rect.top = rect.bottom-g->p.cy;
+				rect.right = g->g.Width - g->p.x;
+				rect.left = rect.right-g->p.cx;
 				break;
 			case GDISP_ROTATE_270:
-				bmpInfo.bV4Width = cy;
-				bmpInfo.bV4Height = -cx; /* top-down image */
-				rect.bottom = GC->g.Width - x;
-				rect.top = rect.bottom-cx;
-				rect.left = y;
-				rect.right = rect.left+cy;
+				bmpInfo.bV4Width = g->p.cy;
+				bmpInfo.bV4Height = -g->p.cx; /* top-down image */
+				rect.top = g->p.x;
+				rect.bottom = rect.top+g->p.cx;
+				rect.right = g->g.Height - g->p.y;
+				rect.left = rect.right-g->p.cy;
 				break;
 			}
+			dcScreen = GetDC(winRootWindow);
 			SetDIBitsToDevice(dcBuffer, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top, 0, 0, 0, rect.bottom-rect.top, srcimg, (BITMAPINFO*)&bmpInfo, DIB_RGB_COLORS);
-			if (srcimg != (pixel_t *)buffer)
+			SetDIBitsToDevice(dcScreen, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top, 0, 0, 0, rect.bottom-rect.top, srcimg, (BITMAPINFO*)&bmpInfo, DIB_RGB_COLORS);
+			ReleaseDC(winRootWindow, dcScreen);
+			if (srcimg != buffer)
 				free(srcimg);
 			
 		#else
-			bmpInfo.bV4Width = srccx;
-			bmpInfo.bV4Height = -cy; /* top-down image */
-			bmpInfo.bV4SizeImage = (cy*srccx) * sizeof(pixel_t);
-			rect.top = y;
-			rect.bottom = rect.top+cy;
-			rect.left = x;
-			rect.right = rect.left+cx;
-			SetDIBitsToDevice(dcBuffer, x, y, cx, cy, srcx, 0, 0, cy, buffer, (BITMAPINFO*)&bmpInfo, DIB_RGB_COLORS);
+			bmpInfo.bV4Width = g->p.x2;
+			bmpInfo.bV4Height = -g->p.cy; /* top-down image */
+			bmpInfo.bV4SizeImage = (g->p.cy*g->p.x2) * sizeof(pixel_t);
+			dcScreen = GetDC(winRootWindow);
+			SetDIBitsToDevice(dcBuffer, g->p.x, g->p.y, g->p.cx, g->p.cy, g->p.x1, 0, 0, g->p.cy, buffer, (BITMAPINFO*)&bmpInfo, DIB_RGB_COLORS);
+			SetDIBitsToDevice(dcScreen, g->p.x, g->p.y, g->p.cx, g->p.cy, g->p.x1, 0, 0, g->p.cy, buffer, (BITMAPINFO*)&bmpInfo, DIB_RGB_COLORS);
+			ReleaseDC(winRootWindow, dcScreen);
 		#endif
-
-		// Invalidate the region to get it on the screen.
-		InvalidateRect(winRootWindow, &rect, FALSE);
-		UpdateWindow(winRootWindow);
 	}
 #endif
 
@@ -577,13 +565,13 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 				color = GetPixel(dcBuffer, g->p.x, g->p.y);
 				break;
 			case GDISP_ROTATE_90:
-				color = GetPixel(dcBuffer, g->g.Height - 1 - g->p.y, g->p.x);
+				color = GetPixel(dcBuffer, g->p.y, g->g.Width - 1 - g->p.x);
 				break;
 			case GDISP_ROTATE_180:
 				color = GetPixel(dcBuffer, g->g.Width - 1 - g->p.x, g->g.Height - 1 - g->p.y);
 				break;
 			case GDISP_ROTATE_270:
-				color = GetPixel(dcBuffer, g->p.y, g->g.Width - 1 - g->p.x);
+				color = GetPixel(dcBuffer, g->g.Height - 1 - g->p.y, g->p.x);
 				break;
 			}
 		#else
@@ -610,11 +598,11 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 				lines = -g->p.y1;
 				goto vertical_scroll;
 			case GDISP_ROTATE_90:
-				rect.top = g->p.x;
-				rect.bottom = rect.top+g->p.cx;
-				rect.right = g->g.Height - g->p.y;
-				rect.left = rect.right-g->p.cy;
-				lines = g->p.y1;
+				rect.bottom = g->g.Width - g->p.x;
+				rect.top = rect.bottom-g->p.cx;
+				rect.left = g->p.y;
+				rect.right = rect.left+g->p.cy;
+				lines = -g->p.y1;
 				goto horizontal_scroll;
 			case GDISP_ROTATE_180:
 				rect.bottom = g->g.Height - g->p.y;
@@ -636,11 +624,11 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 				}
 				break;
 			case GDISP_ROTATE_270:
-				rect.bottom = g->g.Width - g->p.x;
-				rect.top = rect.bottom-g->p.cx;
-				rect.left = g->p.y;
-				rect.right = rect.left+g->p.cy;
-				lines = -g->p.y1;
+				rect.top = g->p.x;
+				rect.bottom = rect.top+g->p.cx;
+				rect.right = g->g.Height - g->p.y;
+				rect.left = rect.right-g->p.cy;
+				lines = g->p.y1;
 			horizontal_scroll:
 				if (lines > 0) {
 					rect.right -= lines;
@@ -684,17 +672,11 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 				return;
 			switch((orientation_t)g->p.ptr) {
 				case GDISP_ROTATE_0:
-					g->g.Width = wWidth;
-					g->g.Height = wHeight;
-					break;
-				case GDISP_ROTATE_90:
-					g->g.Height = wWidth;
-					g->g.Width = wHeight;
-					break;
 				case GDISP_ROTATE_180:
 					g->g.Width = wWidth;
 					g->g.Height = wHeight;
 					break;
+				case GDISP_ROTATE_90:
 				case GDISP_ROTATE_270:
 					g->g.Height = wWidth;
 					g->g.Width = wHeight;

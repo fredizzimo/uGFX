@@ -28,18 +28,18 @@
 		#define GMISC_NEED_ARRAYOPS		FALSE
 	#endif
 	/**
-	 * @brief   Include fast array based trig functions (sin, cos)
-	 * @details	Defaults to FALSE
-	 */
-	#ifndef GMISC_NEED_FASTTRIG
-		#define GMISC_NEED_FASTTRIG		FALSE
-	#endif
-	/**
 	 * @brief   Include fast fixed point trig functions (sin, cos)
 	 * @details	Defaults to FALSE
 	 */
 	#ifndef GMISC_NEED_FIXEDTRIG
 		#define GMISC_NEED_FIXEDTRIG		FALSE
+	#endif
+	/**
+	 * @brief   Include fast inverse square root (x^-1/2)
+	 * @details	Defaults to FALSE
+	 */
+	#ifndef GMISC_NEED_INVSQRT
+		#define GMISC_NEED_INVSQRT		FALSE
 	#endif
 /**
  * @}
