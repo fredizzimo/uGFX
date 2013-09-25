@@ -27,7 +27,7 @@
 
 #define GDISP_HARDWARE_STREAM			TRUE
 #define GDISP_HARDWARE_STREAM_STOP		TRUE
-#define GDISP_HARDWARE_CONTROL			TRUE
+//#define GDISP_HARDWARE_CONTROL			TRUE
 
 #define GDISP_PIXELFORMAT				GDISP_PIXELFORMAT_RGB444
 /* This driver supports both packed and unpacked pixel formats and line formats.
