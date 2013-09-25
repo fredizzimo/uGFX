@@ -48,9 +48,9 @@ GDISPControl			*GDISP = &GDISP_DRIVER_STRUCT.g;
 	#define MUTEX_EXIT()
 #endif
 
-#if GDISP_HARDWARE_STREAM_END
+#if GDISP_HARDWARE_STREAM_STOP
 	#define STREAM_CLEAR()		if ((GC->flags & GDISP_FLG_INSTREAM)) {	\
-									gdisp_lld_stream_end(GC);				\
+									gdisp_lld_stream_stop(GC);				\
 									GC->flags &= ~GDISP_FLG_INSTREAM;	\
 								}
 #else
@@ -84,11 +84,11 @@ GDISPControl			*GDISP = &GDISP_DRIVER_STRUCT.g;
 				return;
 		#endif
 
-		GC->cx = GC->cy = 1;
+		GC->p.cx = GC->p.cy = 1;
 		gdisp_lld_stream_start(GC);
 		gdisp_lld_stream_color(GC);
-		#if GDISP_HARDWARE_STREAM_END
-			gdisp_lld_stream_end(GC);
+		#if GDISP_HARDWARE_STREAM_STOP
+			gdisp_lld_stream_stop(GC);
 		#endif
 	}
 #endif
@@ -110,8 +110,8 @@ GDISPControl			*GDISP = &GDISP_DRIVER_STRUCT.g;
 		gdisp_lld_stream_start(GC);
 		for(; area; area--)
 			gdisp_lld_stream_color(GC);
-		#if GDISP_HARDWARE_STREAM_END
-			gdisp_lld_stream_end(GC);
+		#if GDISP_HARDWARE_STREAM_STOP
+			gdisp_lld_stream_stop(GC);
 		#endif
 	}
 #else
@@ -170,8 +170,8 @@ static void hline_clip(void) {
 				GC->p.cx = GC->p.cy = 1;
 				gdisp_lld_stream_start(GC);
 				gdisp_lld_stream_color(GC);
-				#if GDISP_HARDWARE_STREAM_END
-					gdisp_lld_stream_end(GC);
+				#if GDISP_HARDWARE_STREAM_STOP
+					gdisp_lld_stream_stop(GC);
 				#endif
 			#endif
 			return;
@@ -186,10 +186,11 @@ static void hline_clip(void) {
 	#elif GDISP_HARDWARE_STREAM
 		// Next best is streaming
 		GC->p.cx = GC->p.x1 - GC->p.x;
+		GC->p.cy = 1;
 		gdisp_lld_stream_start(GC);
 		do { gdisp_lld_stream_color(GC); } while(GC->p.cx--);
-		#if GDISP_HARDWARE_STREAM_END
-			gdisp_lld_stream_end(GC);
+		#if GDISP_HARDWARE_STREAM_STOP
+			gdisp_lld_stream_stop(GC);
 		#endif
 	#else
 		// Worst is drawing pixels
@@ -227,8 +228,8 @@ static void vline_clip(void) {
 				GC->p.cx = GC->p.cy = 1;
 				gdisp_lld_stream_start(GC);
 				gdisp_lld_stream_color(GC);
-				#if GDISP_HARDWARE_STREAM_END
-					gdisp_lld_stream_end(GC);
+				#if GDISP_HARDWARE_STREAM_STOP
+					gdisp_lld_stream_stop(GC);
 				#endif
 			#endif
 			return;
@@ -243,10 +244,11 @@ static void vline_clip(void) {
 	#elif GDISP_HARDWARE_STREAM
 		// Next best is streaming
 		GC->p.cy = GC->p.y1 - GC->p.y;
+		GC->p.cx = 1;
 		gdisp_lld_stream_start(GC);
 		do { gdisp_lld_stream_color(GC); } while(GC->p.cy--);
-		#if GDISP_HARDWARE_STREAM_END
-			gdisp_lld_stream_end(GC);
+		#if GDISP_HARDWARE_STREAM_STOP
+			gdisp_lld_stream_stop(GC);
 		#endif
 	#else
 		// Worst is drawing pixels
@@ -398,7 +400,7 @@ void _gdispInit(void) {
 
 	void gdispStreamColor(color_t color) {
 		#if !GDISP_HARDWARE_STREAM && GDISP_LINEBUF_SIZE != 0 && GDISP_HARDWARE_BITFILLS
-			coord_t	 sx1, sy1, sx2;
+			coord_t	 sx1, sy1;
 		#endif
 
 		// Don't touch the mutex as we should already own it
@@ -417,17 +419,14 @@ void _gdispInit(void) {
 			if (GC->p.cx >= GDISP_LINEBUF_SIZE) {
 				sx1 = GC->p.x1;
 				sy1 = GC->p.y1;
-				//sx2 = GC->p.x2;
 				GC->p.x -= GC->p.cx;
 				GC->p.cy = 1;
 				GC->p.x1 = 0;
 				GC->p.y1 = 0;
-				//GC->p.x2 = GC->p.cx;
 				GC->p.ptr = (void *)GC->linebuf;
 				gdisp_lld_blit_area(GC);
 				GC->p.x1 = sx1;
 				GC->p.y1 = sy1;
-				//GC->p.x2 = sx2;
 				GC->p.x += GC->p.cx;
 				GC->p.cx = 0;
 			}
@@ -437,17 +436,14 @@ void _gdispInit(void) {
 				if (GC->p.cx) {
 					sx1 = GC->p.x1;
 					sy1 = GC->p.y1;
-					//sx2 = GC->p.x2;
 					GC->p.x -= GC->p.cx;
 					GC->p.cy = 1;
 					GC->p.x1 = 0;
 					GC->p.y1 = 0;
-					//GC->p.x2 = GC->p.cx;
 					GC->p.ptr = (void *)GC->linebuf;
 					gdisp_lld_blit_area(GC);
 					GC->p.x1 = sx1;
 					GC->p.y1 = sy1;
-					//GC->p.x2 = sx2;
 					GC->p.cx = 0;
 				}
 				GC->p.x = GC->p.x1;
@@ -474,8 +470,8 @@ void _gdispInit(void) {
 			return;
 
 		#if GDISP_HARDWARE_STREAM
-			#if GDISP_HARDWARE_STREAM_END
-				gdisp_lld_stream_end(GC);
+			#if GDISP_HARDWARE_STREAM_STOP
+				gdisp_lld_stream_stop(GC);
 			#endif
 		#elif GDISP_LINEBUF_SIZE != 0 && GDISP_HARDWARE_BITFILLS
 			if (GC->p.cx) {
@@ -483,7 +479,6 @@ void _gdispInit(void) {
 				GC->p.cy = 1;
 				GC->p.x1 = 0;
 				GC->p.y1 = 0;
-				//GC->p.x2 = GC->p.cx;
 				GC->p.ptr = (void *)GC->linebuf;
 				gdisp_lld_blit_area(GC);
 			}
@@ -541,8 +536,8 @@ void gdispClear(color_t color) {
 		gdisp_lld_stream_start(GC);
 		for(; area; area--)
 			gdisp_lld_stream_color(GC);
-		#if GDISP_HARDWARE_STREAM_END
-			gdisp_lld_stream_end(GC);
+		#if GDISP_HARDWARE_STREAM_STOP
+			gdisp_lld_stream_stop(GC);
 		#endif
 	#else
 		// Worst is drawing pixels
@@ -607,8 +602,8 @@ void gdispBlitAreaEx(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx,
 				gdisp_lld_stream_color(GC);
 			}
 		}
-		#if GDISP_HARDWARE_STREAM_END
-			gdisp_lld_stream_end(GC);
+		#if GDISP_HARDWARE_STREAM_STOP
+			gdisp_lld_stream_stop(GC);
 		#endif
 	#else
 		// Worst is drawing pixels
@@ -1532,8 +1527,8 @@ void gdispBlitAreaEx(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx,
 			GC->p.cy = 1;
 			gdisp_lld_stream_start(GC);
 			c = gdisp_lld_stream_read(GC);
-			#if GDISP_HARDWARE_STREAM_END
-				gdisp_lld_stream_end(GC);
+			#if GDISP_HARDWARE_STREAM_STOP
+				gdisp_lld_stream_stop(GC);
 			#endif
 		#else
 			// Worst is "not possible"
@@ -1607,8 +1602,8 @@ void gdispBlitAreaEx(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx,
 							gdisp_lld_stream_start(GC);
 							for(j=0; j < fx; j++)
 								GC->linebuf[j] = gdisp_lld_stream_read(GC);
-							#if GDISP_HARDWARE_STREAM_END
-								gdisp_lld_stream_end(GC);
+							#if GDISP_HARDWARE_STREAM_STOP
+								gdisp_lld_stream_stop(GC);
 							#endif
 						#elif GDISP_HARDWARE_PIXELREAD
 							// Next best is single pixel reads
@@ -1645,8 +1640,8 @@ void gdispBlitAreaEx(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx,
 								GC->p.color = GC->linebuf[j];
 								gdisp_lld_stream_color(GC);
 							}
-							#if GDISP_HARDWARE_STREAM_END
-								gdisp_lld_stream_end(GC);
+							#if GDISP_HARDWARE_STREAM_STOP
+								gdisp_lld_stream_stop(GC);
 							#endif
 						#else
 							// Worst is drawing pixels

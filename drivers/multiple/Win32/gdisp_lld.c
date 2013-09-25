@@ -287,12 +287,6 @@ static DECLARE_THREAD_FUNCTION(WindowThread, param) {
 /* Driver exported functions.                                                */
 /*===========================================================================*/
 
-/**
- * @brief   Low level GDISP driver initialization.
- * @return	TRUE if successful, FALSE on error.
- *
- * @notapi
- */
 LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 	RECT			rect;
 	gfxThreadHandle	hth;

@@ -45,8 +45,8 @@
 		 * @brief   Hardware streaming requires an explicit end call.
 		 * @details If set to @p FALSE if an explicit stream end call is not required.
 		 */
-		#ifndef GDISP_HARDWARE_STREAM_END
-			#define GDISP_HARDWARE_STREAM_END		FALSE
+		#ifndef GDISP_HARDWARE_STREAM_STOP
+			#define GDISP_HARDWARE_STREAM_STOP		FALSE
 		#endif
 
 		/**
@@ -143,6 +143,7 @@ typedef struct GDISPDriver {
 
 	uint16_t					flags;
 		#define GDISP_FLG_INSTREAM		0x0001
+		#define GDISP_FLG_DRIVER		0x0002		// This flags and above are for use by the driver
 
 	// Multithread Mutex
 	#if GDISP_NEED_MULTITHREAD
@@ -241,10 +242,10 @@ typedef struct GDISPDriver {
 			LLDSPEC	color_t gdisp_lld_stream_read(GDISPDriver *g);
 		#endif
 
-		#if GDISP_HARDWARE_STREAM_END || defined(__DOXYGEN__)
+		#if GDISP_HARDWARE_STREAM_STOP || defined(__DOXYGEN__)
 			/**
 			 * @brief   End the current streaming operation
-			 * @pre		GDISP_HARDWARE_STREAM and GDISP_HARDWARE_STREAM_END is TRUE
+			 * @pre		GDISP_HARDWARE_STREAM and GDISP_HARDWARE_STREAM_STOP is TRUE
 			 *
 			 * @param[in]	g				The driver structure
 			 *
@@ -421,7 +422,7 @@ typedef struct GDISPDriver {
 				gdisp_lld_stream_start,
 				gdisp_lld_stream_color,
 				gdisp_lld_stream_read,
-				#if GDISP_HARDWARE_STREAM_END
+				#if GDISP_HARDWARE_STREAM_STOP
 					gdisp_lld_stream_stop,
 				#else
 					0,
