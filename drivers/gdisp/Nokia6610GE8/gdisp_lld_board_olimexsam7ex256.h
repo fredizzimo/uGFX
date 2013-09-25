@@ -16,6 +16,20 @@
 #ifndef _GDISP_LLD_BOARD_H
 #define _GDISP_LLD_BOARD_H
 
+/*
+ * Set various display properties. These properties mostly depend on the exact controller chip you get.
+ * The defaults should work for most controllers.
+ */
+//#define GDISP_GE8_BROKEN_CONTROLLER		FALSE	// Uncomment this out if you have a controller thats not window wrap broken.
+//#define GDISP_SCREEN_HEIGHT				130		// The visible display height
+//#define GDISP_SCREEN_WIDTH				130		// The visible display width
+//#define GDISP_RAM_X_OFFSET				0		// The x offset of the visible area
+//#define GDISP_RAM_Y_OFFSET				2		// The y offset of the visible area
+//#define GDISP_SLEEP_SIZE					32		// The size of the sleep mode partial display
+//#define GDISP_SLEEP_POS					50		// The position of the sleep mode partial display
+//#define GDISP_INITIAL_CONTRAST			38		// The initial contrast percentage
+//#define GDISP_INITIAL_BACKLIGHT			100		// The initial backlight percentage
+
 // ******************************************************
 // Pointers to AT91SAM7X256 peripheral data structures
 // ******************************************************
@@ -98,14 +112,10 @@ static inline void init_board(void) {
 	pPMC->PMC_PCER = 1 << AT91C_ID_SPI0;
 
 	// Fixed mode
-	pSPI->SPI_CR      = 0x81;               //SPI Enable, Sowtware reset
+	pSPI->SPI_CR      = 0x81;               //SPI Enable, Software reset
 	pSPI->SPI_CR      = 0x01;               //SPI Enable
-
-	//pSPI->SPI_MR      = 0xE0019;            //Master mode, fixed select, disable decoder, FDIV=1 (MCK), PCS=1110
-	pSPI->SPI_MR      = 0xE0011;          //Master mode, fixed select, disable decoder, FDIV=0 (MCK), PCS=1110
-
-	//pSPI->SPI_CSR[0]  = 0x01010C11;           //9bit, CPOL=1, ClockPhase=0, SCLK = 48Mhz/32*12 = 125kHz
-	pSPI->SPI_CSR[0]  = 0x01010311;        //9bit, CPOL=1, ClockPhase=0, SCLK = 48Mhz/8 = 6MHz if using commented MR line above
+	pSPI->SPI_MR      = 0xE0011;			//Master mode, fixed select, disable decoder, PCS=1110
+	pSPI->SPI_CSR[0]  = 0x01010311;			//9bit, CPOL=1, ClockPhase=0, SCLK = 48Mhz/3 = 16MHz
 
 	/* Display backlight control at 100% */
 	pwmRunning = FALSE;

@@ -15,18 +15,40 @@
 
 #include "gfx.h"
 
-#if GFX_USE_GDISP /*|| defined(__DOXYGEN__)*/
+#if GFX_USE_GDISP
 
-/* Include the emulation code for things we don't support */
-#include "gdisp/lld/emulation.c"
+#define GDISP_LLD_DECLARATIONS
+#include "gdisp/lld/gdisp_lld.h"
+
+/**
+ * This is for the EPSON (GE8) controller driving a Nokia6610 color LCD display.
+ * Note that there is also a PHILIPS (GE12) controller for the same display that this code
+ * does not support.
+ *
+ * The controller drives a 132x132 display but a 1 pixel surround is not visible
+ * which gives a visible area of 130x130.
+ *
+ * This controller does not support reading back over the SPI interface.
+ * Additionally, the Olimex board doesn't even connect the pin.
+ *
+ * The hardware is capable of doing full width vertical scrolls aligned
+ * on a 4 line boundary however that is not sufficient to support general vertical scrolling.
+ * We also can't manually do read/modify scrolling because we can't read in SPI mode.
+ *
+ * The controller has some quirkyness when operating in other than rotation 0 mode.
+ * When any direction is decremented it starts at location 0 rather than the end of
+ * the area.
+ *
+ * Some of the more modern controllers have a broken command set. If you have one of these
+ * you will recognise it by the colors being off on anything drawn after an odd (as opposed to
+ * even) pixel count area being drawn. If so then set GDISP_GE8_BROKEN_CONTROLLER to TRUE
+ * on your gdisp_lld_board.h file.
+ */
 
 /*===========================================================================*/
 /* Driver local definitions.                                                 */
 /*===========================================================================*/
 
-#include "GE8.h"
-
-/* This controller is only ever used with a 130 x 130 display */
 #if defined(GDISP_SCREEN_HEIGHT)
 	#warning "GDISP: This low level driver does not support setting a screen size. It is being ignored."
 	#undef GDISP_SCREEN_HEIGHT
@@ -35,17 +57,40 @@
 	#warning "GDISP: This low level driver does not support setting a screen size. It is being ignored."
 	#undef GDISP_SCREEN_WIDTH
 #endif
-#define GDISP_SCREEN_HEIGHT		130
-#define GDISP_SCREEN_WIDTH		130
 
-#define GDISP_SCAN_LINES		132		/* 130 lines + 2 invisible lines */
-#define GDISP_RAM_X_OFFSET		0		/* Offset in RAM of visible area */
-#define GDISP_RAM_Y_OFFSET		2		/* Offset in RAM of visible area */
-#define GDISP_SLEEP_SIZE		32		/* Sleep mode window lines */
-#define GDISP_SLEEP_POS			((GDISP_SCAN_LINES-GDISP_SLEEP_SIZE)/2)
+#include "GE8.h"
+#include "gdisp_lld_board.h"
 
-#define GDISP_INITIAL_CONTRAST	38
-#define GDISP_INITIAL_BACKLIGHT	100
+#define GDISP_SCAN_LINES			132
+
+// Set parameters if they are not already set
+#ifndef GDISP_GE8_BROKEN_CONTROLLER
+	#define GDISP_GE8_BROKEN_CONTROLLER		TRUE
+#endif
+#ifndef GDISP_SCREEN_HEIGHT
+	#define GDISP_SCREEN_HEIGHT		130
+#endif
+#ifndef GDISP_SCREEN_WIDTH
+	#define GDISP_SCREEN_WIDTH		130
+#endif
+#ifndef GDISP_RAM_X_OFFSET
+	#define GDISP_RAM_X_OFFSET		0		/* Offset in RAM of visible area */
+#endif
+#ifndef GDISP_RAM_Y_OFFSET
+	#define GDISP_RAM_Y_OFFSET		2		/* Offset in RAM of visible area */
+#endif
+#ifndef GDISP_SLEEP_SIZE
+	#define GDISP_SLEEP_SIZE		32		/* Sleep mode window lines */
+#endif
+#ifndef GDISP_SLEEP_POS
+	#define GDISP_SLEEP_POS			((GDISP_SCAN_LINES-GDISP_SLEEP_SIZE)/2)
+#endif
+#ifndef GDISP_INITIAL_CONTRAST
+	#define GDISP_INITIAL_CONTRAST	38
+#endif
+#ifndef GDISP_INITIAL_BACKLIGHT
+	#define GDISP_INITIAL_BACKLIGHT	100
+#endif
 
 /*===========================================================================*/
 /* Driver exported variables.                                                */
@@ -55,11 +100,17 @@
 /* Driver local variables.                                                   */
 /*===========================================================================*/
 
+static color_t savecolor;
+#if GDISP_GE8_BROKEN_CONTROLLER
+	static color_t firstcolor;
+#endif
+
+#define GDISP_FLG_ODDBYTE	(GDISP_FLG_DRIVER<<0)
+#define GDISP_FLG_RUNBYTE	(GDISP_FLG_DRIVER<<1)
+
 /*===========================================================================*/
 /* Driver local functions.                                                   */
 /*===========================================================================*/
-
-#include "gdisp_lld_board.h"
 
 // Some macros just to make reading the code easier
 #define delayms(ms)						gfxSleepMilliseconds(ms)
@@ -71,29 +122,6 @@
 #define write_cmd3(cmd, d1, d2, d3)		{ write_cmd(cmd); write_data3(d1, d2, d3); }
 #define write_cmd4(cmd, d1, d2, d3, d4)	{ write_cmd(cmd); write_data4(d1, d2, d3, d4); }
 
-// Set the drawing window on the controller.
-// An inline function has been used here incase the parameters have side effects with the internal calculations.
-static __inline void setviewport(coord_t x, coord_t y, coord_t cx, coord_t cy) {
-	switch(GDISP.Orientation) {
-		case GDISP_ROTATE_0:
-			write_cmd2(CASET, GDISP_RAM_X_OFFSET+x, GDISP_RAM_X_OFFSET+x+cx-1);			// Column address set
-			write_cmd2(PASET, GDISP_RAM_Y_OFFSET+y, GDISP_RAM_Y_OFFSET+y+cy-1);			// Page address set
-			break;
-		case GDISP_ROTATE_90:
-			write_cmd2(CASET, GDISP_RAM_X_OFFSET+GDISP.Height-y-cy, GDISP_RAM_X_OFFSET+GDISP.Height-y-1);
-			write_cmd2(PASET, GDISP_RAM_Y_OFFSET+x, GDISP_RAM_Y_OFFSET+x+cx-1);
-			break;
-		case GDISP_ROTATE_180:
-			write_cmd2(CASET, GDISP_RAM_X_OFFSET+GDISP.Width-x-cx, GDISP_RAM_X_OFFSET+GDISP.Width-x-1);
-			write_cmd2(PASET, GDISP_RAM_Y_OFFSET+GDISP.Height-y-cy, GDISP_RAM_Y_OFFSET+GDISP.Height-y-1);
-			break;
-		case GDISP_ROTATE_270:
-			write_cmd2(CASET, GDISP_RAM_X_OFFSET+y, GDISP_RAM_X_OFFSET+y+cy-1);
-			write_cmd2(PASET, GDISP_RAM_Y_OFFSET+GDISP.Width-x-cx, GDISP_RAM_Y_OFFSET+GDISP.Width-x-1);
-			break;
-	}
-}
-
 /*===========================================================================*/
 /* Driver interrupt handlers.                                                */
 /*===========================================================================*/
@@ -102,12 +130,7 @@ static __inline void setviewport(coord_t x, coord_t y, coord_t cx, coord_t cy) {
 /* Driver exported functions.                                                */
 /*===========================================================================*/
 
-/**
- * @brief   Low level GDISP driver initialisation.
- *
- * @notapi
- */
-bool_t gdisp_lld_init(void) {
+LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 	/* Initialise your display */
 	init_board();
 
@@ -147,43 +170,115 @@ bool_t gdisp_lld_init(void) {
 	set_backlight(GDISP_INITIAL_BACKLIGHT);
 
 	/* Initialise the GDISP structure to match */
-	GDISP.Width = GDISP_SCREEN_WIDTH;
-	GDISP.Height = GDISP_SCREEN_HEIGHT;
-	GDISP.Orientation = GDISP_ROTATE_0;
-	GDISP.Powermode = powerOn;
-	GDISP.Backlight = GDISP_INITIAL_BACKLIGHT;
-	GDISP.Contrast = GDISP_INITIAL_CONTRAST;
-	#if GDISP_NEED_VALIDATION || GDISP_NEED_CLIP
-		GDISP.clipx0 = 0;
-		GDISP.clipy0 = 0;
-		GDISP.clipx1 = GDISP.Width;
-		GDISP.clipy1 = GDISP.Height;
-	#endif
+	g->g.Orientation = GDISP_ROTATE_0;
+	g->g.Powermode = powerOn;
+	g->g.Backlight = GDISP_INITIAL_BACKLIGHT;
+	g->g.Contrast = GDISP_INITIAL_CONTRAST;
+	g->g.Width = GDISP_SCREEN_WIDTH;
+	g->g.Height = GDISP_SCREEN_HEIGHT;
 	return TRUE;
 }
 
-/**
- * @brief   Draws a pixel on the display.
- *
- * @param[in] x        X location of the pixel
- * @param[in] y        Y location of the pixel
- * @param[in] color    The color of the pixel
- *
- * @notapi
- */
-void gdisp_lld_draw_pixel(coord_t x, coord_t y, color_t color) {
-	#if GDISP_NEED_VALIDATION || GDISP_NEED_CLIP
-		if (x < GDISP.clipx0 || y < GDISP.clipy0 || x >= GDISP.clipx1 || y >= GDISP.clipy1) return;
-	#endif
+LLDSPEC	void gdisp_lld_stream_start(GDISPDriver *g) {
 	acquire_bus();
-	setviewport(x, y, 1, 1);
-	write_cmd3(RAMWR, 0, (color>>8) & 0x0F, color & 0xFF);
-	release_bus();
+	#if GDISP_NEED_CONTROL
+		switch(g->g.Orientation) {
+			case GDISP_ROTATE_0:
+				write_cmd2(CASET, GDISP_RAM_X_OFFSET+g->p.x, GDISP_RAM_X_OFFSET+g->p.x+g->p.cx-1);			// Column address set
+				write_cmd2(PASET, GDISP_RAM_Y_OFFSET+g->p.y, GDISP_RAM_Y_OFFSET+g->p.y+g->p.cy-1);			// Page address set
+				write_cmd(RAMWR);
+				break;
+			case GDISP_ROTATE_90:
+				write_cmd2(CASET, GDISP_RAM_X_OFFSET+g->g.Height-g->p.y-g->p.cy, GDISP_RAM_X_OFFSET+g->g.Height-g->p.y-1);
+				write_cmd2(PASET, GDISP_RAM_Y_OFFSET+g->p.x, GDISP_RAM_Y_OFFSET+g->p.x+g->p.cx-1);
+				write_cmd(RAMWR);
+				break;
+			case GDISP_ROTATE_180:
+				write_cmd2(CASET, GDISP_RAM_X_OFFSET+g->g.Width-g->p.x-g->p.cx, GDISP_RAM_X_OFFSET+g->g.Width-g->p.x-1);
+				write_cmd2(PASET, GDISP_RAM_Y_OFFSET+g->g.Height-g->p.y-g->p.cy, GDISP_RAM_Y_OFFSET+g->g.Height-g->p.y-1);
+				write_cmd(RAMWR);
+				break;
+			case GDISP_ROTATE_270:
+				write_cmd2(CASET, GDISP_RAM_X_OFFSET+g->p.y, GDISP_RAM_X_OFFSET+g->p.y+g->p.cy-1);
+				write_cmd2(PASET, GDISP_RAM_Y_OFFSET+g->g.Width-g->p.x-g->p.cx, GDISP_RAM_Y_OFFSET+g->g.Width-g->p.x-1);
+				write_cmd(RAMWR);
+				break;
+		}
+	#else
+		write_cmd2(CASET, GDISP_RAM_X_OFFSET+g->p.x, GDISP_RAM_X_OFFSET+g->p.x+g->p.cx-1);			// Column address set
+		write_cmd2(PASET, GDISP_RAM_Y_OFFSET+g->p.y, GDISP_RAM_Y_OFFSET+g->p.y+g->p.cy-1);			// Page address set
+		write_cmd(RAMWR);
+	#endif
+	g->flags &= ~(GDISP_FLG_ODDBYTE|GDISP_FLG_RUNBYTE);
 }
+
+LLDSPEC	void gdisp_lld_stream_color(GDISPDriver *g) {
+	//write_data2(((g->p.color >> 8)&0xFF), (g->p.color & 0xFF));
+
+	#if GDISP_GE8_BROKEN_CONTROLLER
+		if (!(g->flags & GDISP_FLG_RUNBYTE)) {
+			firstcolor = g->p.color;
+			g->flags |= GDISP_FLG_RUNBYTE;
+		}
+	#endif
+	if ((g->flags & GDISP_FLG_ODDBYTE)) {
+		// Write the pair of pixels to the display
+		write_data3(((savecolor >> 4) & 0xFF), (((savecolor << 4) & 0xF0)|((g->p.color >> 8) & 0x0F)), (g->p.color & 0xFF));
+		g->flags &= ~GDISP_FLG_ODDBYTE;
+	} else {
+		savecolor = g->p.color;
+		g->flags |= GDISP_FLG_ODDBYTE;
+	}
+}
+
+#if GDISP_HARDWARE_STREAM_STOP
+	LLDSPEC	void gdisp_lld_stream_stop(GDISPDriver *g) {
+		if ((g->flags & GDISP_FLG_ODDBYTE)) {
+			#if GDISP_GE8_BROKEN_CONTROLLER
+				/**
+				 * We have a real problem here - we need to write a singular pixel
+				 * Methods that are supposed to work...
+				 * 1/ Write the pixel (2 bytes) and then send a NOP command. This doesn't work, the pixel doesn't get written
+				 * 		and it is maintained in the latch where it causes problems for the next window.
+				 * 2/ Just write a dummy extra pixel as stuff beyond the window gets discarded. This doesn't work as contrary to
+				 * 		the documentation the buffer wraps and the first pixel gets overwritten.
+				 * 3/ Put the controller in 16 bits per pixel Type B mode where each pixel is performed by writing two bytes. This
+				 * 		also doesn't work as the controller refuses to enter Type B mode (it stays in Type A mode).
+				 *
+				 * These methods might work on some controllers - just not on the one of the broken versions.
+				 *
+				 * For these broken controllers:
+				 * 	We know we can wrap to the first byte (just overprint it) if we are at the end of the stream area.
+				 * 	If not, we need to create a one pixel by one pixel window to fix this - Uuch. Fortunately this should only happen if the
+				 * 	user application uses the streaming calls and then terminates the stream early or after buffer wrap.
+				 * 	Since this is such an unlikely situation we just don't handle it.
+				 */
+				write_data3(((savecolor >> 4) & 0xFF), (((savecolor << 4) & 0xF0)|((firstcolor >> 8) & 0x0F)), (firstcolor & 0xFF));
+			#else
+				write_data2(((savecolor >> 4) & 0xFF), ((savecolor << 4) & 0xF0));
+				write_cmd(NOP);
+			#endif
+		}
+
+		release_bus();
+	}
+#endif
+
+#if 0
+	void gdisp_lld_draw_pixel(coord_t x, coord_t y, color_t color) {
+		#if GDISP_NEED_VALIDATION || GDISP_NEED_CLIP
+			if (x < GDISP.clipx0 || y < GDISP.clipy0 || x >= GDISP.clipx1 || y >= GDISP.clipy1) return;
+		#endif
+		acquire_bus();
+		setviewport(x, y, 1, 1);
+		write_cmd3(RAMWR, 0, (color>>8) & 0x0F, color & 0xFF);
+		release_bus();
+	}
+#endif
 
 /* ---- Optional Routines ---- */
 
-#if GDISP_HARDWARE_FILLS || defined(__DOXYGEN__)
+#if 0 && GDISP_HARDWARE_FILLS
 	/**
 	 * @brief   Fill an area with a color.
 	 *
@@ -216,7 +311,7 @@ void gdisp_lld_draw_pixel(coord_t x, coord_t y, color_t color) {
 	}
 #endif
 
-#if GDISP_HARDWARE_BITFILLS || defined(__DOXYGEN__)
+#if 0 && GDISP_HARDWARE_BITFILLS
 	/**
 	 * @brief   Fill an area with a bitmap.
 	 *
@@ -343,8 +438,8 @@ void gdisp_lld_draw_pixel(coord_t x, coord_t y, color_t color) {
 
 				/* Get the next pixel */
 				switch(pnum++ & 1) {
-				case 0:		c1 = (((color_t)p[0]) << 4)|(((color_t)p[1])>>4);				break;
-				case 1:		c1 = (((color_t)p[1]&0x0F) << 8)|((color_t)p[1]);	p += 3;		break;
+				case 0:		c2 = (((color_t)p[0]) << 4)|(((color_t)p[1])>>4);				break;
+				case 1:		c2 = (((color_t)p[1]&0x0F) << 8)|((color_t)p[1]);	p += 3;		break;
 				}
 
 				/* Check for line or buffer wrapping */
@@ -369,80 +464,20 @@ void gdisp_lld_draw_pixel(coord_t x, coord_t y, color_t color) {
 	}
 #endif
 
-#if (GDISP_NEED_PIXELREAD && GDISP_HARDWARE_PIXELREAD)
-	/**
-	 * @brief   Get the color of a particular pixel.
-	 * @note    If x,y is off the screen, the result is undefined.
-	 *
-	 * @param[in] x, y     The start of the text
-	 *
-	 * @notapi
-	 */
-	color_t gdisp_lld_get_pixel_color(coord_t x, coord_t y) {
-		/* NOT IMPLEMENTED */
-		/* This controller does not support reading back over the SPI interface.
-		 * Additionally, the Olimex board doesn't even connect the pin.
-		 */
-	}
-#endif
-
-#if (GDISP_NEED_SCROLL && GDISP_HARDWARE_SCROLL)
-	/**
-	 * @brief   Scroll vertically a section of the screen.
-	 * @note    If x,y + cx,cy is off the screen, the result is undefined.
-	 * @note    If lines is >= cy, it is equivelent to a area fill with bgcolor.
-	 *
-	 * @param[in] x, y     The start of the area to be scrolled
-	 * @param[in] cx, cy   The size of the area to be scrolled
-	 * @param[in] lines    The number of lines to scroll (Can be positive or negative)
-	 * @param[in] bgcolor  The color to fill the newly exposed area.
-	 *
-	 * @notapi
-	 */
-	void gdisp_lld_vertical_scroll(coord_t x, coord_t y, coord_t cx, coord_t cy, int lines, color_t bgcolor) {
-		/* NOT IMPLEMENTED */
-		/**
-		 * The hardware is capable of doing full width vertical scrolls aligned
-		 * on a 4 line boundary however that is not sufficient to support this routine.
-		 *
-		 * We also can't manually do read/modify scrolling because we can't read in SPI mode.
-		 */
-	}
-#endif
-
-#if GDISP_HARDWARE_CONTROL || defined(__DOXYGEN__)
-	/**
-	 * @brief   Driver Control
-	 * @details	Unsupported control codes are ignored.
-	 * @note	The value parameter should always be typecast to (void *).
-	 * @note	There are some predefined and some specific to the low level driver.
-	 * @note	GDISP_CONTROL_POWER			- Takes a gdisp_powermode_t
-	 * 			GDISP_CONTROL_ORIENTATION	- Takes a gdisp_orientation_t
-	 * 			GDISP_CONTROL_BACKLIGHT -	 Takes an int from 0 to 100. For a driver
-	 * 											that only supports off/on anything other
-	 * 											than zero is on.
-	 * 			GDISP_CONTROL_CONTRAST		- Takes an int from 0 to 100.
-	 * 			GDISP_CONTROL_LLD			- Low level driver control constants start at
-	 * 											this value.
-	 *
-	 * @param[in] what		What to do.
-	 * @param[in] value		The value to use (always cast to a void *).
-	 *
-	 * @notapi
-	 */
-	void gdisp_lld_control(unsigned what, void *value) {
+#if 0 && GDISP_NEED_CONTROL && GDISP_HARDWARE_CONTROL
+	LLDSPEC void gdisp_lld_control(GDISPDriver *g) {
 		/* The hardware is capable of supporting...
 		 * 	GDISP_CONTROL_POWER				- supported
 		 * 	GDISP_CONTROL_ORIENTATION		- supported
 		 * 	GDISP_CONTROL_BACKLIGHT			- supported
 		 * 	GDISP_CONTROL_CONTRAST			- supported
 		 */
-		switch(what) {
+		switch(g->p.x) {
 		case GDISP_CONTROL_POWER:
-			if (GDISP.Powermode == (gdisp_powermode_t)value)
+			if (g->g.Powermode == (powermode_t)g->p.ptr)
 				return;
 			acquire_bus();
-			switch((gdisp_powermode_t)value) {
+			switch((powermode_t)g->p.ptr) {
 				case powerOff:
 					set_backlight(0);									// Turn off the backlight
 					write_cmd(DISOFF);									// Turn off the display
@@ -485,13 +520,13 @@ void gdisp_lld_draw_pixel(coord_t x, coord_t y, color_t color) {
 					return;
 			}
 			release_bus();
-			GDISP.Powermode = (gdisp_powermode_t)value;
+			g->g.Powermode = (powermode_t)g->p.ptr;
 			return;
 		case GDISP_CONTROL_ORIENTATION:
-			if (GDISP.Orientation == (gdisp_orientation_t)value)
+			if (g->g.Orientation == (orientation_t)g->p.ptr)
 				return;
 			acquire_bus();
-			switch((gdisp_orientation_t)value) {
+			switch((orientation_t)g->p.ptr) {
 				case GDISP_ROTATE_0:
 					write_cmd3(DATCTL, 0x00, 0x00, 0x02);	// P1: page normal, column normal, scan in column direction
 					GDISP.Height = GDISP_SCREEN_HEIGHT;
@@ -517,25 +552,19 @@ void gdisp_lld_draw_pixel(coord_t x, coord_t y, color_t color) {
 					return;
 			}
 			release_bus();
-			#if GDISP_NEED_CLIP || GDISP_NEED_VALIDATION
-				GDISP.clipx0 = 0;
-				GDISP.clipy0 = 0;
-				GDISP.clipx1 = GDISP.Width;
-				GDISP.clipy1 = GDISP.Height;
-			#endif
-			GDISP.Orientation = (gdisp_orientation_t)value;
+			g->g.Orientation = (orientation_t)g->p.ptr;
 			return;
 		case GDISP_CONTROL_BACKLIGHT:
-			if ((unsigned)value > 100) value = (void *)100;
-			set_backlight((unsigned)value);
-			GDISP.Backlight = (unsigned)value;
+			if ((unsigned)g->p.ptr > 100) g->p.ptr = (void *)100;
+			set_backlight((unsigned)g->p.ptr);
+			g->g.Backlight = (unsigned)g->p.ptr;
 			return;
 		case GDISP_CONTROL_CONTRAST:
-			if ((unsigned)value > 100) value = (void *)100;
+			if ((unsigned)value > 100) g->p.ptr = (void *)100;
 			acquire_bus();
-			write_cmd2(VOLCTR, (unsigned)value, 0x03);
+			write_cmd2(VOLCTR, (unsigned)g->p.ptr, 0x03);
 			release_bus();
-			GDISP.Contrast = (unsigned)value;
+			g->g.Contrast = (unsigned)g->p.ptr;
 			return;
 		}
 	}
