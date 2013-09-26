@@ -12,7 +12,9 @@ FEATURE:	mcufont integration
 FEATURE:	SSD1306 driver by user goeck
 FEATURE:	ST7565 driver by user sam0737
 FEATURE:	ED060SC4 driver by user jpa-
-
+FEATURE:	GDISP Streaming
+FEATURE:	New driver interface for GDISP
+FEATURE:	Multiple display support
 
 *** changes after 1.7 ***
 FEATURE:	Rename of the project from ChibiOS/GFX to uGFX
