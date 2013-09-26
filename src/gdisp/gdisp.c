@@ -185,7 +185,7 @@ static void hline_clip(void) {
 		gdisp_lld_fill_area(GC);
 	#elif GDISP_HARDWARE_STREAM
 		// Next best is streaming
-		GC->p.cx = GC->p.x1 - GC->p.x;
+		GC->p.cx = GC->p.x1 - GC->p.x + 1;
 		GC->p.cy = 1;
 		gdisp_lld_stream_start(GC);
 		do { gdisp_lld_stream_color(GC); } while(GC->p.cx--);
@@ -243,7 +243,7 @@ static void vline_clip(void) {
 		gdisp_lld_fill_area(GC);
 	#elif GDISP_HARDWARE_STREAM
 		// Next best is streaming
-		GC->p.cy = GC->p.y1 - GC->p.y;
+		GC->p.cy = GC->p.y1 - GC->p.y + 1;
 		GC->p.cx = 1;
 		gdisp_lld_stream_start(GC);
 		do { gdisp_lld_stream_color(GC); } while(GC->p.cy--);
@@ -392,7 +392,10 @@ void _gdispInit(void) {
 			GC->p.y1 = GC->p.y = y;
 			GC->p.x2 = x + cx;
 			GC->p.y2 = y + cy;
-			GC->p.cx = 0;
+			#if (GDISP_LINEBUF_SIZE != 0 && GDISP_HARDWARE_BITFILLS) || GDISP_HARDWARE_FILLS
+				GC->p.cx = 0;
+				GC->p.cy = 1;
+			#endif
 		#endif
 
 		// Don't release the mutex as gdispStreamEnd() will do that.
@@ -415,12 +418,9 @@ void _gdispInit(void) {
 			gdisp_lld_stream_color(GC);
 		#elif GDISP_LINEBUF_SIZE != 0 && GDISP_HARDWARE_BITFILLS
 			GC->linebuf[GC->p.cx++] = color;
-			GC->p.x++;
 			if (GC->p.cx >= GDISP_LINEBUF_SIZE) {
 				sx1 = GC->p.x1;
 				sy1 = GC->p.y1;
-				GC->p.x -= GC->p.cx;
-				GC->p.cy = 1;
 				GC->p.x1 = 0;
 				GC->p.y1 = 0;
 				GC->p.ptr = (void *)GC->linebuf;
@@ -432,18 +432,43 @@ void _gdispInit(void) {
 			}
 
 			// Just wrap at end-of-line and end-of-buffer
-			if (GC->p.x >= GC->p.x2) {
+			if (GC->p.x+GC->p.cx >= GC->p.x2) {
 				if (GC->p.cx) {
 					sx1 = GC->p.x1;
 					sy1 = GC->p.y1;
-					GC->p.x -= GC->p.cx;
-					GC->p.cy = 1;
 					GC->p.x1 = 0;
 					GC->p.y1 = 0;
 					GC->p.ptr = (void *)GC->linebuf;
 					gdisp_lld_blit_area(GC);
 					GC->p.x1 = sx1;
 					GC->p.y1 = sy1;
+					GC->p.cx = 0;
+				}
+				GC->p.x = GC->p.x1;
+				if (++GC->p.y >= GC->p.y2)
+					GC->p.y = GC->p.y1;
+			}
+		#elif GDISP_HARDWARE_FILLS
+			// Only slightly better than drawing pixels is to look for runs and use fill area
+			if (!GC->p.cx || GC->p.color == color) {
+				GC->p.cx++;
+				GC->p.color = color;
+			} else {
+				if (GC->p.cx == 1)
+					gdisp_lld_draw_pixel(GC);
+				else
+					gdisp_lld_fill_area(GC);
+				GC->p.x += GC->p.cx;
+				GC->p.color = color;
+				GC->p.cx = 1;
+			}
+			// Just wrap at end-of-line and end-of-buffer
+			if (GC->p.x+GC->p.cx >= GC->p.x2) {
+				if (GC->p.cx) {
+					if (GC->p.cx == 1)
+						gdisp_lld_draw_pixel(GC);
+					else
+						gdisp_lld_fill_area(GC);
 					GC->p.cx = 0;
 				}
 				GC->p.x = GC->p.x1;
@@ -475,12 +500,17 @@ void _gdispInit(void) {
 			#endif
 		#elif GDISP_LINEBUF_SIZE != 0 && GDISP_HARDWARE_BITFILLS
 			if (GC->p.cx) {
-				GC->p.x -= GC->p.cx;
-				GC->p.cy = 1;
 				GC->p.x1 = 0;
 				GC->p.y1 = 0;
 				GC->p.ptr = (void *)GC->linebuf;
 				gdisp_lld_blit_area(GC);
+			}
+		#elif GDISP_HARDWARE_FILLS
+			if (GC->p.cx) {
+				if (GC->p.cx == 1)
+					gdisp_lld_draw_pixel(GC);
+				else
+					gdisp_lld_fill_area(GC);
 			}
 		#endif
 		GC->flags &= ~GDISP_FLG_INSTREAM;
@@ -595,6 +625,10 @@ void gdispBlitAreaEx(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx,
 		srcy = y + cy;
 		srccx -= cx;
 
+		GC->p.x = x;
+		GC->p.y = y;
+		GC->p.cx = cx;
+		GC->p.cy = cy;
 		gdisp_lld_stream_start(GC);
 		for(GC->p.y = y; GC->p.y < srcy; GC->p.y++, buffer += srccx) {
 			for(GC->p.x = x; GC->p.x < srcx; GC->p.x++) {
@@ -605,6 +639,31 @@ void gdispBlitAreaEx(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx,
 		#if GDISP_HARDWARE_STREAM_STOP
 			gdisp_lld_stream_stop(GC);
 		#endif
+	#elif GDISP_HARDWARE_FILLS
+		// Only slightly better than drawing pixels is to look for runs and use fill area
+
+		// Translate buffer to the real image data, use srcx,srcy as the end point, srccx as the buffer line gap
+		buffer += srcy*srccx+srcx;
+		srcx = x + cx;
+		srcy = y + cy;
+		srccx -= cx;
+
+		GC->p.cy = 1;
+		for(GC->p.y = y; GC->p.y < srcy; GC->p.y++, buffer += srccx) {
+			for(GC->p.x=x; GC->p.x < srcx; GC->p.x += GC->p.cx) {
+				GC->p.cx=1;
+				GC->p.color = *buffer++;
+				while(GC->p.x+GC->p.cx < srcx && *buffer == GC->p.color) {
+					GC->p.cx++;
+					buffer++;
+				}
+				if (GC->p.cx == 1) {
+					gdisp_lld_draw_pixel(GC);
+				} else {
+					gdisp_lld_fill_area(GC);
+				}
+			}
+		}
 	#else
 		// Worst is drawing pixels
 
