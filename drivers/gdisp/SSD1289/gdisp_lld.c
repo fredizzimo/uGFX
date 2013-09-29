@@ -47,7 +47,7 @@
 #define delay(us)					gfxSleepMicroseconds(us)
 #define delayms(ms)					gfxSleepMilliseconds(ms)
 
-static inline void set_cursor(coord_t x, coord_t y) {
+static inline void set_cursor(GDISPDriver* g, coord_t x, coord_t y) {
 	/* Reg 0x004E is an 8 bit value
 	 * Reg 0x004F is 9 bit
 	 * Use a bit mask to make sure they are not set too high
@@ -72,7 +72,7 @@ static inline void set_cursor(coord_t x, coord_t y) {
 	}
 }
 
-static void set_viewport(coord_t x, coord_t y, coord_t cx, coord_t cy) {
+static void set_viewport(GDISPDriver* g, coord_t x, coord_t y, coord_t cx, coord_t cy) {
 
 	//set_cursor(x, y);
 
@@ -108,11 +108,11 @@ static void set_viewport(coord_t x, coord_t y, coord_t cx, coord_t cy) {
 			break;
 	}
 
-	set_cursor(x, y);
+	set_cursor(g, x, y);
 }
 
-static inline void reset_viewport(void) {
-	set_viewport(0, 0, g->g.Width, g->g.Height);
+static inline void reset_viewport(GDISPDriver* g) {
+	set_viewport(g, 0, 0, g->g.Width, g->g.Height);
 }
 
 /*===========================================================================*/
@@ -197,11 +197,11 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 #if GDISP_HARDWARE_STREAM_WRITE
 	LLDSPEC	void gdisp_lld_write_start(GDISPDriver *g) {
 		acquire_bus();
-		set_viewport(g->p.x, g->p.y, g->p.cx, g->p.cy);
+		set_viewport(g, g->p.x, g->p.y, g->p.cx, g->p.cy);
 		stream_start();
 	}
 	LLDSPEC	void gdisp_lld_write_color(GDISPDriver *g) {
-		write_data(color);
+		write_data(g->p.color);
 	}
 	LLDSPEC	void gdisp_lld_write_stop(GDISPDriver *g) {
 		stream_stop();
@@ -214,7 +214,7 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 		uint16_t	dummy;
 
 		acquire_bus();
-		set_viewport(g->p.x, g->p.y, g->p.cx, g->p.cy);
+		set_viewport(g, g->p.x, g->p.y, g->p.cx, g->p.cy);
 		stream_start();
 		setreadmode();
 		dummy = read_data();		// dummy read
