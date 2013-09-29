@@ -131,7 +131,6 @@ static int FatalXIOError(Display *d) {
 }
 
 LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
-{
 	XSizeHints				*pSH;
 	XSetWindowAttributes	xa;
 	XTextProperty			WindowTitle;
@@ -212,7 +211,7 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 	gfxThreadClose(hth);
 	
     /* Initialise the GDISP structure to match */
-    g->g.Orientation = g->g_ROTATE_0;
+    g->g.Orientation = GDISP_ROTATE_0;
     g->g.Powermode = powerOn;
     g->g.Backlight = 100;
     g->g.Contrast = 50;
@@ -269,10 +268,10 @@ LLDSPEC void gdisp_lld_draw_pixel(GDISPDriver *g)
 		XImage *img;
 
 		img = XGetImage (dis, pix, g->p.x, g->p.y, 1, 1, AllPlanes, XYPixmap);
-		color->pixel = XGetPixel (img, 0, 0);
+		color.pixel = XGetPixel (img, 0, 0);
 		XFree(img);
 		XQueryColor(dis, cmap, &color);
-		return RGB2COLOR(c.red>>8, c.green>>8, c.blue>>8);
+		return RGB2COLOR(color.red>>8, color.green>>8, color.blue>>8);
 	}
 #endif
 
