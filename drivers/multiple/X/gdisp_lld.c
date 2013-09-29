@@ -60,8 +60,6 @@ int				depth;
 #endif
 
 static void ProcessEvent(void) {
-	XColor	col;
-
 	switch(evt.type) {
 	case Expose:
 		XCopyArea(dis, pix, win, gc,
@@ -282,7 +280,7 @@ LLDSPEC void gdisp_lld_draw_pixel(GDISPDriver *g)
 			XCopyArea(dis, pix, win, gc, g->p.x, g->p.y, g->p.cx, g->p.cy-g->p.y1, g->p.x, g->p.y);
 		} else {
 			XCopyArea(dis, pix, pix, gc, g->p.x, g->p.y, g->p.cx, g->p.cy+g->p.y1, g->p.x, g->p.y-g->p.y1);
-			XCopyArea(dis, pix, win, gc, g->p.x, g->p.y-lines, g->p.cx, g->p.cy+g->p.y1, g->p.x, g->p.y-g->p.y1);
+			XCopyArea(dis, pix, win, gc, g->p.x, g->p.y-g->p.y1, g->p.cx, g->p.cy+g->p.y1, g->p.x, g->p.y-g->p.y1);
 		}
 	}
 #endif
