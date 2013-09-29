@@ -107,7 +107,7 @@
 /* Driver local variables.                                                   */
 /*===========================================================================*/
 
-#if GDISP_HARDWARE_STREAM
+#if GDISP_HARDWARE_STREAM_WRITE
 	static color_t savecolor;
 	#if GDISP_GE8_BROKEN_CONTROLLER
 		static color_t firstcolor;
@@ -184,18 +184,15 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 	return TRUE;
 }
 
-#if GDISP_HARDWARE_STREAM
-	LLDSPEC	void gdisp_lld_stream_start(GDISPDriver *g) {
+#if GDISP_HARDWARE_STREAM_WRITE
+	LLDSPEC	void gdisp_lld_write_start(GDISPDriver *g) {
 		acquire_bus();
 		write_cmd2(CASET, GDISP_RAM_X_OFFSET+g->p.x, GDISP_RAM_X_OFFSET+g->p.x+g->p.cx-1);			// Column address set
 		write_cmd2(PASET, GDISP_RAM_Y_OFFSET+g->p.y, GDISP_RAM_Y_OFFSET+g->p.y+g->p.cy-1);			// Page address set
 		write_cmd(RAMWR);
 		g->flags &= ~(GDISP_FLG_ODDBYTE|GDISP_FLG_RUNBYTE);
 	}
-#endif
-
-#if GDISP_HARDWARE_STREAM
-	LLDSPEC	void gdisp_lld_stream_color(GDISPDriver *g) {
+	LLDSPEC	void gdisp_lld_write_color(GDISPDriver *g) {
 		#if GDISP_GE8_BROKEN_CONTROLLER
 			if (!(g->flags & GDISP_FLG_RUNBYTE)) {
 				firstcolor = g->p.color;
@@ -211,10 +208,7 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 			g->flags |= GDISP_FLG_ODDBYTE;
 		}
 	}
-#endif
-
-#if GDISP_HARDWARE_STREAM && GDISP_HARDWARE_STREAM_STOP
-	LLDSPEC	void gdisp_lld_stream_stop(GDISPDriver *g) {
+	LLDSPEC	void gdisp_lld_write_stop(GDISPDriver *g) {
 		if ((g->flags & GDISP_FLG_ODDBYTE)) {
 			#if GDISP_GE8_BROKEN_CONTROLLER
 				/**
@@ -247,7 +241,7 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 #endif
 
 #if GDISP_HARDWARE_DRAWPIXEL
-	void gdisp_lld_draw_pixel(GDISPDriver *g) {
+	LLDSPEC void gdisp_lld_draw_pixel(GDISPDriver *g) {
 		acquire_bus();
 		switch(g->g.Orientation) {
 			case GDISP_ROTATE_0:
@@ -275,7 +269,7 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 /* ---- Optional Routines ---- */
 
 #if GDISP_HARDWARE_FILLS
-	void gdisp_lld_fill_area(GDISPDriver *g) {
+	LLDSPEC void gdisp_lld_fill_area(GDISPDriver *g) {
 		unsigned tuples;
 
 		tuples = (g->p.cx*g->p.cy+1)>>1;	// With an odd sized area we over-print by one pixel.
@@ -308,7 +302,7 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 #endif
 
 #if GDISP_HARDWARE_BITFILLS
-	void gdisp_lld_blit_area(GDISPDriver *g) {
+	LLDSPEC void gdisp_lld_blit_area(GDISPDriver *g) {
 		coord_t			lg, x, y;
 		color_t			c1, c2;
 		unsigned		tuples;

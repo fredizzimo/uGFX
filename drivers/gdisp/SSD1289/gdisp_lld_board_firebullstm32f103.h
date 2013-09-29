@@ -112,7 +112,28 @@ static inline void write_data(uint16_t data) {
 	CLR_WR; SET_WR;
 }
 
-#if GDISP_HARDWARE_READPIXEL || GDISP_HARDWARE_SCROLL || defined(__DOXYGEN__)
+/**
+ * @brief   Set the bus in read mode
+ *
+ * @notapi
+ */
+static inline void setreadmode(void) {
+	// change pin mode to digital input
+	palSetGroupMode(GPIOE, PAL_WHOLE_PORT, 0, PAL_MODE_INPUT);
+	CLR_RD;
+}
+
+/**
+ * @brief   Set the bus back into write mode
+ *
+ * @notapi
+ */
+static inline void setwritemode(void) {
+	// change pin mode back to digital output
+	SET_RD;
+	palSetGroupMode(GPIOE, PAL_WHOLE_PORT, 0, PAL_MODE_OUTPUT_PUSHPULL);
+}
+
 /**
  * @brief   Read data from the lcd.
  *
@@ -123,21 +144,12 @@ static inline void write_data(uint16_t data) {
  * @notapi
  */
 static inline uint16_t read_data(void) {
-	uint16_t	value;
-	
-	// change pin mode to digital input
-	palSetGroupMode(GPIOE, PAL_WHOLE_PORT, 0, PAL_MODE_INPUT);
-
-	CLR_RD;
-	value = palReadPort(GPIOE);
-	value = palReadPort(GPIOE);
-	SET_RD;
-
-	// change pin mode back to digital output
-	palSetGroupMode(GPIOE, PAL_WHOLE_PORT, 0, PAL_MODE_OUTPUT_PUSHPULL);
-	
-	return value;
+	return palReadPort(GPIOE);
 }
+#endif
+
+#if defined(GDISP_USE_DMA)
+	#error "GDISP - SSD1289: The GPIO interface does not support DMA"
 #endif
 
 #endif /* _GDISP_LLD_BOARD_H */

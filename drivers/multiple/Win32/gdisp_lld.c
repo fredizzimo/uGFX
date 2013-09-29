@@ -463,7 +463,7 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 #endif
 	
 #if GDISP_HARDWARE_BITFILLS
-	void gdisp_lld_blit_area(GDISPDriver *g) {
+	LLDSPEC void gdisp_lld_blit_area(GDISPDriver *g) {
 		BITMAPV4HEADER bmpInfo;
 		HDC			dcScreen;
 		pixel_t	*	buffer;
@@ -577,7 +577,7 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 #endif
 
 #if GDISP_NEED_SCROLL && GDISP_HARDWARE_SCROLL
-	void gdisp_lld_vertical_scroll(GDISPDriver *g) {
+	LLDSPEC void gdisp_lld_vertical_scroll(GDISPDriver *g) {
 		HDC			dcScreen;
 		RECT		rect;
 		coord_t		lines;

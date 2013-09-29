@@ -87,7 +87,24 @@ static inline void write_data(uint16_t data) {
 
 }
 
-#if GDISP_HARDWARE_READPIXEL || GDISP_HARDWARE_SCROLL || defined(__DOXYGEN__)
+/**
+ * @brief   Set the bus in read mode
+ *
+ * @notapi
+ */
+static inline void setreadmode(void) {
+
+}
+
+/**
+ * @brief   Set the bus back into write mode
+ *
+ * @notapi
+ */
+static inline void setwritemode(void) {
+
+}
+
 /**
  * @brief   Read data from the lcd.
  *
@@ -100,6 +117,24 @@ static inline void write_data(uint16_t data) {
 static inline uint16_t read_data(void) {
 
 }
+
+/**
+ * The below section you can replace with #error if your interface doesn't support DMA
+ */
+#if defined(GDISP_USE_DMA) || defined(__DOXYGEN__)
+	//#error "GDISP - SSD1289: This interface does not support DMA"
+
+	/**
+	 * @brief	Transfer data using DMA but don't increment the source address
+	 */
+	static inline dma_with_noinc(color_t *buffer, int area) {
+	}
+
+	/**
+	 * @brief	Transfer data using DMA incrementing the source address
+	 */
+	static inline dma_with_inc(color_t *buffer, int area) {
+	}
 #endif
 
 #endif /* _GDISP_LLD_BOARD_H */

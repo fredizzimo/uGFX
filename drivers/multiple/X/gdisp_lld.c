@@ -14,6 +14,9 @@
 
 #if GFX_USE_GDISP
 
+#define GDISP_LLD_DECLARATIONS
+#include "gdisp/lld/gdisp_lld.h"
+
 /**
  * Our color model - Default or 24 bit only.
  *
@@ -25,25 +28,22 @@
 	#define GDISP_FORCE_24BIT	FALSE
 #endif
 
-#if GINPUT_NEED_MOUSE
-	/* Include mouse support code */
-	#include "ginput/lld/mouse.h"
-#endif
-
-/* Include the emulation code for things we don't support */
-#include "gdisp/lld/emulation.c"
-
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <stdio.h>
-#include <stdlib.h>
-
 #ifndef GDISP_SCREEN_HEIGHT
 	#define GDISP_SCREEN_HEIGHT		480
 #endif
 #ifndef GDISP_SCREEN_WIDTH
 	#define GDISP_SCREEN_WIDTH		640
 #endif
+
+#if GINPUT_NEED_MOUSE
+	/* Include mouse support code */
+	#include "ginput/lld/mouse.h"
+#endif
+
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 Display			*dis;
 int				scr;
@@ -130,7 +130,7 @@ static int FatalXIOError(Display *d) {
 	exit(0);
 }
 
-bool_t gdisp_lld_init(void)
+LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 {
 	XSizeHints				*pSH;
 	XSetWindowAttributes	xa;
@@ -212,69 +212,81 @@ bool_t gdisp_lld_init(void)
 	gfxThreadClose(hth);
 	
     /* Initialise the GDISP structure to match */
-    GDISP.Orientation = GDISP_ROTATE_0;
-    GDISP.Powermode = powerOn;
-    GDISP.Backlight = 100;
-    GDISP.Contrast = 50;
-    GDISP.Width = GDISP_SCREEN_WIDTH;
-    GDISP.Height = GDISP_SCREEN_HEIGHT;
-    #if GDISP_NEED_VALIDATION || GDISP_NEED_CLIP
-            GDISP.clipx0 = 0;
-            GDISP.clipy0 = 0;
-            GDISP.clipx1 = GDISP.Width;
-            GDISP.clipy1 = GDISP.Height;
-    #endif
+    g->g.Orientation = g->g_ROTATE_0;
+    g->g.Powermode = powerOn;
+    g->g.Backlight = 100;
+    g->g.Contrast = 50;
+    g->g.Width = GDISP_SCREEN_WIDTH;
+    g->g.Height = GDISP_SCREEN_HEIGHT;
     return TRUE;
 }
 
-void gdisp_lld_draw_pixel(coord_t x, coord_t y, color_t color)
+LLDSPEC void gdisp_lld_draw_pixel(GDISPDriver *g)
 {
 	XColor	col;
 
-   #if GDISP_NEED_VALIDATION || GDISP_NEED_CLIP
-        // Clip pre orientation change
-        if (x < GDISP.clipx0 || y < GDISP.clipy0 || x >= GDISP.clipx1 || y >= GDISP.clipy1) return;
-    #endif
-
-	col.red = RED_OF(color) << 8;
-	col.green = GREEN_OF(color) << 8;
-	col.blue = BLUE_OF(color) << 8;
+	col.red = RED_OF(g->p.color) << 8;
+	col.green = GREEN_OF(g->p.color) << 8;
+	col.blue = BLUE_OF(g->p.color) << 8;
 	XAllocColor(dis, cmap, &col);
 	XSetForeground(dis, gc, col.pixel);
-	XDrawPoint(dis, pix, gc, (int)x, (int)y );
-	XDrawPoint(dis, win, gc, (int)x, (int)y );
+	XDrawPoint(dis, pix, gc, (int)g->p.x, (int)g->p.y );
+	XDrawPoint(dis, win, gc, (int)g->p.x, (int)g->p.y );
 	XFlush(dis);
 }
 
-void gdisp_lld_fill_area(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color) {
-	XColor	col;
-	
-    #if GDISP_NEED_VALIDATION || GDISP_NEED_CLIP
-        // Clip pre orientation change
-        if (x < GDISP.clipx0) { cx -= GDISP.clipx0 - x; x = GDISP.clipx0; }
-        if (y < GDISP.clipy0) { cy -= GDISP.clipy0 - y; y = GDISP.clipy0; }
-        if (cx <= 0 || cy <= 0 || x >= GDISP.clipx1 || y >= GDISP.clipy1) return;
-        if (x+cx > GDISP.clipx1)	cx = GDISP.clipx1 - x;
-        if (y+cy > GDISP.clipy1)	cy = GDISP.clipy1 - y;
-    #endif
+#if GDISP_HARDWARE_FILLS
+	LLDSPEC void gdisp_lld_fill_area(GDISPDriver *g) {
+		XColor	col;
 
-	col.red = RED_OF(color) << 8;
-	col.green = GREEN_OF(color) << 8;
-	col.blue = BLUE_OF(color) << 8;
-	XAllocColor(dis, cmap, &col);
-	XSetForeground(dis, gc, col.pixel);
-	XFillRectangle(dis, pix, gc, x, y, cx, cy);
-	XFillRectangle(dis, win, gc, x, y, cx, cy);
-	XFlush(dis);
-}
+		col.red = RED_OF(g->p.color) << 8;
+		col.green = GREEN_OF(g->p.color) << 8;
+		col.blue = BLUE_OF(g->p.color) << 8;
+		XAllocColor(dis, cmap, &col);
+		XSetForeground(dis, gc, col.pixel);
+		XFillRectangle(dis, pix, gc, g->p.x, g->p.y, g->p.cx, g->p.cy);
+		XFillRectangle(dis, win, gc, g->p.x, g->p.y, g->p.cx, g->p.cy);
+		XFlush(dis);
+	}
+#endif
 
-// Start of Bitblit code
-//XImage			bitmap;
-//pixel_t			*bits;
-//	bits = malloc(vis.depth * GDISP_SCREEN_WIDTH * GDISP_SCREEN_HEIGHT);
-//	bitmap = XCreateImage(dis, vis, vis.depth, ZPixmap,
-//				0, bits, GDISP_SCREEN_WIDTH, GDISP_SCREEN_HEIGHT,
-//				0, 0);
+#if 0 && GDISP_HARDWARE_BITFILLS
+	LLDSPEC void gdisp_lld_blit_area(GDISPDriver *g) {
+		// Start of Bitblit code
+
+		//XImage			bitmap;
+		//pixel_t			*bits;
+		//	bits = malloc(vis.depth * GDISP_SCREEN_WIDTH * GDISP_SCREEN_HEIGHT);
+		//	bitmap = XCreateImage(dis, vis, vis.depth, ZPixmap,
+		//				0, bits, GDISP_SCREEN_WIDTH, GDISP_SCREEN_HEIGHT,
+		//				0, 0);
+	}
+#endif
+
+#if GDISP_HARDWARE_PIXELREAD
+	LLDSPEC	color_t gdisp_lld_get_pixel_color(GDISPDriver *g) {
+		XColor	color;
+		XImage *img;
+
+		img = XGetImage (dis, pix, g->p.x, g->p.y, 1, 1, AllPlanes, XYPixmap);
+		color->pixel = XGetPixel (img, 0, 0);
+		XFree(img);
+		XQueryColor(dis, cmap, &color);
+		return RGB2COLOR(c.red>>8, c.green>>8, c.blue>>8);
+	}
+#endif
+
+#if GDISP_NEED_SCROLL && GDISP_HARDWARE_SCROLL
+	LLDSPEC void gdisp_lld_vertical_scroll(GDISPDriver *g) {
+		if (g->p.y1 > 0) {
+			XCopyArea(dis, pix, pix, gc, g->p.x, g->p.y+g->p.y1, g->p.cx, g->p.cy-g->p.y1, g->p.x, g->p.y);
+			XCopyArea(dis, pix, win, gc, g->p.x, g->p.y, g->p.cx, g->p.cy-g->p.y1, g->p.x, g->p.y);
+		} else {
+			XCopyArea(dis, pix, pix, gc, g->p.x, g->p.y, g->p.cx, g->p.cy+g->p.y1, g->p.x, g->p.y-g->p.y1);
+			XCopyArea(dis, pix, win, gc, g->p.x, g->p.y-lines, g->p.cx, g->p.cy+g->p.y1, g->p.x, g->p.y-g->p.y1);
+		}
+	}
+#endif
 
 #if GINPUT_NEED_MOUSE
 

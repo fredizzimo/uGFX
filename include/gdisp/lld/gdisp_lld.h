@@ -33,26 +33,26 @@
 	 * @{
 	 */
 		/**
-		 * @brief   Hardware streaming interface is supported.
+		 * @brief   Hardware streaming writing is supported.
 		 * @details If set to @p FALSE software emulation is used.
-		 * @note	Either GDISP_HARDWARE_STREAM or GDISP_HARDWARE_DRAWPIXEL must be provided by the driver
+		 * @note	Either GDISP_HARDWARE_STREAM_WRITE or GDISP_HARDWARE_DRAWPIXEL must be provided by the driver
 		 */
-		#ifndef GDISP_HARDWARE_STREAM
-			#define GDISP_HARDWARE_STREAM			FALSE
+		#ifndef GDISP_HARDWARE_STREAM_WRITE
+			#define GDISP_HARDWARE_STREAM_WRITE		FALSE
 		#endif
 
 		/**
-		 * @brief   Hardware streaming requires an explicit end call.
-		 * @details If set to @p FALSE if an explicit stream end call is not required.
+		 * @brief   Hardware streaming reading of the display surface is supported.
+		 * @details If set to @p FALSE this routine is not available.
 		 */
-		#ifndef GDISP_HARDWARE_STREAM_STOP
-			#define GDISP_HARDWARE_STREAM_STOP		FALSE
+		#ifndef GDISP_HARDWARE_STREAM_READ
+			#define GDISP_HARDWARE_STREAM_READ		FALSE
 		#endif
 
 		/**
 		 * @brief   Hardware accelerated draw pixel.
 		 * @details If set to @p FALSE software emulation is used.
-		 * @note	Either GDISP_HARDWARE_STREAM or GDISP_HARDWARE_DRAWPIXEL must be provided by the driver
+		 * @note	Either GDISP_HARDWARE_STREAM_WRITE or GDISP_HARDWARE_DRAWPIXEL must be provided by the driver
 		 */
 		#ifndef GDISP_HARDWARE_DRAWPIXEL
 			#define GDISP_HARDWARE_DRAWPIXEL		FALSE
@@ -178,7 +178,7 @@ typedef struct GDISPDriver {
 			coord_t		clipx1, clipy1;
 		} t;
 	#endif
-	#if GDISP_LINEBUF_SIZE != 0 && ((GDISP_NEED_SCROLL && !GDISP_HARDWARE_SCROLL) || (!GDISP_HARDWARE_STREAM && GDISP_HARDWARE_BITFILLS))
+	#if GDISP_LINEBUF_SIZE != 0 && ((GDISP_NEED_SCROLL && !GDISP_HARDWARE_SCROLL) || (!GDISP_HARDWARE_STREAM_WRITE && GDISP_HARDWARE_BITFILLS))
 		// A pixel line buffer
 		color_t		linebuf[GDISP_LINEBUF_SIZE];
 	#endif
@@ -204,10 +204,10 @@ typedef struct GDISPDriver {
 	 */
 	LLDSPEC	bool_t gdisp_lld_init(GDISPDriver *g);
 
-	#if GDISP_HARDWARE_STREAM || defined(__DOXYGEN__)
+	#if GDISP_HARDWARE_STREAM_WRITE || defined(__DOXYGEN__)
 		/**
-		 * @brief   Start a streamed operation
-		 * @pre		GDISP_HARDWARE_STREAM is TRUE
+		 * @brief   Start a streamed write operation
+		 * @pre		GDISP_HARDWARE_STREAM_WRITE is TRUE
 		 *
 		 * @param[in]	g				The driver structure
 		 * @param[in]	g->p.x,g->p.y	The window position
@@ -217,43 +217,67 @@ typedef struct GDISPDriver {
 		 * @note		Streaming operations that wrap the defined window have
 		 * 				undefined results.
 		 */
-		LLDSPEC	void gdisp_lld_stream_start(GDISPDriver *g);
+		LLDSPEC	void gdisp_lld_write_start(GDISPDriver *g);
+
 		/**
 		 * @brief   Send a pixel to the current streaming position and then increment that position
-		 * @pre		GDISP_HARDWARE_STREAM is TRUE
+		 * @pre		GDISP_HARDWARE_STREAM_WRITE is TRUE
 		 *
 		 * @param[in]	g				The driver structure
 		 * @param[in]	g->p.color		The color to display at the curent position
 		 *
 		 * @note		The parameter variables must not be altered by the driver.
 		 */
-		LLDSPEC	void gdisp_lld_stream_color(GDISPDriver *g);
+		LLDSPEC	void gdisp_lld_write_color(GDISPDriver *g);
 
-		#if GDISP_HARDWARE_STREAM_READ || defined(__DOXYGEN__)
-			/**
-			 * @brief   Read a pixel from the current streaming position and then increment that position
-			 * @return	The color at the current position
-			 * @pre		GDISP_HARDWARE_STREAM and GDISP_HARDWARE_STREAM_READ is TRUE
-			 *
-			 * @param[in]	g				The driver structure
-			 *
-			 * @note		The parameter variables must not be altered by the driver.
-			 */
-			LLDSPEC	color_t gdisp_lld_stream_read(GDISPDriver *g);
-		#endif
-
-		#if GDISP_HARDWARE_STREAM_STOP || defined(__DOXYGEN__)
-			/**
-			 * @brief   End the current streaming operation
-			 * @pre		GDISP_HARDWARE_STREAM and GDISP_HARDWARE_STREAM_STOP is TRUE
-			 *
-			 * @param[in]	g				The driver structure
-			 *
-			 * @note		The parameter variables must not be altered by the driver.
-			 */
-			LLDSPEC	void gdisp_lld_stream_stop(GDISPDriver *g);
-		#endif
+		/**
+		 * @brief   End the current streaming write operation
+		 * @pre		GDISP_HARDWARE_STREAM_WRITE is TRUE
+		 *
+		 * @param[in]	g				The driver structure
+		 *
+		 * @note		The parameter variables must not be altered by the driver.
+		 */
+		LLDSPEC	void gdisp_lld_write_stop(GDISPDriver *g);
 	#endif
+
+	#if GDISP_HARDWARE_STREAM_READ || defined(__DOXYGEN__)
+		/**
+		 * @brief   Start a streamed read operation
+		 * @pre		GDISP_HARDWARE_STREAM_READ is TRUE
+		 *
+		 * @param[in]	g				The driver structure
+		 * @param[in]	g->p.x,g->p.y	The window position
+		 * @param[in]	g->p.cx,g->p.cy	The window size
+		 *
+		 * @note		The parameter variables must not be altered by the driver.
+		 * @note		Streaming operations that wrap the defined window have
+		 * 				undefined results.
+		 */
+		LLDSPEC	void gdisp_lld_read_start(GDISPDriver *g);
+
+		/**
+		 * @brief   Read a pixel from the current streaming position and then increment that position
+		 * @return	The color at the current position
+		 * @pre		GDISP_HARDWARE_STREAM_READ is TRUE
+		 *
+		 * @param[in]	g				The driver structure
+		 *
+		 * @note		The parameter variables must not be altered by the driver.
+		 */
+		LLDSPEC	color_t gdisp_lld_read_color(GDISPDriver *g);
+
+		/**
+		 * @brief   End the current streaming operation
+		 * @pre		GDISP_HARDWARE_STREAM_READ is TRUE
+		 *
+		 * @param[in]	g				The driver structure
+		 *
+		 * @note		The parameter variables must not be altered by the driver.
+		 */
+		LLDSPEC	void gdisp_lld_read_stop(GDISPDriver *g);
+	#endif
+
 
 	#if GDISP_HARDWARE_DRAWPIXEL || defined(__DOXYGEN__)
 		/**
@@ -399,10 +423,12 @@ typedef struct GDISPDriver {
 
 	typedef struct GDISPVMT {
 		bool_t (*init)(GDISPDriver *g);
-		void (*streamstart)(GDISPDriver *g);			// Uses p.x,p.y  p.cx,p.cy
-		void (*streamcolor)(GDISPDriver *g);			// Uses p.color
-		color_t (*streamread)(GDISPDriver *g);			// Uses no parameters
-		void (*streamstop)(GDISPDriver *g);				// Uses no parameters
+		void (*writestart)(GDISPDriver *g);				// Uses p.x,p.y  p.cx,p.cy
+		void (*writecolor)(GDISPDriver *g);				// Uses p.color
+		void (*writestop)(GDISPDriver *g);				// Uses no parameters
+		void (*readstart)(GDISPDriver *g);				// Uses p.x,p.y  p.cx,p.cy
+		color_t (*readcolor)(GDISPDriver *g);			// Uses no parameters
+		void (*readstop)(GDISPDriver *g);				// Uses no parameters
 		void (*pixel)(GDISPDriver *g);					// Uses p.x,p.y  p.color
 		void (*clear)(GDISPDriver *g);					// Uses p.color
 		void (*fill)(GDISPDriver *g);					// Uses p.x,p.y  p.cx,p.cy  p.color
@@ -418,15 +444,17 @@ typedef struct GDISPDriver {
 		#define GDISP_DRIVER_STRUCT_INIT	{{0}, &VMT}
 		static const GDISPVMT VMT = {
 			gdisp_lld_init,
-			#if GDISP_HARDWARE_STREAM
-				gdisp_lld_stream_start,
-				gdisp_lld_stream_color,
-				gdisp_lld_stream_read,
-				#if GDISP_HARDWARE_STREAM_STOP
-					gdisp_lld_stream_stop,
-				#else
-					0,
-				#endif
+			#if GDISP_HARDWARE_STREAM_WRITE
+				gdisp_lld_write_start,
+				gdisp_lld_write_color,
+				gdisp_lld_write_stop,
+			#else
+				0, 0, 0,
+			#endif
+			#if GDISP_HARDWARE_STREAM_READ
+				gdisp_lld_read_start,
+				gdisp_lld_read_color,
+				gdisp_lld_read_stop,
 			#else
 				0, 0, 0,
 			#endif
@@ -480,10 +508,12 @@ typedef struct GDISPDriver {
 
 	#else
 		#define gdisp_lld_init(g)				g->vmt->init(g)
-		#define gdisp_lld_stream_start(g)		g->vmt->streamstart(g)
-		#define gdisp_lld_stream_color(g)		g->vmt->streamcolor(g)
-		#define gdisp_lld_stream_read(g)		g->vmt->streamread(g)
-		#define gdisp_lld_stream_stop(g)		g->vmt->streamstop(g)
+		#define gdisp_lld_write_start(g)		g->vmt->writestart(g)
+		#define gdisp_lld_write_color(g)		g->vmt->writecolor(g)
+		#define gdisp_lld_write_stop(g)			g->vmt->writestop(g)
+		#define gdisp_lld_read_start(g)			g->vmt->readstart(g)
+		#define gdisp_lld_read_color(g)			g->vmt->readcolor(g)
+		#define gdisp_lld_read_stop(g)			g->vmt->readstop(g)
 		#define gdisp_lld_draw_pixel(g)			g->vmt->pixel(g)
 		#define gdisp_lld_clear(g)				g->vmt->clear(g)
 		#define gdisp_lld_fill_area(g)			g->vmt->fill(g)

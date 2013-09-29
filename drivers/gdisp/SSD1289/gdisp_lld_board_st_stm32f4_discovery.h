@@ -18,10 +18,7 @@
 
 #define GDISP_REG              ((volatile uint16_t *) 0x60000000)[0] /* RS = 0 */
 #define GDISP_RAM              ((volatile uint16_t *) 0x60020000)[0] /* RS = 1 */
-
-#define GDISP_USE_FSMC
-#define GDISP_USE_DMA
-#define GDISP_DMA_STREAM STM32_DMA2_STREAM6
+#define GDISP_DMA_STREAM		STM32_DMA2_STREAM6
 
 const unsigned char FSMC_Bank = 0;
 
@@ -55,20 +52,22 @@ static inline void init_board(void) {
 		/* FSMC setup for F1/F3 */
 		rccEnableAHB(RCC_AHBENR_FSMCEN, 0);
 
-		#if defined(GDISP_USE_DMA) && defined(GDISP_DMA_STREAM)
-			#error "DMA not implemented for F1/F3 Devices"
+		#if defined(GDISP_USE_DMA)
+			#error "GDISP: SSD1289 - DMA not implemented for F1/F3 Devices"
 		#endif
 	#elif defined(STM32F4XX) || defined(STM32F2XX)
 		/* STM32F2-F4 FSMC init */
 		rccEnableAHB3(RCC_AHB3ENR_FSMCEN, 0);
 
-		#if defined(GDISP_USE_DMA) && defined(GDISP_DMA_STREAM)
+		#if defined(GDISP_USE_DMA)
 			if (dmaStreamAllocate(GDISP_DMA_STREAM, 0, NULL, NULL)) gfxExit();
 			dmaStreamSetMemory0(GDISP_DMA_STREAM, &GDISP_RAM);
 			dmaStreamSetMode(GDISP_DMA_STREAM, STM32_DMA_CR_PL(0) | STM32_DMA_CR_PSIZE_HWORD | STM32_DMA_CR_MSIZE_HWORD | STM32_DMA_CR_DIR_M2M);
+		#else
+			#warning "GDISP: SSD1289 - DMA is supported for F2/F4 Devices. Define GDISP_USE_DMA in your gfxconf.h to turn this on for better performance."
 		#endif
 	#else
-		#error "FSMC not implemented for this device"
+		#error "GDISP: SSD1289 - FSMC not implemented for this device"
 	#endif
 
 	/* set pins to FSMC mode */
@@ -155,17 +154,61 @@ static inline void write_index(uint16_t index) { GDISP_REG = index; }
  */
 static inline void write_data(uint16_t data) { GDISP_RAM = data; }
 
-#if GDISP_HARDWARE_READPIXEL || GDISP_HARDWARE_SCROLL || defined(__DOXYGEN__)
+/**
+ * @brief   Set the bus in read mode
+ *
+ * @notapi
+ */
+static inline void setreadmode(void) {
+	FSMC_Bank1->BTCR[FSMC_Bank+1] = FSMC_BTR1_ADDSET_3 | FSMC_BTR1_DATAST_3 | FSMC_BTR1_BUSTURN_0;		/* FSMC timing */
+}
+
+/**
+ * @brief   Set the bus back into write mode
+ *
+ * @notapi
+ */
+static inline void setwritemode(void) {
+	FSMC_Bank1->BTCR[FSMC_Bank+1] = FSMC_BTR1_ADDSET_0 | FSMC_BTR1_DATAST_2 | FSMC_BTR1_BUSTURN_0;		/* FSMC timing */
+}
+
 /**
  * @brief   Read data from the lcd.
  *
  * @return	The data from the lcd
  * @note	The chip select may need to be asserted/de-asserted
  * 			around the actual spi read
- * 
+ *
  * @notapi
  */
 static inline uint16_t read_data(void) { return GDISP_RAM; }
+
+#if defined(GDISP_USE_DMA) || defined(__DOXYGEN__)
+	/**
+	 * @brief	Transfer data using DMA but don't increment the source address
+	 */
+	static inline dma_with_noinc(color_t *buffer, int area) {
+		dmaStreamSetPeripheral(GDISP_DMA_STREAM, buffer);
+		dmaStreamSetMode(GDISP_DMA_STREAM, STM32_DMA_CR_PL(0) | STM32_DMA_CR_PSIZE_HWORD | STM32_DMA_CR_MSIZE_HWORD | STM32_DMA_CR_DIR_M2M);
+		for (; area > 0; area -= 65535) {
+			dmaStreamSetTransactionSize(GDISP_DMA_STREAM, area > 65535 ? 65535 : area);
+			dmaStreamEnable(GDISP_DMA_STREAM);
+			dmaWaitCompletion(GDISP_DMA_STREAM);
+		}
+	}
+
+	/**
+	 * @brief	Transfer data using DMA incrementing the source address
+	 */
+	static inline dma_with_inc(color_t *buffer, int area) {
+        dmaStreamSetPeripheral(GDISP_DMA_STREAM, buffer);
+        dmaStreamSetMode(GDISP_DMA_STREAM, STM32_DMA_CR_PL(0) | STM32_DMA_CR_PINC | STM32_DMA_CR_PSIZE_HWORD | STM32_DMA_CR_MSIZE_HWORD | STM32_DMA_CR_DIR_M2M);
+		for (; area > 0; area -= 65535) {
+			dmaStreamSetTransactionSize(GDISP_DMA_STREAM, area > 65535 ? 65535 : area);
+			dmaStreamEnable(GDISP_DMA_STREAM);
+			dmaWaitCompletion(GDISP_DMA_STREAM);
+		}
+	}
 #endif
 
 #endif /* _GDISP_LLD_BOARD_H */
