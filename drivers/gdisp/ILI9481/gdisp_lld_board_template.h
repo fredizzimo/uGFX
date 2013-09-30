@@ -88,7 +88,24 @@ static inline void write_data(uint16_t data) {
 
 }
 
-#if GDISP_HARDWARE_READPIXEL || GDISP_HARDWARE_SCROLL || defined(__DOXYGEN__)
+/**
+ * @brief   Set the bus in read mode
+ *
+ * @notapi
+ */
+static inline void setreadmode(void) {
+
+}
+
+/**
+ * @brief   Set the bus back into write mode
+ *
+ * @notapi
+ */
+static inline void setwritemode(void) {
+
+}
+
 /**
  * @brief   Read data from the lcd.
  *
@@ -101,7 +118,6 @@ static inline void write_data(uint16_t data) {
 static inline uint16_t read_data(void) {
 
 }
-#endif
 
 #endif /* _GDISP_LLD_BOARD_H */
 /** @} */

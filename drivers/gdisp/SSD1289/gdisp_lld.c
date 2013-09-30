@@ -257,6 +257,7 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 			}
 			g->g.Powermode = (powermode_t)g->p.ptr;
 			return;
+
 		case GDISP_CONTROL_ORIENTATION:
 			if (g->g.Orientation == (orientation_t)g->p.ptr)
 				return;
@@ -298,12 +299,14 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 			}
 			g->g.Orientation = (orientation_t)value;
 			return;
+
         case GDISP_CONTROL_BACKLIGHT:
             if ((unsigned)g->p.ptr > 100)
             	g->p.ptr = (void *)100;
             set_backlight((unsigned)g->p.ptr);
             g->g.Backlight = (unsigned)g->p.ptr;
             return;
+
 		//case GDISP_CONTROL_CONTRAST:
         default:
             return;
