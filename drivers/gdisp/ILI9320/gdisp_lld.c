@@ -14,13 +14,6 @@
 
 #if GFX_USE_GDISP
 
-#define GDISP_LLD_DECLARATIONS
-#include "gdisp/lld/gdisp_lld.h"
-
-/*===========================================================================*/
-/* Driver local definitions.                                                 */
-/*===========================================================================*/
-
 /* This controller is only ever used with a 240 x 320 display */
 #if defined(GDISP_SCREEN_HEIGHT)
 	#warning "GDISP: This low level driver does not support setting a screen size. It is being ignored."
@@ -31,7 +24,13 @@
 	#undef GDISP_SCREEN_WIDTH
 #endif
 
+#define GDISP_LLD_DECLARATIONS
+#include "gdisp/lld/gdisp_lld.h"
 #include "gdisp_lld_board.h"
+
+/*===========================================================================*/
+/* Driver local definitions.                                                 */
+/*===========================================================================*/
 
 #ifndef GDISP_SCREEN_HEIGHT
 	#define GDISP_SCREEN_HEIGHT		320

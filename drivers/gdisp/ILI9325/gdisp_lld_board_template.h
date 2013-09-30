@@ -16,27 +16,105 @@
 #ifndef GDISP_LLD_BOARD_H
 #define GDISP_LLD_BOARD_H
 
-static inline void gdisp_lld_init_board(void) {
+/**
+ * @brief   Initialise the board for the display.
+ *
+ * @notapi
+ */
+static inline void init_board(void) {
 
 }
 
-static inline void gdisp_lld_reset_pin(bool_t state) {
+/**
+ * @brief   Set or clear the lcd reset pin.
+ *
+ * @param[in] state		TRUE = lcd in reset, FALSE = normal operation
+ *
+ * @notapi
+ */
+static inline void setpin_reset(bool_t state) {
 
 }
 
-static inline void gdisp_lld_write_index(uint16_t data) {
+/**
+ * @brief   Set the lcd back-light level.
+ *
+ * @param[in] percent		0 to 100%
+ *
+ * @notapi
+ */
+static inline void set_backlight(uint8_t percent) {
 
 }
 
-static inline void gdisp_lld_write_data(uint16_t data) {
+/**
+ * @brief   Take exclusive control of the bus
+ *
+ * @notapi
+ */
+static inline void acquire_bus(void) {
 
 }
 
-static inline uint16_t gdisp_lld_read_data(void) {
+/**
+ * @brief   Release exclusive control of the bus
+ *
+ * @notapi
+ */
+static inline void release_bus(void) {
 
 }
 
-static inline uint16_t gdisp_lld_backlight(uint8_t percentage) {
+/**
+ * @brief   Send data to the index register.
+ *
+ * @param[in] index		The index register to set
+ *
+ * @notapi
+ */
+static inline void write_index(uint16_t index) {
+
+}
+
+/**
+ * @brief   Send data to the lcd.
+ *
+ * @param[in] data		The data to send
+ *
+ * @notapi
+ */
+static inline void write_data(uint16_t data) {
+
+}
+
+/**
+ * @brief   Set the bus in read mode
+ *
+ * @notapi
+ */
+static inline void setreadmode(void) {
+
+}
+
+/**
+ * @brief   Set the bus back into write mode
+ *
+ * @notapi
+ */
+static inline void setwritemode(void) {
+
+}
+
+/**
+ * @brief   Read data from the lcd.
+ *
+ * @return	The data from the lcd
+ * @note	The chip select may need to be asserted/de-asserted
+ * 			around the actual spi read
+ *
+ * @notapi
+ */
+static inline uint16_t read_data(void) {
 
 }
 

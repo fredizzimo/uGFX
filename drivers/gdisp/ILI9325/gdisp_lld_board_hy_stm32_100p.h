@@ -32,7 +32,7 @@
 #define GDISP_REG              (*((volatile uint16_t *) 0x60000000)) /* RS = 0 */
 #define GDISP_RAM              (*((volatile uint16_t *) 0x60020000)) /* RS = 1 */
 
-static inline void gdisp_lld_init_board(void) {
+static inline void init_board(void) {
 	/* FSMC setup for F1 */
 	rccEnableAHB(RCC_AHBENR_FSMCEN, 0);
 
@@ -55,27 +55,63 @@ static inline void gdisp_lld_init_board(void) {
 	
 }
 
-static inline void gdisp_lld_reset_pin(bool_t state) {
+static inline void setpin_reset(bool_t state) {
 	if(state)
 		palClearPad(GPIOE, GPIOE_TFT_RST);
 	else
 		palSetPad(GPIOE, GPIOE_TFT_RST);
 }
 
-static inline void gdisp_lld_write_index(uint16_t reg) {
+static inline void write_index(uint16_t reg) {
 	GDISP_REG = reg;
 }
 
-static inline void gdisp_lld_write_data(uint16_t data) {
+static inline void write_data(uint16_t data) {
 	GDISP_RAM = data;
 }
 
-static inline uint16_t gdisp_lld_read_data(void) {
+static inline uint16_t read_data(void) {
 	return GDISP_RAM;
 }
 
-static inline void gdisp_lld_backlight(uint8_t percent) {
-	percent=percent;	// avoid a warning
+static inline void set_backlight(uint8_t percent) {
+	(void)percent;
+}
+
+/**
+ * @brief   Take exclusive control of the bus
+ *
+ * @notapi
+ */
+static inline void acquire_bus(void) {
+
+}
+
+/**
+ * @brief   Release exclusive control of the bus
+ *
+ * @notapi
+ */
+static inline void release_bus(void) {
+
+}
+
+/**
+ * @brief   Set the bus in read mode
+ *
+ * @notapi
+ */
+static inline void setreadmode(void) {
+
+}
+
+/**
+ * @brief   Set the bus back into write mode
+ *
+ * @notapi
+ */
+static inline void setwritemode(void) {
+
 }
 
 #endif /* GDISP_LLD_BOARD_H */
