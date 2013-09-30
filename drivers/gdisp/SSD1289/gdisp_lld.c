@@ -76,9 +76,9 @@ static void set_viewport(GDISPDriver* g) {
 			write_reg(0x004f, (GDISP_SCREEN_HEIGHT-1-g->p.x) & 0x01FF);
 			break;
 		case GDISP_ROTATE_180:
-			write_reg(0x44, (((GDISP_SCREEN_WIDTH-g->p.x-1) & 0x00FF) << 8) | ((GDISP_SCREEN_WIDTH - (g->p.x+g->p.cx)) & 0x00FF));
+			write_reg(0x44, (((GDISP_SCREEN_WIDTH-1-g->p.x) & 0x00FF) << 8) | ((GDISP_SCREEN_WIDTH - (g->p.x+g->p.cx)) & 0x00FF));
 			write_reg(0x45, (GDISP_SCREEN_HEIGHT-(g->p.y+g->p.cy)) & 0x01FF);
-			write_reg(0x46, (GDISP_SCREEN_HEIGHT-g->p.y-1) & 0x01FF);
+			write_reg(0x46, (GDISP_SCREEN_HEIGHT-1-g->p.y) & 0x01FF);
 			write_reg(0x004e, (GDISP_SCREEN_WIDTH-1-g->p.x) & 0x00FF);
 			write_reg(0x004f, (GDISP_SCREEN_HEIGHT-1-g->p.y) & 0x01FF);
 			break;
@@ -278,7 +278,6 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 			switch((orientation_t)g->p.ptr) {
 			case GDISP_ROTATE_0:
 				acquire_bus();
-				write_reg(0x0001, 0x2B3F);
 				/* ID = 11 AM = 0 */
 				write_reg(0x0011, 0x6070);
 				release_bus();
@@ -287,17 +286,15 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 				break;
 			case GDISP_ROTATE_90:
 				acquire_bus();
-				write_reg(0x0001, 0x293F);
 				/* ID = 01 AM = 1 */
-				write_reg(0x0011, 0x6048);
+				write_reg(0x0011, 0x6058);
 				release_bus();
 				g->g.Height = GDISP_SCREEN_WIDTH;
 				g->g.Width = GDISP_SCREEN_HEIGHT;
 				break;
 			case GDISP_ROTATE_180:
 				acquire_bus();
-				write_reg(0x0001, 0x2B3F);
-				/* ID = 01 AM = 0 */
+				/* ID = 00 AM = 0 */
 				write_reg(0x0011, 0x6040);
 				release_bus();
 				g->g.Height = GDISP_SCREEN_HEIGHT;
@@ -305,9 +302,8 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 				break;
 			case GDISP_ROTATE_270:
 				acquire_bus();
-				write_reg(0x0001, 0x293F);
-				/* ID = 11 AM = 1 */
-				write_reg(0x0011, 0x6078);
+				/* ID = 10 AM = 1 */
+				write_reg(0x0011, 0x6068);
 				release_bus();
 				g->g.Height = GDISP_SCREEN_WIDTH;
 				g->g.Width = GDISP_SCREEN_HEIGHT;
