@@ -33,7 +33,7 @@
 #define HX8347D_REG_PSLL                0x0b    /* Partial area start row low */
 #define HX8347D_REG_PELH                0x0c    /* Partial area end row high */
 #define HX8347D_REG_PELL                0x0d    /* Partial area end row low */
-#define HX8347D_REG_TFAH                0x0e    /* Vertical srcoll top fixed area high */
+#define HX8347D_REG_TFAH                0x0e    /* Vertical scroll top fixed area high */
 #define HX8347D_REG_TFAL                0x0f    /* Vertical scroll top fixed area low */
 
 #define HX8347D_REG_VSAH                0x10    /* Vertical scroll height area high */
