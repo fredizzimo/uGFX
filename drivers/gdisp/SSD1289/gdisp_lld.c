@@ -8,14 +8,11 @@
 /**
  * @file    drivers/gdisp/SSD1289/gdisp_lld.c
  * @brief   GDISP Graphics Driver subsystem low level driver source for the SSD1289 display.
- *
- * @addtogroup GDISP
- * @{
  */
 
 #include "gfx.h"
 
-#if GFX_USE_GDISP /*|| defined(__DOXYGEN__)*/
+#if GFX_USE_GDISP
 
 #define GDISP_LLD_DECLARATIONS
 #include "gdisp/lld/gdisp_lld.h"
@@ -43,9 +40,8 @@
 /*===========================================================================*/
 
 // Some common routines and macros
+#define dummy_read()				{ volatile uint16_t dummy; dummy = read_data(); (void) dummy; }
 #define write_reg(reg, data)		{ write_index(reg); write_data(data); }
-#define delay(us)					gfxSleepMicroseconds(us)
-#define delayms(ms)					gfxSleepMilliseconds(ms)
 
 static void set_viewport(GDISPDriver* g) {
 	/* Reg 0x44 - Horizontal RAM address position
@@ -107,54 +103,54 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 
 	// Hardware reset
 	setpin_reset(TRUE);
-	delayms(20);
+	gfxSleepMilliseconds(20);
 	setpin_reset(FALSE);
-	delayms(20);
+	gfxSleepMilliseconds(20);
 
 	// Get the bus for the following initialisation commands
 	acquire_bus();
 	
-	write_reg(0x0000,0x0001);		delay(5);
-	write_reg(0x0003,0xA8A4);    	delay(5);
-	write_reg(0x000C,0x0000);    	delay(5);
-	write_reg(0x000D,0x080C);    	delay(5);
-    write_reg(0x000E,0x2B00);    	delay(5);
-    write_reg(0x001E,0x00B0);    	delay(5);
-	write_reg(0x0001,0x2B3F);		delay(5);
-    write_reg(0x0002,0x0600);    	delay(5);
-    write_reg(0x0010,0x0000);    	delay(5);
-    write_reg(0x0011,0x6070);    	delay(5);
-    write_reg(0x0005,0x0000);    	delay(5);
-    write_reg(0x0006,0x0000);    	delay(5);
-    write_reg(0x0016,0xEF1C);    	delay(5);
-    write_reg(0x0017,0x0003);    	delay(5);
-    write_reg(0x0007,0x0133);    	delay(5);
-    write_reg(0x000B,0x0000);    	delay(5);
-    write_reg(0x000F,0x0000);    	delay(5);
-    write_reg(0x0041,0x0000);    	delay(5);
-    write_reg(0x0042,0x0000);    	delay(5);
-    write_reg(0x0048,0x0000);    	delay(5);
-    write_reg(0x0049,0x013F);    	delay(5);
-    write_reg(0x004A,0x0000);    	delay(5);
-    write_reg(0x004B,0x0000);    	delay(5);
-    write_reg(0x0044,0xEF00);    	delay(5);
-    write_reg(0x0045,0x0000);    	delay(5);
-    write_reg(0x0046,0x013F);    	delay(5);
-    write_reg(0x0030,0x0707);    	delay(5);
-    write_reg(0x0031,0x0204);    	delay(5);
-    write_reg(0x0032,0x0204);    	delay(5);
-    write_reg(0x0033,0x0502);    	delay(5);
-    write_reg(0x0034,0x0507);    	delay(5);
-    write_reg(0x0035,0x0204);    	delay(5);
-    write_reg(0x0036,0x0204);    	delay(5);
-    write_reg(0x0037,0x0502);    	delay(5);
-    write_reg(0x003A,0x0302);    	delay(5);
-    write_reg(0x003B,0x0302);    	delay(5);
-    write_reg(0x0023,0x0000);    	delay(5);
-    write_reg(0x0024,0x0000);    	delay(5);
-    write_reg(0x0025,0x8000);    	delay(5);
-    write_reg(0x004f,0x0000);		delay(5);
-    write_reg(0x004e,0x0000);		delay(5);
+	write_reg(0x0000,0x0001);		gfxSleepMicroseconds(5);
+	write_reg(0x0003,0xA8A4);    	gfxSleepMicroseconds(5);
+	write_reg(0x000C,0x0000);    	gfxSleepMicroseconds(5);
+	write_reg(0x000D,0x080C);    	gfxSleepMicroseconds(5);
+    write_reg(0x000E,0x2B00);    	gfxSleepMicroseconds(5);
+    write_reg(0x001E,0x00B0);    	gfxSleepMicroseconds(5);
+	write_reg(0x0001,0x2B3F);		gfxSleepMicroseconds(5);
+    write_reg(0x0002,0x0600);    	gfxSleepMicroseconds(5);
+    write_reg(0x0010,0x0000);    	gfxSleepMicroseconds(5);
+    write_reg(0x0011,0x6070);    	gfxSleepMicroseconds(5);
+    write_reg(0x0005,0x0000);    	gfxSleepMicroseconds(5);
+    write_reg(0x0006,0x0000);    	gfxSleepMicroseconds(5);
+    write_reg(0x0016,0xEF1C);    	gfxSleepMicroseconds(5);
+    write_reg(0x0017,0x0003);    	gfxSleepMicroseconds(5);
+    write_reg(0x0007,0x0133);    	gfxSleepMicroseconds(5);
+    write_reg(0x000B,0x0000);    	gfxSleepMicroseconds(5);
+    write_reg(0x000F,0x0000);    	gfxSleepMicroseconds(5);
+    write_reg(0x0041,0x0000);    	gfxSleepMicroseconds(5);
+    write_reg(0x0042,0x0000);    	gfxSleepMicroseconds(5);
+    write_reg(0x0048,0x0000);    	gfxSleepMicroseconds(5);
+    write_reg(0x0049,0x013F);    	gfxSleepMicroseconds(5);
+    write_reg(0x004A,0x0000);    	gfxSleepMicroseconds(5);
+    write_reg(0x004B,0x0000);    	gfxSleepMicroseconds(5);
+    write_reg(0x0044,0xEF00);    	gfxSleepMicroseconds(5);
+    write_reg(0x0045,0x0000);    	gfxSleepMicroseconds(5);
+    write_reg(0x0046,0x013F);    	gfxSleepMicroseconds(5);
+    write_reg(0x0030,0x0707);    	gfxSleepMicroseconds(5);
+    write_reg(0x0031,0x0204);    	gfxSleepMicroseconds(5);
+    write_reg(0x0032,0x0204);    	gfxSleepMicroseconds(5);
+    write_reg(0x0033,0x0502);    	gfxSleepMicroseconds(5);
+    write_reg(0x0034,0x0507);    	gfxSleepMicroseconds(5);
+    write_reg(0x0035,0x0204);    	gfxSleepMicroseconds(5);
+    write_reg(0x0036,0x0204);    	gfxSleepMicroseconds(5);
+    write_reg(0x0037,0x0502);    	gfxSleepMicroseconds(5);
+    write_reg(0x003A,0x0302);    	gfxSleepMicroseconds(5);
+    write_reg(0x003B,0x0302);    	gfxSleepMicroseconds(5);
+    write_reg(0x0023,0x0000);    	gfxSleepMicroseconds(5);
+    write_reg(0x0024,0x0000);    	gfxSleepMicroseconds(5);
+    write_reg(0x0025,0x8000);    	gfxSleepMicroseconds(5);
+    write_reg(0x004f,0x0000);		gfxSleepMicroseconds(5);
+    write_reg(0x004e,0x0000);		gfxSleepMicroseconds(5);
 
  	// Release the bus
 	release_bus();
@@ -187,12 +183,10 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 
 #if GDISP_HARDWARE_STREAM_READ
 	LLDSPEC	void gdisp_lld_read_start(GDISPDriver *g) {
-		uint16_t	dummy;
-
 		acquire_bus();
 		set_viewport(g);
 		setreadmode();
-		dummy = read_data();		// dummy read
+		dummy_read();
 	}
 	LLDSPEC	color_t gdisp_lld_read_color(GDISPDriver *g) {
 		return read_data();
@@ -318,4 +312,3 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 #endif
 
 #endif /* GFX_USE_GDISP */
-/** @} */

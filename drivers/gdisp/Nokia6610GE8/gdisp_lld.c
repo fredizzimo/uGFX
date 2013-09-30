@@ -17,9 +17,6 @@
 
 #if GFX_USE_GDISP
 
-#define GDISP_LLD_DECLARATIONS
-#include "gdisp/lld/gdisp_lld.h"
-
 /**
  * This is for the EPSON (GE8) controller driving a Nokia6610 color LCD display.
  * Note that there is also a PHILIPS (GE12) controller for the same display that this code
@@ -52,10 +49,6 @@
  * orientation support and the streaming operations will be emulated (as described above).
  */
 
-/*===========================================================================*/
-/* Driver local definitions.                                                 */
-/*===========================================================================*/
-
 #if defined(GDISP_SCREEN_HEIGHT)
 	#warning "GDISP: This low level driver does not support setting a screen size. It is being ignored."
 	#undef GDISP_SCREEN_HEIGHT
@@ -65,7 +58,14 @@
 	#undef GDISP_SCREEN_WIDTH
 #endif
 
+#define GDISP_LLD_DECLARATIONS
+#include "gdisp/lld/gdisp_lld.h"
 #include "gdisp_lld_board.h"
+
+/*===========================================================================*/
+/* Driver local definitions.                                                 */
+/*===========================================================================*/
+
 #include "GE8.h"
 
 #define GDISP_SCAN_LINES			132
