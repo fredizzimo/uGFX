@@ -20,7 +20,7 @@
 #define noinline __attribute__((noinline))
 #endif
 
-static void gdisp_lld_init_board(void) {
+static void init_board(void) {
   // RST
   palSetPadMode(IOPORTA, 7, PAL_MODE_OUTPUT);
   palClearPad(IOPORTA, 7);
@@ -56,14 +56,14 @@ static void gdisp_lld_init_board(void) {
 
 #define PmpWaitBusy()   do {} while (PMMODEbits.BUSY)
 
-static noinline void gdisp_lld_reset_pin(bool_t state) {
+static noinline void setpin_reset(bool_t state) {
   if (state)
     palClearPad(IOPORTA, 7);
   else
     palSetPad(IOPORTA, 7);
 }
 
-static noinline void gdisp_lld_write_index(uint16_t data) {
+static noinline void write_index(uint16_t data) {
   volatile uint16_t dummy;
 
   PmpWaitBusy();
@@ -76,18 +76,24 @@ static noinline void gdisp_lld_write_index(uint16_t data) {
   (void)dummy;
 }
 
-static noinline void gdisp_lld_write_data(uint16_t data) {
+static noinline void write_data(uint16_t data) {
   PMDIN = data;
   PmpWaitBusy();
 }
 
-static noinline uint16_t gdisp_lld_read_data(void) {
+static inline void setreadmode(void) {
+}
+
+static inline void setwritemode(void) {
+}
+
+static noinline uint16_t read_data(void) {
   PmpWaitBusy();
   return PMDIN;
 }
 
 /* if not available, just ignore the argument and return */
-static void gdisp_lld_backlight(uint8_t percentage) {
+static void set_backlight(uint8_t percentage) {
   if (percentage)
     palClearPad(IOPORTD, 3);
   else
@@ -101,6 +107,7 @@ static inline void acquire_bus(void) {
 static inline void release_bus(void) {
   /* Nothing to do here since LCD is the only device on that bus */
 }
+
 #endif /* GDISP_LLD_BOARD_H */
 /** @} */
 

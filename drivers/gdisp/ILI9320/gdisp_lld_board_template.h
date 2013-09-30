@@ -16,11 +16,11 @@
 #ifndef GDISP_LLD_BOARD_H
 #define GDISP_LLD_BOARD_H
 
-static inline void gdisp_lld_init_board(void) {
+static inline void init_board(void) {
 
 }
 
-static inline void gdisp_lld_reset_pin(bool_t state) {
+static inline void setpin_reset(bool_t state) {
 
 }
 
@@ -32,19 +32,27 @@ static inline void release_bus(void) {
 
 }
 
-static inline void gdisp_lld_write_index(uint16_t data) {
+static inline void write_index(uint16_t data) {
 
 }
 
-static inline void gdisp_lld_write_data(uint16_t data) {
+static inline void write_data(uint16_t data) {
 
 }
 
-static inline uint16_t gdisp_lld_read_data(void) {
+static inline void setreadmode(void) {
 
 }
 
-static inline uint16_t gdisp_lld_backlight(uint8_t percentage) {
+static inline void setwritemode(void) {
+
+}
+
+static inline uint16_t read_data(void) {
+
+}
+
+static inline uint16_t set_backlight(uint8_t percentage) {
 
 }
 
