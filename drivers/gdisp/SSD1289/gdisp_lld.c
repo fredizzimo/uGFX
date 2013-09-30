@@ -19,6 +19,7 @@
 
 #define GDISP_LLD_DECLARATIONS
 #include "gdisp/lld/gdisp_lld.h"
+#include "gdisp_lld_board.h"
 
 /*===========================================================================*/
 /* Driver local definitions.                                                 */
@@ -30,15 +31,16 @@
 #ifndef GDISP_SCREEN_WIDTH
 	#define GDISP_SCREEN_WIDTH		240
 #endif
-
-#define GDISP_INITIAL_CONTRAST	50
-#define GDISP_INITIAL_BACKLIGHT	100
+#ifndef GDISP_INITIAL_CONTRAST
+	#define GDISP_INITIAL_CONTRAST	50
+#endif
+#ifndef GDISP_INITIAL_BACKLIGHT
+	#define GDISP_INITIAL_BACKLIGHT	100
+#endif
 
 /*===========================================================================*/
 /* Driver local functions.                                                   */
 /*===========================================================================*/
-
-#include "gdisp_lld_board.h"
 
 // Some common routines and macros
 #define write_reg(reg, data)		{ write_index(reg); write_data(data); }

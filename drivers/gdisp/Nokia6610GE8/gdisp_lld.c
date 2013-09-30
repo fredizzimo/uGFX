@@ -65,8 +65,8 @@
 	#undef GDISP_SCREEN_WIDTH
 #endif
 
-#include "GE8.h"
 #include "gdisp_lld_board.h"
+#include "GE8.h"
 
 #define GDISP_SCAN_LINES			132
 
