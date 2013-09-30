@@ -42,8 +42,6 @@
 
 // Some common routines and macros
 #define write_reg(reg, data)		{ write_index(reg); write_data(data); }
-#define stream_start()				write_index(0x0022);
-#define stream_stop()
 #define delay(us)					gfxSleepMicroseconds(us)
 #define delayms(ms)					gfxSleepMilliseconds(ms)
 
@@ -55,9 +53,8 @@ static void set_viewport(GDISPDriver* g) {
 	 * Reg 0x45,0x46 - Vertical RAM address position
 	 * 		Lower 9 bits gives 0-511 range in each value
 	 * 		0 <= Reg(0x45) <= Reg(0x46) <= 0x13F
-	 */
-	/* Reg 0x004E is an 8 bit value
-	 * Reg 0x004F is 9 bit
+	 * Reg 0x004E is an 8 bit value - start x position
+	 * Reg 0x004F is 9 bit - start y position
 	 * Use a bit mask to make sure they are not set too high
 	 */
 	switch(g->g.Orientation) {
@@ -91,6 +88,7 @@ static void set_viewport(GDISPDriver* g) {
 			write_reg(0x004f, g->p.x & 0x01FF);
 			break;
 	}
+	write_index(0x0022);
 }
 
 /*===========================================================================*/
@@ -176,13 +174,11 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 	LLDSPEC	void gdisp_lld_write_start(GDISPDriver *g) {
 		acquire_bus();
 		set_viewport(g);
-		stream_start();
 	}
 	LLDSPEC	void gdisp_lld_write_color(GDISPDriver *g) {
 		write_data(g->p.color);
 	}
 	LLDSPEC	void gdisp_lld_write_stop(GDISPDriver *g) {
-		stream_stop();
 		release_bus();
 	}
 #endif
@@ -193,7 +189,6 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 
 		acquire_bus();
 		set_viewport(g);
-		stream_start();
 		setreadmode();
 		dummy = read_data();		// dummy read
 	}
@@ -202,7 +197,6 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 	}
 	LLDSPEC	void gdisp_lld_read_stop(GDISPDriver *g) {
 		setwritemode();
-		stream_stop();
 		release_bus();
 	}
 #endif
@@ -211,9 +205,7 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 	LLDSPEC void gdisp_lld_fill_area(GDISPDriver *g) {
 		acquire_bus();
 		set_viewport(g);
-		stream_start();
 		dma_with_noinc(&color, g->p.cx*g->p.cy)
-		stream_stop();
 		release_bus();
 	}
 #endif
@@ -227,15 +219,12 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 
 		acquire_bus();
 		set_viewport(g);
-		stream_start();
-
 		if (g->p.x2 == g->p.cx) {
 			dma_with_inc(buffer, g->p.cx*g->p.cy);
 		} else {
 			for (ycnt = g->p.cy; ycnt; ycnt--, buffer += g->p.x2)
 				dma_with_inc(buffer, g->p.cy);
 		}
-		stream_stop();
 		release_bus();
 	}
 #endif
