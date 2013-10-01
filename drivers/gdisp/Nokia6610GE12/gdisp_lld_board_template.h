@@ -6,8 +6,8 @@
  */
 
 /**
- * @file    drivers/gdisp/Nokia6610GE8/gdisp_lld_board_template.h
- * @brief   GDISP Graphic Driver subsystem board interface for the Nokia6610 GE8 display.
+ * @file    drivers/gdisp/Nokia6610GE12/gdisp_lld_board_template.h
+ * @brief   GDISP Graphic Driver subsystem board interface for the Nokia6610 GE12 display.
  *
  * @addtogroup GDISP
  * @{
@@ -15,6 +15,18 @@
 
 #ifndef _GDISP_LLD_BOARD_H
 #define _GDISP_LLD_BOARD_H
+
+/*
+ * Set various display properties. These properties mostly depend on the exact controller chip you get.
+ * The defaults should work for most controllers.
+ */
+//#define GDISP_SCREEN_HEIGHT				130		// The visible display height
+//#define GDISP_SCREEN_WIDTH				130		// The visible display width
+//#define GDISP_RAM_X_OFFSET				0		// The x offset of the visible area
+//#define GDISP_RAM_Y_OFFSET				2		// The y offset of the visible area
+//#define GDISP_SLEEP_POS					50		// The position of the sleep mode partial display
+//#define GDISP_INITIAL_CONTRAST			50		// The initial contrast percentage
+//#define GDISP_INITIAL_BACKLIGHT			100		// The initial backlight percentage
 
 /**
  * @brief   Initialise the board for the display.
@@ -95,7 +107,7 @@ static inline void write_data(uint16_t data) {
 
 }
 
-#if GDISP_HARDWARE_READPIXEL || GDISP_HARDWARE_SCROLL || defined(__DOXYGEN__)
+#if GDISP_HARDWARE_READPIXEL || GDISP_HARDWARE_SCROLL
 /**
  * @brief   Read data from the lcd.
  *

@@ -518,29 +518,29 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 					return;
 				acquire_bus();
 				switch((orientation_t)g->p.ptr) {
-					case GDISP_ROTATE_0:
-						write_cmd3(DATCTL, 0x00, 0x00, 0x02);	// P1: page normal, column normal, scan in column direction
-						g->g.Height = GDISP_SCREEN_HEIGHT;
-						g->g.Width = GDISP_SCREEN_WIDTH;
-						break;
-					case GDISP_ROTATE_90:
-						write_cmd3(DATCTL, 0x05, 0x00, 0x02);	// P1: page reverse, column normal, scan in page direction
-						g->g.Height = GDISP_SCREEN_WIDTH;
-						g->g.Width = GDISP_SCREEN_HEIGHT;
-						break;
-					case GDISP_ROTATE_180:
-						write_cmd3(DATCTL, 0x03, 0x00, 0x02);	// P1: page reverse, column reverse, scan in column direction
-						g->g.Height = GDISP_SCREEN_HEIGHT;
-						g->g.Width = GDISP_SCREEN_WIDTH;
-						break;
-					case GDISP_ROTATE_270:
-						write_cmd3(DATCTL, 0x06, 0x00, 0x02);	// P1: page normal, column reverse, scan in page direction
-						g->g.Height = GDISP_SCREEN_WIDTH;
-						g->g.Width = GDISP_SCREEN_HEIGHT;
-						break;
-					default:
-						release_bus();
-						return;
+				case GDISP_ROTATE_0:
+					write_cmd3(DATCTL, 0x00, 0x00, 0x02);	// P1: page normal, column normal, scan in column direction
+					g->g.Height = GDISP_SCREEN_HEIGHT;
+					g->g.Width = GDISP_SCREEN_WIDTH;
+					break;
+				case GDISP_ROTATE_90:
+					write_cmd3(DATCTL, 0x05, 0x00, 0x02);	// P1: page reverse, column normal, scan in page direction
+					g->g.Height = GDISP_SCREEN_WIDTH;
+					g->g.Width = GDISP_SCREEN_HEIGHT;
+					break;
+				case GDISP_ROTATE_180:
+					write_cmd3(DATCTL, 0x03, 0x00, 0x02);	// P1: page reverse, column reverse, scan in column direction
+					g->g.Height = GDISP_SCREEN_HEIGHT;
+					g->g.Width = GDISP_SCREEN_WIDTH;
+					break;
+				case GDISP_ROTATE_270:
+					write_cmd3(DATCTL, 0x06, 0x00, 0x02);	// P1: page normal, column reverse, scan in page direction
+					g->g.Height = GDISP_SCREEN_WIDTH;
+					g->g.Width = GDISP_SCREEN_HEIGHT;
+					break;
+				default:
+					release_bus();
+					return;
 				}
 				release_bus();
 				g->g.Orientation = (orientation_t)g->p.ptr;

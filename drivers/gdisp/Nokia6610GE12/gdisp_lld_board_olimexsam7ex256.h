@@ -6,7 +6,7 @@
  */
 
 /**
- * @file    drivers/gdisp/Nokia6610GE12/gdisp_lld_board_olimexsam7ex256.h
+ * @file    drivers/gdisp/Nokia6610GE8/gdisp_lld_board_olimexsam7ex256.h
  * @brief   GDISP Graphic Driver subsystem board interface for the Olimex SAM7-EX256 board.
  *
  * @addtogroup GDISP
@@ -16,14 +16,46 @@
 #ifndef _GDISP_LLD_BOARD_H
 #define _GDISP_LLD_BOARD_H
 
+/*
+ * Set various display properties. These properties mostly depend on the exact controller chip you get.
+ * The defaults should work for most controllers.
+ */
+//#define GDISP_SCREEN_HEIGHT				130		// The visible display height
+//#define GDISP_SCREEN_WIDTH				130		// The visible display width
+//#define GDISP_RAM_X_OFFSET				0		// The x offset of the visible area
+//#define GDISP_RAM_Y_OFFSET				2		// The y offset of the visible area
+//#define GDISP_SLEEP_POS					50		// The position of the sleep mode partial display
+//#define GDISP_INITIAL_CONTRAST			50		// The initial contrast percentage
+//#define GDISP_INITIAL_BACKLIGHT			100		// The initial backlight percentage
+
 // ******************************************************
 // Pointers to AT91SAM7X256 peripheral data structures
 // ******************************************************
-volatile AT91PS_PIO pPIOA = AT91C_BASE_PIOA;
-volatile AT91PS_PIO pPIOB = AT91C_BASE_PIOB;
-volatile AT91PS_SPI pSPI = AT91C_BASE_SPI0;
-volatile AT91PS_PMC pPMC = AT91C_BASE_PMC;
-volatile AT91PS_PDC pPDC = AT91C_BASE_PDC_SPI0;
+static volatile AT91PS_PIO pPIOA = AT91C_BASE_PIOA;
+static volatile AT91PS_PIO pPIOB = AT91C_BASE_PIOB;
+static volatile AT91PS_SPI pSPI = AT91C_BASE_SPI0;
+static volatile AT91PS_PMC pPMC = AT91C_BASE_PMC;
+static volatile AT91PS_PDC pPDC = AT91C_BASE_PDC_SPI0;
+
+/* The PWM backlight control is non-linear on this board.
+ * We pick values here that make it look a bit more linear.
+ */
+#define PWM_TOP_VALUE		500
+#define PWM_BOTTOM_VALUE	200
+
+#define PWM_VALUE(x)	(PWM_BOTTOM_VALUE+(PWM_TOP_VALUE-PWM_BOTTOM_VALUE)*(x)/100)
+
+/* PWM configuration structure. The LCD Backlight is on PWM1/PB20 ie PWM2/PIN1 in ChibiOS speak */
+static const PWMConfig pwmcfg = {
+  1000000,		/* 1 MHz PWM clock frequency. Ignored as we are using PWM_MCK_DIV_n */
+  1000,			/* PWM period is 1000 cycles. */
+  NULL,
+  {
+   {PWM_MCK_DIV_1 | PWM_OUTPUT_ACTIVE_HIGH | PWM_OUTPUT_PIN1 | PWM_DISABLEPULLUP_PIN1, NULL},
+  },
+};
+
+static bool_t pwmRunning = FALSE;
 
 /**
  * @brief   Initialise the board for the display.
@@ -78,14 +110,14 @@ static inline void init_board(void) {
 	pPMC->PMC_PCER = 1 << AT91C_ID_SPI0;
 
 	// Fixed mode
-	pSPI->SPI_CR      = 0x81;               //SPI Enable, Sowtware reset
+	pSPI->SPI_CR      = 0x81;               //SPI Enable, Software reset
 	pSPI->SPI_CR      = 0x01;               //SPI Enable
+	pSPI->SPI_MR      = 0xE0011;			//Master mode, fixed select, disable decoder, PCS=1110
+	pSPI->SPI_CSR[0]  = 0x01010311;			//9bit, CPOL=1, ClockPhase=0, SCLK = 48Mhz/3 = 16MHz
 
-	//pSPI->SPI_MR      = 0xE0019;            //Master mode, fixed select, disable decoder, FDIV=1 (MCK), PCS=1110
-	pSPI->SPI_MR      = 0xE0011;          //Master mode, fixed select, disable decoder, FDIV=0 (MCK), PCS=1110
-
-	//pSPI->SPI_CSR[0]  = 0x01010C11;           //9bit, CPOL=1, ClockPhase=0, SCLK = 48Mhz/32*12 = 125kHz
-	pSPI->SPI_CSR[0]  = 0x01010311;        //9bit, CPOL=1, ClockPhase=0, SCLK = 48Mhz/8 = 6MHz if using commented MR line above
+	/* Display backlight control at 100% */
+	pwmRunning = FALSE;
+	palSetPad(IOPORT2, PIOB_LCD_BL);
 }
 
 /**
@@ -113,10 +145,28 @@ static inline void setpin_reset(bool_t state) {
  * @notapi
  */
 static inline void set_backlight(uint8_t percent) {
-	if (percent)
+	if (percent == 100) {
+		/* Turn the pin on - No PWM */
+		if (pwmRunning) {
+			pwmStop(&PWMD2);
+			pwmRunning = FALSE;
+		}
 		palSetPad(IOPORT2, PIOB_LCD_BL);
-	else
+	} else if (percent == 0) {
+		/* Turn the pin off - No PWM */
+		if (pwmRunning) {
+			pwmStop(&PWMD2);
+			pwmRunning = FALSE;
+		}
 		palClearPad(IOPORT2, PIOB_LCD_BL);
+	} else {
+		/* Use the PWM */
+		if (!pwmRunning) {
+			pwmStart(&PWMD2, &pwmcfg);
+			pwmRunning = TRUE;
+		}
+		pwmEnableChannel(&PWMD2, 0, PWM_VALUE(percent));
+	}
 }
 
 /**
