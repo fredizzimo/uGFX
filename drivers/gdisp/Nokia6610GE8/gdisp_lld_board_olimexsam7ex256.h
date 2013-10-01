@@ -227,7 +227,7 @@ static inline void write_data(uint16_t data) {
  */
 static inline uint16_t read_data(void) {
 	#error "gdispNokia6610GE8: GDISP_HARDWARE_READPIXEL and GDISP_HARDWARE_SCROLL are not supported on this board"
-	return 0;
+	return pSPI->SPI_RDR;
 }
 #endif
 

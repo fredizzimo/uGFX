@@ -93,7 +93,7 @@
 	#define GDISP_SLEEP_POS			((GDISP_SCAN_LINES-GDISP_SLEEP_SIZE)/2)
 #endif
 #ifndef GDISP_INITIAL_CONTRAST
-	#define GDISP_INITIAL_CONTRAST	38
+	#define GDISP_INITIAL_CONTRAST	60
 #endif
 #ifndef GDISP_INITIAL_BACKLIGHT
 	#define GDISP_INITIAL_BACKLIGHT	100
@@ -162,8 +162,8 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 															// P1: 0x00 = page address normal, column address normal, address scan in column direction
 															// P2: 0x00 = RGB sequence (default value)
 															// P3: 0x02 = 4 bits per colour (Type A)
-	write_cmd2(VOLCTR, GDISP_INITIAL_CONTRAST, 0x03);	// Voltage control (contrast setting)
-															// P1 = Contrast
+	write_cmd2(VOLCTR, 63*GDISP_INITIAL_CONTRAST/100, 0x03);	// Voltage control (contrast setting)
+															// P1 = Contrast (0..63)
 															// P2 = 3 resistance ratio (only value that works)
 	delayms(100);										// Allow power supply to stabilise
 	write_cmd(DISON);									// Turn on the display
@@ -554,7 +554,7 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 		case GDISP_CONTROL_CONTRAST:
 			if ((unsigned)g->p.ptr > 100) g->p.ptr = (void *)100;
 			acquire_bus();
-			write_cmd2(VOLCTR, (unsigned)g->p.ptr, 0x03);
+			write_cmd2(VOLCTR, 63*(unsigned)g->p.ptr/100, 0x03);
 			release_bus();
 			g->g.Contrast = (unsigned)g->p.ptr;
 			return;

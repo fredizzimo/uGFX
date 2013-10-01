@@ -52,7 +52,6 @@
 #ifndef GDISP_RAM_Y_OFFSET
 	#define GDISP_RAM_Y_OFFSET		2		/* Offset in RAM of visible area */
 #endif
-#endif
 #ifndef GDISP_SLEEP_POS
 	#define GDISP_SLEEP_POS			((GDISP_SCAN_LINES-GDISP_SLEEP_SIZE)/2 & ~3)
 #endif
