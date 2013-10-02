@@ -50,6 +50,17 @@
 		#endif
 
 		/**
+		 * @brief   Hardware supports setting the cursor position within the stream window.
+		 * @details If set to @p FALSE this routine is not available.
+		 * @note	This is used to optimise setting of individual pixels within a stream window.
+		 * 			It should therefore not be implemented unless it is cheaper than just setting
+		 * 			a new window.
+		 */
+		#ifndef GDISP_HARDWARE_STREAM_POS
+			#define GDISP_HARDWARE_STREAM_POS		FALSE
+		#endif
+
+		/**
 		 * @brief   Hardware accelerated draw pixel.
 		 * @details If set to @p FALSE software emulation is used.
 		 * @note	Either GDISP_HARDWARE_STREAM_WRITE or GDISP_HARDWARE_DRAWPIXEL must be provided by the driver
@@ -142,8 +153,9 @@ typedef struct GDISPDriver {
 	#endif
 
 	uint16_t					flags;
-		#define GDISP_FLG_INSTREAM		0x0001
-		#define GDISP_FLG_DRIVER		0x0002		// This flags and above are for use by the driver
+		#define GDISP_FLG_INSTREAM		0x0001		// We are in a user based stream operation
+		#define GDISP_FLG_SCRSTREAM		0x0002		// The stream area currently covers the whole screen
+		#define GDISP_FLG_DRIVER		0x0004		// This flags and above are for use by the driver
 
 	// Multithread Mutex
 	#if GDISP_NEED_MULTITHREAD
@@ -216,6 +228,7 @@ typedef struct GDISPDriver {
 		 * @note		The parameter variables must not be altered by the driver.
 		 * @note		Streaming operations that wrap the defined window have
 		 * 				undefined results.
+		 * @note		This must be followed by a call to @p gdisp_lld_write_pos() if GDISP_HARDWARE_STREAM_POS is TRUE.
 		 */
 		LLDSPEC	void gdisp_lld_write_start(GDISPDriver *g);
 
@@ -239,6 +252,19 @@ typedef struct GDISPDriver {
 		 * @note		The parameter variables must not be altered by the driver.
 		 */
 		LLDSPEC	void gdisp_lld_write_stop(GDISPDriver *g);
+
+		#if GDISP_HARDWARE_STREAM_POS || defined(__DOXYGEN__)
+			/**
+			 * @brief   Change the current position within the current streaming window
+			 * @pre		GDISP_HARDWARE_STREAM_POS is TRUE and GDISP_HARDWARE_STREAM_WRITE is TRUE
+			 *
+			 * @param[in]	g				The driver structure
+			 * @param[in]	g->p.x,g->p.y	The new position (which will always be within the existing stream window)
+			 *
+			 * @note		The parameter variables must not be altered by the driver.
+			 */
+			LLDSPEC	void gdisp_lld_write_pos(GDISPDriver *g);
+		#endif
 	#endif
 
 	#if GDISP_HARDWARE_STREAM_READ || defined(__DOXYGEN__)
@@ -277,7 +303,6 @@ typedef struct GDISPDriver {
 		 */
 		LLDSPEC	void gdisp_lld_read_stop(GDISPDriver *g);
 	#endif
-
 
 	#if GDISP_HARDWARE_DRAWPIXEL || defined(__DOXYGEN__)
 		/**
@@ -424,6 +449,7 @@ typedef struct GDISPDriver {
 	typedef struct GDISPVMT {
 		bool_t (*init)(GDISPDriver *g);
 		void (*writestart)(GDISPDriver *g);				// Uses p.x,p.y  p.cx,p.cy
+		void (*writepos)(GDISPDriver *g);				// Uses p.x,p.y
 		void (*writecolor)(GDISPDriver *g);				// Uses p.color
 		void (*writestop)(GDISPDriver *g);				// Uses no parameters
 		void (*readstart)(GDISPDriver *g);				// Uses p.x,p.y  p.cx,p.cy
@@ -446,6 +472,11 @@ typedef struct GDISPDriver {
 			gdisp_lld_init,
 			#if GDISP_HARDWARE_STREAM_WRITE
 				gdisp_lld_write_start,
+				#if GDISP_HARDWARE_STREAM_POS
+					gdisp_lld_write_pos,
+				#else
+					0,
+				#endif
 				gdisp_lld_write_color,
 				gdisp_lld_write_stop,
 			#else
@@ -509,6 +540,7 @@ typedef struct GDISPDriver {
 	#else
 		#define gdisp_lld_init(g)				g->vmt->init(g)
 		#define gdisp_lld_write_start(g)		g->vmt->writestart(g)
+		#define gdisp_lld_write_pos(g)			g->vmt->writepos(g)
 		#define gdisp_lld_write_color(g)		g->vmt->writecolor(g)
 		#define gdisp_lld_write_stop(g)			g->vmt->writestop(g)
 		#define gdisp_lld_read_start(g)			g->vmt->readstart(g)

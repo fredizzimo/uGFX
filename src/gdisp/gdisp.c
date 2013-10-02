@@ -54,6 +54,17 @@ GDISPControl			*GDISP = &GDISP_DRIVER_STRUCT.g;
 /* Internal functions.														*/
 /*==========================================================================*/
 
+#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
+	static INLINE void setglobalwindow(void) {
+		coord_t	x, y;
+		x = GC->p.x; y = GC->p.y;
+		GC->p.cx = GC->g.Width; GC->p.cy = GC->g.Height;
+		gdisp_lld_write_start(GC);
+		GC->p.x = x; GC->p.y = y;
+		GC->flags |= GDISP_FLG_SCRSTREAM;
+	}
+#endif
+
 // drawpixel_clip()
 // Parameters:	x,y
 // Alters:		cx, cy (if using streaming)
@@ -67,6 +78,18 @@ GDISPControl			*GDISP = &GDISP_DRIVER_STRUCT.g;
 	#else
 		#define drawpixel_clip()	gdisp_lld_draw_pixel(GC)
 	#endif
+#elif GDISP_HARDWARE_STREAM_POS
+	// Next best is cursor based streaming
+	static INLINE void drawpixel_clip(void) {
+		#if NEED_CLIPPING
+			if (GC->p.x < GC->clipx0 || GC->p.x >= GC->clipx1 || GC->p.y < GC->clipy0 || GC->p.y >= GC->clipy1)
+				return;
+		#endif
+		if (!(GC->flags & GDISP_FLG_SCRSTREAM))
+			setglobalwindow();
+		gdisp_lld_write_pos(GC);
+		gdisp_lld_write_color(GC);
+	}
 #else
 	// Worst is streaming
 	static INLINE void drawpixel_clip(void) {
@@ -86,6 +109,8 @@ GDISPControl			*GDISP = &GDISP_DRIVER_STRUCT.g;
 // Parameters:	x,y cx,cy and color
 // Alters:		nothing
 // Note:		This is not clipped
+// Resets the streaming area
+//	if GDISP_HARDWARE_STREAM_WRITE and GDISP_HARDWARE_STREAM_POS is set.
 #if GDISP_HARDWARE_FILLS
 	// Best is hardware accelerated area fill
 	#define fillarea()	gdisp_lld_fill_area(GC)
@@ -96,7 +121,17 @@ GDISPControl			*GDISP = &GDISP_DRIVER_STRUCT.g;
 
 		area = (uint32_t)GC->p.cx * GC->p.cy;
 
+		#if GDISP_HARDWARE_STREAM_POS
+			if ((GC->flags & GDISP_FLG_SCRSTREAM)) {
+				gdisp_lld_write_stop(GC);
+				GC->flags &= ~GDISP_FLG_SCRSTREAM;
+			}
+		#endif
+
 		gdisp_lld_write_start(GC);
+		#if GDISP_HARDWARE_STREAM_POS
+			gdisp_lld_write_pos(GC);
+		#endif
 		for(; area; area--)
 			gdisp_lld_write_color(GC);
 		gdisp_lld_write_stop(GC);
@@ -130,6 +165,8 @@ GDISPControl			*GDISP = &GDISP_DRIVER_STRUCT.g;
 
 // Parameters:	x,y and x1
 // Alters:		x,y x1,y1 cx,cy
+// Assumes the window covers the screen and a write_stop() will occur later
+//	if GDISP_HARDWARE_STREAM_WRITE and GDISP_HARDWARE_STREAM_POS is set.
 static void hline_clip(void) {
 	// Swap the points if necessary so it always goes from x to x1
 	if (GC->p.x1 < GC->p.x) {
@@ -152,6 +189,12 @@ static void hline_clip(void) {
 			#if GDISP_HARDWARE_DRAWPIXEL
 				// Best is hardware accelerated pixel draw
 				gdisp_lld_draw_pixel(GC);
+			#elif GDISP_HARDWARE_STREAM_POS
+				// Next best is cursor based streaming
+				if (!(GC->flags & GDISP_FLG_SCRSTREAM))
+					setglobalwindow();
+				gdisp_lld_write_pos(GC);
+				gdisp_lld_write_color(GC);
 			#else
 				// Worst is streaming
 				GC->p.cx = GC->p.cy = 1;
@@ -168,6 +211,12 @@ static void hline_clip(void) {
 		GC->p.cx = GC->p.x1 - GC->p.x + 1;
 		GC->p.cy = 1;
 		gdisp_lld_fill_area(GC);
+	#elif GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
+		// Next best is cursor based streaming
+		if (!(GC->flags & GDISP_FLG_SCRSTREAM))
+			setglobalwindow();
+		gdisp_lld_write_pos(GC);
+		do { gdisp_lld_write_color(GC); } while(GC->p.cx--);
 	#elif GDISP_HARDWARE_STREAM_WRITE
 		// Next best is streaming
 		GC->p.cx = GC->p.x1 - GC->p.x + 1;
@@ -200,12 +249,18 @@ static void vline_clip(void) {
 
 	// This is an optimization for the point case. It is only worthwhile however if we
 	// have hardware fills or if we support both hardware pixel drawing and hardware streaming
-	#if GDISP_HARDWARE_FILLS || (GDISP_HARDWARE_DRAWPIXEL && GDISP_HARDWARE_STREAM_WRITE)
+	#if GDISP_HARDWARE_FILLS || (GDISP_HARDWARE_DRAWPIXEL && GDISP_HARDWARE_STREAM_WRITE) || (GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE)
 		// Is this a point
 		if (GC->p.y == GC->p.y1) {
 			#if GDISP_HARDWARE_DRAWPIXEL
 				// Best is hardware accelerated pixel draw
 				gdisp_lld_draw_pixel(GC);
+			#elif GDISP_HARDWARE_STREAM_POS
+				// Next best is cursor based streaming
+				if (!(GC->flags & GDISP_FLG_SCRSTREAM))
+					setglobalwindow();
+				gdisp_lld_write_pos(GC);
+				gdisp_lld_write_color(GC);
 			#else
 				// Worst is streaming
 				GC->p.cx = GC->p.cy = 1;
@@ -224,9 +279,18 @@ static void vline_clip(void) {
 		gdisp_lld_fill_area(GC);
 	#elif GDISP_HARDWARE_STREAM_WRITE
 		// Next best is streaming
+		#if GDISP_HARDWARE_STREAM_POS
+			if ((GC->flags & GDISP_FLG_SCRSTREAM)) {
+				gdisp_lld_write_stop(GC);
+				GC->flags &= ~GDISP_FLG_SCRSTREAM;
+			}
+		#endif
 		GC->p.cy = GC->p.y1 - GC->p.y + 1;
 		GC->p.cx = 1;
 		gdisp_lld_write_start(GC);
+		#if GDISP_HARDWARE_STREAM_POS
+			gdisp_lld_write_pos(GC);
+		#endif
 		do { gdisp_lld_write_color(GC); } while(GC->p.cy--);
 		gdisp_lld_write_stop(GC);
 	#else
@@ -363,6 +427,9 @@ void _gdispInit(void) {
 			GC->p.cx = cx;
 			GC->p.cy = cy;
 			gdisp_lld_write_start(GC);
+			#if GDISP_HARDWARE_STREAM_POS
+				gdisp_lld_write_pos(GC);
+			#endif
 		#else
 			// Worst - save the parameters and use pixel drawing
 
@@ -501,6 +568,12 @@ void gdispDrawPixel(coord_t x, coord_t y, color_t color) {
 	GC->p.y		= y;
 	GC->p.color	= color;
 	drawpixel_clip();
+	#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
+		if ((GC->flags & GDISP_FLG_SCRSTREAM)) {
+			gdisp_lld_write_stop(GC);
+			GC->flags &= ~GDISP_FLG_SCRSTREAM;
+		}
+	#endif
 	MUTEX_EXIT();
 }
 	
@@ -512,6 +585,12 @@ void gdispDrawLine(coord_t x0, coord_t y0, coord_t x1, coord_t y1, color_t color
 	GC->p.y1 = y1;
 	GC->p.color = color;
 	line_clip();
+	#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
+		if ((GC->flags & GDISP_FLG_SCRSTREAM)) {
+			gdisp_lld_write_stop(GC);
+			GC->flags &= ~GDISP_FLG_SCRSTREAM;
+		}
+	#endif
 	MUTEX_EXIT();
 }
 
@@ -541,6 +620,9 @@ void gdispClear(color_t color) {
 		area = (uint32_t)GC->p.cx * GC->p.cy;
 
 		gdisp_lld_write_start(GC);
+		#if GDISP_HARDWARE_STREAM_POS
+			gdisp_lld_write_pos(GC);
+		#endif
 		for(; area; area--)
 			gdisp_lld_write_color(GC);
 		gdisp_lld_write_stop(GC);
@@ -605,6 +687,9 @@ void gdispBlitAreaEx(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx,
 		GC->p.cx = cx;
 		GC->p.cy = cy;
 		gdisp_lld_write_start(GC);
+		#if GDISP_HARDWARE_STREAM_POS
+			gdisp_lld_write_pos(GC);
+		#endif
 		for(GC->p.y = y; GC->p.y < srcy; GC->p.y++, buffer += srccx) {
 			for(GC->p.x = x; GC->p.x < srcx; GC->p.x++) {
 				GC->p.color = *buffer++;
@@ -716,6 +801,13 @@ void gdispBlitAreaEx(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx,
 		GC->p.x = x + a; GC->p.y = y - b; drawpixel_clip();
 		GC->p.x = x - a; GC->p.y = y + b; drawpixel_clip();
 		GC->p.x = x - a; GC->p.y = y - b; drawpixel_clip();
+
+		#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
+			if ((GC->flags & GDISP_FLG_SCRSTREAM)) {
+				gdisp_lld_write_stop(GC);
+				GC->flags &= ~GDISP_FLG_SCRSTREAM;
+			}
+		#endif
 		MUTEX_EXIT();
 	}
 #endif
@@ -750,6 +842,13 @@ void gdispBlitAreaEx(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx,
 		} while(a < b);
 		GC->p.y = y+a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();
 		GC->p.y = y-a; GC->p.x = x-b; GC->p.x1 = x+b; hline_clip();
+
+		#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
+			if ((GC->flags & GDISP_FLG_SCRSTREAM)) {
+				gdisp_lld_write_stop(GC);
+				GC->flags &= ~GDISP_FLG_SCRSTREAM;
+			}
+		#endif
 		MUTEX_EXIT();
 	}
 #endif
@@ -787,6 +886,13 @@ void gdispBlitAreaEx(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx,
 				err -= (2*dy-1)*a2;
 			}
 		} while(dy >= 0);
+
+		#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
+			if ((GC->flags & GDISP_FLG_SCRSTREAM)) {
+				gdisp_lld_write_stop(GC);
+				GC->flags &= ~GDISP_FLG_SCRSTREAM;
+			}
+		#endif
 		MUTEX_EXIT();
 	}
 #endif
@@ -822,6 +928,13 @@ void gdispBlitAreaEx(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx,
 				err -= (2*dy-1)*a2;
 			}
 		} while(dy >= 0);
+
+		#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
+			if ((GC->flags & GDISP_FLG_SCRSTREAM)) {
+				gdisp_lld_write_stop(GC);
+				GC->flags &= ~GDISP_FLG_SCRSTREAM;
+			}
+		#endif
 		MUTEX_EXIT();
 	}
 #endif
@@ -888,8 +1001,16 @@ void gdispBlitAreaEx(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx,
 			if (full & 0x0C) { GC->p.x = x-a; GC->p.y = y-b; drawpixel_clip(); }
 			if (full & 0x03) { GC->p.x = x+a; GC->p.y = y-b; drawpixel_clip(); }
 			if (full & 0x30) { GC->p.x = x-a; GC->p.y = y+b; drawpixel_clip(); }
-			if (full == 0xFF)
+			if (full == 0xFF) {
+				#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
+					if ((GC->flags & GDISP_FLG_SCRSTREAM)) {
+						gdisp_lld_write_stop(GC);
+						GC->flags &= ~GDISP_FLG_SCRSTREAM;
+					}
+				#endif
+				MUTEX_EXIT;
 				return;
+			}
 		}
 
 		#if GFX_USE_GMISC && GMISC_NEED_FIXEDTRIG
@@ -1002,6 +1123,13 @@ void gdispBlitAreaEx(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx,
 			if (((sbit & 0x10) && a >= sedge && a <= eedge) || ((sbit & 0x20) && a <= sedge && a >= eedge))
 				{ GC->p.x = x-a; GC->p.y = y+b; drawpixel_clip(); }
 		}
+
+		#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
+			if ((GC->flags & GDISP_FLG_SCRSTREAM)) {
+				gdisp_lld_write_stop(GC);
+				GC->flags &= ~GDISP_FLG_SCRSTREAM;
+			}
+		#endif
 		MUTEX_EXIT();
 	}
 #endif
@@ -1499,6 +1627,12 @@ void gdispBlitAreaEx(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx,
 			break;
 		}
 
+		#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
+			if ((GC->flags & GDISP_FLG_SCRSTREAM)) {
+				gdisp_lld_write_stop(GC);
+				GC->flags &= ~GDISP_FLG_SCRSTREAM;
+			}
+		#endif
 		MUTEX_EXIT();
 	}
 
@@ -1664,6 +1798,9 @@ void gdispBlitAreaEx(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx,
 							GC->p.cx = fx;
 							GC->p.cy = 1;
 							gdisp_lld_write_start(GC);
+							#if GDISP_HARDWARE_STREAM_POS
+								gdisp_lld_write_pos(GC);
+							#endif
 							for(j = 0; j < fx; j++) {
 								GC->p.color = GC->linebuf[j];
 								gdisp_lld_write_color(GC);
@@ -1776,6 +1913,13 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color) {
 			GC->p.x = cx; GC->p.y = y; GC->p.y1 = cy; vline_clip();
 		}
 	}
+
+	#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
+		if ((GC->flags & GDISP_FLG_SCRSTREAM)) {
+			gdisp_lld_write_stop(GC);
+			GC->flags &= ~GDISP_FLG_SCRSTREAM;
+		}
+	#endif
 	MUTEX_EXIT();
 }
 
@@ -1791,6 +1935,13 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color) {
 			GC->p.x=tx+p->x; GC->p.y=ty+p->y; GC->p.x1=tx+p[1].x; GC->p.y1=ty+p[1].y; line_clip();
 		}
 		GC->p.x=tx+p->x; GC->p.y=ty+p->y; GC->p.x1=tx+pntarray->x; GC->p.y1=ty+pntarray->y; line_clip();
+
+		#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
+			if ((GC->flags & GDISP_FLG_SCRSTREAM)) {
+				gdisp_lld_write_stop(GC);
+				GC->flags &= ~GDISP_FLG_SCRSTREAM;
+			}
+		#endif
 		MUTEX_EXIT();
 	}
 
@@ -1850,6 +2001,12 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color) {
 			}
 
 			if (!cnt) {
+				#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
+					if ((GC->flags & GDISP_FLG_SCRSTREAM)) {
+						gdisp_lld_write_stop(GC);
+						GC->flags &= ~GDISP_FLG_SCRSTREAM;
+					}
+				#endif
 				MUTEX_EXIT();
 				return;
 			}
@@ -1859,6 +2016,12 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color) {
 			if (ymax == lpnt->y) {
 				for (lpnt = lpnt <= pntarray ? epnts : lpnt-1; lpnt->y == y; cnt--) {
 					if (!cnt) {
+						#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
+							if ((GC->flags & GDISP_FLG_SCRSTREAM)) {
+								gdisp_lld_write_stop(GC);
+								GC->flags &= ~GDISP_FLG_SCRSTREAM;
+							}
+						#endif
 						MUTEX_EXIT();
 						return;
 					}
@@ -1869,6 +2032,12 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color) {
 			} else {
 				for (rpnt = rpnt >= epnts ? pntarray : rpnt+1; rpnt->y == y; cnt--) {
 					if (!cnt) {
+						#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
+							if ((GC->flags & GDISP_FLG_SCRSTREAM)) {
+								gdisp_lld_write_stop(GC);
+								GC->flags &= ~GDISP_FLG_SCRSTREAM;
+							}
+						#endif
 						MUTEX_EXIT();
 						return;
 					}
@@ -1948,6 +2117,12 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color) {
 		GC->t.clipy1 = y + font->height;
 		GC->t.color = color;
 		mf_render_character(font, x, y, c, drawcharline, GC);
+		#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
+			if ((GC->flags & GDISP_FLG_SCRSTREAM)) {
+				gdisp_lld_write_stop(GC);
+				GC->flags &= ~GDISP_FLG_SCRSTREAM;
+			}
+		#endif
 		MUTEX_EXIT();
 	}
 
@@ -1967,6 +2142,12 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color) {
 			fillarea();
 			mf_render_character(font, x, y, c, fillcharline, GC);
 		}
+		#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
+			if ((GC->flags & GDISP_FLG_SCRSTREAM)) {
+				gdisp_lld_write_stop(GC);
+				GC->flags &= ~GDISP_FLG_SCRSTREAM;
+			}
+		#endif
 		MUTEX_EXIT();
 	}
 
@@ -1980,6 +2161,12 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color) {
 		GC->t.color = color;
 
 		mf_render_aligned(font, x+font->baseline_x, y, MF_ALIGN_LEFT, str, 0, drawcharglyph, GC);
+		#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
+			if ((GC->flags & GDISP_FLG_SCRSTREAM)) {
+				gdisp_lld_write_stop(GC);
+				GC->flags &= ~GDISP_FLG_SCRSTREAM;
+			}
+		#endif
 		MUTEX_EXIT();
 	}
 
@@ -1999,6 +2186,13 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color) {
 			fillarea();
 			mf_render_aligned(font, x+font->baseline_x, y, MF_ALIGN_LEFT, str, 0, fillcharglyph, GC);
 		}
+
+		#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
+			if ((GC->flags & GDISP_FLG_SCRSTREAM)) {
+				gdisp_lld_write_stop(GC);
+				GC->flags &= ~GDISP_FLG_SCRSTREAM;
+			}
+		#endif
 		MUTEX_EXIT();
 	}
 
@@ -2026,6 +2220,13 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color) {
 		y += (cy+1 - font->height)/2;
 
 		mf_render_aligned(font, x, y, justify, str, 0, drawcharglyph, GC);
+
+		#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
+			if ((GC->flags & GDISP_FLG_SCRSTREAM)) {
+				gdisp_lld_write_stop(GC);
+				GC->flags &= ~GDISP_FLG_SCRSTREAM;
+			}
+		#endif
 		MUTEX_EXIT();
 	}
 
@@ -2063,6 +2264,13 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color) {
 			/* Render */
 			mf_render_aligned(font, x, y, justify, str, 0, fillcharglyph, GC);
 		}
+
+		#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
+			if ((GC->flags & GDISP_FLG_SCRSTREAM)) {
+				gdisp_lld_write_stop(GC);
+				GC->flags &= ~GDISP_FLG_SCRSTREAM;
+			}
+		#endif
 		MUTEX_EXIT();
 	}
 
