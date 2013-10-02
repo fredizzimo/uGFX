@@ -57,29 +57,41 @@ uint32_t DISPLAY_CODE;
 #define dummy_read()				{ volatile uint16_t dummy; dummy = read_data(); (void) dummy; }
 #define write_reg(reg, data)		{ write_index(reg); write_data(data); }
 
-static void set_viewport(uint16_t x, uint16_t y, uint16_t cx, uint16_t cy) {
+static void set_cursor(GDISPDriver *g) {
 	switch(g->g.Orientation) {
 		case GDISP_ROTATE_0:
 		case GDISP_ROTATE_180:
-			write_reg(0x0050, x);
-			write_reg(0x0051, x + cx - 1);
-			write_reg(0x0052, y);
-			write_reg(0x0053, y + cy - 1);
-			write_reg(0x0020, x);
-			write_reg(0x0021, y);
+			write_reg(0x0020, g->p.x);
+			write_reg(0x0021, g->p.y);
 			break;
 
 		case GDISP_ROTATE_90:
 		case GDISP_ROTATE_270:
-			write_reg(0x0050, y);
-			write_reg(0x0051, y + cy - 1);
-			write_reg(0x0052, x);
-			write_reg(0x0053, x + cx - 1);
-			write_reg(0x0020, y);
-			write_reg(0x0021, x);
+			write_reg(0x0020, g->p.y);
+			write_reg(0x0021, g->p.x);
 			break;
 	}
 	write_index(0x0022);
+}
+
+static void set_viewport(GDISPDriver *g) {
+	switch(g->g.Orientation) {
+		case GDISP_ROTATE_0:
+		case GDISP_ROTATE_180:
+			write_reg(0x0050, g->p.x);
+			write_reg(0x0051, g->p.x + g->p.cx - 1);
+			write_reg(0x0052, g->p.y);
+			write_reg(0x0053, g->p.y + g->p.cy - 1);
+			break;
+
+		case GDISP_ROTATE_90:
+		case GDISP_ROTATE_270:
+			write_reg(0x0050, g->p.y);
+			write_reg(0x0051, g->p.y + g->p.cy - 1);
+			write_reg(0x0052, g->p.x);
+			write_reg(0x0053, g->p.x + g->p.cx - 1);
+			break;
+	}
 }
 
 LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
@@ -181,12 +193,17 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 	LLDSPEC	void gdisp_lld_write_stop(GDISPDriver *g) {
 		release_bus();
 	}
+	LLDSPEC void gdisp_lld_write_pos(GDISPDriver *g) {
+		set_cursor(g);
+	}
+	#endif
 #endif
 
 #if GDISP_HARDWARE_STREAM_READ
 	LLDSPEC	void gdisp_lld_read_start(GDISPDriver *g) {
 		acquire_bus();
 		set_viewport(g);
+		set_cursor(g);
 		setreadmode();
 		dummy_read();
 	}

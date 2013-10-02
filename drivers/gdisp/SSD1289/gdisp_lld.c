@@ -43,6 +43,28 @@
 #define dummy_read()				{ volatile uint16_t dummy; dummy = read_data(); (void) dummy; }
 #define write_reg(reg, data)		{ write_index(reg); write_data(data); }
 
+static void set_cursor(GDISPDriver *g) {
+	switch(g->g.Orientation) {
+		case GDISP_ROTATE_0:
+			write_reg(0x004e, g->p.x & 0x00FF);
+			write_reg(0x004f, g->p.y & 0x01FF);
+			break;
+		case GDISP_ROTATE_90:
+			write_reg(0x004e, g->p.y & 0x00FF);
+			write_reg(0x004f, (GDISP_SCREEN_HEIGHT-1-g->p.x) & 0x01FF);
+			break;
+		case GDISP_ROTATE_180:
+			write_reg(0x004e, (GDISP_SCREEN_WIDTH-1-g->p.x) & 0x00FF);
+			write_reg(0x004f, (GDISP_SCREEN_HEIGHT-1-g->p.y) & 0x01FF);
+			break;
+		case GDISP_ROTATE_270:
+			write_reg(0x004e, (GDISP_SCREEN_WIDTH-1-g->p.y) & 0x00FF);
+			write_reg(0x004f, g->p.x & 0x01FF);
+			break;
+	}
+	write_index(0x0022);
+}
+
 static void set_viewport(GDISPDriver* g) {
 	/* Reg 0x44 - Horizontal RAM address position
 	 * 		Upper Byte - HEA
@@ -60,33 +82,24 @@ static void set_viewport(GDISPDriver* g) {
 			write_reg(0x44, (((g->p.x+g->p.cx-1) << 8) & 0xFF00 ) | (g->p.x & 0x00FF));
 			write_reg(0x45, g->p.y & 0x01FF);
 			write_reg(0x46, (g->p.y+g->p.cy-1) & 0x01FF);
-			write_reg(0x004e, g->p.x & 0x00FF);
-			write_reg(0x004f, g->p.y & 0x01FF);
 			break;
 		case GDISP_ROTATE_90:
 			write_reg(0x44, (((g->p.y+g->p.cy-1) << 8) & 0xFF00 ) | (g->p.y & 0x00FF));
 			write_reg(0x45, (GDISP_SCREEN_HEIGHT-(g->p.x+g->p.cx)) & 0x01FF);
 			write_reg(0x46, (GDISP_SCREEN_HEIGHT-1-g->p.x) & 0x01FF);
-			write_reg(0x004e, g->p.y & 0x00FF);
-			write_reg(0x004f, (GDISP_SCREEN_HEIGHT-1-g->p.x) & 0x01FF);
 			break;
 		case GDISP_ROTATE_180:
 			write_reg(0x44, (((GDISP_SCREEN_WIDTH-1-g->p.x) & 0x00FF) << 8) | ((GDISP_SCREEN_WIDTH - (g->p.x+g->p.cx)) & 0x00FF));
 			write_reg(0x45, (GDISP_SCREEN_HEIGHT-(g->p.y+g->p.cy)) & 0x01FF);
 			write_reg(0x46, (GDISP_SCREEN_HEIGHT-1-g->p.y) & 0x01FF);
-			write_reg(0x004e, (GDISP_SCREEN_WIDTH-1-g->p.x) & 0x00FF);
-			write_reg(0x004f, (GDISP_SCREEN_HEIGHT-1-g->p.y) & 0x01FF);
 			break;
 		case GDISP_ROTATE_270:
 			write_cmd2(PASET, GDISP_RAM_Y_OFFSET+g->p.x, GDISP_RAM_Y_OFFSET+g->p.x+g->p.cx-1);
 			write_reg(0x44, (((GDISP_SCREEN_WIDTH-1-g->p.y) & 0x00FF) << 8) | ((GDISP_SCREEN_WIDTH-(g->p.y+g->p.cy)) & 0x00FF));
 			write_reg(0x45, g->p.x & 0x01FF);
 			write_reg(0x46, (g->p.x+g->p.cx-1) & 0x01FF);
-			write_reg(0x004e, (GDISP_SCREEN_WIDTH-1-g->p.y) & 0x00FF);
-			write_reg(0x004f, g->p.x & 0x01FF);
 			break;
 	}
-	write_index(0x0022);
 }
 
 /*===========================================================================*/
@@ -179,12 +192,16 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 	LLDSPEC	void gdisp_lld_write_stop(GDISPDriver *g) {
 		release_bus();
 	}
+	LLDSPEC void gdisp_lld_stream_pos(GDISPDriver *g) {
+		set_cursor(g);
+	}
 #endif
 
 #if GDISP_HARDWARE_STREAM_READ
 	LLDSPEC	void gdisp_lld_read_start(GDISPDriver *g) {
 		acquire_bus();
 		set_viewport(g);
+		set_cursor(g);
 		setreadmode();
 		dummy_read();
 	}
@@ -201,6 +218,7 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 	LLDSPEC void gdisp_lld_fill_area(GDISPDriver *g) {
 		acquire_bus();
 		set_viewport(g);
+		set_cursor(g);
 		dma_with_noinc(&color, g->p.cx*g->p.cy)
 		release_bus();
 	}
@@ -215,6 +233,7 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 
 		acquire_bus();
 		set_viewport(g);
+		set_cursor(g);
 		if (g->p.x2 == g->p.cx) {
 			dma_with_inc(buffer, g->p.cx*g->p.cy);
 		} else {
