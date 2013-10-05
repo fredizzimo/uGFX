@@ -21,6 +21,13 @@
  * @{
  */
 	/**
+	 * @brief	The priority of the GDISP thread.
+	 * @details	Defaults to NORMAL_PRIORITY
+	 */
+	#ifndef GDISP_THREAD_PRIORITY
+		#define GDISP_THREAD_PRIORITY	NORMAL_PRIORITY
+	#endif
+	/**
 	 * @brief   Should all operations be clipped to the screen and colors validated.
 	 * @details	Defaults to TRUE.
 	 * @note    If this is FALSE, any operations that extend beyond the

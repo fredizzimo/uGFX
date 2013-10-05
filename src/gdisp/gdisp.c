@@ -123,7 +123,7 @@
 		gfxMutexInit(&gdispMsgsMutex);
 		gfxSemInit(&gdispMsgsSem, GDISP_QUEUE_SIZE, GDISP_QUEUE_SIZE);
 
-		hth = gfxThreadCreate(waGDISPThread, sizeof(waGDISPThread), NORMAL_PRIORITY, GDISPThreadHandler, NULL);
+		hth = gfxThreadCreate(waGDISPThread, sizeof(waGDISPThread), GDISP_PRIORITY, GDISPThreadHandler, NULL);
 		if (hth) gfxThreadClose(hth);
 
 		/* Initialise driver - synchronous */
