@@ -142,9 +142,6 @@
 
 /* Optional Parameters for various subsystems */
 /*
-	#define GDISP_NEED_UTF8				    FALSE
-	#define GDISP_NEED_TEXT_KERNING			FALSE
-	#define GDISP_NEED_ANTIALIAS			FALSE
 	#define GDISP_THREAD_PRIORITY			NORMAL_PRIORITY
 	#define GEVENT_MAXIMUM_SIZE				32
 	#define GEVENT_MAX_SOURCE_LISTENERS		32
@@ -162,8 +159,6 @@
 	#define GDISP_USE_CUSTOM_BOARD		FALSE
 	#define GDISP_SCREEN_WIDTH			320
 	#define GDISP_SCREEN_HEIGHT			240
-	#define GDISP_USE_FSMC
-	#define GDISP_USE_GPIO
 	#define TDISP_COLUMNS				16
 	#define TDISP_ROWS					2
 */
