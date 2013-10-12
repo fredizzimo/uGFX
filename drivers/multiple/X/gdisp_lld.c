@@ -14,7 +14,7 @@
 
 #if GFX_USE_GDISP
 
-#define GDISP_LLD_DECLARATIONS
+#define GDISP_DRIVER_VMT			GDISPVMT_X11
 #include "gdisp/lld/gdisp_lld.h"
 
 /**
@@ -35,6 +35,8 @@
 	#define GDISP_SCREEN_WIDTH		640
 #endif
 
+#define GDISP_FLG_READY				(GDISP_FLG_DRIVER<<0)
+
 #if GINPUT_NEED_MOUSE
 	/* Include mouse support code */
 	#include "ginput/lld/mouse.h"
@@ -45,24 +47,37 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-Display			*dis;
-int				scr;
-Window			win;
-Pixmap			pix;
-XEvent			evt;
-GC 				gc;
-Colormap		cmap;
-XVisualInfo		vis;
-int				depth;
+static bool_t			initdone;
+static Display			*dis;
+static int				scr;
+static XEvent			evt;
+static Colormap			cmap;
+static XVisualInfo		vis;
+static int				depth;
+static XContext			cxt;
 #if GINPUT_NEED_MOUSE
 	coord_t			mousex, mousey;
 	uint16_t		mousebuttons;
 #endif
 
-static void ProcessEvent(void) {
+typedef struct xPriv {
+	Pixmap			pix;
+	GC 				gc;
+	Window			win;
+} xPriv;
+
+static void ProcessEvent(GDisplay *g, xPriv *priv) {
 	switch(evt.type) {
+	case MapNotify:
+		XSelectInput(dis, evt.xmap.window, StructureNotifyMask | ExposureMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask);
+		g->flags |= GDISP_FLG_READY;
+		break;
+	case UnmapNotify:
+		XCloseDisplay(dis);
+		exit(0);
+		break;
 	case Expose:
-		XCopyArea(dis, pix, win, gc,
+		XCopyArea(dis, pix, evt.xexpose.window, priv->gc,
 			evt.xexpose.x, evt.xexpose.y,
 			evt.xexpose.width, evt.xexpose.height,   
 			evt.xexpose.x, evt.xexpose.y);
@@ -108,13 +123,15 @@ static void ProcessEvent(void) {
 /* this is the X11 thread which keeps track of all events */
 static DECLARE_THREAD_STACK(waXThread, 1024);
 static DECLARE_THREAD_FUNCTION(ThreadX, arg) {
+	GDisplay	*g;
 	(void)arg;
 
 	while(1) {
 		gfxSleepMilliseconds(100);
 		while(XPending(dis)) {
 			XNextEvent(dis, &evt);
-			ProcessEvent();
+			XFindContext(ev.xany.display, ev.xany.window, cxt, (XPointer*)&g);
+			ProcessEvent(g, (xPriv *)g->priv);
 		}
 	}
 	return 0;
@@ -128,50 +145,76 @@ static int FatalXIOError(Display *d) {
 	exit(0);
 }
 
-LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
+LLDSPEC bool_t gdisp_lld_init(GDisplay *g, unsigned display) {
 	XSizeHints				*pSH;
 	XSetWindowAttributes	xa;
 	XTextProperty			WindowTitle;
 	char *					WindowTitleText;
-	gfxThreadHandle			hth;
+	xPriv					*priv;
 
-	#if GFX_USE_OS_LINUX || GFX_USE_OS_OSX
-		XInitThreads();
-	#endif
+	if (!initdone) {
+		gfxThreadHandle			hth;
 
-	dis = XOpenDisplay(NULL);
-	scr = DefaultScreen(dis);
+		initdone = TRUE;
+		#if GFX_USE_OS_LINUX || GFX_USE_OS_OSX
+			XInitThreads();
+		#endif
 
-	#if GDISP_FORCE_24BIT	
-		if (!XMatchVisualInfo(dis, scr, 24, TrueColor, &vis)) {
-			fprintf(stderr, "Your display has no TrueColor mode\n");
+		dis = XOpenDisplay(NULL);
+		scr = DefaultScreen(dis);
+		cxt = XUniqueContext();
+		XSetIOErrorHandler(FatalXIOError);
+
+		#if GDISP_FORCE_24BIT
+			if (!XMatchVisualInfo(dis, scr, 24, TrueColor, &vis)) {
+				fprintf(stderr, "Your display has no TrueColor mode\n");
+				XCloseDisplay(dis);
+				return FALSE;
+			}
+			cmap = XCreateColormap(dis, RootWindow(dis, scr),
+					vis.visual, AllocNone);
+		#else
+			vis.visual = CopyFromParent;
+			vis.depth = DefaultDepth(dis, scr);
+			cmap = DefaultColormap(dis, scr);
+		#endif
+		fprintf(stderr, "Running GFX Window in %d bit color\n", vis.depth);
+
+		if (!(hth = gfxThreadCreate(waXThread, sizeof(waXThread), HIGH_PRIORITY, ThreadX, 0))) {
+			fprintf(stderr, "Cannot start X Thread\n");
 			XCloseDisplay(dis);
-			return FALSE;
+			exit(0);
 		}
-		cmap = XCreateColormap(dis, RootWindow(dis, scr),
-				vis.visual, AllocNone);
-	#else
-		vis.visual = CopyFromParent;
-		vis.depth = DefaultDepth(dis, scr);
-		cmap = DefaultColormap(dis, scr);
-	#endif
-	fprintf(stderr, "Running GFX Window in %d bit color\n", vis.depth);
+		#if GFX_USE_OS_LINUX || GFX_USE_OS_OSX
+			pthread_detach(hth);
+		#endif
+		gfxThreadClose(hth);
+	}
+
+	g->priv = gfxAlloc(sizeof(xPriv));
+	priv = (xPriv *)g->priv;
 
 	xa.colormap = cmap;
 	xa.border_pixel = 0xFFFFFF;
 	xa.background_pixel = 0x000000;
 	
-	win = XCreateWindow(dis, RootWindow(dis, scr), 16, 16,
+	priv->win = XCreateWindow(dis, RootWindow(dis, scr), 16, 16,
 			GDISP_SCREEN_WIDTH, GDISP_SCREEN_HEIGHT,
 			0, vis.depth, InputOutput, vis.visual,
 			CWBackPixel|CWColormap|CWBorderPixel, &xa);
 	XSync(dis, TRUE);
 	
-	WindowTitleText = "GFX";
-	XStringListToTextProperty(&WindowTitleText, 1, &WindowTitle);
-	XSetWMName(dis, win, &WindowTitle);
-	XSetWMIconName(dis, win, &WindowTitle);
-	XSync(dis, TRUE);
+	XSaveContext(dis, win, cxt, (XPointer)g);
+
+	{
+		char					buf[132];
+		sprintf(buf, "uGFX - %u", display+1);
+		WindowTitleText = buf;
+		XStringListToTextProperty(&WindowTitleText, 1, &WindowTitle);
+		XSetWMName(dis, win, &WindowTitle);
+		XSetWMIconName(dis, win, &WindowTitle);
+		XSync(dis, TRUE);
+	}
 			
 	pSH = XAllocSizeHints();
 	pSH->flags = PSize | PMinSize | PMaxSize;
@@ -181,34 +224,22 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 	XFree(pSH);
 	XSync(dis, TRUE);
 	
-	pix = XCreatePixmap(dis, win, 
+	priv->pix = XCreatePixmap(dis, win,
 				GDISP_SCREEN_WIDTH, GDISP_SCREEN_HEIGHT, vis.depth);
 	XSync(dis, TRUE);
 
-	gc = XCreateGC(dis, win, 0, 0);
+	priv->gc = XCreateGC(dis, win, 0, 0);
 	XSetBackground(dis, gc, BlackPixel(dis, scr));
 	XSync(dis, TRUE);
 
 	XSelectInput(dis, win, StructureNotifyMask);
 	XMapWindow(dis, win);
-	do { XNextEvent(dis, &evt); } while (evt.type != MapNotify);
 
-	/* start the X11 thread */
-	XSetIOErrorHandler(FatalXIOError);
-	XSelectInput(dis, win,
-		ExposureMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask);
+	// Wait for the window creation to complete (for safety)
+	while(!(((volatile GDisplay *)g)->flags & GDISP_FLG_READY))
+		gfxSleepMilliseconds(100);
 
-	if (!(hth = gfxThreadCreate(waXThread, sizeof(waXThread), HIGH_PRIORITY, ThreadX, 0))) {
-		fprintf(stderr, "Cannot start X Thread\n");
-		XCloseDisplay(dis);
-		exit(0);
-	}
-	#if GFX_USE_OS_LINUX || GFX_USE_OS_OSX
-		pthread_detach(hth);
-	#endif
-	gfxThreadClose(hth);
-	
-    /* Initialise the GDISP structure to match */
+	/* Initialise the GDISP structure to match */
     g->g.Orientation = GDISP_ROTATE_0;
     g->g.Powermode = powerOn;
     g->g.Backlight = 100;
@@ -220,29 +251,31 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 
 LLDSPEC void gdisp_lld_draw_pixel(GDISPDriver *g)
 {
+	xPriv	priv = (xPriv *)g->priv;
 	XColor	col;
 
 	col.red = RED_OF(g->p.color) << 8;
 	col.green = GREEN_OF(g->p.color) << 8;
 	col.blue = BLUE_OF(g->p.color) << 8;
 	XAllocColor(dis, cmap, &col);
-	XSetForeground(dis, gc, col.pixel);
-	XDrawPoint(dis, pix, gc, (int)g->p.x, (int)g->p.y );
-	XDrawPoint(dis, win, gc, (int)g->p.x, (int)g->p.y );
+	XSetForeground(dis, priv->gc, col.pixel);
+	XDrawPoint(dis, priv->pix, priv->gc, (int)g->p.x, (int)g->p.y );
+	XDrawPoint(dis, priv->win, priv->gc, (int)g->p.x, (int)g->p.y );
 	XFlush(dis);
 }
 
 #if GDISP_HARDWARE_FILLS
 	LLDSPEC void gdisp_lld_fill_area(GDISPDriver *g) {
+		xPriv	priv = (xPriv *)g->priv;
 		XColor	col;
 
 		col.red = RED_OF(g->p.color) << 8;
 		col.green = GREEN_OF(g->p.color) << 8;
 		col.blue = BLUE_OF(g->p.color) << 8;
 		XAllocColor(dis, cmap, &col);
-		XSetForeground(dis, gc, col.pixel);
-		XFillRectangle(dis, pix, gc, g->p.x, g->p.y, g->p.cx, g->p.cy);
-		XFillRectangle(dis, win, gc, g->p.x, g->p.y, g->p.cx, g->p.cy);
+		XSetForeground(dis, priv->gc, col.pixel);
+		XFillRectangle(dis, priv->pix, priv->gc, g->p.x, g->p.y, g->p.cx, g->p.cy);
+		XFillRectangle(dis, priv->win, priv->gc, g->p.x, g->p.y, g->p.cx, g->p.cy);
 		XFlush(dis);
 	}
 #endif
@@ -262,10 +295,11 @@ LLDSPEC void gdisp_lld_draw_pixel(GDISPDriver *g)
 
 #if GDISP_HARDWARE_PIXELREAD
 	LLDSPEC	color_t gdisp_lld_get_pixel_color(GDISPDriver *g) {
+		xPriv	priv = (xPriv *)g->priv;
 		XColor	color;
 		XImage *img;
 
-		img = XGetImage (dis, pix, g->p.x, g->p.y, 1, 1, AllPlanes, XYPixmap);
+		img = XGetImage (dis, priv->pix, g->p.x, g->p.y, 1, 1, AllPlanes, XYPixmap);
 		color.pixel = XGetPixel (img, 0, 0);
 		XFree(img);
 		XQueryColor(dis, cmap, &color);
@@ -275,12 +309,14 @@ LLDSPEC void gdisp_lld_draw_pixel(GDISPDriver *g)
 
 #if GDISP_NEED_SCROLL && GDISP_HARDWARE_SCROLL
 	LLDSPEC void gdisp_lld_vertical_scroll(GDISPDriver *g) {
+		xPriv	priv = (xPriv *)g->priv;
+
 		if (g->p.y1 > 0) {
-			XCopyArea(dis, pix, pix, gc, g->p.x, g->p.y+g->p.y1, g->p.cx, g->p.cy-g->p.y1, g->p.x, g->p.y);
-			XCopyArea(dis, pix, win, gc, g->p.x, g->p.y, g->p.cx, g->p.cy-g->p.y1, g->p.x, g->p.y);
+			XCopyArea(dis, priv->pix, priv->pix, priv->gc, g->p.x, g->p.y+g->p.y1, g->p.cx, g->p.cy-g->p.y1, g->p.x, g->p.y);
+			XCopyArea(dis, priv->pix, priv->win, priv->gc, g->p.x, g->p.y, g->p.cx, g->p.cy-g->p.y1, g->p.x, g->p.y);
 		} else {
-			XCopyArea(dis, pix, pix, gc, g->p.x, g->p.y, g->p.cx, g->p.cy+g->p.y1, g->p.x, g->p.y-g->p.y1);
-			XCopyArea(dis, pix, win, gc, g->p.x, g->p.y-g->p.y1, g->p.cx, g->p.cy+g->p.y1, g->p.x, g->p.y-g->p.y1);
+			XCopyArea(dis, priv->pix, priv->pix, priv->gc, g->p.x, g->p.y, g->p.cx, g->p.cy+g->p.y1, g->p.x, g->p.y-g->p.y1);
+			XCopyArea(dis, priv->pix, priv->win, priv->gc, g->p.x, g->p.y-g->p.y1, g->p.cx, g->p.cy+g->p.y1, g->p.x, g->p.y-g->p.y1);
 		}
 	}
 #endif

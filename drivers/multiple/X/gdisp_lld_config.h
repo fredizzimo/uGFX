@@ -22,14 +22,6 @@
 /* Driver hardware support.                                                  */
 /*===========================================================================*/
 
-#ifndef GDISP_DRIVER_COUNT_X11
-	#define GDISP_DRIVER_COUNT_X11	1
-#endif
-#define GDISP_DRIVER_COUNT				GDISP_DRIVER_COUNT_X11
-
-#define GDISP_DRIVER_NAME				"Linux emulator - X11"
-#define GDISP_DRIVER_STRUCT				GDISP_X11
-
 #define GDISP_HARDWARE_DRAWPIXEL		TRUE
 #define GDISP_HARDWARE_FILLS			TRUE
 #define GDISP_HARDWARE_BITFILLS			FALSE
