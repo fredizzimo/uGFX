@@ -18,139 +18,135 @@
 
 #if GFX_USE_GDISP || defined(__DOXYGEN__)
 
-#if GDISP_MULTIPLE_DRIVERS && defined(GDISP_LLD_DECLARATIONS)
-	// include hardware definitions
-	#include "gdisp_lld_config.h"
-#endif
-
 /*===========================================================================*/
 /* Error checks.                                                             */
 /*===========================================================================*/
 
-#if !GDISP_MULTIPLE_DRIVERS || defined(GDISP_LLD_DECLARATIONS)
+/**
+ * @name    GDISP hardware accelerated support
+ * @{
+ */
 	/**
-	 * @name    GDISP hardware accelerated support
-	 * @{
+	 * @brief   Hardware streaming writing is supported.
+	 * @details If set to @p FALSE software emulation is used.
+	 * @note	Either GDISP_HARDWARE_STREAM_WRITE or GDISP_HARDWARE_DRAWPIXEL must be provided by the driver
 	 */
-		/**
-		 * @brief   Hardware streaming writing is supported.
-		 * @details If set to @p FALSE software emulation is used.
-		 * @note	Either GDISP_HARDWARE_STREAM_WRITE or GDISP_HARDWARE_DRAWPIXEL must be provided by the driver
-		 */
-		#ifndef GDISP_HARDWARE_STREAM_WRITE
-			#define GDISP_HARDWARE_STREAM_WRITE		FALSE
-		#endif
+	#ifndef GDISP_HARDWARE_STREAM_WRITE
+		#define GDISP_HARDWARE_STREAM_WRITE		FALSE
+	#endif
 
-		/**
-		 * @brief   Hardware streaming reading of the display surface is supported.
-		 * @details If set to @p FALSE this routine is not available.
-		 */
-		#ifndef GDISP_HARDWARE_STREAM_READ
-			#define GDISP_HARDWARE_STREAM_READ		FALSE
-		#endif
+	/**
+	 * @brief   Hardware streaming reading of the display surface is supported.
+	 * @details If set to @p FALSE this routine is not available.
+	 */
+	#ifndef GDISP_HARDWARE_STREAM_READ
+		#define GDISP_HARDWARE_STREAM_READ		FALSE
+	#endif
 
-		/**
-		 * @brief   Hardware supports setting the cursor position within the stream window.
-		 * @details If set to @p FALSE this routine is not available.
-		 * @note	This is used to optimise setting of individual pixels within a stream window.
-		 * 			It should therefore not be implemented unless it is cheaper than just setting
-		 * 			a new window.
-		 */
-		#ifndef GDISP_HARDWARE_STREAM_POS
-			#define GDISP_HARDWARE_STREAM_POS		FALSE
-		#endif
+	/**
+	 * @brief   Hardware supports setting the cursor position within the stream window.
+	 * @details If set to @p FALSE this routine is not available.
+	 * @note	This is used to optimise setting of individual pixels within a stream window.
+	 * 			It should therefore not be implemented unless it is cheaper than just setting
+	 * 			a new window.
+	 */
+	#ifndef GDISP_HARDWARE_STREAM_POS
+		#define GDISP_HARDWARE_STREAM_POS		FALSE
+	#endif
 
-		/**
-		 * @brief   Hardware accelerated draw pixel.
-		 * @details If set to @p FALSE software emulation is used.
-		 * @note	Either GDISP_HARDWARE_STREAM_WRITE or GDISP_HARDWARE_DRAWPIXEL must be provided by the driver
-		 */
-		#ifndef GDISP_HARDWARE_DRAWPIXEL
-			#define GDISP_HARDWARE_DRAWPIXEL		FALSE
-		#endif
+	/**
+	 * @brief   Hardware accelerated draw pixel.
+	 * @details If set to @p FALSE software emulation is used.
+	 * @note	Either GDISP_HARDWARE_STREAM_WRITE or GDISP_HARDWARE_DRAWPIXEL must be provided by the driver
+	 */
+	#ifndef GDISP_HARDWARE_DRAWPIXEL
+		#define GDISP_HARDWARE_DRAWPIXEL		FALSE
+	#endif
 
-		/**
-		 * @brief   Hardware accelerated screen clears.
-		 * @details If set to @p FALSE software emulation is used.
-		 * @note	This clears the entire display surface regardless of the clipping area currently set
-		 */
-		#ifndef GDISP_HARDWARE_CLEARS
-			#define GDISP_HARDWARE_CLEARS			FALSE
-		#endif
+	/**
+	 * @brief   Hardware accelerated screen clears.
+	 * @details If set to @p FALSE software emulation is used.
+	 * @note	This clears the entire display surface regardless of the clipping area currently set
+	 */
+	#ifndef GDISP_HARDWARE_CLEARS
+		#define GDISP_HARDWARE_CLEARS			FALSE
+	#endif
 
-		/**
-		 * @brief   Hardware accelerated rectangular fills.
-		 * @details If set to @p FALSE software emulation is used.
-		 */
-		#ifndef GDISP_HARDWARE_FILLS
-			#define GDISP_HARDWARE_FILLS			FALSE
-		#endif
+	/**
+	 * @brief   Hardware accelerated rectangular fills.
+	 * @details If set to @p FALSE software emulation is used.
+	 */
+	#ifndef GDISP_HARDWARE_FILLS
+		#define GDISP_HARDWARE_FILLS			FALSE
+	#endif
 
-		/**
-		 * @brief   Hardware accelerated fills from an image.
-		 * @details If set to @p FALSE software emulation is used.
-		 */
-		#ifndef GDISP_HARDWARE_BITFILLS
-			#define GDISP_HARDWARE_BITFILLS			FALSE
-		#endif
+	/**
+	 * @brief   Hardware accelerated fills from an image.
+	 * @details If set to @p FALSE software emulation is used.
+	 */
+	#ifndef GDISP_HARDWARE_BITFILLS
+		#define GDISP_HARDWARE_BITFILLS			FALSE
+	#endif
 
-		/**
-		 * @brief   Hardware accelerated scrolling.
-		 * @details If set to @p FALSE there is no support for scrolling.
-		 */
-		#ifndef GDISP_HARDWARE_SCROLL
-			#define GDISP_HARDWARE_SCROLL			FALSE
-		#endif
+	/**
+	 * @brief   Hardware accelerated scrolling.
+	 * @details If set to @p FALSE there is no support for scrolling.
+	 */
+	#ifndef GDISP_HARDWARE_SCROLL
+		#define GDISP_HARDWARE_SCROLL			FALSE
+	#endif
 
-		/**
-		 * @brief   Reading back of pixel values.
-		 * @details If set to @p FALSE there is no support for pixel read-back.
-		 */
-		#ifndef GDISP_HARDWARE_PIXELREAD
-			#define GDISP_HARDWARE_PIXELREAD		FALSE
-		#endif
+	/**
+	 * @brief   Reading back of pixel values.
+	 * @details If set to @p FALSE there is no support for pixel read-back.
+	 */
+	#ifndef GDISP_HARDWARE_PIXELREAD
+		#define GDISP_HARDWARE_PIXELREAD		FALSE
+	#endif
 
-		/**
-		 * @brief   The driver supports one or more control commands.
-		 * @details If set to @p FALSE there is no support for control commands.
-		 */
-		#ifndef GDISP_HARDWARE_CONTROL
-			#define GDISP_HARDWARE_CONTROL			FALSE
-		#endif
+	/**
+	 * @brief   The driver supports one or more control commands.
+	 * @details If set to @p FALSE there is no support for control commands.
+	 */
+	#ifndef GDISP_HARDWARE_CONTROL
+		#define GDISP_HARDWARE_CONTROL			FALSE
+	#endif
 
-		/**
-		 * @brief   The driver supports a non-standard query.
-		 * @details If set to @p FALSE there is no support for non-standard queries.
-		 */
-		#ifndef GDISP_HARDWARE_QUERY
-			#define GDISP_HARDWARE_QUERY			FALSE
-		#endif
+	/**
+	 * @brief   The driver supports a non-standard query.
+	 * @details If set to @p FALSE there is no support for non-standard queries.
+	 */
+	#ifndef GDISP_HARDWARE_QUERY
+		#define GDISP_HARDWARE_QUERY			FALSE
+	#endif
 
-		/**
-		 * @brief   The driver supports a clipping in hardware.
-		 * @details If set to @p FALSE there is no support for non-standard queries.
-		 * @note	If this is defined the driver must perform its own clipping on all calls to
-		 * 			the driver and respond appropriately if a parameter is outside the display area.
-		 * @note	If this is not defined then the software ensures that all calls to the
-		 * 			driver do not exceed the display area (provided GDISP_NEED_CLIP or GDISP_NEED_VALIDATION
-		 * 			has been set).
-		 */
-		#ifndef GDISP_HARDWARE_CLIP
-			#define GDISP_HARDWARE_CLIP				FALSE
-		#endif
-	/** @} */
-#endif
+	/**
+	 * @brief   The driver supports a clipping in hardware.
+	 * @details If set to @p FALSE there is no support for non-standard queries.
+	 * @note	If this is defined the driver must perform its own clipping on all calls to
+	 * 			the driver and respond appropriately if a parameter is outside the display area.
+	 * @note	If this is not defined then the software ensures that all calls to the
+	 * 			driver do not exceed the display area (provided GDISP_NEED_CLIP or GDISP_NEED_VALIDATION
+	 * 			has been set).
+	 */
+	#ifndef GDISP_HARDWARE_CLIP
+		#define GDISP_HARDWARE_CLIP				FALSE
+	#endif
+/** @} */
 
 /*===========================================================================*/
 /* External declarations.                                                    */
 /*===========================================================================*/
 
-typedef struct GDISPDriver {
-	GDISPControl				g;
+typedef struct GDisplay {
+	GDISPControl				g;					// The public GDISP stuff - must be the first element
 
-	#if GDISP_MULTIPLE_DRIVERS
-		const struct GDISPVMT const *	vmt;
+	#if GDISP_TOTAL_CONTROLLERS > 1
+		const struct GDISPVMT const *	vmt;		// The Virtual Method Table
 	#endif
+
+	void *						priv;				// A private area just for the drivers use.
+
 
 	uint16_t					flags;
 		#define GDISP_FLG_INSTREAM		0x0001		// We are in a user based stream operation
@@ -163,7 +159,7 @@ typedef struct GDISPDriver {
 	#endif
 
 	// Software clipping
-	#if (GDISP_MULTIPLE_DRIVERS || !GDISP_HARDWARE_CLIP) && (GDISP_NEED_CLIP || GDISP_NEED_VALIDATION)
+	#if !GDISP_HARDWARE_CLIP && (GDISP_NEED_CLIP || GDISP_NEED_VALIDATION)
 		coord_t					clipx0, clipy0;
 		coord_t					clipx1, clipy1;		/* not inclusive */
 	#endif
@@ -195,10 +191,10 @@ typedef struct GDISPDriver {
 		color_t		linebuf[GDISP_LINEBUF_SIZE];
 	#endif
 
-} GDISPDriver;
+} GDisplay;
 
-#if !GDISP_MULTIPLE_DRIVERS || defined(GDISP_LLD_DECLARATIONS) || defined(__DOXYGEN__)
-	#if GDISP_MULTIPLE_DRIVERS
+#if GDISP_TOTAL_CONTROLLERS == 1 || defined(GDISP_DRIVER_VMT) || defined(__DOXYGEN__)
+	#if GDISP_TOTAL_CONTROLLERS > 1
 		#define LLDSPEC			static
 	#else
 		#define LLDSPEC
@@ -212,9 +208,10 @@ typedef struct GDISPDriver {
 	 * @brief   Initialize the driver.
 	 * @return	TRUE if successful.
 	 * @param[in]	g		The driver structure
+	 * @param[in]	display	The display number for this controller 0..n
 	 * @param[out]	g->g	The driver must fill in the GDISPControl structure
 	 */
-	LLDSPEC	bool_t gdisp_lld_init(GDISPDriver *g);
+	LLDSPEC	bool_t gdisp_lld_init(GDisplay *g, unsigned display);
 
 	#if GDISP_HARDWARE_STREAM_WRITE || defined(__DOXYGEN__)
 		/**
@@ -230,7 +227,7 @@ typedef struct GDISPDriver {
 		 * 				undefined results.
 		 * @note		This must be followed by a call to @p gdisp_lld_write_pos() if GDISP_HARDWARE_STREAM_POS is TRUE.
 		 */
-		LLDSPEC	void gdisp_lld_write_start(GDISPDriver *g);
+		LLDSPEC	void gdisp_lld_write_start(GDisplay *g);
 
 		/**
 		 * @brief   Send a pixel to the current streaming position and then increment that position
@@ -241,7 +238,7 @@ typedef struct GDISPDriver {
 		 *
 		 * @note		The parameter variables must not be altered by the driver.
 		 */
-		LLDSPEC	void gdisp_lld_write_color(GDISPDriver *g);
+		LLDSPEC	void gdisp_lld_write_color(GDisplay *g);
 
 		/**
 		 * @brief   End the current streaming write operation
@@ -251,7 +248,7 @@ typedef struct GDISPDriver {
 		 *
 		 * @note		The parameter variables must not be altered by the driver.
 		 */
-		LLDSPEC	void gdisp_lld_write_stop(GDISPDriver *g);
+		LLDSPEC	void gdisp_lld_write_stop(GDisplay *g);
 
 		#if GDISP_HARDWARE_STREAM_POS || defined(__DOXYGEN__)
 			/**
@@ -263,7 +260,7 @@ typedef struct GDISPDriver {
 			 *
 			 * @note		The parameter variables must not be altered by the driver.
 			 */
-			LLDSPEC	void gdisp_lld_write_pos(GDISPDriver *g);
+			LLDSPEC	void gdisp_lld_write_pos(GDisplay *g);
 		#endif
 	#endif
 
@@ -280,7 +277,7 @@ typedef struct GDISPDriver {
 		 * @note		Streaming operations that wrap the defined window have
 		 * 				undefined results.
 		 */
-		LLDSPEC	void gdisp_lld_read_start(GDISPDriver *g);
+		LLDSPEC	void gdisp_lld_read_start(GDisplay *g);
 
 		/**
 		 * @brief   Read a pixel from the current streaming position and then increment that position
@@ -291,7 +288,7 @@ typedef struct GDISPDriver {
 		 *
 		 * @note		The parameter variables must not be altered by the driver.
 		 */
-		LLDSPEC	color_t gdisp_lld_read_color(GDISPDriver *g);
+		LLDSPEC	color_t gdisp_lld_read_color(GDisplay *g);
 
 		/**
 		 * @brief   End the current streaming operation
@@ -301,7 +298,7 @@ typedef struct GDISPDriver {
 		 *
 		 * @note		The parameter variables must not be altered by the driver.
 		 */
-		LLDSPEC	void gdisp_lld_read_stop(GDISPDriver *g);
+		LLDSPEC	void gdisp_lld_read_stop(GDisplay *g);
 	#endif
 
 	#if GDISP_HARDWARE_DRAWPIXEL || defined(__DOXYGEN__)
@@ -315,7 +312,7 @@ typedef struct GDISPDriver {
 		 *
 		 * @note		The parameter variables must not be altered by the driver.
 		 */
-		LLDSPEC	void gdisp_lld_draw_pixel(GDISPDriver *g);
+		LLDSPEC	void gdisp_lld_draw_pixel(GDisplay *g);
 	#endif
 
 	#if GDISP_HARDWARE_CLEARS || defined(__DOXYGEN__)
@@ -328,7 +325,7 @@ typedef struct GDISPDriver {
 		 *
 		 * @note		The parameter variables must not be altered by the driver.
 		 */
-		LLDSPEC	void gdisp_lld_clear(GDISPDriver *g);
+		LLDSPEC	void gdisp_lld_clear(GDisplay *g);
 	#endif
 
 	#if GDISP_HARDWARE_FILLS || defined(__DOXYGEN__)
@@ -343,7 +340,7 @@ typedef struct GDISPDriver {
 		 *
 		 * @note		The parameter variables must not be altered by the driver.
 		 */
-		LLDSPEC	void gdisp_lld_fill_area(GDISPDriver *g);
+		LLDSPEC	void gdisp_lld_fill_area(GDisplay *g);
 	#endif
 
 	#if GDISP_HARDWARE_BITFILLS || defined(__DOXYGEN__)
@@ -360,7 +357,7 @@ typedef struct GDISPDriver {
 		 *
 		 * @note		The parameter variables must not be altered by the driver.
 		 */
-		LLDSPEC	void gdisp_lld_blit_area(GDISPDriver *g);
+		LLDSPEC	void gdisp_lld_blit_area(GDisplay *g);
 	#endif
 
 	#if GDISP_HARDWARE_PIXELREAD || defined(__DOXYGEN__)
@@ -374,7 +371,7 @@ typedef struct GDISPDriver {
 		 *
 		 * @note		The parameter variables must not be altered by the driver.
 		 */
-		LLDSPEC	color_t gdisp_lld_get_pixel_color(GDISPDriver *g);
+		LLDSPEC	color_t gdisp_lld_get_pixel_color(GDisplay *g);
 	#endif
 
 	#if (GDISP_HARDWARE_SCROLL && GDISP_NEED_SCROLL) || defined(__DOXYGEN__)
@@ -393,7 +390,7 @@ typedef struct GDISPDriver {
 		 * @note		Clearing the exposed area on the scroll operation is not
 		 * 				needed as the high level code handles this.
 		 */
-		LLDSPEC	void gdisp_lld_vertical_scroll(GDISPDriver *g);
+		LLDSPEC	void gdisp_lld_vertical_scroll(GDisplay *g);
 	#endif
 
 	#if (GDISP_HARDWARE_CONTROL && GDISP_NEED_CONTROL) || defined(__DOXYGEN__)
@@ -407,7 +404,7 @@ typedef struct GDISPDriver {
 		 *
 		 * @note		The parameter variables must not be altered by the driver.
 		 */
-		LLDSPEC	void gdisp_lld_control(GDISPDriver *g);
+		LLDSPEC	void gdisp_lld_control(GDisplay *g);
 	#endif
 
 	#if (GDISP_HARDWARE_QUERY && GDISP_NEED_QUERY) || defined(__DOXYGEN__)
@@ -421,7 +418,7 @@ typedef struct GDISPDriver {
 		 *
 		 * @note		The parameter variables must not be altered by the driver.
 		 */
-		LLDSPEC	void *gdisp_lld_query(GDISPDriver *g);				// Uses p.x (=what);
+		LLDSPEC	void *gdisp_lld_query(GDisplay *g);				// Uses p.x (=what);
 	#endif
 
 	#if (GDISP_HARDWARE_CLIP && (GDISP_NEED_CLIP || GDISP_NEED_VALIDATION)) || defined(__DOXYGEN__)
@@ -435,40 +432,39 @@ typedef struct GDISPDriver {
 		 *
 		 * @note		The parameter variables must not be altered by the driver.
 		 */
-		LLDSPEC	void gdisp_lld_set_clip(GDISPDriver *g);
+		LLDSPEC	void gdisp_lld_set_clip(GDisplay *g);
 	#endif
 
 	#ifdef __cplusplus
 	}
 	#endif
-#endif  // !GDISP_MULTIPLE_DRIVERS || defined(GDISP_LLD_DECLARATIONS)
+#endif  // GDISP_TOTAL_CONTROLLERS == 1 || defined(GDISP_DRIVER_VMT)
 
 
-#if GDISP_MULTIPLE_DRIVERS
+#if GDISP_TOTAL_CONTROLLERS > 1
 
 	typedef struct GDISPVMT {
-		bool_t (*init)(GDISPDriver *g);
-		void (*writestart)(GDISPDriver *g);				// Uses p.x,p.y  p.cx,p.cy
-		void (*writepos)(GDISPDriver *g);				// Uses p.x,p.y
-		void (*writecolor)(GDISPDriver *g);				// Uses p.color
-		void (*writestop)(GDISPDriver *g);				// Uses no parameters
-		void (*readstart)(GDISPDriver *g);				// Uses p.x,p.y  p.cx,p.cy
-		color_t (*readcolor)(GDISPDriver *g);			// Uses no parameters
-		void (*readstop)(GDISPDriver *g);				// Uses no parameters
-		void (*pixel)(GDISPDriver *g);					// Uses p.x,p.y  p.color
-		void (*clear)(GDISPDriver *g);					// Uses p.color
-		void (*fill)(GDISPDriver *g);					// Uses p.x,p.y  p.cx,p.cy  p.color
-		void (*blit)(GDISPDriver *g);					// Uses p.x,p.y  p.cx,p.cy  p.x1,p.y1 (=srcx,srcy)  p.x2 (=srccx), p.ptr (=buffer)
-		color_t (*get)(GDISPDriver *g);					// Uses p.x,p.y
-		void (*vscroll)(GDISPDriver *g);				// Uses p.x,p.y  p.cx,p.cy, p.y1 (=lines) p.color
-		void (*control)(GDISPDriver *g);				// Uses p.x (=what)  p.ptr (=value)
-		void *(*query)(GDISPDriver *g);					// Uses p.x (=what);
-		void (*setclip)(GDISPDriver *g);				// Uses p.x,p.y  p.cx,p.cy
+		bool_t (*init)(GDisplay *g, unsigned display);
+		void (*writestart)(GDisplay *g);				// Uses p.x,p.y  p.cx,p.cy
+		void (*writepos)(GDisplay *g);					// Uses p.x,p.y
+		void (*writecolor)(GDisplay *g);				// Uses p.color
+		void (*writestop)(GDisplay *g);					// Uses no parameters
+		void (*readstart)(GDisplay *g);					// Uses p.x,p.y  p.cx,p.cy
+		color_t (*readcolor)(GDisplay *g);				// Uses no parameters
+		void (*readstop)(GDisplay *g);					// Uses no parameters
+		void (*pixel)(GDisplay *g);						// Uses p.x,p.y  p.color
+		void (*clear)(GDisplay *g);						// Uses p.color
+		void (*fill)(GDisplay *g);						// Uses p.x,p.y  p.cx,p.cy  p.color
+		void (*blit)(GDisplay *g);						// Uses p.x,p.y  p.cx,p.cy  p.x1,p.y1 (=srcx,srcy)  p.x2 (=srccx), p.ptr (=buffer)
+		color_t (*get)(GDisplay *g);					// Uses p.x,p.y
+		void (*vscroll)(GDisplay *g);					// Uses p.x,p.y  p.cx,p.cy, p.y1 (=lines) p.color
+		void (*control)(GDisplay *g);					// Uses p.x (=what)  p.ptr (=value)
+		void *(*query)(GDisplay *g);					// Uses p.x (=what);
+		void (*setclip)(GDisplay *g);					// Uses p.x,p.y  p.cx,p.cy
 	} GDISPVMT;
 
-	#ifdef GDISP_LLD_DECLARATIONS
-		#define GDISP_DRIVER_STRUCT_INIT	{{0}, &VMT}
-		static const GDISPVMT VMT = {
+	#if defined(GDISP_DRIVER_VMT)
+		const GDISPVMT const GDISP_DRIVER_VMT[1] = {{
 			gdisp_lld_init,
 			#if GDISP_HARDWARE_STREAM_WRITE
 				gdisp_lld_write_start,
@@ -480,7 +476,7 @@ typedef struct GDISPDriver {
 				gdisp_lld_write_color,
 				gdisp_lld_write_stop,
 			#else
-				0, 0, 0,
+				0, 0, 0, 0,
 			#endif
 			#if GDISP_HARDWARE_STREAM_READ
 				gdisp_lld_read_start,
@@ -534,11 +530,10 @@ typedef struct GDISPDriver {
 			#else
 				0,
 			#endif
-		};
-		GDISPDriver	GDISP_DRIVER_STRUCT = {{0}, &VMT};
+		}};
 
 	#else
-		#define gdisp_lld_init(g)				g->vmt->init(g)
+		#define gdisp_lld_init(g, display)		g->vmt->init(g, display)
 		#define gdisp_lld_write_start(g)		g->vmt->writestart(g)
 		#define gdisp_lld_write_pos(g)			g->vmt->writepos(g)
 		#define gdisp_lld_write_color(g)		g->vmt->writecolor(g)
@@ -555,19 +550,9 @@ typedef struct GDISPDriver {
 		#define gdisp_lld_control(g)			g->vmt->control(g)
 		#define gdisp_lld_query(g)				g->vmt->query(g)
 		#define gdisp_lld_set_clip(g)			g->vmt->setclip(g)
-
-		extern	GDISPDriver	GDISP_DRIVER_STRUCT;
-
 	#endif	// GDISP_LLD_DECLARATIONS
 
-#else		// GDISP_MULTIPLE_DRIVERS
-	#ifdef GDISP_LLD_DECLARATIONS
-		GDISPDriver	GDISP_DRIVER_STRUCT;
-	#else
-		extern	GDISPDriver	GDISP_DRIVER_STRUCT;
-	#endif
-
-#endif		// GDISP_MULTIPLE_DRIVERS
+#endif		// GDISP_TOTAL_CONTROLLERS > 1
 
 		/* Verify information for packed pixels and define a non-packed pixel macro */
 		#if !GDISP_PACKED_PIXELS

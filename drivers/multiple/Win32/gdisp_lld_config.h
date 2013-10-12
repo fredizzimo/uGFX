@@ -16,14 +16,11 @@
 #ifndef _GDISP_LLD_CONFIG_H
 #define _GDISP_LLD_CONFIG_H
 
-#if GFX_USE_GDISP /*|| defined(__DOXYGEN__)*/
+#if GFX_USE_GDISP
 
 /*===========================================================================*/
 /* Driver hardware support.                                                  */
 /*===========================================================================*/
-
-#define GDISP_DRIVER_NAME				"Win32"
-#define GDISP_DRIVER_STRUCT				GDISP_Win32
 
 #define GDISP_HARDWARE_DRAWPIXEL		TRUE
 #define GDISP_HARDWARE_FILLS			TRUE
@@ -32,7 +29,7 @@
 #define GDISP_HARDWARE_BITFILLS			TRUE
 #define GDISP_HARDWARE_SCROLL			TRUE
 
-#define GDISP_LLD_PIXELFORMAT			GDISP_PIXELFORMAT_RGB888
+#define GDISP_PIXELFORMAT				GDISP_PIXELFORMAT_RGB888
 
 #endif	/* GFX_USE_GDISP */
 

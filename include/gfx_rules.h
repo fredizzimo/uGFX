@@ -134,12 +134,14 @@
 #endif
 
 #if GFX_USE_GDISP
-	#if GDISP_MULTIPLE_DRIVERS
+	#if GDISP_TOTAL_CONTROLLERS > 1
+		#ifndef GDISP_CONTROLLER_LIST
+			#error "GDISP Multiple Controllers: You must specify a value for GDISP_CONTROLLER_LIST"
+		#endif
 		#ifndef GDISP_PIXELFORMAT
 			#if GFX_DISPLAY_RULE_WARNINGS
-				#warning "GDISP: GDISP_MULTIPLE_DRIVERS requires GDISP_PIXELFORMAT to be set. It has been defaulted to GDISP_PIXELFORMAT_RGB565."
+				#error "GDISP Multiple Controllers: You must specify a value for GDISP_PIXELFORMAT"
 			#endif
-			#define GDISP_PIXELFORMAT 			GDISP_PIXELFORMAT_RGB565
 		#endif
 	#endif
 	#if GDISP_NEED_ANTIALIAS && !GDISP_NEED_PIXELREAD

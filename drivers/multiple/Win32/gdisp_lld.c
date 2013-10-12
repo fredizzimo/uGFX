@@ -9,12 +9,11 @@
  * @file    drivers/multiple/Win32/gdisp_lld.c
  * @brief   GDISP Graphics Driver subsystem low level driver source for Win32.
  */
-
 #include "gfx.h"
 
 #if GFX_USE_GDISP
 
-#define GDISP_LLD_DECLARATIONS
+#define GDISP_DRIVER_VMT			GDISPVMT_Win32
 #include "gdisp/lld/gdisp_lld.h"
 
 #include <stdio.h>
@@ -31,9 +30,17 @@
 	#define GDISP_SCREEN_HEIGHT	480
 #endif
 
+#define GDISP_FLG_READY				(GDISP_FLG_DRIVER<<0)
+#define GDISP_FLG_HASTOGGLE			(GDISP_FLG_DRIVER<<1)
+#define GDISP_FLG_HASMOUSE			(GDISP_FLG_DRIVER<<2)
+
 #if GINPUT_NEED_TOGGLE
 	/* Include toggle support code */
 	#include "ginput/lld/toggle.h"
+#endif
+
+#if GDISP_PIXELFORMAT != GDISP_PIXELFORMAT_RGB888
+	#error "GDISP Win32: This driver currently only supports the RGB888 pixel format."
 #endif
 
 #if GINPUT_NEED_MOUSE
@@ -41,41 +48,62 @@
 	#include "ginput/lld/mouse.h"
 #endif
 
+// Setting this to TRUE delays updating the screen
+// to the windows paint routine. Due to the
+// drawing lock this does not add as much speed
+// as might be expected but it is still faster in
+// all tested circumstances and for all operations
+// even draw_pixel().
+// This is probably due to drawing operations being
+// combined as the update regions are merged.
+#define GDISP_WIN32_USE_INDIRECT_UPDATE		TRUE
+
+// How far extra windows should be offset from the first.
+#define DISPLAY_X_OFFSET		50
+#define DISPLAY_Y_OFFSET		50
+
+static DWORD			winThreadId;
+static ATOM				winClass;
+static volatile bool_t	QReady;
+static HANDLE			drawMutex;
+
+
 /*===========================================================================*/
 /* Driver local routines    .                                                */
 /*===========================================================================*/
 
-#define WIN32_USE_MSG_REDRAW	FALSE
 #if GINPUT_NEED_TOGGLE
 	#define WIN32_BUTTON_AREA		16
 #else
 	#define WIN32_BUTTON_AREA		0
 #endif
 
-#define APP_NAME "GDISP"
+#define APP_NAME "uGFX"
 
 #define COLOR2BGR(c)	((((c) & 0xFF)<<16)|((c) & 0xFF00)|(((c)>>16) & 0xFF))
 #define BGR2COLOR(c)	COLOR2BGR(c)
 
-static HWND winRootWindow = NULL;
-static HDC dcBuffer = NULL;
-static HBITMAP dcBitmap = NULL;
-static HBITMAP dcOldBitmap;
-static volatile bool_t isReady = FALSE;
-static coord_t	wWidth, wHeight;
+typedef struct winPriv {
+	HWND			hwnd;
+	HDC				dcBuffer;
+	HBITMAP			dcBitmap;
+	HBITMAP 		dcOldBitmap;
+	#if GINPUT_NEED_MOUSE
+		coord_t		mousex, mousey;
+		uint16_t	mousebuttons;
+	#endif
+	#if GINPUT_NEED_TOGGLE
+		uint8_t		toggles;
+	#endif
+} winPriv;
 
-#if GINPUT_NEED_MOUSE
-	static coord_t	mousex, mousey;
-	static uint16_t	mousebuttons;
-#endif
-#if GINPUT_NEED_TOGGLE
-	static uint8_t	toggles = 0;
-#endif
 
 static LRESULT myWindowProc(HWND hWnd,	UINT Msg, WPARAM wParam, LPARAM lParam)
 {
-	HDC			dc;
-	PAINTSTRUCT	ps;
+	HDC				dc;
+	PAINTSTRUCT		ps;
+	GDisplay *		g;
+	winPriv *		priv;
 	#if GINPUT_NEED_TOGGLE
 		HBRUSH		hbrOn, hbrOff;
 		HPEN		pen;
@@ -88,86 +116,135 @@ static LRESULT myWindowProc(HWND hWnd,	UINT Msg, WPARAM wParam, LPARAM lParam)
 
 	switch (Msg) {
 	case WM_CREATE:
+		// Get our GDisplay structure and attach it to the window
+		g = (GDisplay *)((LPCREATESTRUCT)lParam)->lpCreateParams;
+		priv = (winPriv *)g->priv;
+		SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)g);
+
+		// Fill in the private area
+		priv->hwnd = hWnd;
+		dc = GetDC(hWnd);
+		priv->dcBitmap = CreateCompatibleBitmap(dc, g->g.Width, g->g.Height);
+		priv->dcBuffer = CreateCompatibleDC(dc);
+		ReleaseDC(hWnd, dc);
+		priv->dcOldBitmap = SelectObject(priv->dcBuffer, priv->dcBitmap);
+
+		// Mark the window as ready to go
+		g->flags |= GDISP_FLG_READY;
 		break;
-	case WM_LBUTTONDOWN:
-		#if GINPUT_NEED_MOUSE
-			if ((coord_t)HIWORD(lParam) < wHeight) {
-				mousebuttons |= GINPUT_MOUSE_BTN_LEFT;
-				goto mousemove;
-			}
-		#endif
-		#if GINPUT_NEED_TOGGLE
-			bit = 1 << ((coord_t)LOWORD(lParam)*8/wWidth);
-			toggles ^= bit;
-			rect.left = 0;
-			rect.right = wWidth;
-			rect.top = wHeight;
-			rect.bottom = wHeight + WIN32_BUTTON_AREA;
-			InvalidateRect(hWnd, &rect, FALSE);
-			UpdateWindow(hWnd);
-			#if GINPUT_TOGGLE_POLL_PERIOD == TIME_INFINITE
-				ginputToggleWakeup();
+
+	#if GINPUT_NEED_MOUSE || GINPUT_NEED_TOGGLE
+		case WM_LBUTTONDOWN:
+			// Get our GDisplay structure
+			g = (GDisplay *)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+			priv = (winPriv *)g->priv;
+
+			// Handle mouse down on the window
+			#if GINPUT_NEED_MOUSE
+				if ((coord_t)HIWORD(lParam) < GDISP_SCREEN_HEIGHT && (g->flags & GDISP_FLG_HASMOUSE)) {
+					priv->mousebuttons |= GINPUT_MOUSE_BTN_LEFT;
+					goto mousemove;
+				}
 			#endif
-		#endif
-		break;
-	case WM_LBUTTONUP:
-		#if GINPUT_NEED_TOGGLE
-			if ((toggles & 0x0F)) {
-				toggles &= ~0x0F;
-				rect.left = 0;
-				rect.right = wWidth;
-				rect.top = wHeight;
-				rect.bottom = wHeight + WIN32_BUTTON_AREA;
-				InvalidateRect(hWnd, &rect, FALSE);
-				UpdateWindow(hWnd);
-				#if GINPUT_TOGGLE_POLL_PERIOD == TIME_INFINITE
-					ginputToggleWakeup();
-				#endif
-			}
-		#endif
-		#if GINPUT_NEED_MOUSE
-			if ((coord_t)HIWORD(lParam) < wHeight) {
-				mousebuttons &= ~GINPUT_MOUSE_BTN_LEFT;
+
+			// Handle mouse down on the toggle area
+			#if GINPUT_NEED_TOGGLE
+				if ((coord_t)HIWORD(lParam) >= GDISP_SCREEN_HEIGHT && (g->flags & GDISP_FLG_HASTOGGLE)) {
+					bit = 1 << ((coord_t)LOWORD(lParam)*8/g->g.Width);
+					priv->toggles ^= bit;
+					rect.left = 0;
+					rect.right = GDISP_SCREEN_WIDTH;
+					rect.top = GDISP_SCREEN_HEIGHT;
+					rect.bottom = GDISP_SCREEN_HEIGHT + WIN32_BUTTON_AREA;
+					InvalidateRect(hWnd, &rect, FALSE);
+					UpdateWindow(hWnd);
+					#if GINPUT_TOGGLE_POLL_PERIOD == TIME_INFINITE
+						ginputToggleWakeup();
+					#endif
+				}
+			#endif
+			break;
+
+		case WM_LBUTTONUP:
+			// Get our GDisplay structure
+			g = (GDisplay *)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+			priv = (winPriv *)g->priv;
+
+			// Handle mouse up on the toggle area
+			#if GINPUT_NEED_TOGGLE
+				if ((g->flags & GDISP_FLG_HASTOGGLE)) {
+					if ((priv->toggles & 0x0F)) {
+						priv->toggles &= ~0x0F;
+						rect.left = 0;
+						rect.right = GDISP_SCREEN_WIDTH;
+						rect.top = GDISP_SCREEN_HEIGHT;
+						rect.bottom = GDISP_SCREEN_HEIGHT + WIN32_BUTTON_AREA;
+						InvalidateRect(hWnd, &rect, FALSE);
+						UpdateWindow(hWnd);
+						#if GINPUT_TOGGLE_POLL_PERIOD == TIME_INFINITE
+							ginputToggleWakeup();
+						#endif
+					}
+				}
+			#endif
+
+			// Handle mouse up on the window
+			#if GINPUT_NEED_MOUSE
+				if ((coord_t)HIWORD(lParam) < GDISP_SCREEN_HEIGHT && (g->flags & GDISP_FLG_HASMOUSE)) {
+					priv->mousebuttons &= ~GINPUT_MOUSE_BTN_LEFT;
+					goto mousemove;
+				}
+			#endif
+			break;
+	#endif
+
+	#if GINPUT_NEED_MOUSE
+		case WM_MBUTTONDOWN:
+			g = (GDisplay *)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+			priv = (winPriv *)g->priv;
+			if ((coord_t)HIWORD(lParam) < GDISP_SCREEN_HEIGHT && (g->flags & GDISP_FLG_HASMOUSE)) {
+				priv->mousebuttons |= GINPUT_MOUSE_BTN_MIDDLE;
 				goto mousemove;
 			}
-		#endif
-		break;
-#if GINPUT_NEED_MOUSE
-	case WM_MBUTTONDOWN:
-		if ((coord_t)HIWORD(lParam) < wHeight) {
-			mousebuttons |= GINPUT_MOUSE_BTN_MIDDLE;
-			goto mousemove;
-		}
-		break;
-	case WM_MBUTTONUP:
-		if ((coord_t)HIWORD(lParam) < wHeight) {
-			mousebuttons &= ~GINPUT_MOUSE_BTN_MIDDLE;
-			goto mousemove;
-		}
-		break;
-	case WM_RBUTTONDOWN:
-		if ((coord_t)HIWORD(lParam) < wHeight) {
-			mousebuttons |= GINPUT_MOUSE_BTN_RIGHT;
-			goto mousemove;
-		}
-		break;
-	case WM_RBUTTONUP:
-		if ((coord_t)HIWORD(lParam) < wHeight) {
-			mousebuttons &= ~GINPUT_MOUSE_BTN_RIGHT;
-			goto mousemove;
-		}
-		break;
-	case WM_MOUSEMOVE:
-		if ((coord_t)HIWORD(lParam) >= wHeight)
 			break;
-	mousemove:
-		mousex = (coord_t)LOWORD(lParam); 
-		mousey = (coord_t)HIWORD(lParam); 
-		#if GINPUT_MOUSE_POLL_PERIOD == TIME_INFINITE
-			ginputMouseWakeup();
-		#endif
-		break;
-#endif
+		case WM_MBUTTONUP:
+			g = (GDisplay *)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+			priv = (winPriv *)g->priv;
+			if ((coord_t)HIWORD(lParam) < GDISP_SCREEN_HEIGHT && (g->flags & GDISP_FLG_HASMOUSE)) {
+				priv->mousebuttons &= ~GINPUT_MOUSE_BTN_MIDDLE;
+				goto mousemove;
+			}
+			break;
+		case WM_RBUTTONDOWN:
+			g = (GDisplay *)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+			priv = (winPriv *)g->priv;
+			if ((coord_t)HIWORD(lParam) < GDISP_SCREEN_HEIGHT && (g->flags & GDISP_FLG_HASMOUSE)) {
+				priv->mousebuttons |= GINPUT_MOUSE_BTN_RIGHT;
+				goto mousemove;
+			}
+			break;
+		case WM_RBUTTONUP:
+			g = (GDisplay *)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+			priv = (winPriv *)g->priv;
+			if ((coord_t)HIWORD(lParam) < GDISP_SCREEN_HEIGHT && (g->flags & GDISP_FLG_HASMOUSE)) {
+				priv->mousebuttons &= ~GINPUT_MOUSE_BTN_RIGHT;
+				goto mousemove;
+			}
+			break;
+		case WM_MOUSEMOVE:
+			g = (GDisplay *)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+			priv = (winPriv *)g->priv;
+			if ((coord_t)HIWORD(lParam) >= GDISP_SCREEN_HEIGHT || !(g->flags & GDISP_FLG_HASMOUSE))
+				break;
+		mousemove:
+			priv->mousex = (coord_t)LOWORD(lParam);
+			priv->mousey = (coord_t)HIWORD(lParam);
+			#if GINPUT_MOUSE_POLL_PERIOD == TIME_INFINITE
+				ginputMouseWakeup();
+			#endif
+			break;
+	#endif
+
 	case WM_SYSKEYDOWN:
 	case WM_KEYDOWN:
 	case WM_SYSKEYUP:
@@ -178,26 +255,41 @@ static LRESULT myWindowProc(HWND hWnd,	UINT Msg, WPARAM wParam, LPARAM lParam)
 	case WM_SYSCHAR:
 	case WM_SYSDEADCHAR:
 		break;
+
+	case WM_ERASEBKGND:
+		// Pretend we have erased the background.
+		// We know we don't really need to do this as we
+		// redraw the entire surface in the WM_PAINT handler.
+		return TRUE;
+
 	case WM_PAINT:
+		// Get our GDisplay structure
+		g = (GDisplay *)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+		priv = (winPriv *)g->priv;
+
+		// Paint the main window area
+		WaitForSingleObject(drawMutex, INFINITE);
 		dc = BeginPaint(hWnd, &ps);
 		BitBlt(dc, ps.rcPaint.left, ps.rcPaint.top,
 			ps.rcPaint.right - ps.rcPaint.left,
-			(ps.rcPaint.bottom > wHeight ? wHeight : ps.rcPaint.bottom) - ps.rcPaint.top,
-			dcBuffer, ps.rcPaint.left, ps.rcPaint.top, SRCCOPY);
+			(ps.rcPaint.bottom > GDISP_SCREEN_HEIGHT ? GDISP_SCREEN_HEIGHT : ps.rcPaint.bottom) - ps.rcPaint.top,
+			priv->dcBuffer, ps.rcPaint.left, ps.rcPaint.top, SRCCOPY);
+
+		// Paint the toggle area
 		#if GINPUT_NEED_TOGGLE
-			if (ps.rcPaint.bottom >= wHeight) {
+			if (ps.rcPaint.bottom >= GDISP_SCREEN_HEIGHT && (g->flags & GDISP_FLG_HASTOGGLE)) {
 				pen = CreatePen(PS_SOLID, 1, COLOR2BGR(Black));
 				hbrOn = CreateSolidBrush(COLOR2BGR(Blue));
 				hbrOff = CreateSolidBrush(COLOR2BGR(Gray));
 				old = SelectObject(dc, pen);
-				MoveToEx(dc, 0, wHeight, &p);
-				LineTo(dc, wWidth, wHeight);
+				MoveToEx(dc, 0, GDISP_SCREEN_HEIGHT, &p);
+				LineTo(dc, GDISP_SCREEN_WIDTH, GDISP_SCREEN_HEIGHT);
 				for(pos = 0, bit=1; pos < wWidth; pos=rect.right, bit <<= 1) {
 					rect.left = pos;
-					rect.right = pos + wWidth/8;
-					rect.top = wHeight;
-					rect.bottom = wHeight + WIN32_BUTTON_AREA;
-					FillRect(dc, &rect, (toggles & bit) ? hbrOn : hbrOff);
+					rect.right = pos + GDISP_SCREEN_WIDTH/8;
+					rect.top = GDISP_SCREEN_HEIGHT;
+					rect.bottom = GDISP_SCREEN_HEIGHT + WIN32_BUTTON_AREA;
+					FillRect(dc, &rect, (priv->toggles & bit) ? hbrOn : hbrOff);
 					if (pos > 0) {
 						MoveToEx(dc, rect.left, rect.top, &p);
 						LineTo(dc, rect.left, rect.bottom);
@@ -209,61 +301,33 @@ static LRESULT myWindowProc(HWND hWnd,	UINT Msg, WPARAM wParam, LPARAM lParam)
 			}
 		#endif
 		EndPaint(hWnd, &ps);
+		ReleaseMutex(drawMutex);
 		break;
+
 	case WM_DESTROY:
+		// Get our GDisplay structure
+		g = (GDisplay *)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+		priv = (winPriv *)g->priv;
+
+		// Restore the window and free our bitmaps
+		SelectObject(priv->dcBuffer, priv->dcOldBitmap);
+		DeleteDC(priv->dcBuffer);
+		DeleteObject(priv->dcBitmap);
+
+		// Cleanup the private area
+		gfxFree(priv);
+
+		// Quit the application
 		PostQuitMessage(0);
-		SelectObject(dcBuffer, dcOldBitmap);
-		DeleteDC(dcBuffer);
-		DeleteObject(dcBitmap);
-		winRootWindow = NULL;
+
+		// Actually the above doesn't work (who knows why)
+		ExitProcess(0);
 		break;
+
 	default:
 		return DefWindowProc(hWnd, Msg, wParam, lParam);
 	}
 	return 0;
-}
-
-static void InitWindow(void) {
-	HANDLE hInstance;
-	WNDCLASS wc;
-	RECT	rect;
-	HDC		dc;
-
-	hInstance = GetModuleHandle(NULL);
-
-	wc.style           = CS_HREDRAW | CS_VREDRAW; // | CS_OWNDC;
-	wc.lpfnWndProc     = (WNDPROC)myWindowProc;
-	wc.cbClsExtra      = 0;
-	wc.cbWndExtra      = 0;
-	wc.hInstance       = hInstance;
-	wc.hIcon           = LoadIcon(NULL, IDI_APPLICATION);
-	wc.hCursor         = LoadCursor(NULL, IDC_ARROW);
-	wc.hbrBackground   = GetStockObject(WHITE_BRUSH);
-	wc.lpszMenuName    = NULL;
-	wc.lpszClassName   = APP_NAME;
-	RegisterClass(&wc);
-
-	rect.top = 0; rect.bottom = wHeight+WIN32_BUTTON_AREA;
-	rect.left = 0; rect.right = wWidth;
-	AdjustWindowRect(&rect, WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU, 0);
-	winRootWindow = CreateWindow(APP_NAME, "", WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU, 0, 0,
-			rect.right-rect.left, rect.bottom-rect.top, 0, 0, hInstance, NULL);
-	assert(winRootWindow != NULL);
-
-
-	GetClientRect(winRootWindow, &rect);
-	wWidth = rect.right-rect.left;
-	wHeight = rect.bottom - rect.top - WIN32_BUTTON_AREA;
-
-	dc = GetDC(winRootWindow);
-	dcBitmap = CreateCompatibleBitmap(dc, wWidth, wHeight);
-	dcBuffer = CreateCompatibleDC(dc);
-	ReleaseDC(winRootWindow, dc);
-	dcOldBitmap = SelectObject(dcBuffer, dcBitmap);
-
-	ShowWindow(winRootWindow, SW_SHOW);
-	UpdateWindow(winRootWindow);
-	isReady = TRUE;
 }
 
 static DECLARE_THREAD_STACK(waWindowThread, 1024);
@@ -271,12 +335,41 @@ static DECLARE_THREAD_FUNCTION(WindowThread, param) {
 	(void)param;
 	MSG msg;
 
-	InitWindow();
+	// Establish this thread as a message queue thread
+	winThreadId = GetCurrentThreadId();
+	PeekMessage(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
+	QReady = TRUE;
+
 	do {
 		gfxSleepMilliseconds(1);
 		while(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
+			// Is this our special thread message to create a new window?
+			if (!msg.hwnd && msg.message == WM_USER) {
+				RECT		rect;
+				GDisplay	*g;
+
+				g = (GDisplay *)msg.lParam;
+
+				// Set the window rectangle
+				rect.top = 0; rect.bottom = g->g.Height;
+				rect.left = 0; rect.right = g->g.Width;
+				#if GINPUT_NEED_TOGGLE
+					if ((g->flags & GDISP_FLG_HASTOGGLE))
+						rect.bottom += WIN32_BUTTON_AREA;
+				#endif
+				AdjustWindowRect(&rect, WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU, 0);
+
+				// Create the window
+				msg.hwnd = CreateWindow(APP_NAME, "", WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_BORDER, msg.wParam*DISPLAY_X_OFFSET, msg.wParam*DISPLAY_Y_OFFSET,
+								rect.right-rect.left, rect.bottom-rect.top, 0, 0,
+								GetModuleHandle(NULL), g);
+				assert(msg.hwnd != NULL);
+
+			// Or just a normal window message
+			} else {
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
 		}
 	} while (msg.message != WM_QUIT);
 	ExitProcess(0);
@@ -287,44 +380,89 @@ static DECLARE_THREAD_FUNCTION(WindowThread, param) {
 /* Driver exported functions.                                                */
 /*===========================================================================*/
 
-LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
-	RECT			rect;
-	gfxThreadHandle	hth;
+LLDSPEC bool_t gdisp_lld_init(GDisplay *g, unsigned display) {
+	winPriv	*	priv;
+	char		buf[132];
 
-	/* Set the window dimensions */
-	GetWindowRect(GetDesktopWindow(), &rect);
-	wWidth = rect.right - rect.left;
-	wHeight = rect.bottom - rect.top - WIN32_BUTTON_AREA;
-	if (wWidth > GDISP_SCREEN_WIDTH)
-		wWidth = GDISP_SCREEN_WIDTH;
-	if (wHeight > GDISP_SCREEN_HEIGHT)
-		wHeight = GDISP_SCREEN_HEIGHT;
+	// Initialise the window thread and the window class (if it hasn't been done already)
+	if (!QReady) {
+		gfxThreadHandle	hth;
+		WNDCLASS		wc;
 
-	/* Initialise the window */
-	if (!(hth = gfxThreadCreate(waWindowThread, sizeof(waWindowThread), HIGH_PRIORITY, WindowThread, 0))) {
-		fprintf(stderr, "Cannot create window thread\n");
-		exit(-1);
+		// Create the draw mutex
+		drawMutex = CreateMutex(NULL, FALSE, NULL);
+
+		// Create the thread
+		hth = gfxThreadCreate(waWindowThread, sizeof(waWindowThread), HIGH_PRIORITY, WindowThread, 0);
+		assert(hth != NULL);
+		gfxThreadClose(hth);
+
+		wc.style           = CS_HREDRAW | CS_VREDRAW; // | CS_OWNDC;
+		wc.lpfnWndProc     = (WNDPROC)myWindowProc;
+		wc.cbClsExtra      = 0;
+		wc.cbWndExtra      = 0;
+		wc.hInstance       = GetModuleHandle(NULL);
+		wc.hIcon           = LoadIcon(NULL, IDI_APPLICATION);
+		wc.hCursor         = LoadCursor(NULL, IDC_ARROW);
+		wc.hbrBackground   = GetStockObject(WHITE_BRUSH);
+		wc.lpszMenuName    = NULL;
+		wc.lpszClassName   = APP_NAME;
+		winClass = RegisterClass(&wc);
+		assert(winClass != 0);
+
+		// Wait for our thread to be ready
+		while (!QReady)
+			Sleep(1);
 	}
-	gfxThreadClose(hth);
-	while (!isReady)
-		Sleep(1);
 
-	/* Initialise the GDISP structure to match */
+	// Initialise the GDISP structure
 	g->g.Orientation = GDISP_ROTATE_0;
 	g->g.Powermode = powerOn;
 	g->g.Backlight = 100;
 	g->g.Contrast = 50;
-	g->g.Width = wWidth;
-	g->g.Height = wHeight;
+	g->g.Width = GDISP_SCREEN_WIDTH;
+	g->g.Height = GDISP_SCREEN_HEIGHT;
+
+	// Turn on toggles for the first GINPUT_TOGGLE_CONFIG_ENTRIES windows
+	#if GINPUT_NEED_TOGGLE
+		if (display < GINPUT_TOGGLE_CONFIG_ENTRIES)
+			g->flags |= GDISP_FLG_HASTOGGLE;
+	#endif
+
+	// Only turn on mouse on the first window for now
+	#if GINPUT_NEED_MOUSE
+		if (!display)
+			g->flags |= GDISP_FLG_HASMOUSE;
+	#endif
+
+	// Create a private area for this window
+	priv = (winPriv *)gfxAlloc(sizeof(winPriv));
+	assert(priv != NULL);
+	memset(priv, 0, sizeof(winPriv));
+	g->priv = priv;
+
+	// Create the window in the message thread
+	PostThreadMessage(winThreadId, WM_USER, (WPARAM)display, (LPARAM)g);
+
+	// Wait for the window creation to complete (for safety)
+	while(!(((volatile GDisplay *)g)->flags & GDISP_FLG_READY))
+		Sleep(1);
+
+	sprintf(buf, APP_NAME " - %u", display+1);
+	SetWindowText(priv->hwnd, buf);
+	ShowWindow(priv->hwnd, SW_SHOW);
+	UpdateWindow(priv->hwnd);
+
 	return TRUE;
 }
 
 #if GDISP_HARDWARE_DRAWPIXEL
-	LLDSPEC void gdisp_lld_draw_pixel(GDISPDriver *g) {
-		HDC			dcScreen;
+	LLDSPEC void gdisp_lld_draw_pixel(GDisplay *g) {
+		winPriv	*	priv;
 		int			x, y;
 		COLORREF	color;
 	
+		priv = g->priv;
 		color = COLOR2BGR(g->p.color);
 	
 		#if GDISP_NEED_CONTROL
@@ -352,23 +490,41 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 		#endif
 
 		// Draw the pixel on the screen and in the buffer.
-		dcScreen = GetDC(winRootWindow);
-		SetPixel(dcScreen, x, y, color);
-		SetPixel(dcBuffer, x, y, color);
-		ReleaseDC(winRootWindow, dcScreen);
+		WaitForSingleObject(drawMutex, INFINITE);
+		SetPixel(priv->dcBuffer, x, y, color);
+		#if GDISP_WIN32_USE_INDIRECT_UPDATE
+			ReleaseMutex(drawMutex);
+			{
+				RECT	r;
+				r.left = g->p.x; r.right = g->p.x+1;
+				r.top = g->p.y; r.bottom = g->p.y+1;
+				InvalidateRect(priv->hwnd, &r, FALSE);
+			}
+		#else
+			{
+				HDC		dc;
+				dc = GetDC(priv->hwnd);
+				SetPixel(dc, x, y, color);
+				ReleaseDC(priv->hwnd, dc);
+				ReleaseMutex(drawMutex);
+			}
+		#endif
 	}
 #endif
 
 /* ---- Optional Routines ---- */
 
 #if GDISP_HARDWARE_FILLS
-	LLDSPEC void gdisp_lld_fill_area(GDISPDriver *g) {
-		HDC			dcScreen;
+	LLDSPEC void gdisp_lld_fill_area(GDisplay *g) {
+		winPriv	*	priv;
 		RECT		rect;
 		HBRUSH		hbr;
 		COLORREF	color;
 
+		priv = g->priv;
 		color = COLOR2BGR(g->p.color);
+		hbr = CreateSolidBrush(color);
+
 		#if GDISP_NEED_CONTROL
 			switch(g->g.Orientation) {
 			case GDISP_ROTATE_0:
@@ -403,29 +559,34 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 			rect.right = rect.left + g->p.cx;
 		#endif
 
-		hbr = CreateSolidBrush(color);
 
-		dcScreen = GetDC(winRootWindow);
-		FillRect(dcScreen, &rect, hbr);
-		FillRect(dcBuffer, &rect, hbr);
-		ReleaseDC(winRootWindow, dcScreen);
+		WaitForSingleObject(drawMutex, INFINITE);
+		FillRect(priv->dcBuffer, &rect, hbr);
+		#if GDISP_WIN32_USE_INDIRECT_UPDATE
+			ReleaseMutex(drawMutex);
+			InvalidateRect(priv->hwnd, &rect, FALSE);
+		#else
+			{
+				HDC		dc;
+				dc = GetDC(priv->hwnd);
+				FillRect(dc, &rect, hbr);
+				ReleaseDC(priv->hwnd, dc);
+				ReleaseMutex(drawMutex);
+			}
+		#endif
 
 		DeleteObject(hbr);
 	}
 #endif
 
 #if GDISP_HARDWARE_BITFILLS && GDISP_NEED_CONTROL
-	static pixel_t *rotateimg(GDISPDriver *g, const pixel_t *buffer) {
+	static pixel_t *rotateimg(GDisplay *g, const pixel_t *buffer) {
 		pixel_t	*dstbuf;
 		pixel_t	*dst;
 		const pixel_t	*src;
 		size_t	sz;
 		coord_t	i, j;
 
-		// Shortcut.
-		if (g->g.Orientation == GDISP_ROTATE_0 && g->p.x1 == 0 && g->p.cx == g->p.x2)
-			return (pixel_t *)buffer;
-		
 		// Allocate the destination buffer
 		sz = (size_t)g->p.cx * (size_t)g->p.cy;
 		if (!(dstbuf = (pixel_t *)malloc(sz * sizeof(pixel_t))))
@@ -433,11 +594,6 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 		
 		// Copy the bits we need
 		switch(g->g.Orientation) {
-		case GDISP_ROTATE_0:
-			for(dst = dstbuf, src = buffer+g->p.x1, j = 0; j < g->p.cy; j++, src += g->p.x2 - g->p.cx)
-				for(i = 0; i < g->p.cx; i++)
-					*dst++ = *src++;
-			break;
 		case GDISP_ROTATE_90:
 			for(src = buffer+g->p.x1, j = 0; j < g->p.cy; j++, src += g->p.x2 - g->p.cx) {
 				dst = dstbuf+sz-g->p.cy+j;
@@ -463,16 +619,14 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 #endif
 	
 #if GDISP_HARDWARE_BITFILLS
-	LLDSPEC void gdisp_lld_blit_area(GDISPDriver *g) {
-		BITMAPV4HEADER bmpInfo;
-		HDC			dcScreen;
-		pixel_t	*	buffer;
-		#if GDISP_NEED_CONTROL
-			RECT		rect;
-			pixel_t	*	srcimg;
-		#endif
+	LLDSPEC void gdisp_lld_blit_area(GDisplay *g) {
+		winPriv	*		priv;
+		pixel_t	*		buffer;
+		RECT			rect;
+		BITMAPV4HEADER	bmpInfo;
 
 		// Make everything relative to the start of the line
+		priv = g->priv;
 		buffer = g->p.ptr;
 		buffer += g->p.x2*g->p.y1;
 		
@@ -492,13 +646,10 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 		bmpInfo.bV4CSType = 0; //LCS_sRGB;
 
 		#if GDISP_NEED_CONTROL
-			bmpInfo.bV4SizeImage = (g->p.cy*g->p.cx) * sizeof(pixel_t);
-			srcimg = rotateimg(g, buffer);
-			if (!srcimg) return;
-			
 			switch(g->g.Orientation) {
 			case GDISP_ROTATE_0:
-				bmpInfo.bV4Width = g->p.cx;
+				bmpInfo.bV4SizeImage = (g->p.cy*g->p.x2) * sizeof(pixel_t);
+				bmpInfo.bV4Width = g->p.x2;
 				bmpInfo.bV4Height = -g->p.cy; /* top-down image */
 				rect.top = g->p.y;
 				rect.bottom = rect.top+g->p.cy;
@@ -506,6 +657,8 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 				rect.right = rect.left+g->p.cx;
 				break;
 			case GDISP_ROTATE_90:
+				if (!(buffer = rotateimg(g, buffer))) return;
+				bmpInfo.bV4SizeImage = (g->p.cy*g->p.cx) * sizeof(pixel_t);
 				bmpInfo.bV4Width = g->p.cy;
 				bmpInfo.bV4Height = -g->p.cx; /* top-down image */
 				rect.bottom = g->g.Width - g->p.x;
@@ -514,6 +667,8 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 				rect.right = rect.left+g->p.cy;
 				break;
 			case GDISP_ROTATE_180:
+				if (!(buffer = rotateimg(g, buffer))) return;
+				bmpInfo.bV4SizeImage = (g->p.cy*g->p.cx) * sizeof(pixel_t);
 				bmpInfo.bV4Width = g->p.cx;
 				bmpInfo.bV4Height = -g->p.cy; /* top-down image */
 				rect.bottom = g->g.Height-1 - g->p.y;
@@ -522,6 +677,8 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 				rect.left = rect.right-g->p.cx;
 				break;
 			case GDISP_ROTATE_270:
+				if (!(buffer = rotateimg(g, buffer))) return;
+				bmpInfo.bV4SizeImage = (g->p.cy*g->p.cx) * sizeof(pixel_t);
 				bmpInfo.bV4Width = g->p.cy;
 				bmpInfo.bV4Height = -g->p.cx; /* top-down image */
 				rect.top = g->p.x;
@@ -530,58 +687,78 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 				rect.left = rect.right-g->p.cy;
 				break;
 			}
-			dcScreen = GetDC(winRootWindow);
-			SetDIBitsToDevice(dcBuffer, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top, 0, 0, 0, rect.bottom-rect.top, srcimg, (BITMAPINFO*)&bmpInfo, DIB_RGB_COLORS);
-			SetDIBitsToDevice(dcScreen, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top, 0, 0, 0, rect.bottom-rect.top, srcimg, (BITMAPINFO*)&bmpInfo, DIB_RGB_COLORS);
-			ReleaseDC(winRootWindow, dcScreen);
-			if (srcimg != buffer)
-				free(srcimg);
-			
 		#else
+			bmpInfo.bV4SizeImage = (g->p.cy*g->p.x2) * sizeof(pixel_t);
 			bmpInfo.bV4Width = g->p.x2;
 			bmpInfo.bV4Height = -g->p.cy; /* top-down image */
-			bmpInfo.bV4SizeImage = (g->p.cy*g->p.x2) * sizeof(pixel_t);
-			dcScreen = GetDC(winRootWindow);
-			SetDIBitsToDevice(dcBuffer, g->p.x, g->p.y, g->p.cx, g->p.cy, g->p.x1, 0, 0, g->p.cy, buffer, (BITMAPINFO*)&bmpInfo, DIB_RGB_COLORS);
-			SetDIBitsToDevice(dcScreen, g->p.x, g->p.y, g->p.cx, g->p.cy, g->p.x1, 0, 0, g->p.cy, buffer, (BITMAPINFO*)&bmpInfo, DIB_RGB_COLORS);
-			ReleaseDC(winRootWindow, dcScreen);
+			rect.top = g->p.y;
+			rect.bottom = rect.top+g->p.cy;
+			rect.left = g->p.x;
+			rect.right = rect.left+g->p.cx;
+		#endif
+
+		WaitForSingleObject(drawMutex, INFINITE);
+		SetDIBitsToDevice(priv->dcBuffer, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top, 0, 0, 0, rect.bottom-rect.top, buffer, (BITMAPINFO*)&bmpInfo, DIB_RGB_COLORS);
+		#if GDISP_WIN32_USE_INDIRECT_UPDATE
+			ReleaseMutex(drawMutex);
+			InvalidateRect(priv->hwnd, &rect, FALSE);
+		#else
+			{
+				HDC		dc;
+				dc = GetDC(priv->hwnd);
+				SetDIBitsToDevice(dc, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top, 0, 0, 0, rect.bottom-rect.top, buffer, (BITMAPINFO*)&bmpInfo, DIB_RGB_COLORS);
+				ReleaseDC(priv->hwnd, dc);
+				ReleaseMutex(drawMutex);
+			}
+		#endif
+
+		#if GDISP_NEED_CONTROL
+			if (buffer != (pixel_t *)g->p.ptr)
+				free(srcimg);
 		#endif
 	}
 #endif
 
 #if GDISP_HARDWARE_PIXELREAD
-	LLDSPEC	color_t gdisp_lld_get_pixel_color(GDISPDriver *g) {
+	LLDSPEC	color_t gdisp_lld_get_pixel_color(GDisplay *g) {
+		winPriv	*	priv;
 		COLORREF	color;
 
+		priv = g->priv;
+
+		WaitForSingleObject(drawMutex, INFINITE);
 		#if GDISP_NEED_CONTROL
 			switch(g->g.Orientation) {
 			case GDISP_ROTATE_0:
-				color = GetPixel(dcBuffer, g->p.x, g->p.y);
+				color = GetPixel(priv->dcBuffer, g->p.x, g->p.y);
 				break;
 			case GDISP_ROTATE_90:
-				color = GetPixel(dcBuffer, g->p.y, g->g.Width - 1 - g->p.x);
+				color = GetPixel(priv->dcBuffer, g->p.y, g->g.Width - 1 - g->p.x);
 				break;
 			case GDISP_ROTATE_180:
-				color = GetPixel(dcBuffer, g->g.Width - 1 - g->p.x, g->g.Height - 1 - g->p.y);
+				color = GetPixel(priv->dcBuffer, g->g.Width - 1 - g->p.x, g->g.Height - 1 - g->p.y);
 				break;
 			case GDISP_ROTATE_270:
-				color = GetPixel(dcBuffer, g->g.Height - 1 - g->p.y, g->p.x);
+				color = GetPixel(priv->dcBuffer, g->g.Height - 1 - g->p.y, g->p.x);
 				break;
 			}
 		#else
-			color = GetPixel(dcBuffer, g->p.x, g->p.y);
+			color = GetPixel(priv->dcBuffer, g->p.x, g->p.y);
 		#endif
+		ReleaseMutex(drawMutex);
 		
 		return BGR2COLOR(color);
 	}
 #endif
 
 #if GDISP_NEED_SCROLL && GDISP_HARDWARE_SCROLL
-	LLDSPEC void gdisp_lld_vertical_scroll(GDISPDriver *g) {
-		HDC			dcScreen;
+	LLDSPEC void gdisp_lld_vertical_scroll(GDisplay *g) {
+		winPriv	*	priv;
 		RECT		rect;
 		coord_t		lines;
 		
+		priv = g->priv;
+
 		#if GDISP_NEED_CONTROL
 			switch(GC->g.Orientation) {
 			case GDISP_ROTATE_0:
@@ -611,10 +788,20 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 					rect.top -= lines;
 				}
 				if (g->p.cy >= lines && g->p.cy >= -lines) {
-					dcScreen = GetDC(winRootWindow);
-					ScrollDC(dcBuffer, 0, lines, &rect, 0, 0, 0);
-					ScrollDC(dcScreen, 0, lines, &rect, 0, 0, 0);
-					ReleaseDC(winRootWindow, dcScreen);
+					WaitForSingleObject(drawMutex, INFINITE);
+					ScrollDC(priv->dcBuffer, 0, lines, &rect, 0, 0, 0);
+					#if GDISP_WIN32_USE_INDIRECT_UPDATE
+						ReleaseMutex(drawMutex);
+						InvalidateRect(priv->hwnd, &rect, FALSE);
+					#else
+						{
+							HDC		dc;
+							dc = GetDC(priv->hwnd);
+							ScrollDC(dc, 0, lines, &rect, 0, 0, 0);
+							ReleaseDC(priv->hwnd, dc);
+							ReleaseMutex(drawMutex);
+						}
+					#endif
 				}
 				break;
 			case GDISP_ROTATE_270:
@@ -630,10 +817,20 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 					rect.left -= lines;
 				}
 				if (g->p.cy >= lines && g->p.cy >= -lines) {
-					dcScreen = GetDC(winRootWindow);
-					ScrollDC(dcBuffer, lines, 0, &rect, 0, 0, 0);
-					ScrollDC(dcScreen, lines, 0, &rect, 0, 0, 0);
-					ReleaseDC(winRootWindow, dcScreen);
+					WaitForSingleObject(drawMutex, INFINITE);
+					ScrollDC(priv->dcBuffer, lines, 0, &rect, 0, 0, 0);
+					#if GDISP_WIN32_USE_INDIRECT_UPDATE
+						ReleaseMutex(drawMutex);
+						InvalidateRect(priv->hwnd, &rect, FALSE);
+					#else
+						{
+							HDC		dc;
+							dc = GetDC(priv->hwnd);
+							ScrollDC(dc, lines, 0, &rect, 0, 0, 0);
+							ReleaseDC(priv->hwnd, dc);
+							ReleaseMutex(drawMutex);
+						}
+					#endif
 				}
 				break;
 			}
@@ -649,17 +846,27 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 				rect.top -= lines;
 			}
 			if (g->p.cy >= lines && g->p.cy >= -lines) {
-				dcScreen = GetDC(winRootWindow);
-				ScrollDC(dcBuffer, 0, lines, &rect, 0, 0, 0);
-				ScrollDC(dcScreen, 0, lines, &rect, 0, 0, 0);
-				ReleaseDC(winRootWindow, dcScreen);
+				WaitForSingleObject(drawMutex, INFINITE);
+				ScrollDC(priv->dcBuffer, 0, lines, &rect, 0, 0, 0);
+				#if GDISP_WIN32_USE_INDIRECT_UPDATE
+					ReleaseMutex(drawMutex);
+					InvalidateRect(priv->hwnd, &rect, FALSE);
+				#else
+					{
+						HDC		dc;
+						dc = GetDC(priv->hwnd);
+						ScrollDC(dc, 0, lines, &rect, 0, 0, 0);
+						ReleaseDC(priv->hwnd, dc);
+						ReleaseMutex(drawMutex);
+					}
+				#endif
 			}
 		#endif
 	}
 #endif
 
 #if GDISP_NEED_CONTROL && GDISP_HARDWARE_CONTROL
-	LLDSPEC void gdisp_lld_control(GDISPDriver *g) {
+	LLDSPEC void gdisp_lld_control(GDisplay *g) {
 		switch(g->p.x) {
 		case GDISP_CONTROL_ORIENTATION:
 			if (g->g.Orientation == (orientation_t)g->p.ptr)
@@ -667,13 +874,13 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 			switch((orientation_t)g->p.ptr) {
 				case GDISP_ROTATE_0:
 				case GDISP_ROTATE_180:
-					g->g.Width = wWidth;
-					g->g.Height = wHeight;
+					g->g.Width = GDISP_SCREEN_WIDTH;
+					g->g.Height = GDISP_SCREEN_HEIGHT;
 					break;
 				case GDISP_ROTATE_90:
 				case GDISP_ROTATE_270:
-					g->g.Height = wWidth;
-					g->g.Width = wHeight;
+					g->g.Height = GDISP_SCREEN_WIDTH;
+					g->g.Width = GDISP_SCREEN_HEIGHT;
 					break;
 				default:
 					return;
@@ -692,20 +899,38 @@ LLDSPEC bool_t gdisp_lld_init(GDISPDriver *g) {
 #if GINPUT_NEED_MOUSE
 	void ginput_lld_mouse_init(void) {}
 	void ginput_lld_mouse_get_reading(MouseReading *pt) {
-		pt->x = mousex;
-		pt->y = mousey > wHeight ? wHeight : mousey;
-		pt->z = (mousebuttons & GINPUT_MOUSE_BTN_LEFT) ? 100 : 0;
-		pt->buttons = mousebuttons;
+		GDisplay *g;
+
+		g = GDISP_WIN32;
+		pt->x = g->priv->mousex;
+		pt->y = g->priv->mousey > g->g.Height ? g->g.Height : mousey;
+		pt->z = (g->priv->mousebuttons & GINPUT_MOUSE_BTN_LEFT) ? 100 : 0;
+		pt->buttons = g->priv->mousebuttons;
 	}
 #endif /* GINPUT_NEED_MOUSE */
 
 #if GINPUT_NEED_TOGGLE
-	const GToggleConfig GInputToggleConfigTable[GINPUT_TOGGLE_CONFIG_ENTRIES] = {
-		{0,	0xFF, 0x00, 0},
-	};
-	void ginput_lld_toggle_init(const GToggleConfig *ptc) { (void) ptc; }
-	unsigned ginput_lld_toggle_getbits(const GToggleConfig *ptc) { (void) ptc; return toggles; }
-#endif /* GINPUT_NEED_MOUSE */
+	#if GINPUT_TOGGLE_CONFIG_ENTRIES > GDISP_DRIVER_COUNT_WIN32
+		#error "GDISP Win32: GINPUT_TOGGLE_CONFIG_ENTRIES must not be greater than GDISP_DRIVER_COUNT_WIN32"
+	#endif
+
+	GToggleConfig GInputToggleConfigTable[GINPUT_TOGGLE_CONFIG_ENTRIES];
+
+	void ginput_lld_toggle_init(const GToggleConfig *ptc) {
+		// Save the associated window struct
+		ptc->id = &GDISP_WIN32[ptc - GInputToggleConfigTable];
+
+		// We have 8 buttons per window.
+		ptc->mask = 0xFF;
+
+		// No inverse or special mode
+		ptc->invert = 0x00;
+		ptc->mode = 0;
+	}
+	unsigned ginput_lld_toggle_getbits(const GToggleConfig *ptc) {
+		return ((GDisplay *)(ptc->id))->priv->toggles;
+	}
+#endif /* GINPUT_NEED_TOGGLE */
 
 #endif /* GFX_USE_GDISP */
 

@@ -22,7 +22,12 @@
 /* Driver hardware support.                                                  */
 /*===========================================================================*/
 
-#define GDISP_DRIVER_NAME			"Linux emulator - X11"
+#ifndef GDISP_DRIVER_COUNT_X11
+	#define GDISP_DRIVER_COUNT_X11	1
+#endif
+#define GDISP_DRIVER_COUNT				GDISP_DRIVER_COUNT_X11
+
+#define GDISP_DRIVER_NAME				"Linux emulator - X11"
 #define GDISP_DRIVER_STRUCT				GDISP_X11
 
 #define GDISP_HARDWARE_DRAWPIXEL		TRUE
@@ -32,7 +37,7 @@
 #define GDISP_HARDWARE_PIXELREAD		TRUE
 #define GDISP_HARDWARE_CONTROL			FALSE
 
-#define GDISP_PIXELFORMAT			GDISP_PIXELFORMAT_RGB888
+#define GDISP_PIXELFORMAT				GDISP_PIXELFORMAT_RGB888
 
 #endif	/* GFX_USE_GDISP */
 

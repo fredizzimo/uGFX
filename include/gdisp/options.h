@@ -21,19 +21,6 @@
  * @{
  */
 	/**
-	 * @brief   Should support for multiple displays be provided.
-	 * @details	Defaults to FALSE.
-	 * @note    Setting this to TRUE can significantly increase code size as many
-	 * 			optimizations that remove code through conditional compilation can't
-	 * 			be done. It may also slow some graphics operations as extra tests must
-	 * 			be performed to determine how to do a particular operation. For these
-	 * 			reasons do not set it to TRUE unless you really need multiple display
-	 * 			support.
-	 */
-	#ifndef GDISP_MULTIPLE_DRIVERS
-		#define GDISP_MULTIPLE_DRIVERS			FALSE
-	#endif
-	/**
 	 * @brief   Should all operations be clipped to the screen and colors validated.
 	 * @details	Defaults to TRUE.
 	 * @note    If this is FALSE, any operations that extend beyond the
@@ -154,6 +141,50 @@
 	 */
 	#ifndef GDISP_NEED_IMAGE
 		#define GDISP_NEED_IMAGE				FALSE
+	#endif
+/**
+ * @}
+ *
+ * @name    GDISP Multiple Display Support
+ * @{
+ */
+	/**
+	 * @brief   The total number of displays.
+	 * @note	This can be on just one type of controller or spread across several different controllers
+	 */
+	#ifndef GDISP_TOTAL_DISPLAYS
+		#define GDISP_TOTAL_DISPLAYS		1
+	#endif
+	/**
+	 * @brief   The total number of controllers.
+	 * @note	If this is greater than one, all the hardware acceleration options below
+	 * 			and the pixel format must be manually specified in your gfxconf.h along with
+	 * 			@p GDISP_CONTROLLER_LIST. See the gdisp_lld_config.h in each driver to get a list
+	 * 			of hardware capabilities for each driver in order to work out the common set across
+	 * 			all the controllers you want to use.
+	 */
+	#ifndef GDISP_TOTAL_CONTROLLERS
+		#define GDISP_TOTAL_CONTROLLERS		1
+	#endif
+
+	#if defined(__DOXYGEN__)
+		/**
+		 * @brief   The list of controllers.
+		 * @note	This is required if @p GDISP_TOTAL_CONTROLLERS is greater than one.
+		 * @note	The number of entries must match @p GDISP_TOTAL_CONTROLLERS.
+		 * @note	See the gdisp_lld.c in each driver (near the top) to get the name of the VMT for a driver.
+		 * @note	Replace this example with your own definition in your gfxconf.h file.
+		 */
+		#define GDISP_CONTROLLER_LIST		GDISPVMT_Win32, GDISPVMT_SSD1963
+		/**
+		 * @brief   The number of displays for each controller.
+		 * @note	This is required if @p GDISP_TOTAL_CONTROLLERS is greater than one.
+		 * @note	The number of entries must match @p GDISP_TOTAL_CONTROLLERS.
+		 * @note	The sum of all the display counts must equal @p GDISP_TOTAL_DISPLAYS (3 for this example)
+		 * 			or bad things will happen.
+		 * @note	Replace this example with your own definition in your gfxconf.h file.
+		 */
+		#define GDISP_CONTROLLER_DISPLAYS	2, 1
 	#endif
 /**
  * @}
