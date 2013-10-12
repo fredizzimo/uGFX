@@ -53,7 +53,6 @@ static int				scr;
 static XEvent			evt;
 static Colormap			cmap;
 static XVisualInfo		vis;
-static int				depth;
 static XContext			cxt;
 #if GINPUT_NEED_MOUSE
 	coord_t			mousex, mousey;
@@ -77,7 +76,7 @@ static void ProcessEvent(GDisplay *g, xPriv *priv) {
 		exit(0);
 		break;
 	case Expose:
-		XCopyArea(dis, pix, evt.xexpose.window, priv->gc,
+		XCopyArea(dis, priv->pix, evt.xexpose.window, priv->gc,
 			evt.xexpose.x, evt.xexpose.y,
 			evt.xexpose.width, evt.xexpose.height,   
 			evt.xexpose.x, evt.xexpose.y);
@@ -130,7 +129,7 @@ static DECLARE_THREAD_FUNCTION(ThreadX, arg) {
 		gfxSleepMilliseconds(100);
 		while(XPending(dis)) {
 			XNextEvent(dis, &evt);
-			XFindContext(ev.xany.display, ev.xany.window, cxt, (XPointer*)&g);
+			XFindContext(evt.xany.display, evt.xany.window, cxt, (XPointer*)&g);
 			ProcessEvent(g, (xPriv *)g->priv);
 		}
 	}
@@ -204,15 +203,15 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g, unsigned display) {
 			CWBackPixel|CWColormap|CWBorderPixel, &xa);
 	XSync(dis, TRUE);
 	
-	XSaveContext(dis, win, cxt, (XPointer)g);
+	XSaveContext(dis, priv->win, cxt, (XPointer)g);
 
 	{
 		char					buf[132];
 		sprintf(buf, "uGFX - %u", display+1);
 		WindowTitleText = buf;
 		XStringListToTextProperty(&WindowTitleText, 1, &WindowTitle);
-		XSetWMName(dis, win, &WindowTitle);
-		XSetWMIconName(dis, win, &WindowTitle);
+		XSetWMName(dis, priv->win, &WindowTitle);
+		XSetWMIconName(dis, priv->win, &WindowTitle);
 		XSync(dis, TRUE);
 	}
 			
@@ -220,20 +219,20 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g, unsigned display) {
 	pSH->flags = PSize | PMinSize | PMaxSize;
 	pSH->min_width = pSH->max_width = pSH->base_width = GDISP_SCREEN_WIDTH;
 	pSH->min_height = pSH->max_height = pSH->base_height = GDISP_SCREEN_HEIGHT;
-	XSetWMNormalHints(dis, win, pSH);
+	XSetWMNormalHints(dis, priv->win, pSH);
 	XFree(pSH);
 	XSync(dis, TRUE);
 	
-	priv->pix = XCreatePixmap(dis, win,
+	priv->pix = XCreatePixmap(dis, priv->win,
 				GDISP_SCREEN_WIDTH, GDISP_SCREEN_HEIGHT, vis.depth);
 	XSync(dis, TRUE);
 
-	priv->gc = XCreateGC(dis, win, 0, 0);
-	XSetBackground(dis, gc, BlackPixel(dis, scr));
+	priv->gc = XCreateGC(dis, priv->win, 0, 0);
+	XSetBackground(dis, priv->gc, BlackPixel(dis, scr));
 	XSync(dis, TRUE);
 
-	XSelectInput(dis, win, StructureNotifyMask);
-	XMapWindow(dis, win);
+	XSelectInput(dis, priv->win, StructureNotifyMask);
+	XMapWindow(dis, priv->win);
 
 	// Wait for the window creation to complete (for safety)
 	while(!(((volatile GDisplay *)g)->flags & GDISP_FLG_READY))
@@ -249,9 +248,9 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g, unsigned display) {
     return TRUE;
 }
 
-LLDSPEC void gdisp_lld_draw_pixel(GDISPDriver *g)
+LLDSPEC void gdisp_lld_draw_pixel(GDisplay *g)
 {
-	xPriv	priv = (xPriv *)g->priv;
+	xPriv *	priv = (xPriv *)g->priv;
 	XColor	col;
 
 	col.red = RED_OF(g->p.color) << 8;
@@ -265,8 +264,8 @@ LLDSPEC void gdisp_lld_draw_pixel(GDISPDriver *g)
 }
 
 #if GDISP_HARDWARE_FILLS
-	LLDSPEC void gdisp_lld_fill_area(GDISPDriver *g) {
-		xPriv	priv = (xPriv *)g->priv;
+	LLDSPEC void gdisp_lld_fill_area(GDisplay *g) {
+		xPriv *	priv = (xPriv *)g->priv;
 		XColor	col;
 
 		col.red = RED_OF(g->p.color) << 8;
@@ -281,7 +280,7 @@ LLDSPEC void gdisp_lld_draw_pixel(GDISPDriver *g)
 #endif
 
 #if 0 && GDISP_HARDWARE_BITFILLS
-	LLDSPEC void gdisp_lld_blit_area(GDISPDriver *g) {
+	LLDSPEC void gdisp_lld_blit_area(GDisplay *g) {
 		// Start of Bitblit code
 
 		//XImage			bitmap;
@@ -294,8 +293,8 @@ LLDSPEC void gdisp_lld_draw_pixel(GDISPDriver *g)
 #endif
 
 #if GDISP_HARDWARE_PIXELREAD
-	LLDSPEC	color_t gdisp_lld_get_pixel_color(GDISPDriver *g) {
-		xPriv	priv = (xPriv *)g->priv;
+	LLDSPEC	color_t gdisp_lld_get_pixel_color(GDisplay *g) {
+		xPriv *	priv = (xPriv *)g->priv;
 		XColor	color;
 		XImage *img;
 
@@ -308,8 +307,8 @@ LLDSPEC void gdisp_lld_draw_pixel(GDISPDriver *g)
 #endif
 
 #if GDISP_NEED_SCROLL && GDISP_HARDWARE_SCROLL
-	LLDSPEC void gdisp_lld_vertical_scroll(GDISPDriver *g) {
-		xPriv	priv = (xPriv *)g->priv;
+	LLDSPEC void gdisp_lld_vertical_scroll(GDisplay *g) {
+		xPriv *	priv = (xPriv *)g->priv;
 
 		if (g->p.y1 > 0) {
 			XCopyArea(dis, priv->pix, priv->pix, priv->gc, g->p.x, g->p.y+g->p.y1, g->p.cx, g->p.cy-g->p.y1, g->p.x, g->p.y);
