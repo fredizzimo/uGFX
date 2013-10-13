@@ -448,9 +448,14 @@ void _gdispInit(void) {
 	#endif
 }
 
-void gdispSetDisplay(unsigned display) {
-	if (display < GDISP_TOTAL_DISPLAYS)
-		GDISP = &GDisplayArray[display];
+GDisplay *gdispGetDisplay(unsigned display) {
+	if (display >= GDISP_TOTAL_DISPLAYS)
+		return 0;
+	return &GDisplayArray[display];
+}
+
+void gdispSetDisplay(GDisplay *g) {
+	if (g) GDISP = g;
 }
 
 #if GDISP_NEED_STREAMING
@@ -2106,12 +2111,12 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 			if (y < GD->t.clipy0 || y >= GD->t.clipy1 || x < GD->t.clipx0 || x+count > GD->t.clipx1) return;
 			if (alpha == 255) {
 				GD->p.x = x; GD->p.y = y; GD->p.x1 = x+count-1; GD->p.color = GD->t.color;
-				hline_clip(g);
+				hline_clip(GD);
 			} else {
 				for (; count; count--, x++) {
 					GD->p.x = x; GD->p.y = y;
 					GD->p.color = gdispBlendColor(GD->t.color, gdisp_lld_get_pixel_color(GD), alpha);
-					drawpixel_clip(g);
+					drawpixel_clip(GD);
 				}
 			}
 			#undef GD
@@ -2122,7 +2127,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 			if (y < GD->t.clipy0 || y >= GD->t.clipy1 || x < GD->t.clipx0 || x+count > GD->t.clipx1) return;
 			if (alpha > 0x80) {			// A best approximation when using anti-aliased fonts but we can't actually draw them anti-aliased
 				GD->p.x = x; GD->p.y = y; GD->p.x1 = x+count-1; GD->p.color = GD->t.color;
-				hline_clip(g);
+				hline_clip(GD);
 			}
 			#undef GD
 		}
@@ -2138,7 +2143,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 				GD->p.color = gdispBlendColor(GD->t.color, GD->t.bgcolor, alpha);
 			}
 			GD->p.x = x; GD->p.y = y; GD->p.x1 = x+count-1;
-			hline_clip(g);
+			hline_clip(GD);
 			#undef GD
 		}
 	#else
@@ -2147,12 +2152,16 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 
 	/* Callback to render characters. */
 	static uint8_t drawcharglyph(int16_t x, int16_t y, mf_char ch, void *state) {
-		return mf_render_character(g->t.font, x, y, ch, drawcharline, state);
+		#define GD	((GDisplay *)state)
+			return mf_render_character(GD->t.font, x, y, ch, drawcharline, state);
+		#undef GD
 	}
 
 	/* Callback to render characters. */
 	static uint8_t fillcharglyph(int16_t x, int16_t y, mf_char ch, void *state) {
-		return mf_render_character(g->t.font, x, y, ch, fillcharline, state);
+		#define GD	((GDisplay *)state)
+			return mf_render_character(GD->t.font, x, y, ch, fillcharline, state);
+		#undef GD
 	}
 
 	void gdispGDrawChar(GDisplay *g, coord_t x, coord_t y, uint16_t c, font_t font, color_t color) {

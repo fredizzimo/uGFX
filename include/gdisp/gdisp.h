@@ -366,16 +366,32 @@ extern "C" {
 color_t gdispBlendColor(color_t fg, color_t bg, uint8_t alpha);
 
 /**
- * @brief   Set the current default display to the specified display
- * @note	The default display is used for the gdispXxxx functions.
+ * @brief   Get the specified display
+ * @return	The pointer to the display or NULL if the display doesn't exist
+ * @note	The GDISP variable contains the display used by the gdispXxxx routines
+ * 			as opposed to the gdispGXxxx routines which take an explicit display
+ * 			parameter.
  * @note	Displays are numbered from 0 to GDISP_TOTAL_DISPLAYS - 1
- * @note	If an invalid display number is specified the request is ignored.
  *
  * @param[in] display	The display number (0..n)
  *
  * @api
  */
-void gdispSetDisplay(unsigned display);
+GDisplay *gdispGetDisplay(unsigned display);
+
+/**
+ * @brief   Set the current default display to the specified display
+ * @note	The default display is used for the gdispXxxx functions.
+ * @note	The default display is contained in the variable GDISP. Using
+ * 			this function to set it protects against it being set to a NULL
+ * 			value.
+ * @note	If a NULL is passed for the dispay this call is ignored.
+ *
+ * @param[in] display	The display number (0..n)
+ *
+ * @api
+ */
+void gdispSetDisplay(GDisplay *g);
 
 /* Drawing Functions */
 
