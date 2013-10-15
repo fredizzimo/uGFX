@@ -22,107 +22,140 @@
 /* Error checks.                                                             */
 /*===========================================================================*/
 
+#if GDISP_TOTAL_CONTROLLERS > 1 && !defined(GDISP_DRIVER_VMT)
+	#define HARDWARE_AUTODETECT		2
+	#define HARDWARE_DEFAULT		HARDWARE_AUTODETECT
+#else
+	#define HARDWARE_AUTODETECT		2
+	#define HARDWARE_DEFAULT		FALSE
+#endif
+
 /**
  * @name    GDISP hardware accelerated support
  * @{
  */
 	/**
 	 * @brief   Hardware streaming writing is supported.
-	 * @details If set to @p FALSE software emulation is used.
-	 * @note	Either GDISP_HARDWARE_STREAM_WRITE or GDISP_HARDWARE_DRAWPIXEL must be provided by the driver
+	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
+	 *
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
+	 * @note	Either GDISP_HARDWARE_STREAM_WRITE or GDISP_HARDWARE_DRAWPIXEL must be provided by each driver
 	 */
 	#ifndef GDISP_HARDWARE_STREAM_WRITE
-		#define GDISP_HARDWARE_STREAM_WRITE		FALSE
+		#define GDISP_HARDWARE_STREAM_WRITE		HARDWARE_DEFAULT
 	#endif
 
 	/**
 	 * @brief   Hardware streaming reading of the display surface is supported.
-	 * @details If set to @p FALSE this routine is not available.
+	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
+	 *
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
+	 *
 	 */
 	#ifndef GDISP_HARDWARE_STREAM_READ
-		#define GDISP_HARDWARE_STREAM_READ		FALSE
+		#define GDISP_HARDWARE_STREAM_READ		HARDWARE_DEFAULT
 	#endif
 
 	/**
 	 * @brief   Hardware supports setting the cursor position within the stream window.
-	 * @details If set to @p FALSE this routine is not available.
+	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
+	 *
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
 	 * @note	This is used to optimise setting of individual pixels within a stream window.
 	 * 			It should therefore not be implemented unless it is cheaper than just setting
 	 * 			a new window.
 	 */
 	#ifndef GDISP_HARDWARE_STREAM_POS
-		#define GDISP_HARDWARE_STREAM_POS		FALSE
+		#define GDISP_HARDWARE_STREAM_POS		HARDWARE_DEFAULT
 	#endif
 
 	/**
 	 * @brief   Hardware accelerated draw pixel.
-	 * @details If set to @p FALSE software emulation is used.
+	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
+	 *
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
 	 * @note	Either GDISP_HARDWARE_STREAM_WRITE or GDISP_HARDWARE_DRAWPIXEL must be provided by the driver
 	 */
 	#ifndef GDISP_HARDWARE_DRAWPIXEL
-		#define GDISP_HARDWARE_DRAWPIXEL		FALSE
+		#define GDISP_HARDWARE_DRAWPIXEL		HARDWARE_DEFAULT
 	#endif
 
 	/**
 	 * @brief   Hardware accelerated screen clears.
-	 * @details If set to @p FALSE software emulation is used.
+	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
+	 *
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
 	 * @note	This clears the entire display surface regardless of the clipping area currently set
 	 */
 	#ifndef GDISP_HARDWARE_CLEARS
-		#define GDISP_HARDWARE_CLEARS			FALSE
+		#define GDISP_HARDWARE_CLEARS			HARDWARE_DEFAULT
 	#endif
 
 	/**
 	 * @brief   Hardware accelerated rectangular fills.
-	 * @details If set to @p FALSE software emulation is used.
+	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
+	 *
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
 	 */
 	#ifndef GDISP_HARDWARE_FILLS
-		#define GDISP_HARDWARE_FILLS			FALSE
+		#define GDISP_HARDWARE_FILLS			HARDWARE_DEFAULT
 	#endif
 
 	/**
 	 * @brief   Hardware accelerated fills from an image.
-	 * @details If set to @p FALSE software emulation is used.
+	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
+	 *
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
 	 */
 	#ifndef GDISP_HARDWARE_BITFILLS
-		#define GDISP_HARDWARE_BITFILLS			FALSE
+		#define GDISP_HARDWARE_BITFILLS			HARDWARE_DEFAULT
 	#endif
 
 	/**
 	 * @brief   Hardware accelerated scrolling.
-	 * @details If set to @p FALSE there is no support for scrolling.
+	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
+	 *
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
 	 */
 	#ifndef GDISP_HARDWARE_SCROLL
-		#define GDISP_HARDWARE_SCROLL			FALSE
+		#define GDISP_HARDWARE_SCROLL			HARDWARE_DEFAULT
 	#endif
 
 	/**
 	 * @brief   Reading back of pixel values.
-	 * @details If set to @p FALSE there is no support for pixel read-back.
+	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
+	 *
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
 	 */
 	#ifndef GDISP_HARDWARE_PIXELREAD
-		#define GDISP_HARDWARE_PIXELREAD		FALSE
+		#define GDISP_HARDWARE_PIXELREAD		HARDWARE_DEFAULT
 	#endif
 
 	/**
 	 * @brief   The driver supports one or more control commands.
-	 * @details If set to @p FALSE there is no support for control commands.
+	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
+	 *
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
 	 */
 	#ifndef GDISP_HARDWARE_CONTROL
-		#define GDISP_HARDWARE_CONTROL			FALSE
+		#define GDISP_HARDWARE_CONTROL			HARDWARE_DEFAULT
 	#endif
 
 	/**
 	 * @brief   The driver supports a non-standard query.
-	 * @details If set to @p FALSE there is no support for non-standard queries.
+	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
+	 *
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
 	 */
 	#ifndef GDISP_HARDWARE_QUERY
-		#define GDISP_HARDWARE_QUERY			FALSE
+		#define GDISP_HARDWARE_QUERY			HARDWARE_DEFAULT
 	#endif
 
 	/**
 	 * @brief   The driver supports a clipping in hardware.
-	 * @details If set to @p FALSE there is no support for non-standard queries.
+	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
+	 *
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
 	 * @note	If this is defined the driver must perform its own clipping on all calls to
 	 * 			the driver and respond appropriately if a parameter is outside the display area.
 	 * @note	If this is not defined then the software ensures that all calls to the
@@ -130,7 +163,7 @@
 	 * 			has been set).
 	 */
 	#ifndef GDISP_HARDWARE_CLIP
-		#define GDISP_HARDWARE_CLIP				FALSE
+		#define GDISP_HARDWARE_CLIP				HARDWARE_DEFAULT
 	#endif
 /** @} */
 
@@ -159,7 +192,7 @@ typedef struct GDisplay {
 	#endif
 
 	// Software clipping
-	#if !GDISP_HARDWARE_CLIP && (GDISP_NEED_CLIP || GDISP_NEED_VALIDATION)
+	#if GDISP_HARDWARE_CLIP != TRUE && (GDISP_NEED_CLIP || GDISP_NEED_VALIDATION)
 		coord_t					clipx0, clipy0;
 		coord_t					clipx1, clipy1;		/* not inclusive */
 	#endif
@@ -464,6 +497,9 @@ typedef struct GDisplay {
 	} GDISPVMT;
 
 	#if defined(GDISP_DRIVER_VMT)
+		#if !GDISP_HARDWARE_STREAM_WRITE && !GDISP_HARDWARE_DRAWPIXEL
+			#error "GDISP Driver: Either GDISP_HARDWARE_STREAM_WRITE or GDISP_HARDWARE_DRAWPIXEL must be TRUE"
+		#endif
 		const GDISPVMT const GDISP_DRIVER_VMT[1] = {{
 			gdisp_lld_init,
 			#if GDISP_HARDWARE_STREAM_WRITE

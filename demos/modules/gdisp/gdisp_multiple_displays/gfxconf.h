@@ -52,24 +52,37 @@
 #define GDISP_NEED_ASYNC		FALSE
 #define GDISP_NEED_MSGAPI		FALSE
 
-#define GDISP_INCLUDE_FONT_UI2			TRUE
+#define GDISP_INCLUDE_FONT_UI2	TRUE
 
-#define GDISP_TOTAL_DISPLAYS			2
+#define GDISP_TOTAL_DISPLAYS	2
 
-/* Uncomment the following lines and alter the definitions to match your
- * hardware if you want to try multiple displays on different controllers.
+/* Uncomment the following lines if you want to use multiple displays on
+ * different controllers.
+ *
+ * Change the definitions to suit your hardware.
+ * Currently all controllers must use the same pixel format.
+ *
  * Remember that GDISP_TOTAL_DISPLAYS above must match the **Total**
  * number of displays in your system across all controllers.
+ *
+ * Optionally, you can also specify hardware characteristics that are common to
+ * all your controllers. This significantly improves code and speed efficiency
+ * as the program doesn't have to detect the hardware method to use on each call.
+ *
+ * Hardware definitions can be set to:
+ * 		- TRUE		- all controllers support this routine
+ * 		- FALSE		- no controllers support this routine
+ * 		- if not specified then the code auto-detects the hardware.
+ *
+ * e.g
+ * 		#define GDISP_HARDWARE_STREAM_WRITE	FALSE
+ * 		#define GDISP_HARDWARE_STREAM_READ	FALSE
+ * 		#define GDISP_HARDWARE_DRAWPIXEL	TRUE
+ * 		#define GDISP_HARDWARE_FILLS		TRUE
  */
 //#define GDISP_TOTAL_CONTROLLERS			2
-//#define GDISP_CONTROLLER_LIST			GDISPVMT_Win32, GDISPVMT_Win32
-//#define GDISP_CONTROLLER_DISPLAYS		1, 1
-//#define GDISP_PIXELFORMAT				GDISP_PIXELFORMAT_RGB888
-//#define GDISP_HARDWARE_DRAWPIXEL		TRUE
-//#define GDISP_HARDWARE_FILLS			TRUE
-//#define GDISP_HARDWARE_PIXELREAD		TRUE
-//#define GDISP_HARDWARE_CONTROL		TRUE
-//#define GDISP_HARDWARE_BITFILLS		TRUE
-//#define GDISP_HARDWARE_SCROLL			TRUE
+//#define GDISP_CONTROLLER_LIST				GDISPVMT_Win32, GDISPVMT_Win32
+//#define GDISP_CONTROLLER_DISPLAYS			1, 1
+//#define GDISP_PIXELFORMAT					GDISP_PIXELFORMAT_RGB888
 
 #endif /* _GFXCONF_H */

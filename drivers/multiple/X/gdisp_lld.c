@@ -15,6 +15,7 @@
 #if GFX_USE_GDISP
 
 #define GDISP_DRIVER_VMT			GDISPVMT_X11
+#include "../drivers/multiple/X/gdisp_lld_config.h"
 #include "gdisp/lld/gdisp_lld.h"
 
 /**
