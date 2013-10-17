@@ -169,6 +169,9 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g, unsigned display) {
     write_reg(g, 0x4f, 0x0000);		gfxSleepMicroseconds(5);
     write_reg(g, 0x4e, 0x0000);		gfxSleepMicroseconds(5);
 
+    // Finish Init
+    post_init_board(g);
+
  	// Release the bus
 	release_bus(g);
 	

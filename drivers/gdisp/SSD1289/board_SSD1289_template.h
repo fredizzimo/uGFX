@@ -31,6 +31,16 @@ static inline void init_board(GDisplay *g, unsigned display) {
 }
 
 /**
+ * @brief   After the initialisation.
+ *
+ * @param[in] g			The GDisplay structure
+ *
+ * @notapi
+ */
+static inline void post_init_board(GDisplay *g) {
+}
+
+/**
  * @brief   Set or clear the lcd reset pin.
  *
  * @param[in] g			The GDisplay structure

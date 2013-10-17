@@ -98,6 +98,10 @@ static inline void init_board(GDisplay *g, unsigned display) {
 	}
 }
 
+static inline void post_init_board(GDisplay *g) {
+	(void) g;
+}
+
 static inline void setpin_reset(GDisplay *g, bool_t state) {
 	(void) g;
 	(void) state;
