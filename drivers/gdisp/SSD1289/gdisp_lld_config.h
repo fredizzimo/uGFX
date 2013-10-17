@@ -22,9 +22,6 @@
 /* Driver hardware support.                                                  */
 /*===========================================================================*/
 
-#define GDISP_DRIVER_NAME				"SSD1289"
-#define GDISP_DRIVER_STRUCT				GDISP_SSD1289
-
 #define GDISP_HARDWARE_STREAM_WRITE		TRUE
 #define GDISP_HARDWARE_STREAM_READ		TRUE
 #define GDISP_HARDWARE_STREAM_POS		TRUE
