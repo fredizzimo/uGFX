@@ -171,7 +171,7 @@
 /* External declarations.                                                    */
 /*===========================================================================*/
 
-typedef struct GDisplay {
+struct GDisplay {
 	GDISPControl				g;					// The public GDISP stuff - must be the first element
 
 	#if GDISP_TOTAL_CONTROLLERS > 1
@@ -224,7 +224,7 @@ typedef struct GDisplay {
 		color_t		linebuf[GDISP_LINEBUF_SIZE];
 	#endif
 
-} GDisplay;
+};
 
 #if GDISP_TOTAL_CONTROLLERS == 1 || defined(GDISP_DRIVER_VMT) || defined(__DOXYGEN__)
 	#if GDISP_TOTAL_CONTROLLERS > 1
