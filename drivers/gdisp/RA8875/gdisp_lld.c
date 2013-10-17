@@ -21,9 +21,6 @@
 /* include the users board interface */
 #include "board_ra8875.h"
 
-/* include our hardware definitions */
-#include "../drivers/gdisp/RA8875/ra8875.h"
-
 /*===========================================================================*/
 /* Driver local definitions.                                                 */
 /*===========================================================================*/
@@ -54,7 +51,7 @@
 static inline void set_cursor(GDisplay *g) {
 	write_reg16(g, 0x46, g->p.x);
 	write_reg16(g, 0x48, g->p.y);
-	write_index(g, RA8875_WRITE_MEMORY_START);
+	write_index(g, 0x02);
 }
 
 static inline void set_viewport(GDisplay* g) {
