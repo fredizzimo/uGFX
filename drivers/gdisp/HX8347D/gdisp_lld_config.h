@@ -22,9 +22,6 @@
 /* Driver hardware support.                                                  */
 /*===========================================================================*/
 
-#define GDISP_DRIVER_NAME				"HX8347D"
-#define GDISP_DRIVER_STRUCT				GDISP_HX8347D
-
 #define GDISP_HARDWARE_STREAM_WRITE		TRUE
 #define GDISP_HARDWARE_CONTROL			TRUE
 
