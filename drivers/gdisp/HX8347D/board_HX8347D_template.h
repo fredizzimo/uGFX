@@ -28,6 +28,8 @@
  * @notapi
  */
 static inline void init_board(GDisplay *g, unsigned display) {
+	(void) g;
+	(void) display;
 }
 
 /**
@@ -38,6 +40,7 @@ static inline void init_board(GDisplay *g, unsigned display) {
  * @notapi
  */
 static inline void post_init_board(GDisplay *g) {
+	(void) g;
 }
 
 /**
@@ -49,7 +52,8 @@ static inline void post_init_board(GDisplay *g) {
  * @notapi
  */
 static inline void setpin_reset(GDisplay *g, bool_t state) {
-
+	(void) g;
+	(void) state;
 }
 
 /**
@@ -61,7 +65,8 @@ static inline void setpin_reset(GDisplay *g, bool_t state) {
  * @notapi
  */
 static inline void set_backlight(GDisplay *g, uint8_t percent) {
-
+	(void) g;
+	(void) percent;
 }
 
 /**
@@ -72,7 +77,7 @@ static inline void set_backlight(GDisplay *g, uint8_t percent) {
  * @notapi
  */
 static inline void acquire_bus(GDisplay *g) {
-
+	(void) g;
 }
 
 /**
@@ -83,7 +88,7 @@ static inline void acquire_bus(GDisplay *g) {
  * @notapi
  */
 static inline void release_bus(GDisplay *g) {
-
+	(void) g;
 }
 
 /**
@@ -94,7 +99,7 @@ static inline void release_bus(GDisplay *g) {
  * @notapi
  */
 static inline void busmode16(GDisplay *g) {
-
+	(void) g;
 }
 
 /**
@@ -105,7 +110,7 @@ static inline void busmode16(GDisplay *g) {
  * @notapi
  */
 static inline void busmode8(GDisplay *g) {
-
+	(void) g;
 }
 
 /**
@@ -117,7 +122,8 @@ static inline void busmode8(GDisplay *g) {
  * @notapi
  */
 static inline void write_index(GDisplay *g, uint8_t index) {
-
+	(void) g;
+	(void) index;
 }
 
 /**
@@ -130,7 +136,8 @@ static inline void write_index(GDisplay *g, uint8_t index) {
  * @notapi
  */
 static inline void write_data(GDisplay *g, uint8_t data) {
-
+	(void) g;
+	(void) data;
 }
 
 /**
@@ -143,7 +150,8 @@ static inline void write_data(GDisplay *g, uint8_t data) {
  * @notapi
  */
 static inline void write_ram16(GDisplay *g, uint16_t data) {
-
+	(void) g;
+	(void) data;
 }
 
 #endif /* _GDISP_LLD_BOARD_H */

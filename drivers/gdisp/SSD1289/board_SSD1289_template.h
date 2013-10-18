@@ -28,6 +28,8 @@
  * @notapi
  */
 static inline void init_board(GDisplay *g, unsigned display) {
+	(void) g;
+	(void) display;
 }
 
 /**
@@ -38,6 +40,7 @@ static inline void init_board(GDisplay *g, unsigned display) {
  * @notapi
  */
 static inline void post_init_board(GDisplay *g) {
+	(void) g;
 }
 
 /**
@@ -49,7 +52,8 @@ static inline void post_init_board(GDisplay *g) {
  * @notapi
  */
 static inline void setpin_reset(GDisplay *g, bool_t state) {
-
+	(void) g;
+	(void) state;
 }
 
 /**
@@ -61,7 +65,8 @@ static inline void setpin_reset(GDisplay *g, bool_t state) {
  * @notapi
  */
 static inline void set_backlight(GDisplay *g, uint8_t percent) {
-
+	(void) g;
+	(void) percent;
 }
 
 /**
@@ -72,7 +77,7 @@ static inline void set_backlight(GDisplay *g, uint8_t percent) {
  * @notapi
  */
 static inline void acquire_bus(GDisplay *g) {
-
+	(void) g;
 }
 
 /**
@@ -83,7 +88,7 @@ static inline void acquire_bus(GDisplay *g) {
  * @notapi
  */
 static inline void release_bus(GDisplay *g) {
-
+	(void) g;
 }
 
 /**
@@ -95,7 +100,8 @@ static inline void release_bus(GDisplay *g) {
  * @notapi
  */
 static inline void write_index(GDisplay *g, uint16_t index) {
-
+	(void) g;
+	(void) index;
 }
 
 /**
@@ -107,7 +113,8 @@ static inline void write_index(GDisplay *g, uint16_t index) {
  * @notapi
  */
 static inline void write_data(GDisplay *g, uint16_t data) {
-
+	(void) g;
+	(void) data;
 }
 
 /**
@@ -118,7 +125,7 @@ static inline void write_data(GDisplay *g, uint16_t data) {
  * @notapi
  */
 static inline void setreadmode(GDisplay *g) {
-
+	(void) g;
 }
 
 /**
@@ -129,7 +136,7 @@ static inline void setreadmode(GDisplay *g) {
  * @notapi
  */
 static inline void setwritemode(GDisplay *g) {
-
+	(void) g;
 }
 
 /**
@@ -144,7 +151,8 @@ static inline void setwritemode(GDisplay *g) {
  * @notapi
  */
 static inline uint16_t read_data(GDisplay *g) {
-
+	(void) g;
+	return 0;
 }
 
 /**
@@ -163,6 +171,9 @@ static inline uint16_t read_data(GDisplay *g) {
 	 * @notapi
 	 */
 	static inline void dma_with_noinc(GDisplay *g, color_t *buffer, int area) {
+		(void) g;
+		(void) buffer;
+		(void) area;
 	}
 
 	/**
@@ -175,6 +186,9 @@ static inline uint16_t read_data(GDisplay *g) {
 	 * @notapi
 	 */
 	static inline void dma_with_inc(GDisplay *g, color_t *buffer, int area) {
+		(void) g;
+		(void) buffer;
+		(void) area;
 	}
 #endif
 
