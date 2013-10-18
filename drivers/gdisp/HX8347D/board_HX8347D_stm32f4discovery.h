@@ -143,7 +143,7 @@ static inline void busmode8(GDisplay *g) {
 static inline void write_index(GDisplay *g, uint8_t index) {
 	(void) g;
     CLR_DATA;
-    SPI1->DR = cmd;
+    SPI1->DR = index;
     while(((SPI1->SR & SPI_SR_TXE) == 0) || ((SPI1->SR & SPI_SR_BSY) != 0));
     SET_DATA;
 }
