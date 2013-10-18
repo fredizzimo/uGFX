@@ -19,7 +19,7 @@
 
 
 /**
- * @file    drivers/gdisp/ILI9325/gdisp_lld_board_hy_stm32_100p.h
+ * @file    drivers/gdisp/ILI9325/board_ILI9325_hy_stm32_100p.h
  * @brief   GDISP Graphic Driver subsystem board interface for the ILI9325 display.
  */
 
@@ -113,5 +113,3 @@ static inline uint16_t read_data(GDisplay *g) {
 }
 
 #endif /* GDISP_LLD_BOARD_H */
-/** @} */
-

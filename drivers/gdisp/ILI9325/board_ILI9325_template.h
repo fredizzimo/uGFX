@@ -6,7 +6,7 @@
  */
 
 /**
- * @file    drivers/gdisp/ILI9325/gdisp_lld_board_template.h
+ * @file    drivers/gdisp/ILI9325/board_ILI9325_template.h
  * @brief   GDISP Graphic Driver subsystem board interface for the ILI9325 display.
  *
  * @addtogroup GDISP
