@@ -145,9 +145,6 @@ static inline void setwritemode(GDisplay *g) {
  *
  * @param[in] g				The GDisplay structure
  *
- * @note	The chip select may need to be asserted/de-asserted
- * 			around the actual spi read
- * 
  * @notapi
  */
 static inline uint16_t read_data(GDisplay *g) {
