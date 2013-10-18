@@ -24,7 +24,7 @@
 	#undef GDISP_SCREEN_WIDTH
 #endif
 
-#define GDISP_DRIVER_VMT			GDISPVMT_SSD1289
+#define GDISP_DRIVER_VMT			GDISPVMT_ILI9320
 #include "../drivers/gdisp/ILI9320/gdisp_lld_config.h"
 #include "gdisp/lld/gdisp_lld.h"
 
