@@ -6,8 +6,8 @@
  */
 
 /**
- * @file    drivers/gdisp/SSD1963/gdisp_lld_board_template.h
- * @brief   GDISP Graphic Driver subsystem board interface for the SSD1963 display.
+ * @file    drivers/gdisp/SSD1963/board_RA8875_template.h
+ * @brief   GDISP Graphic Driver subsystem board interface for the RA8875 display.
  *
  * @addtogroup GDISP
  * @{

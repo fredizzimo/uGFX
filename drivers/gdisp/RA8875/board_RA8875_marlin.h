@@ -6,7 +6,7 @@
  */
 
 /**
- * @file    drivers/gdisp/RA8875/gdisp_lld_board_marlin.h
+ * @file    drivers/gdisp/RA8875/board_RA8875_marlin.h
  * @brief   GDISP Graphic Driver subsystem board interface for the RA8875 display.
  */
 
