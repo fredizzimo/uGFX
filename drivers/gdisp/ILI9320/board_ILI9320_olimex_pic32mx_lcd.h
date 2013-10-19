@@ -17,17 +17,13 @@
 #define noinline __attribute__((noinline))
 #endif
 
-static void init_board(GDisplay *g, unsigned display) {
+static void init_board(GDisplay *g) {
 
 	// As we are not using multiple displays we set g->priv to NULL as we don't use it.
 	g->priv = 0;
 
-	if (display == 0) {
-
-		/**
-		 * Set up for Display 0
-		 */
-
+	switch(g->controllerdisplay) {
+	case 0:											// Set up for Display 0
 		// RST
 		palSetPadMode(IOPORTA, 7, PAL_MODE_OUTPUT);
 		palClearPad(IOPORTA, 7);
@@ -59,6 +55,7 @@ static void init_board(GDisplay *g, unsigned display) {
 		PMCONbits.PMPEN = 1;
 
 		palClearPad(IOPORTA, 9);
+		break;
 	}
 }
 

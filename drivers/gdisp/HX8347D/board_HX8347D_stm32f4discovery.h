@@ -64,17 +64,13 @@ static const SPIConfig spi1cfg_16bit = {
 	SPI_CR1_DFF //SPI_CR1_BR_0
 };
 
-static inline void init_board(GDisplay *g, unsigned display) {
+static inline void init_board(GDisplay *g) {
 
 	// As we are not using multiple displays we set g->priv to NULL as we don't use it.
 	g->priv = 0;
 
-	if (display == 0) {
-
-		/**
-		 * Set up for Display 0
-		 */
-
+	switch(g->controllerdisplay) {
+	case 0:											// Set up for Display 0
 		/* Display backlight control */
 		/* TIM4 is an alternate function 2 (AF2) */
 		pwmStart(&PWMD4, &pwmcfg);
@@ -96,6 +92,7 @@ static inline void init_board(GDisplay *g, unsigned display) {
 		palSetPadMode(GPIOA, 5, PAL_MODE_ALTERNATE(5)|PAL_STM32_OSPEED_HIGHEST);			/* SCK.     */
 		palSetPadMode(GPIOA, 6, PAL_MODE_ALTERNATE(5));										/* MISO.    */
 		palSetPadMode(GPIOA, 7, PAL_MODE_ALTERNATE(5)|PAL_STM32_OSPEED_HIGHEST);			/* MOSI.    */
+		break;
 	}
 }
 

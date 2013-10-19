@@ -20,17 +20,13 @@
 #define FSMC_BANK				4
 
 
-static inline void init_board(GDisplay *g, unsigned display) {
+static inline void init_board(GDisplay *g) {
 
 	// As we are not using multiple displays we set g->priv to NULL as we don't use it.
 	g->priv = 0;
 
-	if (display == 0) {
-
-		/**
-		 * Set up for Display 0
-		 */
-
+	switch(g->controllerdisplay) {
+	case 0:											// Set up for Display 0
 		/* set pins to FSMC mode */
 		IOBus busD = {GPIOD, (1 << 0) | (1 << 1) | (1 << 4) | (1 << 5) | (1 << 8) |
 								(1 << 9) | (1 << 10) | (1 << 11) | (1 << 14) | (1 << 15), 0};
@@ -52,6 +48,7 @@ static inline void init_board(GDisplay *g, unsigned display) {
 		/* Bank1 NOR/SRAM control register configuration
 		 * This is actually not needed as already set by default after reset */
 		FSMC_Bank1->BTCR[FSMC_BANK] = FSMC_BCR1_MWID_0 | FSMC_BCR1_WREN | FSMC_BCR1_MBKEN;
+		break;
 	}
 }
 

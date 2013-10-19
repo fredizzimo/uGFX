@@ -25,16 +25,13 @@
 #define SET_RD		palSetPad(GPIOD, 15);
 #define CLR_RD		palClearPad(GPIOD, 15);
 
-static inline void init_board(GDisplay *g, unsigned display) {
+static inline void init_board(GDisplay *g) {
 
 	// As we are not using multiple displays we set g->priv to NULL as we don't use it.
 	g->priv = 0;
 
-	if (display == 0) {
-
-		/**
-		 * Set up for Display 0
-		 */
+	switch(g->controllerdisplay) {
+	case 0:											// Set up for Display 0
 		palSetGroupMode(GPIOE, PAL_WHOLE_PORT, 0, PAL_MODE_OUTPUT_PUSHPULL);
 		palSetPadMode(GPIOD, 12, PAL_MODE_OUTPUT_PUSHPULL);
 		palSetPadMode(GPIOD, 13, PAL_MODE_OUTPUT_PUSHPULL);
@@ -46,6 +43,7 @@ static inline void init_board(GDisplay *g, unsigned display) {
 		SET_RD;
 		SET_WR;
 		CLR_CS;
+		break;
 	}
 }
 

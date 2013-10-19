@@ -34,16 +34,14 @@ static const PWMConfig pwmcfg = {
   0
 };
 
-static inline void init_board(GDisplay *g, unsigned display) {
+static inline void init_board(GDisplay *g) {
 
 	// As we are not using multiple displays we set g->priv to NULL as we don't use it.
 	g->priv = 0;
 
-	if (display == 0) {
-
+	switch(g->controllerdisplay) {
+	case 0:											// Set up for Display 0
 		/**
-		 * Set up for Display 0
-		 *
 		 * Performs the following functions:
 		 *		1. initialise the io port used by the display
 		 *		2. initialise the reset pin (initial state not-in-reset)
@@ -95,6 +93,7 @@ static inline void init_board(GDisplay *g, unsigned display) {
 		pwmStart(&PWMD3, &pwmcfg);
 		palSetPadMode(GPIOB, 0, PAL_MODE_ALTERNATE(2));
 		pwmEnableChannel(&PWMD3, 2, 100);
+		break;
 	}
 }
 

@@ -20,16 +20,14 @@
  * @brief   Initialise the board for the display.
  *
  * @param[in] g			The GDisplay structure
- * @param[in] display	The display number on this controller (0..n)
  *
  * @note	Set the g->priv member to whatever is appropriate. For multiple
  * 			displays this might be a pointer to the appropriate register set.
  *
  * @notapi
  */
-static inline void init_board(GDisplay *g, unsigned display) {
+static inline void init_board(GDisplay *g) {
 	(void) g;
-	(void) display;
 }
 
 /**

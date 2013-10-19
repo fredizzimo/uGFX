@@ -493,9 +493,9 @@ static void line_clip(GDisplay *g) {
 /* Our module initialiser */
 void _gdispInit(void) {
 	GDisplay		*g;
-	unsigned		i;
+	uint16_t		i;
 	#if GDISP_TOTAL_CONTROLLERS > 1
-		unsigned				j;
+		uint16_t	j;
 	#endif
 
 
@@ -504,13 +504,17 @@ void _gdispInit(void) {
 		for(g = GDisplayArray, j=0; j < GDISP_TOTAL_CONTROLLERS; j++)
 			for(i = 0; i < DisplayCountList[j]; g++, i++) {
 				g->vmt = ControllerList[j];
+				g->systemdisplay = j*GDISP_TOTAL_CONTROLLERS+i;
+				g->controllerdisplay = i;
 	#else
 		for(g = GDisplayArray, i = 0; i < GDISP_TOTAL_DISPLAYS; g++, i++) {
+			g->systemdisplay = i;
+			g->controllerdisplay = i;
 	#endif
 			MUTEX_INIT(g);
 			MUTEX_ENTER(g);
 			g->flags = 0;
-			gdisp_lld_init(g, i);
+			gdisp_lld_init(g);
 
 			// Set the initial clipping region
 			#if GDISP_NEED_VALIDATION || GDISP_NEED_CLIP

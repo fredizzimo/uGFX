@@ -145,7 +145,7 @@ static int FatalXIOError(Display *d) {
 	exit(0);
 }
 
-LLDSPEC bool_t gdisp_lld_init(GDisplay *g, unsigned display) {
+LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	XSizeHints				*pSH;
 	XSetWindowAttributes	xa;
 	XTextProperty			WindowTitle;
@@ -208,7 +208,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g, unsigned display) {
 
 	{
 		char					buf[132];
-		sprintf(buf, "uGFX - %u", display+1);
+		sprintf(buf, "uGFX - %u", g->systemdisplay+1);
 		WindowTitleText = buf;
 		XStringListToTextProperty(&WindowTitleText, 1, &WindowTitle);
 		XSetWMName(dis, priv->win, &WindowTitle);

@@ -61,9 +61,9 @@ static inline void set_viewport(GDisplay* g) {
 /* Driver exported functions.                                                */
 /*===========================================================================*/
 
-LLDSPEC bool_t gdisp_lld_init(GDisplay *g, unsigned display) {
+LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	/* Initialise your display */
-	init_board(g, display);
+	init_board(g);
 
 	// Hardware reset
 	setpin_reset(g, TRUE);

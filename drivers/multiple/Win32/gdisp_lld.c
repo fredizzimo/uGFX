@@ -381,7 +381,7 @@ static DECLARE_THREAD_FUNCTION(WindowThread, param) {
 /* Driver exported functions.                                                */
 /*===========================================================================*/
 
-LLDSPEC bool_t gdisp_lld_init(GDisplay *g, unsigned display) {
+LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	winPriv	*	priv;
 	char		buf[132];
 
@@ -426,13 +426,13 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g, unsigned display) {
 
 	// Turn on toggles for the first GINPUT_TOGGLE_CONFIG_ENTRIES windows
 	#if GINPUT_NEED_TOGGLE
-		if (display < GINPUT_TOGGLE_CONFIG_ENTRIES)
+		if (g->controllerdisplay < GINPUT_TOGGLE_CONFIG_ENTRIES)
 			g->flags |= GDISP_FLG_HASTOGGLE;
 	#endif
 
 	// Only turn on mouse on the first window for now
 	#if GINPUT_NEED_MOUSE
-		if (!display)
+		if (!g->controllerdisplay)
 			g->flags |= GDISP_FLG_HASMOUSE;
 	#endif
 
@@ -443,13 +443,13 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g, unsigned display) {
 	g->priv = priv;
 
 	// Create the window in the message thread
-	PostThreadMessage(winThreadId, WM_USER, (WPARAM)display, (LPARAM)g);
+	PostThreadMessage(winThreadId, WM_USER, (WPARAM)g->controllerdisplay, (LPARAM)g);
 
 	// Wait for the window creation to complete (for safety)
 	while(!(((volatile GDisplay *)g)->flags & GDISP_FLG_READY))
 		Sleep(1);
 
-	sprintf(buf, APP_NAME " - %u", display+1);
+	sprintf(buf, APP_NAME " - %u", g->systemdisplay+1);
 	SetWindowText(priv->hwnd, buf);
 	ShowWindow(priv->hwnd, SW_SHOW);
 	UpdateWindow(priv->hwnd);

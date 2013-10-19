@@ -31,17 +31,13 @@
 #define GDISP_REG              (*((volatile uint16_t *) 0x60000000)) /* RS = 0 */
 #define GDISP_RAM              (*((volatile uint16_t *) 0x60020000)) /* RS = 1 */
 
-static inline void init_board(GDisplay *g, unsigned display) {
+static inline void init_board(GDisplay *g) {
 
 	// As we are not using multiple displays we set g->priv to NULL as we don't use it.
 	g->priv = 0;
 
-	if (display == 0) {
-
-		/**
-		 * Set up for Display 0
-		 */
-
+	switch(g->controllerdisplay) {
+	case 0:											// Set up for Display 0
 		/* FSMC setup for F1 */
 		rccEnableAHB(RCC_AHBENR_FSMCEN, 0);
 
@@ -61,6 +57,7 @@ static inline void init_board(GDisplay *g, unsigned display) {
 		/* Bank1 NOR/SRAM control register configuration
 		 * This is actually not needed as already set by default after reset */
 		FSMC_Bank1->BTCR[FSMC_Bank] = FSMC_BCR1_MWID_0 | FSMC_BCR1_WREN | FSMC_BCR1_MBKEN;
+		break;
 	}
 }
 

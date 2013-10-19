@@ -172,7 +172,8 @@
 /*===========================================================================*/
 
 struct GDisplay {
-	GDISPControl				g;					// The public GDISP stuff - must be the first element
+	// The public GDISP stuff - must be the first element
+	GDISPControl				g;
 
 	#if GDISP_TOTAL_CONTROLLERS > 1
 		const struct GDISPVMT const *	vmt;		// The Virtual Method Table
@@ -180,7 +181,8 @@ struct GDisplay {
 
 	void *						priv;				// A private area just for the drivers use.
 
-
+	uint8_t						systemdisplay;
+	uint8_t						controllerdisplay;
 	uint16_t					flags;
 		#define GDISP_FLG_INSTREAM		0x0001		// We are in a user based stream operation
 		#define GDISP_FLG_SCRSTREAM		0x0002		// The stream area currently covers the whole screen
@@ -241,10 +243,9 @@ struct GDisplay {
 	 * @brief   Initialize the driver.
 	 * @return	TRUE if successful.
 	 * @param[in]	g		The driver structure
-	 * @param[in]	display	The display number for this controller 0..n
 	 * @param[out]	g->g	The driver must fill in the GDISPControl structure
 	 */
-	LLDSPEC	bool_t gdisp_lld_init(GDisplay *g, unsigned display);
+	LLDSPEC	bool_t gdisp_lld_init(GDisplay *g);
 
 	#if GDISP_HARDWARE_STREAM_WRITE || defined(__DOXYGEN__)
 		/**
@@ -477,7 +478,7 @@ struct GDisplay {
 #if GDISP_TOTAL_CONTROLLERS > 1
 
 	typedef struct GDISPVMT {
-		bool_t (*init)(GDisplay *g, unsigned display);
+		bool_t (*init)(GDisplay *g);
 		void (*writestart)(GDisplay *g);				// Uses p.x,p.y  p.cx,p.cy
 		void (*writepos)(GDisplay *g);					// Uses p.x,p.y
 		void (*writecolor)(GDisplay *g);				// Uses p.color
@@ -569,7 +570,7 @@ struct GDisplay {
 		}};
 
 	#else
-		#define gdisp_lld_init(g, display)		g->vmt->init(g, display)
+		#define gdisp_lld_init(g)				g->vmt->init(g)
 		#define gdisp_lld_write_start(g)		g->vmt->writestart(g)
 		#define gdisp_lld_write_pos(g)			g->vmt->writepos(g)
 		#define gdisp_lld_write_color(g)		g->vmt->writecolor(g)
