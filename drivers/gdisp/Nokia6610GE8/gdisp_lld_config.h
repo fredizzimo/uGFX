@@ -22,9 +22,11 @@
 /* Driver hardware support.                                                  */
 /*===========================================================================*/
 
-#define GDISP_DRIVER_NAME				"Nokia6610GE8"
-#define GDISP_DRIVER_STRUCT				GDISP_Nokia6610GE8
-
+/* This driver has problems with other orientations and requires significantly
+ * extra code to handle them. By default we turn this on (only if the GDISP_NEED_CONTROL
+ * is turned on). If you are worried about code size and don't need orientation support
+ * define GDISP_NOKIA_ORIENTATION as false.
+ */
 #ifndef GDISP_NOKIA_ORIENTATION
 	#define GDISP_NOKIA_ORIENTATION			TRUE
 #endif
@@ -40,11 +42,6 @@
 #endif
 
 #define GDISP_PIXELFORMAT				GDISP_PIXELFORMAT_RGB444
-/* This driver supports both packed and unpacked pixel formats and line formats.
- * 	By default we leave these as FALSE.
- */
-#define GDISP_PACKED_PIXELS				FALSE
-#define GDISP_PACKED_LINES				FALSE
 
 #endif	/* GFX_USE_GDISP */
 
