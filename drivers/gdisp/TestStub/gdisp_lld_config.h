@@ -22,14 +22,10 @@
 /* Driver hardware support.                                                  */
 /*===========================================================================*/
 
-#define GDISP_DRIVER_NAME				"TestStub"
-
-#define GDISP_HARDWARE_SCROLL			GDISP_NEED_SCROLL
-#define GDISP_HARDWARE_PIXELREAD		GDISP_NEED_PIXELREAD
+#define GDISP_HARDWARE_DRAWPIXEL		TRUE
+#define GDISP_HARDWARE_PIXELREAD		TRUE
 
 #define GDISP_PIXELFORMAT				GDISP_PIXELFORMAT_RGB565
-#define GDISP_PACKED_PIXELS				FALSE
-#define GDISP_PACKED_LINES				FALSE
 
 #endif	/* GFX_USE_GDISP */
 
