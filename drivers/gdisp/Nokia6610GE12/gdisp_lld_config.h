@@ -22,18 +22,10 @@
 /* Driver hardware support.                                                  */
 /*===========================================================================*/
 
-#define GDISP_DRIVER_NAME				"Nokia6610GE12"
-#define GDISP_DRIVER_STRUCT				GDISP_Nokia6610GE12
-
 #define GDISP_HARDWARE_CONTROL			TRUE
 #define GDISP_HARDWARE_STREAM_WRITE		TRUE
 
 #define GDISP_PIXELFORMAT				GDISP_PIXELFORMAT_RGB444
-/* This driver supports both packed and unpacked pixel formats and line formats.
- * 	By default we leave these as FALSE.
- */
-#define GDISP_PACKED_PIXELS				FALSE
-#define GDISP_PACKED_LINES				FALSE
 
 #endif	/* GFX_USE_GDISP */
 

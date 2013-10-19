@@ -6,7 +6,7 @@
  */
 
 /**
- * @file    drivers/gdisp/Nokia6610GE12/gdisp_lld_board_template.h
+ * @file    drivers/gdisp/Nokia6610GE12/board_Nokia6610GE12_template.h
  * @brief   GDISP Graphic Driver subsystem board interface for the Nokia6610 GE12 display.
  *
  * @addtogroup GDISP
@@ -30,97 +30,102 @@
 
 /**
  * @brief   Initialise the board for the display.
- * @notes	Performs the following functions:
- *			1. initialise the spi port used by your display
- *			2. initialise the reset pin (initial state not-in-reset)
- *			3. initialise the chip select pin (initial state not-active)
- *			4. initialise the backlight pin (initial state back-light off)
+ *
+ * @param[in] g			The GDisplay structure
+ *
+ * @note	Set the g->priv member to whatever is appropriate. For multiple
+ * 			displays this might be a pointer to the appropriate register set.
  *
  * @notapi
  */
-static inline void init_board(void) {
+static inline void init_board(GDisplay *g) {
+	(void) g;
+}
 
+/**
+ * @brief   After the initialisation.
+ *
+ * @param[in] g			The GDisplay structure
+ *
+ * @notapi
+ */
+static inline void post_init_board(GDisplay *g) {
+	(void) g;
 }
 
 /**
  * @brief   Set or clear the lcd reset pin.
  *
+ * @param[in] g			The GDisplay structure
  * @param[in] state		TRUE = lcd in reset, FALSE = normal operation
  * 
  * @notapi
  */
-static inline void setpin_reset(bool_t state) {
-
+static inline void setpin_reset(GDisplay *g, bool_t state) {
+	(void) g;
+	(void) state;
 }
 
 /**
  * @brief   Set the lcd back-light level.
- * @note	For now 0% turns the backlight off, anything else the backlight is on.
- *			While the hardware supports PWM backlight control, we are not using it
- *			yet.
  *
+ * @param[in] g				The GDisplay structure
  * @param[in] percent		0 to 100%
  * 
  * @notapi
  */
-static inline void set_backlight(uint8_t percent) {
-
+static inline void set_backlight(GDisplay *g, uint8_t percent) {
+	(void) g;
+	(void) percent;
 }
 
 /**
  * @brief   Take exclusive control of the bus
  *
+ * @param[in] g				The GDisplay structure
+ *
  * @notapi
  */
-static inline void acquire_bus(void) {
-
+static inline void acquire_bus(GDisplay *g) {
+	(void) g;
 }
 
 /**
  * @brief   Release exclusive control of the bus
  *
- * @notapi
- */
-static inline void release_bus(void) {
-
-}
-
-/**
- * @brief   Send an 8 bit command to the lcd.
- *
- * @param[in] cmd		The command to send
+ * @param[in] g				The GDisplay structure
  *
  * @notapi
  */
-static inline void write_cmd(uint16_t cmd) {
-
+static inline void release_bus(GDisplay *g) {
+	(void) g;
 }
 
 /**
- * @brief   Send an 8 bit data to the lcd.
+ * @brief   Send data to the index register.
  *
- * @param[in] data		The data to send
+ * @param[in] g				The GDisplay structure
+ * @param[in] index			The index register to set
+ *
+ * @notapi
+ */
+static inline void write_index(GDisplay *g, uint16_t index) {
+	(void) g;
+	(void) index;
+}
+
+/**
+ * @brief   Send data to the lcd.
+ *
+ * @param[in] g				The GDisplay structure
+ * @param[in] data			The data to send
  * 
  * @notapi
  */
-static inline void write_data(uint16_t data) {
-
+static inline void write_data(GDisplay *g, uint16_t data) {
+	(void) g;
+	(void) data;
 }
-
-#if GDISP_HARDWARE_READPIXEL || GDISP_HARDWARE_SCROLL
-/**
- * @brief   Read data from the lcd.
- *
- * @return	The data from the lcd
- * @note	The chip select may need to be asserted/de-asserted
- * 			around the actual spi read
- * 
- * @notapi
- */
-static inline uint16_t read_data(void) {
-
-}
-#endif
 
 #endif /* _GDISP_LLD_BOARD_H */
 /** @} */
