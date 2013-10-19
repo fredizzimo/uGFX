@@ -106,11 +106,16 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	delayms(20);
 
 	acquire_bus(g);
+
 	write_index(g, SLEEPOUT);								// Sleep out
 	write_reg(g, COLMOD, 0x03);							// Color Interface Pixel Format - 0x03 = 12 bits-per-pixel
 	write_reg(g, MADCTL, 0x00);							// Memory access controller
 	write_reg(g, SETCON, 127*GDISP_INITIAL_CONTRAST/100-64);			// Write contrast
 	delayms(20);
+
+    // Finish Init
+    post_init_board(g);
+
 	release_bus(g);
 	
 	/* Turn on the back-light */

@@ -118,13 +118,10 @@ static inline void init_board(GDisplay *g) {
 	}
 }
 
-/**
- * @brief   Set or clear the lcd reset pin.
- *
- * @param[in] state		TRUE = lcd in reset, FALSE = normal operation
- * 
- * @notapi
- */
+static inline void post_init_board(GDisplay *g) {
+	(void) g;
+}
+
 static inline void setpin_reset(GDisplay *g, bool_t state) {
 	(void) g;
 	if (state)
@@ -133,16 +130,6 @@ static inline void setpin_reset(GDisplay *g, bool_t state) {
 		palSetPad(IOPORT1, PIOA_LCD_RESET);
 }
 
-/**
- * @brief   Set the lcd back-light level.
- * @note	For now 0% turns the backlight off, anything else the backlight is on.
- *			While the hardware supports PWM backlight control, we are not using it
- *			yet.
- *
- * @param[in] percent		0 to 100%
- * 
- * @notapi
- */
 static inline void set_backlight(GDisplay *g, uint8_t percent) {
 	(void) g;
 
@@ -170,33 +157,14 @@ static inline void set_backlight(GDisplay *g, uint8_t percent) {
 	}
 }
 
-/**
- * @brief   Take exclusive control of the bus
- *
- * @notapi
- */
 static inline void acquire_bus(GDisplay *g) {
 	(void) g;
-	/* Nothing to do for this board as the LCD is the only device on the SPI port */
 }
 
-/**
- * @brief   Release exclusive control of the bus
- *
- * @notapi
- */
 static inline void release_bus(GDisplay *g) {
 	(void) g;
-	// Nothing to do for this board as the LCD is the only device on the SPI port
 }
 
-/**
- * @brief   Send an 8 bit command to the lcd.
- *
- * @param[in] cmd		The command to send
- *
- * @notapi
- */
 static inline void write_index(GDisplay *g, uint16_t cmd) {
 	(void) g;
 
@@ -206,13 +174,6 @@ static inline void write_index(GDisplay *g, uint16_t cmd) {
 	pSPI->SPI_TDR = cmd & 0xFF;
 }
 
-/**
- * @brief   Send an 8 bit data to the lcd.
- *
- * @param[in] data		The data to send
- * 
- * @notapi
- */
 static inline void write_data(GDisplay *g, uint16_t data) {
 	(void) g;
 
