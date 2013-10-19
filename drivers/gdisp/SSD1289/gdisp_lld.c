@@ -178,7 +178,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	/* Turn on the back-light */
 	set_backlight(g, GDISP_INITIAL_BACKLIGHT);
 
-   /* Initialise the GDISP structure */
+	/* Initialise the GDISP structure */
 	g->g.Width = GDISP_SCREEN_WIDTH;
 	g->g.Height = GDISP_SCREEN_HEIGHT;
 	g->g.Orientation = GDISP_ROTATE_0;
