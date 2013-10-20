@@ -823,7 +823,7 @@ baddatacleanup:
 gdispImageError gdispImageDraw_GIF(gdispImage *img, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t sx, coord_t sy) {
 	gdispImagePrivate *	priv;
 	imgdecode *			decode;
-	uint8_t *			q;
+	uint8_t *			q = 0;
 	coord_t				mx, my, fx, fy;
 	uint16_t			cnt, gcnt;
 	uint8_t				col;
