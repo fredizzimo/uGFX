@@ -38,7 +38,7 @@
 	 * @details	Defaults to 512 bytes
 	 */
 	#ifndef GTIMER_THREAD_WORKAREA_SIZE
-		#define GTIMER_THREAD_WORKAREA_SIZE		512
+		#define GTIMER_THREAD_WORKAREA_SIZE		1024
 	#endif
 /** @} */
 
