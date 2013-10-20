@@ -41,6 +41,8 @@ static void _redraw(GHandle gh) {
 	#endif
 
 	// The default display area
+	dx = 0;
+	dy = 0;
 	x = gh->x;
 	y = gh->y;
 	w = gh->width;
