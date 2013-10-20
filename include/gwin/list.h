@@ -205,9 +205,11 @@ bool_t gwinListItemIsSelected(GHandle gh, int item);
  */
 int gwinListGetSelected(GHandle gh);
 
-#if GWIN_NEED_LIST_IMAGES
+#if GWIN_NEED_LIST_IMAGES || defined(__DOXYGEN__)
 	/**
 	 * @brief				Set the image for a list item
+	 *
+	 * @pre					GWIN_NEED_LIST_IMAGES must be set to true in your gfxconf.h
 	 *
 	 * @param[in] gh		The widget handle (must be a list handle)
 	 * @param[in] item		The item ID
