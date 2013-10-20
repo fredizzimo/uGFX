@@ -1,8 +1,3 @@
-# don't re-define GFXLIB if it has been set elsewhere, e.g in Makefile
-ifeq ($(GFXLIB),)
-	GFXLIB =	$(CHIBIOS)/ext/gfx
-endif
-
 GFXINC +=   $(GFXLIB)/include
 GFXSRC +=	$(GFXLIB)/src/gfx.c
 
