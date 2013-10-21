@@ -8,11 +8,6 @@
 #ifndef SSD1963_H
 #define SSD1963_H
 
-#include "gdisp_lld_panel.h"
-
-#define mHIGH(x) (x >> 8)
-#define mLOW(x) (x & 0xFF)
-
 /* SSD1963 commands */
 
 #define SSD1963_NOP						0x0000
