@@ -108,8 +108,8 @@ GDisplay	*GDISP = GDisplayArray;
 				if ((g->flags & GDISP_FLG_SCRSTREAM)) {		\
 					gdisp_lld_write_stop(g);				\
 					g->flags &= ~GDISP_FLG_SCRSTREAM;		\
-				}
-				autoflush_stopdone(g);
+				}											\
+				autoflush_stopdone(g);						\
 			}
 #else
 	#define autoflush(g)		autoflush_stopdone(g)

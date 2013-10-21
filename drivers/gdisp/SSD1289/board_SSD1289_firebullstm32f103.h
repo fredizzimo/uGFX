@@ -99,7 +99,6 @@ static inline void setwritemode(GDisplay *g) {
 static inline uint16_t read_data(GDisplay *g) {
 	return palReadPort(GPIOE);
 }
-#endif
 
 #if defined(GDISP_USE_DMA)
 	#error "GDISP - SSD1289: The GPIO interface does not support DMA"
