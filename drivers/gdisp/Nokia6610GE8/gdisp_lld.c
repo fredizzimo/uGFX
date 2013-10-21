@@ -199,7 +199,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 															// P1: 0x00 = page address normal, column address normal, address scan in column direction
 															// P2: 0x00 = RGB sequence (default value)
 															// P3: 0x02 = 4 bits per colour (Type A)
-	write_cmd2(g, VOLCTR, 63*GDISP_INITIAL_CONTRAST/100, 0x03);	// Voltage control (contrast setting)
+	write_cmd2(g, VOLCTR, 64*GDISP_INITIAL_CONTRAST/101, 0x03);	// Voltage control (contrast setting)
 															// P1 = Contrast (0..63)
 															// P2 = 3 resistance ratio (only value that works)
 	delayms(100);										// Allow power supply to stabilise
@@ -543,7 +543,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		case GDISP_CONTROL_CONTRAST:
 			if ((unsigned)g->p.ptr > 100) g->p.ptr = (void *)100;
 			acquire_bus(g);
-			write_cmd2(g, VOLCTR, 63*(unsigned)g->p.ptr/100, 0x03);
+			write_cmd2(g, VOLCTR, 64*(unsigned)g->p.ptr/101, 0x03);
 			release_bus(g);
 			g->g.Contrast = (unsigned)g->p.ptr;
 			return;

@@ -115,7 +115,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	write_index(g, SLEEPOUT);								// Sleep out
 	write_reg(g, COLMOD, 0x03);							// Color Interface Pixel Format - 0x03 = 12 bits-per-pixel
 	write_reg(g, MADCTL, 0x00);							// Memory access controller
-	write_reg(g, SETCON, 127*GDISP_INITIAL_CONTRAST/100-64);			// Write contrast
+	write_reg(g, SETCON, 128*GDISP_INITIAL_CONTRAST/101-64);			// Write contrast
 	delayms(20);
 
     // Finish Init
@@ -248,7 +248,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		case GDISP_CONTROL_CONTRAST:
 			if ((unsigned)g->p.ptr > 100) g->p.ptr = (void *)100;
 			acquire_bus(g);
-			write_reg(g, CONTRAST,(unsigned)127*g->p.ptr/100-64);
+			write_reg(g, CONTRAST,(unsigned)128*g->p.ptr/101-64);
 			release_bus(g);
 			g->g.Contrast = (unsigned)g->p.ptr;
 			return;
