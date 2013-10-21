@@ -27,7 +27,7 @@
 #define GDISP_LLD_BOARD_H
 
 // For a multiple display configuration we would put all this in a structure and then
-//	set g->priv to that structure.
+//	set g->board to that structure.
 #define GDISP_REG              (*((volatile uint16_t *) 0x60000000)) /* RS = 0 */
 #define GDISP_RAM              (*((volatile uint16_t *) 0x60020000)) /* RS = 1 */
 

@@ -33,7 +33,7 @@
  *
  * @param[in] g			The GDisplay structure
  *
- * @note	Set the g->priv member to whatever is appropriate. For multiple
+ * @note	Set the g->board member to whatever is appropriate. For multiple
  * 			displays this might be a pointer to the appropriate register set.
  *
  * @notapi

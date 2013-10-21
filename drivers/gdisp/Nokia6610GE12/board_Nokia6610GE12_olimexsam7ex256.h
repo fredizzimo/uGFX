@@ -26,7 +26,7 @@
 //#define GDISP_INITIAL_BACKLIGHT			100		// The initial backlight percentage
 
 // For a multiple display configuration we would put all this in a structure and then
-//	set g->priv to that structure.
+//	set g->board to that structure.
 
 // ******************************************************
 // Pointers to AT91SAM7X256 peripheral data structures

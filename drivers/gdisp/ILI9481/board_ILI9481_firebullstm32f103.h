@@ -15,7 +15,7 @@
 #define _GDISP_LLD_BOARD_H
 
 // For a multiple display configuration we would put all this in a structure and then
-//	set g->priv to that structure.
+//	set g->board to that structure.
 #define SET_CS		palSetPad(GPIOD, 12);
 #define CLR_CS		palClearPad(GPIOD, 12);
 #define SET_RS		palSetPad(GPIOD, 13);

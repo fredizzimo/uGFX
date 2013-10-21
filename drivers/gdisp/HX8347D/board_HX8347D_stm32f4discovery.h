@@ -14,7 +14,7 @@
 #define _GDISP_LLD_BOARD_H
 
 // For a multiple display configuration we would put all this in a structure and then
-//	set g->priv to that structure.
+//	set g->board to that structure.
 
 /* Pin assignments */
 #define SET_RST		palSetPad(GPIOB, 8)
