@@ -302,7 +302,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			case GDISP_ROTATE_90:
 				acquire_bus(g);
 				/* ID = 01 AM = 1 */
-				write_reg(0x11, 0x6058);
+				write_reg(g, 0x11, 0x6058);
 				release_bus(g);
 				g->g.Height = GDISP_SCREEN_WIDTH;
 				g->g.Width = GDISP_SCREEN_HEIGHT;
@@ -310,7 +310,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			case GDISP_ROTATE_180:
 				acquire_bus(g);
 				/* ID = 00 AM = 0 */
-				write_reg(0x11, 0x6040);
+				write_reg(g, 0x11, 0x6040);
 				release_bus(g);
 				g->g.Height = GDISP_SCREEN_HEIGHT;
 				g->g.Width = GDISP_SCREEN_WIDTH;
@@ -326,7 +326,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			default:
 				return;
 			}
-			g->g.Orientation = (orientation_t)value;
+			g->g.Orientation = (orientation_t)g->p.ptr;
 			return;
 
         case GDISP_CONTROL_BACKLIGHT:
