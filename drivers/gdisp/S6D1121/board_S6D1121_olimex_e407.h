@@ -20,8 +20,8 @@
 
 static inline void init_board(GDisplay *g) {
 
-	// As we are not using multiple displays we set g->priv to NULL as we don't use it.
-	g->priv = 0;
+	// As we are not using multiple displays we set g->board to NULL as we don't use it.
+	g->board = 0;
 
 	switch(g->controllerdisplay) {
 	case 0:											// Set up for Display 0

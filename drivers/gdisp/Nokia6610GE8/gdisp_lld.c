@@ -110,10 +110,13 @@
 /*===========================================================================*/
 
 #if GDISP_HARDWARE_STREAM_WRITE
-	static color_t savecolor[GDISP_TOTAL_DISPLAYS];
-	#if GDISP_GE8_BROKEN_CONTROLLER
-		static color_t firstcolor[GDISP_TOTAL_DISPLAYS];
-	#endif
+	typedef struct dvrPriv {
+		color_t			savecolor;
+		#if GDISP_GE8_BROKEN_CONTROLLER
+			color_t		firstcolor;
+		#endif
+	} dvrPriv;
+	#define PRIV		((dvrPriv *)g->priv)
 #endif
 
 #define GDISP_FLG_ODDBYTE	(GDISP_FLG_DRIVER<<0)
@@ -164,7 +167,13 @@ static inline void set_viewport(GDisplay* g) {
 /*===========================================================================*/
 
 LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
-	/* Initialise your display */
+	#if GDISP_HARDWARE_STREAM_WRITE
+		g->priv = gfxAlloc(sizeof(dvrPriv));
+	#else
+		g->priv = 0;
+	#endif
+
+	// Initialise the board interface
 	init_board(g);
 
 	// Hardware reset
@@ -224,18 +233,18 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	LLDSPEC	void gdisp_lld_write_color(GDisplay *g) {
 		#if GDISP_GE8_BROKEN_CONTROLLER
 			if (!(g->flags & GDISP_FLG_RUNBYTE)) {
-				firstcolor[g->controllerdisplay] = g->p.color;
+				PRIV->firstcolor = g->p.color;
 				g->flags |= GDISP_FLG_RUNBYTE;
 			}
 		#endif
 		if ((g->flags & GDISP_FLG_ODDBYTE)) {
 			// Write the pair of pixels to the display
-			write_data3(g, ((savecolor[g->controllerdisplay] >> 4) & 0xFF),
-					(((savecolor[g->controllerdisplay] << 4) & 0xF0)|((g->p.color >> 8) & 0x0F)),
+			write_data3(g, ((PRIV->savecolor >> 4) & 0xFF),
+					(((PRIV->savecolor << 4) & 0xF0)|((g->p.color >> 8) & 0x0F)),
 					(g->p.color & 0xFF));
 			g->flags &= ~GDISP_FLG_ODDBYTE;
 		} else {
-			savecolor[g->controllerdisplay] = g->p.color;
+			PRIV->savecolor = g->p.color;
 			g->flags |= GDISP_FLG_ODDBYTE;
 		}
 	}
@@ -260,11 +269,11 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 				 * 	user application uses the streaming calls and then terminates the stream early or after buffer wrap.
 				 * 	Since this is such an unlikely situation we just don't handle it.
 				 */
-				write_data3(g, ((savecolor[g->controllerdisplay] >> 4) & 0xFF),
-						(((savecolor[g->controllerdisplay] << 4) & 0xF0)|((firstcolor[g->controllerdisplay] >> 8) & 0x0F)),
-						(firstcolor[g->controllerdisplay] & 0xFF));
+				write_data3(g, ((PRIV->savecolor >> 4) & 0xFF),
+						(((PRIV->savecolor << 4) & 0xF0)|((PRIV->firstcolor >> 8) & 0x0F)),
+						(PRIV->firstcolor & 0xFF));
 			#else
-				write_data2(g, ((savecolor[g->controllerdisplay] >> 4) & 0xFF), ((savecolor[g->controllerdisplay] << 4) & 0xF0));
+				write_data2(g, ((PRIV->savecolor >> 4) & 0xFF), ((PRIV->savecolor << 4) & 0xF0));
 				write_index(g, NOP);
 			#endif
 		}

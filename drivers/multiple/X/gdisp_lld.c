@@ -193,6 +193,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 	g->priv = gfxAlloc(sizeof(xPriv));
 	priv = (xPriv *)g->priv;
+	g->board = 0;					// No board interface for this driver
 
 	xa.colormap = cmap;
 	xa.border_pixel = 0xFFFFFF;

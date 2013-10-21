@@ -107,7 +107,10 @@ static inline void set_backlight(GDisplay* g, uint8_t percent) {
 /*===========================================================================*/
 
 LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
-	/* Initialise your display */
+	// No private area for this controller
+	g->priv = 0;
+
+	// Initialise the board interface
 	init_board(g);
 
 	// Hardware reset

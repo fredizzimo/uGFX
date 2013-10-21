@@ -117,7 +117,10 @@ static inline void set_viewport(GDisplay *g) {
 }
 
 LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
-	/* initialize the hardware */
+	// No private area for this controller
+	g->priv = 0;
+
+	// Initialise the board interface
 	init_board(g);
 
 	/* Hardware reset */

@@ -32,6 +32,9 @@
 #endif
 
 LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
+	/* No board interface and no private driver area */
+	g->priv = g->board = 0;
+
 	/* Initialise the GDISP structure */
 	g->g.Width = GDISP_SCREEN_WIDTH;
 	g->g.Height = GDISP_SCREEN_HEIGHT;

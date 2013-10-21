@@ -191,6 +191,7 @@ struct GDisplay {
 	#endif
 
 	void *						priv;				// A private area just for the drivers use.
+	void *						board;				// A private area just for the board interfaces use.
 
 	uint8_t						systemdisplay;
 	uint8_t						controllerdisplay;

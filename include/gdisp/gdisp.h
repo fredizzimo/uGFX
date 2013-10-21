@@ -271,7 +271,7 @@ extern GDisplay	*GDISP;
 #elif GDISP_PIXELFORMAT == GDISP_PIXELFORMAT_MONO
 	typedef uint8_t 			color_t;
 	#define COLOR(c)			((color_t)(c))
-	#define MASKCOLOR			FALSE
+	#define MASKCOLOR			TRUE
 	#define RGB2COLOR(r,g,b)	((r|g|b) ? 1 : 0)
 	#define HTML2COLOR(h)		(h ? 1 : 0)
 	#define RED_OF(c)			(c ? 255 : 0)

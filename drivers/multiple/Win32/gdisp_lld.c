@@ -441,6 +441,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	assert(priv != NULL);
 	memset(priv, 0, sizeof(winPriv));
 	g->priv = priv;
+	g->board = 0;			// no board interface for this controller
 
 	// Create the window in the message thread
 	PostThreadMessage(winThreadId, WM_USER, (WPARAM)g->controllerdisplay, (LPARAM)g);
