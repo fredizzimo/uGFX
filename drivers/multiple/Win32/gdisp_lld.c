@@ -457,6 +457,15 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	return TRUE;
 }
 
+#if GDISP_HARDWARE_FLUSH
+	LLDSPEC void gdisp_lld_flush(GDisplay *g) {
+		winPriv	*	priv;
+
+		priv = g->priv;
+		UpdateWindow(priv->hwnd);
+	}
+#endif
+
 #if GDISP_HARDWARE_DRAWPIXEL
 	LLDSPEC void gdisp_lld_draw_pixel(GDisplay *g) {
 		winPriv	*	priv;

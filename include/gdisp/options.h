@@ -21,6 +21,20 @@
  * @{
  */
 	/**
+	 * @brief   Should drawing operations be automatically flushed.
+	 * @details	Defaults to FALSE
+	 * @note	If set to FALSE and the controller requires flushing
+	 * 			then the application must manually call @p gdispGFlush().
+	 * 			Setting this to TRUE causes GDISP to automatically flush
+	 * 			after each drawing operation. Note this may be slow but enables
+	 * 			an application to avoid having to manually call the flush routine.
+	 * @note	Most controllers don't need flushing which is why this is set to
+	 * 			FALSE by default.
+	 */
+	#ifndef GDISP_NEED_AUTOFLUSH
+		#define GDISP_NEED_AUTOFLUSH			FALSE
+	#endif
+	/**
 	 * @brief   Should all operations be clipped to the screen and colors validated.
 	 * @details	Defaults to TRUE.
 	 * @note    If this is FALSE, any operations that extend beyond the

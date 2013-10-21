@@ -106,6 +106,9 @@ int main(void) {
 		}
 		gdispStreamStop();
 
+		// Force a display update if the controller supports it
+		gdispFlush();
+
 		// Calculate the new frame size (note this is a drawing optimisation only)
 		minx = ballx - radius; miny = bally - radius;
 		maxx = minx + ballcx; maxy = miny + ballcy;

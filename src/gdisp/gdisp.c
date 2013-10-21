@@ -94,6 +94,27 @@ GDisplay	*GDISP = GDisplayArray;
 	}
 #endif
 
+#if GDISP_NEED_AUTOFLUSH && GDISP_HARDWARE_FLUSH == HARDWARE_AUTODETECT
+	#define autoflush_stopdone(g)	if (g->vmt->flush) gdisp_lld_flush(g)
+#elif GDISP_NEED_AUTOFLUSH && GDISP_HARDWARE_FLUSH
+	#define autoflush_stopdone(g)	gdisp_lld_flush(g)
+#else
+	#define autoflush_stopdone(g)
+#endif
+
+#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
+	#define autoflush(g)									\
+			{												\
+				if ((g->flags & GDISP_FLG_SCRSTREAM)) {		\
+					gdisp_lld_write_stop(g);				\
+					g->flags &= ~GDISP_FLG_SCRSTREAM;		\
+				}
+				autoflush_stopdone(g);
+			}
+#else
+	#define autoflush(g)		autoflush_stopdone(g)
+#endif
+
 // drawpixel(g)
 // Parameters:	x,y
 // Alters:		cx, cy (if using streaming)
@@ -551,11 +572,18 @@ void _gdispInit(void) {
 			#if GDISP_STARTUP_LOGO_TIMEOUT > 0
 				StatupLogoDisplay(g);
 			#endif
+			#if !GDISP_NEED_AUTOFLUSH && GDISP_HARDWARE_FLUSH
+				gdispGFlush(g);
+			#endif
 	}
 	#if GDISP_STARTUP_LOGO_TIMEOUT > 0
 		gfxSleepMilliseconds(GDISP_STARTUP_LOGO_TIMEOUT);
-		for(g = GDisplayArray, i = 0; i < GDISP_TOTAL_DISPLAYS; g++, i++)
+		for(g = GDisplayArray, i = 0; i < GDISP_TOTAL_DISPLAYS; g++, i++) {
 			gdispGClear(g, GDISP_STARTUP_COLOR);
+			#if !GDISP_NEED_AUTOFLUSH && GDISP_HARDWARE_FLUSH
+				gdispGFlush(g);
+			#endif
+		}
 	#endif
 }
 
@@ -567,6 +595,21 @@ GDisplay *gdispGetDisplay(unsigned display) {
 
 void gdispSetDisplay(GDisplay *g) {
 	if (g) GDISP = g;
+}
+
+void gdispGFlush(GDisplay *g) {
+	#if GDISP_HARDWARE_FLUSH
+		#if GDISP_HARDWARE_FLUSH == HARDWARE_AUTODETECT
+			if (g->vmt->flush)
+		#endif
+		{
+			MUTEX_ENTER(g);
+			gdisp_lld_flush(g);
+			MUTEX_EXIT(g);
+		}
+	#else
+		(void) g;
+	#endif
 }
 
 #if GDISP_NEED_STREAMING
@@ -766,6 +809,7 @@ void gdispSetDisplay(GDisplay *g) {
 			#endif
 			{
 					gdisp_lld_write_stop(g);
+					autoflush_stopdone(g);
 					MUTEX_EXIT(g);
 					return;
 			}
@@ -782,6 +826,7 @@ void gdispSetDisplay(GDisplay *g) {
 					g->p.ptr = (void *)g->linebuf;
 					gdisp_lld_blit_area(g);
 				}
+				autoflush_stopdone(g);
 				MUTEX_EXIT(g);
 				return;
 			}
@@ -799,8 +844,16 @@ void gdispSetDisplay(GDisplay *g) {
 					else
 						gdisp_lld_fill_area(g);
 				}
+				autoflush_stopdone(g);
 				MUTEX_EXIT(g);
 				return;
+			}
+		#endif
+
+		#if GDISP_HARDWARE_STREAM_WRITE != TRUE && (GDISP_LINEBUF_SIZE == 0 || GDISP_HARDWARE_BITFILLS != TRUE) && GDISP_HARDWARE_FILLS != TRUE
+			{
+				autoflush_stopdone(g);
+				MUTEX_EXIT(g);
 			}
 		#endif
 	}
@@ -812,12 +865,7 @@ void gdispGDrawPixel(GDisplay *g, coord_t x, coord_t y, color_t color) {
 	g->p.y		= y;
 	g->p.color	= color;
 	drawpixel_clip(g);
-	#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
-		if ((g->flags & GDISP_FLG_SCRSTREAM)) {
-			gdisp_lld_write_stop(g);
-			g->flags &= ~GDISP_FLG_SCRSTREAM;
-		}
-	#endif
+	autoflush(g);
 	MUTEX_EXIT(g);
 }
 	
@@ -829,12 +877,7 @@ void gdispGDrawLine(GDisplay *g, coord_t x0, coord_t y0, coord_t x1, coord_t y1,
 	g->p.y1 = y1;
 	g->p.color = color;
 	line_clip(g);
-	#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
-		if ((g->flags & GDISP_FLG_SCRSTREAM)) {
-			gdisp_lld_write_stop(g);
-			g->flags &= ~GDISP_FLG_SCRSTREAM;
-		}
-	#endif
+	autoflush(g);
 	MUTEX_EXIT(g);
 }
 
@@ -850,6 +893,7 @@ void gdispGClear(GDisplay *g, color_t color) {
 		{
 			g->p.color = color;
 			gdisp_lld_clear(g);
+			autoflush_stopdone(g);
 			MUTEX_EXIT(g);
 			return;
 		}
@@ -866,6 +910,7 @@ void gdispGClear(GDisplay *g, color_t color) {
 			g->p.cy = g->g.Height;
 			g->p.color = color;
 			gdisp_lld_fill_area(g);
+			autoflush_stopdone(g);
 			MUTEX_EXIT(g);
 			return;
 		}
@@ -895,6 +940,7 @@ void gdispGClear(GDisplay *g, color_t color) {
 			for(; area; area--)
 				gdisp_lld_write_color(g);
 			gdisp_lld_write_stop(g);
+			autoflush_stopdone(g);
 			MUTEX_EXIT(g);
 			return;
 		}
@@ -911,6 +957,7 @@ void gdispGClear(GDisplay *g, color_t color) {
 			for(g->p.y = 0; g->p.y < g->g.Height; g->p.y++)
 				for(g->p.x = 0; g->p.x < g->g.Width; g->p.x++)
 					gdisp_lld_draw_pixel(g);
+			autoflush_stopdone(g);
 			MUTEX_EXIT(g);
 			return;
 		}
@@ -927,6 +974,7 @@ void gdispGFillArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 	TEST_CLIP_AREA(g) {
 		fillarea(g);
 	}
+	autoflush_stopdone(g);
 	MUTEX_EXIT(g);
 }
 	
@@ -963,6 +1011,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 			g->p.x2 = srccx;
 			g->p.ptr = (void *)buffer;
 			gdisp_lld_blit_area(g);
+			autoflush_stopdone(g);
 			MUTEX_EXIT(g);
 			return;
 		}
@@ -998,6 +1047,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 				}
 			}
 			gdisp_lld_write_stop(g);
+			autoflush_stopdone(g);
 			MUTEX_EXIT(g);
 			return;
 		}
@@ -1032,6 +1082,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 					}
 				}
 			}
+			autoflush_stopdone(g);
 			MUTEX_EXIT(g);
 			return;
 		}
@@ -1056,6 +1107,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 					gdisp_lld_draw_pixel(g);
 				}
 			}
+			autoflush_stopdone(g);
 			MUTEX_EXIT(g);
 			return;
 		}
@@ -1136,12 +1188,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 		g->p.x = x - a; g->p.y = y + b; drawpixel_clip(g);
 		g->p.x = x - a; g->p.y = y - b; drawpixel_clip(g);
 
-		#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
-			if ((g->flags & GDISP_FLG_SCRSTREAM)) {
-				gdisp_lld_write_stop(g);
-				g->flags &= ~GDISP_FLG_SCRSTREAM;
-			}
-		#endif
+		autoflush(g);
 		MUTEX_EXIT(g);
 	}
 #endif
@@ -1177,12 +1224,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 		g->p.y = y+a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);
 		g->p.y = y-a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);
 
-		#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
-			if ((g->flags & GDISP_FLG_SCRSTREAM)) {
-				gdisp_lld_write_stop(g);
-				g->flags &= ~GDISP_FLG_SCRSTREAM;
-			}
-		#endif
+		autoflush(g);
 		MUTEX_EXIT(g);
 	}
 #endif
@@ -1221,12 +1263,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 			}
 		} while(dy >= 0);
 
-		#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
-			if ((g->flags & GDISP_FLG_SCRSTREAM)) {
-				gdisp_lld_write_stop(g);
-				g->flags &= ~GDISP_FLG_SCRSTREAM;
-			}
-		#endif
+		autoflush(g);
 		MUTEX_EXIT(g);
 	}
 #endif
@@ -1263,12 +1300,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 			}
 		} while(dy >= 0);
 
-		#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
-			if ((g->flags & GDISP_FLG_SCRSTREAM)) {
-				gdisp_lld_write_stop(g);
-				g->flags &= ~GDISP_FLG_SCRSTREAM;
-			}
-		#endif
+		autoflush(g);
 		MUTEX_EXIT(g);
 	}
 #endif
@@ -1336,12 +1368,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 			if (full & 0x03) { g->p.x = x+a; g->p.y = y-b; drawpixel_clip(g); }
 			if (full & 0x30) { g->p.x = x-a; g->p.y = y+b; drawpixel_clip(g); }
 			if (full == 0xFF) {
-				#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
-					if ((g->flags & GDISP_FLG_SCRSTREAM)) {
-						gdisp_lld_write_stop(g);
-						g->flags &= ~GDISP_FLG_SCRSTREAM;
-					}
-				#endif
+				autoflush(g);
 				MUTEX_EXIT;
 				return;
 			}
@@ -1458,12 +1485,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 				{ g->p.x = x-a; g->p.y = y+b; drawpixel_clip(g); }
 		}
 
-		#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
-			if ((g->flags & GDISP_FLG_SCRSTREAM)) {
-				gdisp_lld_write_stop(g);
-				g->flags &= ~GDISP_FLG_SCRSTREAM;
-			}
-		#endif
+		autoflush(g);
 		MUTEX_EXIT(g);
 	}
 #endif
@@ -1961,12 +1983,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 			break;
 		}
 
-		#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
-			if ((g->flags & GDISP_FLG_SCRSTREAM)) {
-				gdisp_lld_write_stop(g);
-				g->flags &= ~GDISP_FLG_SCRSTREAM;
-			}
-		#endif
+		autoflush(g);
 		MUTEX_EXIT(g);
 	}
 
@@ -2246,6 +2263,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 		g->p.cy = abslines;
 		g->p.color = bgcolor;
 		fillarea(g);
+		autoflush_stopdone(g);
 		MUTEX_EXIT(g);
 	}
 #endif
@@ -2354,12 +2372,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 		}
 	}
 
-	#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
-		if ((g->flags & GDISP_FLG_SCRSTREAM)) {
-			gdisp_lld_write_stop(g);
-			g->flags &= ~GDISP_FLG_SCRSTREAM;
-		}
-	#endif
+	autoflush(g);
 	MUTEX_EXIT(g);
 }
 
@@ -2376,12 +2389,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 		}
 		g->p.x=tx+p->x; g->p.y=ty+p->y; g->p.x1=tx+pntarray->x; g->p.y1=ty+pntarray->y; line_clip(g);
 
-		#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
-			if ((g->flags & GDISP_FLG_SCRSTREAM)) {
-				gdisp_lld_write_stop(g);
-				g->flags &= ~GDISP_FLG_SCRSTREAM;
-			}
-		#endif
+		autoflush(g);
 		MUTEX_EXIT(g);
 	}
 
@@ -2441,12 +2449,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 			}
 
 			if (!cnt) {
-				#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
-					if ((g->flags & GDISP_FLG_SCRSTREAM)) {
-						gdisp_lld_write_stop(g);
-						g->flags &= ~GDISP_FLG_SCRSTREAM;
-					}
-				#endif
+				autoflush(g);
 				MUTEX_EXIT(g);
 				return;
 			}
@@ -2456,12 +2459,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 			if (ymax == lpnt->y) {
 				for (lpnt = lpnt <= pntarray ? epnts : lpnt-1; lpnt->y == y; cnt--) {
 					if (!cnt) {
-						#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
-							if ((g->flags & GDISP_FLG_SCRSTREAM)) {
-								gdisp_lld_write_stop(g);
-								g->flags &= ~GDISP_FLG_SCRSTREAM;
-							}
-						#endif
+						autoflush(g);
 						MUTEX_EXIT(g);
 						return;
 					}
@@ -2472,12 +2470,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 			} else {
 				for (rpnt = rpnt >= epnts ? pntarray : rpnt+1; rpnt->y == y; cnt--) {
 					if (!cnt) {
-						#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
-							if ((g->flags & GDISP_FLG_SCRSTREAM)) {
-								gdisp_lld_write_stop(g);
-								g->flags &= ~GDISP_FLG_SCRSTREAM;
-							}
-						#endif
+						autoflush(g);
 						MUTEX_EXIT(g);
 						return;
 					}
@@ -2561,12 +2554,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 		g->t.clipy1 = y + font->height;
 		g->t.color = color;
 		mf_render_character(font, x, y, c, drawcharline, g);
-		#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
-			if ((g->flags & GDISP_FLG_SCRSTREAM)) {
-				gdisp_lld_write_stop(g);
-				g->flags &= ~GDISP_FLG_SCRSTREAM;
-			}
-		#endif
+		autoflush(g);
 		MUTEX_EXIT(g);
 	}
 
@@ -2586,12 +2574,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 			fillarea(g);
 			mf_render_character(font, x, y, c, fillcharline, g);
 		}
-		#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
-			if ((g->flags & GDISP_FLG_SCRSTREAM)) {
-				gdisp_lld_write_stop(g);
-				g->flags &= ~GDISP_FLG_SCRSTREAM;
-			}
-		#endif
+		autoflush(g);
 		MUTEX_EXIT(g);
 	}
 
@@ -2605,12 +2588,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 		g->t.color = color;
 
 		mf_render_aligned(font, x+font->baseline_x, y, MF_ALIGN_LEFT, str, 0, drawcharglyph, g);
-		#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
-			if ((g->flags & GDISP_FLG_SCRSTREAM)) {
-				gdisp_lld_write_stop(g);
-				g->flags &= ~GDISP_FLG_SCRSTREAM;
-			}
-		#endif
+		autoflush(g);
 		MUTEX_EXIT(g);
 	}
 
@@ -2631,12 +2609,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 			mf_render_aligned(font, x+font->baseline_x, y, MF_ALIGN_LEFT, str, 0, fillcharglyph, g);
 		}
 
-		#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
-			if ((g->flags & GDISP_FLG_SCRSTREAM)) {
-				gdisp_lld_write_stop(g);
-				g->flags &= ~GDISP_FLG_SCRSTREAM;
-			}
-		#endif
+		autoflush(g);
 		MUTEX_EXIT(g);
 	}
 
@@ -2665,12 +2638,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 
 		mf_render_aligned(font, x, y, justify, str, 0, drawcharglyph, g);
 
-		#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
-			if ((g->flags & GDISP_FLG_SCRSTREAM)) {
-				gdisp_lld_write_stop(g);
-				g->flags &= ~GDISP_FLG_SCRSTREAM;
-			}
-		#endif
+		autoflush(g);
 		MUTEX_EXIT(g);
 	}
 
@@ -2709,12 +2677,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 			mf_render_aligned(font, x, y, justify, str, 0, fillcharglyph, g);
 		}
 
-		#if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
-			if ((g->flags & GDISP_FLG_SCRSTREAM)) {
-				gdisp_lld_write_stop(g);
-				g->flags &= ~GDISP_FLG_SCRSTREAM;
-			}
-		#endif
+		autoflush(g);
 		MUTEX_EXIT(g);
 	}
 

@@ -35,6 +35,17 @@
  * @{
  */
 	/**
+	 * @brief   The display hardware can benefit from being flushed.
+	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
+	 *
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
+	 * @note	Some controllers ** require ** the application to flush
+	 */
+	#ifndef GDISP_HARDWARE_FLUSH
+		#define GDISP_HARDWARE_FLUSH		HARDWARE_DEFAULT
+	#endif
+
+	/**
 	 * @brief   Hardware streaming writing is supported.
 	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
 	 *
@@ -246,6 +257,18 @@ struct GDisplay {
 	 * @param[out]	g->g	The driver must fill in the GDISPControl structure
 	 */
 	LLDSPEC	bool_t gdisp_lld_init(GDisplay *g);
+
+	#if GDISP_HARDWARE_FLUSH || defined(__DOXYGEN__)
+		/**
+		 * @brief   Flush the current drawing operations to the display
+		 * @pre		GDISP_HARDWARE_FLUSH is TRUE
+		 *
+		 * @param[in]	g				The driver structure
+		 *
+		 * @note		The parameter variables must not be altered by the driver.
+		 */
+		LLDSPEC	void gdisp_lld_flush(GDisplay *g);
+	#endif
 
 	#if GDISP_HARDWARE_STREAM_WRITE || defined(__DOXYGEN__)
 		/**
@@ -495,6 +518,7 @@ struct GDisplay {
 		void (*control)(GDisplay *g);					// Uses p.x (=what)  p.ptr (=value)
 		void *(*query)(GDisplay *g);					// Uses p.x (=what);
 		void (*setclip)(GDisplay *g);					// Uses p.x,p.y  p.cx,p.cy
+		void (*flush)(GDisplay *g);						// Uses no parameters
 	} GDISPVMT;
 
 	#if defined(GDISP_DRIVER_VMT)
@@ -503,6 +527,11 @@ struct GDisplay {
 		#endif
 		const GDISPVMT const GDISP_DRIVER_VMT[1] = {{
 			gdisp_lld_init,
+			#if GDISP_HARDWARE_FLUSH
+				gdisp_lld_flush,
+			#else
+				0,
+			#endif
 			#if GDISP_HARDWARE_STREAM_WRITE
 				gdisp_lld_write_start,
 				#if GDISP_HARDWARE_STREAM_POS
@@ -571,6 +600,7 @@ struct GDisplay {
 
 	#else
 		#define gdisp_lld_init(g)				g->vmt->init(g)
+		#define gdisp_lld_flush(g)				g->vmt->flush(g)
 		#define gdisp_lld_write_start(g)		g->vmt->writestart(g)
 		#define gdisp_lld_write_pos(g)			g->vmt->writepos(g)
 		#define gdisp_lld_write_color(g)		g->vmt->writecolor(g)
@@ -591,34 +621,34 @@ struct GDisplay {
 
 #endif		// GDISP_TOTAL_CONTROLLERS > 1
 
-		/* Verify information for packed pixels and define a non-packed pixel macro */
-		#if !GDISP_PACKED_PIXELS
-			#define gdispPackPixels(buf,cx,x,y,c)	{ ((color_t *)(buf))[(y)*(cx)+(x)] = (c); }
-		#elif !GDISP_HARDWARE_BITFILLS
-			#error "GDISP: packed pixel formats are only supported for hardware accelerated drivers."
-		#elif GDISP_PIXELFORMAT != GDISP_PIXELFORMAT_RGB888 \
-				&& GDISP_PIXELFORMAT != GDISP_PIXELFORMAT_RGB444 \
-				&& GDISP_PIXELFORMAT != GDISP_PIXELFORMAT_RGB666 \
-				&& GDISP_PIXELFORMAT != GDISP_PIXELFORMAT_CUSTOM
-			#error "GDISP: A packed pixel format has been specified for an unsupported pixel format."
-		#endif
+/* Verify information for packed pixels and define a non-packed pixel macro */
+#if !GDISP_PACKED_PIXELS
+	#define gdispPackPixels(buf,cx,x,y,c)	{ ((color_t *)(buf))[(y)*(cx)+(x)] = (c); }
+#elif !GDISP_HARDWARE_BITFILLS
+	#error "GDISP: packed pixel formats are only supported for hardware accelerated drivers."
+#elif GDISP_PIXELFORMAT != GDISP_PIXELFORMAT_RGB888 \
+		&& GDISP_PIXELFORMAT != GDISP_PIXELFORMAT_RGB444 \
+		&& GDISP_PIXELFORMAT != GDISP_PIXELFORMAT_RGB666 \
+		&& GDISP_PIXELFORMAT != GDISP_PIXELFORMAT_CUSTOM
+	#error "GDISP: A packed pixel format has been specified for an unsupported pixel format."
+#endif
 
-		/* Support routine for packed pixel formats */
-		#if !defined(gdispPackPixels) || defined(__DOXYGEN__)
-			/**
-			 * @brief   Pack a pixel into a pixel buffer.
-			 * @note    This function performs no buffer boundary checking
-			 *			regardless of whether GDISP_NEED_CLIP has been specified.
-			 *
-			 * @param[in] buf		The buffer to put the pixel in
-			 * @param[in] cx		The width of a pixel line
-			 * @param[in] x, y		The location of the pixel to place
-			 * @param[in] color		The color to put into the buffer
-			 *
-			 * @api
-			 */
-			void gdispPackPixels(const pixel_t *buf, coord_t cx, coord_t x, coord_t y, color_t color);
-		#endif
+/* Support routine for packed pixel formats */
+#if !defined(gdispPackPixels) || defined(__DOXYGEN__)
+	/**
+	 * @brief   Pack a pixel into a pixel buffer.
+	 * @note    This function performs no buffer boundary checking
+	 *			regardless of whether GDISP_NEED_CLIP has been specified.
+	 *
+	 * @param[in] buf		The buffer to put the pixel in
+	 * @param[in] cx		The width of a pixel line
+	 * @param[in] x, y		The location of the pixel to place
+	 * @param[in] color		The color to put into the buffer
+	 *
+	 * @api
+	 */
+	void gdispPackPixels(const pixel_t *buf, coord_t cx, coord_t x, coord_t y, color_t color);
+#endif
 
 #endif	/* GFX_USE_GDISP */
 

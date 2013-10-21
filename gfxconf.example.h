@@ -34,6 +34,7 @@
 #define GFX_USE_GMISC			FALSE
 
 /* Features for the GDISP subsystem */
+#define GDISP_NEED_AUTOFLUSH		FALSE
 #define GDISP_NEED_VALIDATION		TRUE
 #define GDISP_NEED_CLIP				TRUE
 #define GDISP_NEED_TEXT				TRUE

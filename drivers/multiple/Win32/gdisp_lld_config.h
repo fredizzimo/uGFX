@@ -22,6 +22,10 @@
 /* Driver hardware support.                                                  */
 /*===========================================================================*/
 
+// Calling gdispGFlush() is optional for this driver but can be used by the
+//	application to force a display update. eg after streaming.
+
+#define GDISP_HARDWARE_FLUSH			TRUE
 #define GDISP_HARDWARE_DRAWPIXEL		TRUE
 #define GDISP_HARDWARE_FILLS			TRUE
 #define GDISP_HARDWARE_PIXELREAD		TRUE

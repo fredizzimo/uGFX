@@ -396,6 +396,27 @@ void gdispSetDisplay(GDisplay *g);
 /* Drawing Functions */
 
 /**
+ * @brief   Flush current drawing operations to the display
+ * @note	Some low level drivers do not update the display until
+ * 			the display is flushed. For others it is optional but can
+ * 			help prevent tearing effects. For some it is ignored.
+ * 			Calling it at the end of a logic set of drawing operations
+ * 			in your application will ensure controller portability. If you
+ * 			know your controller does not need to be flushed there is no
+ * 			need to call it (which is in reality most controllers).
+ * @note	Even for displays that require flushing, there is no need to
+ * 			call this function if GDISP_NEED_AUTOFLUSH is TRUE.
+ * 			Calling it again won't hurt though.
+ *
+ *
+ * @param[in] display	The display number (0..n)
+ *
+ * @api
+ */
+void gdispGFlush(GDisplay *g);
+#define gdispFlush()									gdispGFlush(GDISP)
+
+/**
  * @brief   Clear the display to the specified color.
  *
  * @param[in] g 	The display to use
