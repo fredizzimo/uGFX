@@ -195,6 +195,9 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	LLDSPEC	void gdisp_lld_write_start(GDisplay *g) {
 		acquire_bus(g);
 		set_viewport(g);
+		#if !GDISP_HARDWARE_STREAM_POS
+			set_cursor(g);
+		#endif
 	}
 	LLDSPEC	void gdisp_lld_write_color(GDisplay *g) {
 		write_data(g, g->p.color);
@@ -202,9 +205,11 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	LLDSPEC	void gdisp_lld_write_stop(GDisplay *g) {
 		release_bus(g);
 	}
-	LLDSPEC void gdisp_lld_write_pos(GDisplay *g) {
-		set_cursor(g);
-	}
+	#if GDISP_HARDWARE_STREAM_POS
+		LLDSPEC void gdisp_lld_write_pos(GDisplay *g) {
+			set_cursor(g);
+		}
+	#endif
 #endif
 
 #if GDISP_HARDWARE_STREAM_READ
