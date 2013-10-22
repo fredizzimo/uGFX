@@ -8,9 +8,6 @@
 #ifndef _ST7565_H
 #define _ST7565_H
 
-#define ST7565_BLACK 0
-#define ST7565_WHITE 1
-
 #define ST7565_CONTRAST             0x81
 #define ST7565_ALLON_NORMAL         0xA4
 #define ST7565_ALLON                0xA5
