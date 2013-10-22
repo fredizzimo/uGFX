@@ -5,265 +5,258 @@
  *              http://ugfx.org/license.html
  */
 
+/**
+ * @file    drivers/gdisp/ST7565/gdisp_lld.c
+ * @brief   GDISP Graphics Driver subsystem low level driver source for the ST7565 display.
+ */
+
 #include "gfx.h"
 
-#if GFX_USE_GDISP || defined(__DOXYGEN__)
+#if GFX_USE_GDISP
 
+#define GDISP_DRIVER_VMT			GDISPVMT_ST7565
+#include "../drivers/gdisp/ST7565/gdisp_lld_config.h"
+#include "gdisp/lld/gdisp_lld.h"
 
-/* Include the emulation code for things we don't support */
-#include "gdisp/lld/emulation.c"
-#include "st7565.h"
-#include "gdisp_lld_board.h"
-
+#include "board_ST7565.h"
 
 /*===========================================================================*/
 /* Driver local definitions.                                                 */
 /*===========================================================================*/
 
 #ifndef GDISP_SCREEN_HEIGHT
-#define GDISP_SCREEN_HEIGHT		64
+	#define GDISP_SCREEN_HEIGHT		64
 #endif
 #ifndef GDISP_SCREEN_WIDTH
-#define GDISP_SCREEN_WIDTH		128
+	#define GDISP_SCREEN_WIDTH		128
+#endif
+#ifndef GDISP_INITIAL_CONTRAST
+	#define GDISP_INITIAL_CONTRAST	51
+#endif
+#ifndef GDISP_INITIAL_BACKLIGHT
+	#define GDISP_INITIAL_BACKLIGHT	100
 #endif
 
-#define GDISP_INITIAL_CONTRAST		0xFF
+#define GDISP_FLG_NEEDFLUSH			(GDISP_FLG_DRIVER<<0)
+
+#include "st7565.h"
 
 /*===========================================================================*/
 /* Driver local functions.                                                   */
 /*===========================================================================*/
 
 // Some common routines and macros
-#define delay(us)         gfxSleepMicroseconds(us)
-#define delay_ms(ms)      gfxSleepMilliseconds(ms)
+#define RAM(g)							((uint8_t *)g->priv)
+#define write_cmd2(g, cmd1, cmd2)		{ write_cmd(g, cmd1); write_cmd(g, cmd2); }
+#define write_cmd3(g, cmd1, cmd2, cmd3)	{ write_cmd(g, cmd1); write_cmd(g, cmd2); write_cmd(g, cmd3); }
 
-// The memory buffer for the display
-static uint8_t gdisp_buffer[GDISP_SCREEN_HEIGHT * GDISP_SCREEN_WIDTH / 8];
+// Some common routines and macros
+#define delay(us)			gfxSleepMicroseconds(us)
+#define delay_ms(ms)		gfxSleepMilliseconds(ms)
 
-/** Set the display to normal or inverse.
- *  @param[in] value 0 for normal mode, or 1 for inverse mode.
- *  @notapi
- */
-static void invert_display(uint8_t i) {
-  write_cmd(i ? ST7565_INVERT_DISPLAY : ST7565_POSITIVE_DISPLAY);
-}
-
-/** Turn the whole display off.
- *	Sends the display to sleep, but leaves RAM intact.
- *	@notapi
- */
-static void display_off(void) {
-  write_cmd(ST7565_DISPLAY_OFF);
-}
-
-/** Turn the whole display on.
- * 	Wakes up this display following a sleep() call.
- *	@notapi
- */
-static void display_on(void) {
-  write_cmd(ST7565_DISPLAY_ON);
-}
-
-/** Set the display contrast.
- *  @param[in] value The contrast, from 1 to 63.
- *	@notapi
- */
-static void set_contrast(uint8_t value) {
-  write_cmd(ST7565_CONTRAST);
-  write_cmd(value & 0x3F);
-}
-
-/** Set the display start line.  This is the line at which the display will start rendering.
- *  @param[in] value A value from 0 to 63 denoting the line to start at.
- *	@notapi
- */
-static void set_display_start_line(unsigned char value) {
-  write_cmd(ST7565_START_LINE | value);
-}
-
-static void gdisp_lld_display(void) {
-  uint8_t p;
-  set_display_start_line(0);
-
-  for (p = 0; p < 8; p++) {
-    write_cmd(ST7565_PAGE | p);
-    write_cmd(ST7565_COLUMN_MSB | 0);
-    write_cmd(ST7565_COLUMN_LSB | 0);
-    write_cmd(ST7565_RMW);
-    write_data(&gdisp_buffer[p * GDISP_SCREEN_WIDTH], GDISP_SCREEN_WIDTH);
-  }
-}
-
-/*===========================================================================*/
-/* Driver interrupt handlers.                                                */
-/*===========================================================================*/
+#define xyaddr(x, y)		((x) + ((y)>>3)*GDISP_SCREEN_WIDTH)
+#define xybit(y)			(1<<((y)&7))
 
 /*===========================================================================*/
 /* Driver exported functions.                                                */
 /*===========================================================================*/
 
-/* ---- Required Routines ---- */
-/*
- The following 2 routines are required.
- All other routines are optional.
- */
-
 /**
- * @brief   Low level GDISP driver initialization.
- *
- * @notapi
+ * As this controller can't update on a pixel boundary we need to maintain the
+ * the entire display surface in memory so that we can do the necessary bit
+ * operations. Fortunately it is a small display in monochrome.
+ * 64 * 128 / 8 = 1024 bytes.
  */
-bool_t gdisp_lld_init(void) {
-  // Initialize your display
-  init_board();
 
-  // Hardware reset.
-  setpin_reset(TRUE);
-  delay_ms(10);
-  setpin_reset(FALSE);
-  delay_ms(1);
+LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
+	// The private area is the display surface.
+	g->priv = gfxAlloc(GDISP_SCREEN_HEIGHT * GDISP_SCREEN_WIDTH / 8);
 
-  write_cmd(ST7565_LCD_BIAS_7);
-  write_cmd(ST7565_ADC_NORMAL);
-  write_cmd(ST7565_COM_SCAN_INC);
-  set_display_start_line(0);
+	// Initialise the board interface
+	init_board(g);
 
-  set_contrast(32);
-  write_cmd(ST7565_RESISTOR_RATIO | 0x3);
+	// Hardware reset
+	setpin_reset(g, TRUE);
+	gfxSleepMilliseconds(20);
+	setpin_reset(g, FALSE);
+	gfxSleepMilliseconds(20);
 
-  // turn on voltage converter (VC=1, VR=0, VF=0)
-  write_cmd(ST7565_POWER_CONTROL | 0x04);
-  delay_ms(50);
-  // turn on voltage regulator (VC=1, VR=1, VF=0)
-  write_cmd(ST7565_POWER_CONTROL | 0x06);
-  delay_ms(50);
-  // turn on voltage follower (VC=1, VR=1, VF=1)
-  write_cmd(ST7565_POWER_CONTROL | 0x07);
-  delay_ms(50);
+	acquire_bus(g);
 
-  display_on();
-  write_cmd(ST7565_ALLON_NORMAL);
-  invert_display(0);// Disable Inversion of display.
+	write_cmd(g, ST7565_LCD_BIAS_7);
+	write_cmd(g, ST7565_ADC_NORMAL);
+	write_cmd(g, ST7565_COM_SCAN_INC);
+	write_cmd(g, ST7565_START_LINE | 0);
 
-  write_cmd(ST7565_RMW);
-  gdisp_lld_display();
+	write_cmd2(g, ST7565_CONTRAST, GDISP_INITIAL_CONTRAST*64/101);
+	write_cmd(g, ST7565_RESISTOR_RATIO | 0x3);
 
-  // Initialize the GDISP structure
-  GDISP.Width = GDISP_SCREEN_WIDTH;
-  GDISP.Height = GDISP_SCREEN_HEIGHT;
-  GDISP.Orientation = GDISP_ROTATE_0;
-  GDISP.Powermode = powerOn;
-  GDISP.Contrast = 50;
-#if GDISP_NEED_VALIDATION || GDISP_NEED_CLIP
-  GDISP.clipx0 = 0;
-  GDISP.clipy0 = 0;
-  GDISP.clipx1 = GDISP.Width;
-  GDISP.clipy1 = GDISP.Height;
+	// turn on voltage converter (VC=1, VR=0, VF=0)
+	write_cmd(g, ST7565_POWER_CONTROL | 0x04);
+	delay_ms(50);
+
+	// turn on voltage regulator (VC=1, VR=1, VF=0)
+	write_cmd(g, ST7565_POWER_CONTROL | 0x06);
+	delay_ms(50);
+
+	// turn on voltage follower (VC=1, VR=1, VF=1)
+	write_cmd(g, ST7565_POWER_CONTROL | 0x07);
+	delay_ms(50);
+
+	write_cmd(g, ST7565_DISPLAY_ON);
+	write_cmd(g, ST7565_ALLON_NORMAL);
+	write_cmd(g, ST7565_POSITIVE_DISPLAY);	// Disable Inversion of display.
+
+	write_cmd(g, ST7565_RMW);
+
+    // Finish Init
+    post_init_board(g);
+
+ 	// Release the bus
+	release_bus(g);
+
+	/* Initialise the GDISP structure */
+	g->g.Width = GDISP_SCREEN_WIDTH;
+	g->g.Height = GDISP_SCREEN_HEIGHT;
+	g->g.Orientation = GDISP_ROTATE_0;
+	g->g.Powermode = powerOn;
+	g->g.Backlight = GDISP_INITIAL_BACKLIGHT;
+	g->g.Contrast = GDISP_INITIAL_CONTRAST;
+	return TRUE;
+}
+
+#if GDISP_HARDWARE_FLUSH
+	LLDSPEC void gdisp_lld_flush(GDisplay *g) {
+		unsigned	p;
+
+		// Don't flush if we don't need it.
+		if (!(g->flags & GDISP_FLG_NEEDFLUSH))
+			return;
+
+		acquire_bus(g);
+		for (p = 0; p < 8; p++) {
+			write_cmd(g, ST7565_PAGE | p);
+			write_cmd(g, ST7565_COLUMN_MSB | 0);
+			write_cmd(g, ST7565_COLUMN_LSB | 0);
+			write_cmd(g, ST7565_RMW);
+			write_data(g, RAM(g) + (p*GDISP_SCREEN_WIDTH), GDISP_SCREEN_WIDTH);
+		}
+		release_bus(g);
+	}
 #endif
-  return TRUE;
-}
 
-/**
- * @brief   Draws a pixel on the display.
- *
- * @param[in] x        X location of the pixel
- * @param[in] y        Y location of the pixel
- * @param[in] color    The color of the pixel
- *
- * @notapi
- */
-void gdisp_lld_draw_pixel(coord_t x, coord_t y, color_t color) {
-#if GDISP_NEED_VALIDATION || GDISP_NEED_CLIP
-  if (x < GDISP.clipx0 || y < GDISP.clipy0 || x >= GDISP.clipx1 || y >= GDISP.clipy1) return;
+#if GDISP_HARDWARE_DRAWPIXEL
+	LLDSPEC void gdisp_lld_draw_pixel(GDisplay *g) {
+		coord_t		x, y;
+
+		switch(g->g.Orientation) {
+		case GDISP_ROTATE_0:
+			x = g->p.x;
+			y = g->p.y;
+			break;
+		case GDISP_ROTATE_90:
+			x = g->p.y;
+			y = GDISP_SCREEN_HEIGHT-1 - g->p.x;
+			break;
+		case GDISP_ROTATE_180:
+			x = GDISP_SCREEN_WIDTH-1 - g->p.x;
+			y = GDISP_SCREEN_HEIGHT-1 - g->p.y;
+			break;
+		case GDISP_ROTATE_270:
+			x = GDISP_SCREEN_HEIGHT-1 - g->p.y;
+			y = g->p.x;
+			break;
+		}
+		if (g->p.color != Black)
+			RAM(g)[xyaddr(x, y)] |= xybit(y);
+		else
+			RAM(g)[xyaddr(x, y)] &= ~xybit(y);
+		g->flags |= GDISP_FLG_NEEDFLUSH;
+	}
 #endif
 
-  if (color == 1)
-  gdisp_buffer[x+ (y/8)*GDISP_SCREEN_WIDTH] |= (1<<y%8);
-  else
-  gdisp_buffer[x+ (y/8)*GDISP_SCREEN_WIDTH] &= ~(1<<y%8);
-}
+#if GDISP_HARDWARE_PIXELREAD
+	LLDSPEC color_t gdisp_lld_get_pixel_color(GDisplay *g) {
+		coord_t		x, y;
 
-/* ---- Optional Routines ---- */
-/*
- All the below routines are optional.
- Defining them will increase speed but everything
- will work if they are not defined.
- If you are not using a routine - turn it off using
- the appropriate GDISP_HARDWARE_XXXX macro.
- Don't bother coding for obvious similar routines if
- there is no performance penalty as the emulation software
- makes a good job of using similar routines.
- eg. If gfillarea() is defined there is little
- point in defining clear() unless the
- performance bonus is significant.
- For good performance it is suggested to implement
- fillarea() and blitarea().
- */
+		switch(g->g.Orientation) {
+		case GDISP_ROTATE_0:
+			x = g->p.x;
+			y = g->p.y;
+			break;
+		case GDISP_ROTATE_90:
+			x = g->p.y;
+			y = GDISP_SCREEN_HEIGHT-1 - g->p.x;
+			break;
+		case GDISP_ROTATE_180:
+			x = GDISP_SCREEN_WIDTH-1 - g->p.x;
+			y = GDISP_SCREEN_HEIGHT-1 - g->p.y;
+			break;
+		case GDISP_ROTATE_270:
+			x = GDISP_SCREEN_HEIGHT-1 - g->p.y;
+			x = g->p.x;
+			break;
+		}
+		return (RAM(g)[xyaddr(x, y)] & xybit(y)) ? White : Black;
+	}
+#endif
 
-#if (GDISP_NEED_CONTROL && GDISP_HARDWARE_CONTROL) || defined(__DOXYGEN__)
-/**
- * @brief   Driver Control
- * @details Unsupported control codes are ignored.
- * @note    The value parameter should always be typecast to (void *).
- * @note    There are some predefined and some specific to the low level driver.
- * @note    GDISP_CONTROL_POWER         - Takes a gdisp_powermode_t
- *          GDISP_CONTROL_ORIENTATION   - Takes a gdisp_orientation_t
- *          GDISP_CONTROL_BACKLIGHT 	- Takes an int from 0 to 100. For a driver
- *                                        that only supports off/on anything other
- *                                        than zero is on.
- *          GDISP_CONTROL_CONTRAST      - Takes an int from 0 to 100.
- *          GDISP_CONTROL_LLD           - Low level driver control constants start at
- *                                        this value.
- *
- * @param[in] what		What to do.
- * @param[in] value 	The value to use (always cast to a void *).
- *
- * @notapi
- */
-void gdisp_lld_control(unsigned what, void *value) {
-  switch(what) {
-    case GDISP_CONTROL_POWER:
-      if (GDISP.Powermode == (gdisp_powermode_t)value)
-        return;
+#if GDISP_NEED_CONTROL && GDISP_HARDWARE_CONTROL
+	LLDSPEC void gdisp_lld_control(GDisplay *g) {
+		switch(g->p.x) {
+		case GDISP_CONTROL_POWER:
+			if (g->g.Powermode == (powermode_t)g->p.ptr)
+				return;
+			switch((powermode_t)g->p.ptr) {
+			case powerOff:
+			case powerSleep:
+			case powerDeepSleep:
+				acquire_bus(g);
+				write_cmd(g, ST7565_DISPLAY_OFF);
+				release_bus(g);
+				break;
+			case powerOn:
+				acquire_bus(g);
+				write_cmd(g, ST7565_DISPLAY_ON);
+				release_bus(g);
+				break;
+			default:
+				return;
+			}
+			g->g.Powermode = (powermode_t)g->p.ptr;
+			return;
 
-      switch((gdisp_powermode_t)value) {
-        case powerOff:
-          display_off();
-          break;
-        case powerSleep:
-          display_off();
-          break;
-        case powerDeepSleep:
-          display_off();
-          break;
-        case powerOn:
-          display_on();
-          break;
-        default:
-          return;
-      }
-      GDISP.Powermode = (gdisp_powermode_t)value;
-      return;
+		case GDISP_CONTROL_ORIENTATION:
+			if (g->g.Orientation == (orientation_t)g->p.ptr)
+				return;
+			switch((orientation_t)g->p.ptr) {
+			/* Rotation is handled by the drawing routines */
+			case GDISP_ROTATE_0:
+			case GDISP_ROTATE_180:
+				g->g.Height = GDISP_SCREEN_HEIGHT;
+				g->g.Width = GDISP_SCREEN_WIDTH;
+				break;
+			case GDISP_ROTATE_90:
+			case GDISP_ROTATE_270:
+				g->g.Height = GDISP_SCREEN_WIDTH;
+				g->g.Width = GDISP_SCREEN_HEIGHT;
+				break;
+			default:
+				return;
+			}
+			g->g.Orientation = (orientation_t)g->p.ptr;
+			return;
 
-    case GDISP_CONTROL_BACKLIGHT:
-      set_backlight((uint8_t)(size_t)value);
-      return;
-
-    case GDISP_CONTROL_CONTRAST:
-      if ((unsigned)value > 100) value = (void*)100;
-      if (GDISP.Contrast == (uint8_t)((float)((size_t)value) * 63.0/100.0))
-        return;
-      set_contrast((uint8_t)((float)((size_t)value) * 63.0/100.0) );
-      GDISP.Contrast = (unsigned)value;
-      return;
-
-    case GDISP_CONTROL_LLD_FLUSH:
-      gdisp_lld_display();
-      return;
-  }
-}
+		case GDISP_CONTROL_CONTRAST:
+            if ((unsigned)g->p.ptr > 100)
+            	g->p.ptr = (void *)100;
+			acquire_bus(g);
+			write_cmd2(g, ST7565_CONTRAST, ((((unsigned)g->p.ptr)<<6)/101) & 0x3F);
+			release_bus(g);
+            g->g.Contrast = (unsigned)g->p.ptr;
+			return;
+		}
+	}
 #endif // GDISP_NEED_CONTROL
 
 #endif // GFX_USE_GDISP
-/** @} */
-
