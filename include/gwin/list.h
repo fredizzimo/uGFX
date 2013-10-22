@@ -205,6 +205,19 @@ bool_t gwinListItemIsSelected(GHandle gh, int item);
  */
 int gwinListGetSelected(GHandle gh);
 
+/**
+ * @brief				Get the text of the selected item
+ *
+ * @param[in] gh		The widget handle (must be a list handle)
+ *
+ * @return				The test of the selected list item for a single-select list.
+ *
+ * @note				It always returns NULL (nothing selected) for a multi-select list.
+ *
+ * @api
+ */
+const char* gwinListGetSelectedText(GHandle gh);
+
 #if GWIN_NEED_LIST_IMAGES || defined(__DOXYGEN__)
 	/**
 	 * @brief				Set the image for a list item
