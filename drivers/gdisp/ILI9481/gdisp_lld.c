@@ -311,7 +311,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			default:
 				return;
 			}
-			g->g.Orientation = (orientation_t)value;
+			g->g.Orientation = (orientation_t)g->p.ptr;
 			return;
         //case GDISP_CONTROL_BACKLIGHT:
 		//case GDISP_CONTROL_CONTRAST:

@@ -2313,6 +2313,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 		}
 	#else
 		void gdispGControl(GDisplay *g, unsigned what, void *value) {
+			(void)g;
 			(void)what;
 			(void)value;
 			/* Ignore everything */

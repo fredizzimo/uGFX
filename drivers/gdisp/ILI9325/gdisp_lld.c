@@ -346,7 +346,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 					return;
 			}
 
-			g->g.Orientation = (orientation_t)value;
+			g->g.Orientation = (orientation_t)g->p.ptr;
 			return;
 			
         case GDISP_CONTROL_BACKLIGHT:
@@ -360,7 +360,6 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			return;
 		}
 	}
-
 #endif
 
 #endif /* GFX_USE_GDISP */
