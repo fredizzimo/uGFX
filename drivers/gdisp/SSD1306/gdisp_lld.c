@@ -51,8 +51,11 @@
 #define write_cmd3(g, cmd1, cmd2, cmd3)	{ write_cmd(g, cmd1); write_cmd(g, cmd2); write_cmd(g, cmd3); }
 
 // Some common routines and macros
-#define delay(us)					gfxSleepMicroseconds(us)
-#define delayms(ms)					gfxSleepMilliseconds(ms)
+#define delay(us)			gfxSleepMicroseconds(us)
+#define delayms(ms)			gfxSleepMilliseconds(ms)
+
+#define xyaddr(x, y)		((x) + ((y)>>3)*GDISP_SCREEN_WIDTH)
+#define xybit(y)			(1<<((y)&7))
 
 /*===========================================================================*/
 /* Driver exported functions.                                                */
@@ -135,17 +138,57 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 #if GDISP_HARDWARE_DRAWPIXEL
 	LLDSPEC void gdisp_lld_draw_pixel(GDisplay *g) {
+		coord_t		x, y;
+
+		switch(g->g.Orientation) {
+		case GDISP_ROTATE_0:
+			x = g->p.x;
+			y = g->p.y;
+			break;
+		case GDISP_ROTATE_90:
+			x = g->p.y;
+			y = GDISP_SCREEN_HEIGHT-1 - g->p.x;
+			break;
+		case GDISP_ROTATE_180:
+			x = GDISP_SCREEN_WIDTH-1 - g->p.x;
+			y = GDISP_SCREEN_HEIGHT-1 - g->p.y;
+			break;
+		case GDISP_ROTATE_270:
+			x = GDISP_SCREEN_HEIGHT-1 - g->p.y;
+			x = g->p.x;
+			break;
+		}
 		if (g->p.color != Black)
-			RAM(g)[g->p.x + (g->p.y>>3)*GDISP_SCREEN_WIDTH] |=  (1<<(g->p.y&7));
+			RAM(g)[xyaddr(x, y)] |= xybit(y);
 		else
-			RAM(g)[g->p.x + (g->p.y>>3)*GDISP_SCREEN_WIDTH] &=  ~(1<<(g->p.y&7));
+			RAM(g)[xyaddr(x, y)] &= ~xybit(y);
 		g->flags |= GDISP_FLG_NEEDFLUSH;
 	}
 #endif
 
 #if GDISP_HARDWARE_PIXELREAD
 	LLDSPEC color_t gdisp_lld_get_pixel_color(GDisplay *g) {
-		return (RAM(g)[g->p.x + (g->p.y>>3)*GDISP_SCREEN_WIDTH] & (1<<(g->p.y&7))) ? White : Black;
+		coord_t		x, y;
+
+		switch(g->g.Orientation) {
+		case GDISP_ROTATE_0:
+			x = g->p.x;
+			y = g->p.y;
+			break;
+		case GDISP_ROTATE_90:
+			x = g->p.y;
+			y = GDISP_SCREEN_HEIGHT-1 - g->p.x;
+			break;
+		case GDISP_ROTATE_180:
+			x = GDISP_SCREEN_WIDTH-1 - g->p.x;
+			y = GDISP_SCREEN_HEIGHT-1 - g->p.y;
+			break;
+		case GDISP_ROTATE_270:
+			x = GDISP_SCREEN_HEIGHT-1 - g->p.y;
+			y = g->p.x;
+			break;
+		}
+		return (RAM(g)[xyaddr(x, y)] & xybit(y)) ? White : Black;
 	}
 #endif
 
@@ -167,6 +210,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 				acquire_bus(g);
 				write_cmd(g, SSD1306_DISPLAYON);
 				release_bus(g);
+				break;
 			default:
 				return;
 			}
@@ -177,21 +221,16 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			if (g->g.Orientation == (orientation_t)g->p.ptr)
 				return;
 			switch((orientation_t)g->p.ptr) {
+			/* Rotation is handled by the drawing routines */
 			case GDISP_ROTATE_0:
-				acquire_bus(g);
-				write_cmd(g, SSD1306_COMSCANDEC);
-				write_cmd(g, SSD1306_SEGREMAP+1);
-				GDISP.Height = GDISP_SCREEN_HEIGHT;
-				GDISP.Width = GDISP_SCREEN_WIDTH;
-				release_bus(g);
-				break;
 			case GDISP_ROTATE_180:
-				acquire_bus(g);
-				write_cmd(g, SSD1306_COMSCANINC);
-				write_cmd(g, SSD1306_SEGREMAP);
-				GDISP.Height = GDISP_SCREEN_HEIGHT;
-				GDISP.Width = GDISP_SCREEN_WIDTH;
-				release_bus(g);
+				g->g.Height = GDISP_SCREEN_HEIGHT;
+				g->g.Width = GDISP_SCREEN_WIDTH;
+				break;
+			case GDISP_ROTATE_90:
+			case GDISP_ROTATE_270:
+				g->g.Height = GDISP_SCREEN_WIDTH;
+				g->g.Width = GDISP_SCREEN_HEIGHT;
 				break;
 			default:
 				return;
@@ -203,14 +242,14 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
             if ((unsigned)g->p.ptr > 100)
             	g->p.ptr = (void *)100;
 			acquire_bus(g);
-			write_cmd2(g, SSD1306_SETCONTRAST, (((uint16_t)value)<<8)/101);
+			write_cmd2(g, SSD1306_SETCONTRAST, (((unsigned)g->p.ptr)<<8)/101);
 			release_bus(g);
             g->g.Contrast = (unsigned)g->p.ptr;
 			return;
 
 		// Our own special controller code to inverse the display
 		// 0 = normal, 1 = inverse
-		case GDISP_CONTROL_INVERT:
+		case GDISP_CONTROL_INVERSE:
 			acquire_bus(g);
 			write_cmd(g, g->p.ptr ? SSD1306_INVERTDISPLAY : SSD1306_NORMALDISPLAY);
 			release_bus(g);
