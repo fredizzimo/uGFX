@@ -536,6 +536,18 @@ int gwinListItemCount(GHandle gh) {
 	return gh2obj->cnt;
 }
 
+const char* gwinListGetSelectedText(GHandle gh) {
+	// is it a valid handle?
+	if (gh->vmt != (gwinVMT *)&listVMT)
+		return 0;
+
+	// return NULL if nothing is selected (or multi-select)
+	if (gwinListGetSelected(gh) < 0)
+		return 0;
+
+	return gwinListItemGetText(gh, gwinListGetSelected(gh));
+}
+
 #if GWIN_NEED_LIST_IMAGES
 	void gwinListItemSetImage(GHandle gh, int item, gdispImage *pimg) {
 		const gfxQueueASyncItem	*	qi;
