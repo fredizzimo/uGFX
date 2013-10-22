@@ -43,84 +43,100 @@
 #define GPIOC_VPOS_CTRL     14
 #define GPIOC_VNEG_CTRL     15
 
+static inline void init_board(GDisplay *g) {
 
-/* Set up IO pins for the panel connection. */
-static inline void init_board(void) {
-	/* Main SMPS power control, active low
-	 * (open collector so that MOSFET gate can be pulled up to Vbat) */
-	palWritePad(GPIOC, GPIOC_SMPS_CTRL, true);
-	palSetPadMode(GPIOC, GPIOC_SMPS_CTRL, PAL_MODE_OUTPUT_OPENDRAIN);
-	
-	/* Power control for the positive & negative side */
-	palWritePad(GPIOC, GPIOC_VPOS_CTRL, false);
-	palSetPadMode(GPIOC, GPIOC_VPOS_CTRL, PAL_MODE_OUTPUT_PUSHPULL);
-	palWritePad(GPIOC, GPIOC_VNEG_CTRL, false);
-	palSetPadMode(GPIOC, GPIOC_VNEG_CTRL, PAL_MODE_OUTPUT_PUSHPULL);
-	
-	/* Main data bus */
-	palWritePort(GPIOB, 0);
-	palSetGroupMode(GPIOB, 0xFFFF, 0, PAL_MODE_OUTPUT_PUSHPULL);
+	// As we are not using multiple displays we set g->board to NULL as we don't use it.
+	g->board = 0;
+
+	switch(g->controllerdisplay) {
+	case 0:											// Set up for Display 0
+		/* Main SMPS power control, active low
+		 * (open collector so that MOSFET gate can be pulled up to Vbat) */
+		palWritePad(GPIOC, GPIOC_SMPS_CTRL, true);
+		palSetPadMode(GPIOC, GPIOC_SMPS_CTRL, PAL_MODE_OUTPUT_OPENDRAIN);
+
+		/* Power control for the positive & negative side */
+		palWritePad(GPIOC, GPIOC_VPOS_CTRL, false);
+		palSetPadMode(GPIOC, GPIOC_VPOS_CTRL, PAL_MODE_OUTPUT_PUSHPULL);
+		palWritePad(GPIOC, GPIOC_VNEG_CTRL, false);
+		palSetPadMode(GPIOC, GPIOC_VNEG_CTRL, PAL_MODE_OUTPUT_PUSHPULL);
+
+		/* Main data bus */
+		palWritePort(GPIOB, 0);
+		palSetGroupMode(GPIOB, 0xFFFF, 0, PAL_MODE_OUTPUT_PUSHPULL);
+		break;
+	}
 }
 
 /* Delay for display waveforms. Should be an accurate microsecond delay. */
-static void eink_delay(int us)
-{
+static void eink_delay(int us) {
 	halPolledDelay(US2RTT(us));
 }
 
 /* Turn the E-ink panel Vdd supply (+3.3V) on or off. */
-static inline void setpower_vdd(bool_t on) {
+static inline void setpower_vdd(GDisplay *g, bool_t on) {
+	(void) g;
 	palWritePad(GPIOB, GPIOB_SMPS_CTRL, !on);
 	palWritePad(GPIOA, GPIOA_EINK_VDD, on);
 }
 
 /* Turn the E-ink panel negative supplies (-15V, -20V) on or off. */
-static inline void setpower_vneg(bool_t on) {
+static inline void setpower_vneg(GDisplay *g, bool_t on) {
+	(void) g;
 	palWritePad(GPIOA, GPIOA_VNEG_CTRL, on);
 }
 
 /* Turn the E-ink panel positive supplies (-15V, -20V) on or off. */
-static inline void setpower_vpos(bool_t on) {
+static inline void setpower_vpos(GDisplay *g, bool_t on) {
+	(void) g;
 	palWritePad(GPIOA, GPIOA_VPOS_CTRL, on);
 }
 
 /* Set the state of the LE (source driver Latch Enable) pin. */
-static inline void setpin_le(bool_t on) {
+static inline void setpin_le(GDisplay *g, bool_t on) {
+	(void) g;
 	palWritePad(GPIOB, GPIOB_EINK_LE, on);
 }
 
 /* Set the state of the OE (source driver Output Enable) pin. */
-static inline void setpin_oe(bool_t on) {
+static inline void setpin_oe(GDisplay *g, bool_t on) {
+	(void) g;
 	palWritePad(GPIOB, GPIOB_EINK_OE, on);
 }
 
 /* Set the state of the CL (source driver Clock) pin. */
-static inline void setpin_cl(bool_t on) {
+static inline void setpin_cl(GDisplay *g, bool_t on) {
+	(void) g;
 	palWritePad(GPIOB, GPIOB_EINK_CL, on);
 }
 
 /* Set the state of the SPH (source driver Start Pulse Horizontal) pin. */
-static inline void setpin_sph(bool_t on) {
+static inline void setpin_sph(GDisplay *g, bool_t on) {
+	(void) g;
 	palWritePad(GPIOB, GPIOB_EINK_SPH, on);
 }
 
 /* Set the state of the D0-D7 (source driver Data) pins. */
-static inline void setpins_data(uint8_t value) {
+static inline void setpins_data(GDisplay *g, uint8_t value) {
+	(void) g;
 	palWriteGroup(GPIOB, 0xFF, GPIOB_EINK_D0, value);
 }
 
 /* Set the state of the CKV (gate driver Clock Vertical) pin. */
-static inline void setpin_ckv(bool_t on) {
+static inline void setpin_ckv(GDisplay *g, bool_t on) {
+	(void) g;
 	palWritePad(GPIOB, GPIOB_EINK_CKV, on);
 }
 
 /* Set the state of the GMODE (gate driver Gate Mode) pin. */
-static inline void setpin_gmode(bool_t on) {
+static inline void setpin_gmode(GDisplay *g, bool_t on) {
+	(void) g;
 	palWritePad(GPIOC, GPIOC_EINK_GMODE, on);
 }
 
 /* Set the state of the SPV (gate driver Start Pulse Vertical) pin. */
-static inline void setpin_spv(bool_t on) {
+static inline void setpin_spv(GDisplay *g, bool_t on) {
+	(void) g;
 	palWritePad(GPIOB, GPIOB_EINK_SPV, on);
 }
 
