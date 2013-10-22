@@ -8,20 +8,16 @@
 /**
  * @file    drivers/gdisp/SSD2119/gdisp_lld.c
  * @brief   GDISP Graphics Driver subsystem low level driver source for the SSD2119 display.
- *
- * @addtogroup GDISP
- * @{
  */
 
 #include "gfx.h"
-
-#include "ssd2119.h"
 
 #if GFX_USE_GDISP
 
 #define GDISP_DRIVER_VMT			GDISPVMT_SSD2119
 #include "../drivers/gdisp/SSD2119/gdisp_lld_config.h"
 #include "gdisp/lld/gdisp_lld.h"
+
 #include "board_SSD2119.h"
 
 /*===========================================================================*/
@@ -40,6 +36,8 @@
 #ifndef GDISP_INITIAL_BACKLIGHT
 	#define GDISP_INITIAL_BACKLIGHT	100
 #endif
+
+#include "ssd2119.h"
 
 /*===========================================================================*/
 /* Driver local functions.                                                   */
@@ -60,23 +58,22 @@ static void set_cursor(GDisplay* g) {
 			write_reg(g, SSD2119_REG_Y_RAM_ADDR, g->p.y & 0x00FF);
 			break;
 		case GDISP_ROTATE_90:
-			write_reg(g, SSD2119_REG_X_RAM_ADDR, (GDISP_SCREEN_WIDTH - g->p.y - 1) & 0x01FF);
-			write_reg(g, SSD2119_REG_Y_RAM_ADDR, (GDISP_SCREEN_HEIGHT - g->p.x - 1) & 0x00FF);
+			write_reg(g, SSD2119_REG_X_RAM_ADDR, g->p.y & 0x01FF);
+			write_reg(g, SSD2119_REG_Y_RAM_ADDR, (GDISP_SCREEN_HEIGHT-1 - g->p.x) & 0x00FF);
 			break;
 		case GDISP_ROTATE_180:
-			write_reg(g, SSD2119_REG_X_RAM_ADDR, (GDISP_SCREEN_WIDTH - 1 - g->p.x) & 0x01FF);
-			write_reg(g, SSD2119_REG_Y_RAM_ADDR, (GDISP_SCREEN_HEIGHT - 1 - g->p.y) & 0x00FF);
+			write_reg(g, SSD2119_REG_X_RAM_ADDR, (GDISP_SCREEN_WIDTH-1 - g->p.x) & 0x01FF);
+			write_reg(g, SSD2119_REG_Y_RAM_ADDR, (GDISP_SCREEN_HEIGHT-1 - g->p.y) & 0x00FF);
 			break;
 		case GDISP_ROTATE_270:
-			write_reg(g, SSD2119_REG_X_RAM_ADDR, g->p.y & 0x01FF);
+			write_reg(g, SSD2119_REG_X_RAM_ADDR, (GDISP_SCREEN_WIDTH-1 - g->p.y) & 0x01FF);
 			write_reg(g, SSD2119_REG_Y_RAM_ADDR, g->p.x & 0x00FF);
 			break;
 	}
+	write_index(g, SSD2119_REG_RAM_DATA);
 }
 
 static void set_viewport(GDisplay* g) {
-	set_cursor(g->p.x, g->p.y);
-
 	/* Reg 0x44 - Vertical RAM address position
 	 * 		Upper Byte - VEA
 	 * 		Lower Byte - VSA
@@ -85,7 +82,6 @@ static void set_viewport(GDisplay* g) {
 	 * 		Lower 9 bits gives 0-511 range in each value, HSA and HEA respectively
 	 * 		0 <= HSA <= HEA <= 0x13F
 	 */
-
 	switch(g->g.Orientation) {
 		case GDISP_ROTATE_0:
 			write_reg(g, SSD2119_REG_V_RAM_POS,   (((g->p.y + g->p.cy - 1) << 8) & 0xFF00 ) | (g->p.y & 0x00FF));
@@ -93,27 +89,21 @@ static void set_viewport(GDisplay* g) {
 			write_reg(g, SSD2119_REG_H_RAM_END,   (g->p.x + g->p.cx - 1) & 0x01FF);
 			break;
 		case GDISP_ROTATE_90:
-			write_reg(g, SSD2119_REG_V_RAM_POS,   (((GDISP_SCREEN_HEIGHT - g->p.x - 1) & 0x00FF) << 8) | ((GDISP_SCREEN_HEIGHT - (g->p.x + g->p.cx)) & 0x00FF));
-			write_reg(g, SSD2119_REG_H_RAM_START, (GDISP_SCREEN_WIDTH - (g->p.y + g->p.cy)) & 0x01FF);
-			write_reg(g, SSD2119_REG_H_RAM_END,   (GDISP_SCREEN_WIDTH - g->p.y - 1) & 0x01FF);
+			write_reg(g, SSD2119_REG_V_RAM_POS,   (((GDISP_SCREEN_HEIGHT-1 - g->p.x) & 0x00FF) << 8) | ((GDISP_SCREEN_HEIGHT - (g->p.x + g->p.cx)) & 0x00FF));
+			write_reg(g, SSD2119_REG_H_RAM_START, (g->p.y & 0x01FF));
+			write_reg(g, SSD2119_REG_H_RAM_END,   (g->p.y + g->p.cy - 1) & 0x01FF);
 			break;
 		case GDISP_ROTATE_180:
-			write_reg(SSD2119_REG_V_RAM_POS,   (((GDISP_SCREEN_HEIGHT - g->p.y - 1) & 0x00FF) << 8) | ((GDISP_SCREEN_HEIGHT - (g->p.y + g->p.cy)) & 0x00FF));
-			write_reg(SSD2119_REG_H_RAM_START, (GDISP_SCREEN_WIDTH - (g->p.x + g->p.cx)) & 0x01FF);
-			write_reg(SSD2119_REG_H_RAM_END,   (GDISP_SCREEN_WIDTH - g->p.x - 1) & 0x01FF);
+			write_reg(g, SSD2119_REG_V_RAM_POS,   (((GDISP_SCREEN_HEIGHT-1 - g->p.y) & 0x00FF) << 8) | ((GDISP_SCREEN_HEIGHT - (g->p.y + g->p.cy)) & 0x00FF));
+			write_reg(g, SSD2119_REG_H_RAM_START, (GDISP_SCREEN_WIDTH - (g->p.x + g->p.cx)) & 0x01FF);
+			write_reg(g, SSD2119_REG_H_RAM_END,   (GDISP_SCREEN_WIDTH-1 - g->p.x) & 0x01FF);
 			break;
 		case GDISP_ROTATE_270:
-			write_reg(SSD2119_REG_V_RAM_POS,   (((g->p.x + g->p.cx - 1) << 8) & 0xFF00 ) | (g->p.x & 0x00FF));
-			write_reg(SSD2119_REG_H_RAM_START, (g->p.y & 0x01FF));
-			write_reg(SSD2119_REG_H_RAM_END,   (g->p.y + g->p.cy - 1) & 0x01FF);
+			write_reg(g, SSD2119_REG_V_RAM_POS,   (((g->p.x + g->p.cx - 1) << 8) & 0xFF00 ) | (g->p.x & 0x00FF));
+			write_reg(g, SSD2119_REG_H_RAM_START, (GDISP_SCREEN_WIDTH - (g->p.y + g->p.cy)) & 0x01FF);
+			write_reg(g, SSD2119_REG_H_RAM_END,   (GDISP_SCREEN_WIDTH-1 - g->p.y) & 0x01FF);
 			break;
 	}
-
-	set_cursor(g->p.x, g->p.y);
-}
-
-static inline void reset_viewport(GDisplay* g) {
-	set_viewport(0, 0, g->g.Width, g->g.Height);
 }
 
 /*===========================================================================*/
@@ -129,7 +119,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay* g) {
 	g->priv = 0;
 
 	// initialise the board interface
-	init_board();
+	init_board(g);
 
 	// Hardware reset
 	setpin_reset(g, TRUE);
@@ -223,20 +213,22 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay* g) {
 	write_reg(g, SSD2119_REG_Y_RAM_ADDR, 0x00);
 	gfxSleepMicroseconds(5);
 
-	// Release the bus
+    // Finish Init
+    post_init_board(g);
+
+ 	// Release the bus
 	release_bus(g);
 
-	// Turn on the backlight
+	/* Turn on the back-light */
 	set_backlight(g, GDISP_INITIAL_BACKLIGHT);
 
-	// Initialise the GDISP structure
+	/* Initialise the GDISP structure */
 	g->g.Width = GDISP_SCREEN_WIDTH;
 	g->g.Height = GDISP_SCREEN_HEIGHT;
 	g->g.Orientation = GDISP_ROTATE_0;
 	g->g.Powermode = powerOn;
 	g->g.Backlight = GDISP_INITIAL_BACKLIGHT;
 	g->g.Contrast = GDISP_INITIAL_CONTRAST;
-
 	return TRUE;
 }
 
@@ -261,14 +253,14 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay* g) {
 		acquire_bus(g);
 		set_viewport(g);
 		set_cursor(g);
-		set_readmode(g);
+		setreadmode(g);
 		dummy_read(g);
 	}
 	LLDSPEC color_t gdisp_lld_read_color(GDisplay* g) {
 		return read_data(g);
 	}
 	LLDSPEC void gdisp_lld_read_stop(GDisplay* g) {
-		set_writemode(g);
+		setwritemode(g);
 		release_bus(g);
 	}
 #endif
@@ -278,7 +270,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay* g) {
 		acquire_bus(g);
 		set_viewport(g);
 		set_cursor(g);	
-		dma_with_noinc(g, &color, g->p.cx * g->p.cy);
+		dma_with_noinc(g, &g->p.color, g->p.cx * g->p.cy);
 		release_bus(g);
 	}
 #endif
@@ -306,450 +298,104 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay* g) {
 #endif
 
 #if GDISP_NEED_CONTROL && GDISP_HARDWARE_CONTROL
-	LLDSPEC void gdisp_lld_control(GDisplay* g) {
-		// ....
-	}
-#endif
-
-
-//////////////////////// OLD STUFF FROM HERE ////////////////////////////////////////////////////
-
-void gdisp_lld_draw_pixel(coord_t x, coord_t y, color_t color) {
-	#if GDISP_NEED_VALIDATION || GDISP_NEED_CLIP
-		if (x < GDISP.clipx0 || y < GDISP.clipy0 || x >= GDISP.clipx1 || y >= GDISP.clipy1) return;
-	#endif
-	
-	acquire_bus();
-	set_cursor(x, y);
-	write_reg(SSD2119_REG_RAM_DATA, color);
-	release_bus();
-}
-
-/* ---- Optional Routines ---- */
-/*
-	All the below routines are optional.
-	Defining them will increase speed but everything
-	will work if they are not defined.
-	If you are not using a routine - turn it off using
-	the appropriate GDISP_HARDWARE_XXXX macro.
-	Don't bother coding for obvious similar routines if
-	there is no performance penalty as the emulation software
-	makes a good job of using similar routines.
-		eg. If gfillarea() is defined there is little
-			point in defining clear() unless the
-			performance bonus is significant.
-	For good performance it is suggested to implement
-		fillarea() and blitarea().
-*/
-
-#if GDISP_HARDWARE_CLEARS || defined(__DOXYGEN__)
-	/**
-	 * @brief   Clear the display.
-	 * @note    Optional - The high level driver can emulate using software.
-	 *
-	 * @param[in] color    The color of the pixel
-	 *
-	 * @notapi
-	 */
-	void gdisp_lld_clear(color_t color) {
-		unsigned area;
-
-		area = GDISP_SCREEN_WIDTH * GDISP_SCREEN_HEIGHT;
-
-		acquire_bus();
-		reset_viewport();
-		set_cursor(0, 0);
-		stream_start();
-
-		#if defined(GDISP_USE_FSMC) && defined(GDISP_USE_DMA) && defined(GDISP_DMA_STREAM)
-			uint8_t i;
-			dmaStreamSetPeripheral(GDISP_DMA_STREAM, &color);
-			dmaStreamSetMode(GDISP_DMA_STREAM, STM32_DMA_CR_PL(0) | STM32_DMA_CR_PSIZE_HWORD | STM32_DMA_CR_MSIZE_HWORD | STM32_DMA_CR_DIR_M2M);
-			for (i = area / 65535; i; i--) {
-				dmaStreamSetTransactionSize(GDISP_DMA_STREAM, 65535);
-				dmaStreamEnable(GDISP_DMA_STREAM);
-				dmaWaitCompletion(GDISP_DMA_STREAM);
-			}
-			dmaStreamSetTransactionSize(GDISP_DMA_STREAM, area % 65535);
-			dmaStreamEnable(GDISP_DMA_STREAM);
-			dmaWaitCompletion(GDISP_DMA_STREAM);
-		#else
-			uint32_t index;
-			for(index = 0; index < area; index++)
-				write_data(color);
-		#endif // defined(GDISP_USE_FSMC) && defined(GDISP_USE_DMA) && defined(GDISP_DMA_STREAM)
-
-		stream_stop();
-		release_bus();
-	}
-#endif
-
-#if GDISP_HARDWARE_FILLS || defined(__DOXYGEN__)
-	/**
-	 * @brief   Fill an area with a color.
-	 * @note    Optional - The high level driver can emulate using software.
-	 *
-	 * @param[in] x, y     The start filled area
-	 * @param[in] cx, cy   The width and height to be filled
-	 * @param[in] color    The color of the fill
-	 *
-	 * @notapi
-	 */
-	void gdisp_lld_fill_area(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color) {
-		unsigned area;
-
-		#if GDISP_NEED_VALIDATION || GDISP_NEED_CLIP
-			if (x < GDISP.clipx0) { cx -= GDISP.clipx0 - x; x = GDISP.clipx0; }
-			if (y < GDISP.clipy0) { cy -= GDISP.clipy0 - y; y = GDISP.clipy0; }
-			if (cx <= 0 || cy <= 0 || x >= GDISP.clipx1 || y >= GDISP.clipy1) return;
-			if (x+cx > GDISP.clipx1)	cx = GDISP.clipx1 - x;
-			if (y+cy > GDISP.clipy1)	cy = GDISP.clipy1 - y;
-		#endif
-
-		area = cx*cy;
-
-		acquire_bus();
-		set_viewport(x, y, cx, cy);
-		stream_start();
-
-		#if defined(GDISP_USE_FSMC) && defined(GDISP_USE_DMA) && defined(GDISP_DMA_STREAM)
-			uint8_t i;
-				dmaStreamSetPeripheral(GDISP_DMA_STREAM, &color);
-				dmaStreamSetMode(GDISP_DMA_STREAM, STM32_DMA_CR_PL(0) | STM32_DMA_CR_PSIZE_HWORD | STM32_DMA_CR_MSIZE_HWORD | STM32_DMA_CR_DIR_M2M);
-			for (i = area / 65535; i; i--) {
-				dmaStreamSetTransactionSize(GDISP_DMA_STREAM, 65535);
-				dmaStreamEnable(GDISP_DMA_STREAM);
-				dmaWaitCompletion(GDISP_DMA_STREAM);
-			}
-			dmaStreamSetTransactionSize(GDISP_DMA_STREAM, area % 65535);
-			dmaStreamEnable(GDISP_DMA_STREAM);
-			dmaWaitCompletion(GDISP_DMA_STREAM);
-		#else
-			uint32_t index;
-			for(index = 0; index < area; index++)
-				write_data(color);
-		#endif // defined(GDISP_USE_FSMC) && defined(GDISP_USE_DMA) && defined(GDISP_DMA_STREAM)
-
-		stream_stop();
-		release_bus();
-	}
-#endif
-
-#if GDISP_HARDWARE_BITFILLS || defined(__DOXYGEN__)
-	/**
-	 * @brief   Fill an area with a bitmap.
-	 * @note    Optional - The high level driver can emulate using software.
-	 *
-	 * @param[in] x, y     The start filled area
-	 * @param[in] cx, cy   The width and height to be filled
-	 * @param[in] srcx, srcy   The bitmap position to start the fill from
-	 * @param[in] srccx    The width of a line in the bitmap.
-	 * @param[in] buffer   The pixels to use to fill the area.
-	 *
-	 * @notapi
-	 */
-	void gdisp_lld_blit_area_ex(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx, coord_t srcy, coord_t srccx, const pixel_t *buffer) {
-
-		#if GDISP_NEED_VALIDATION || GDISP_NEED_CLIP
-			if (x < GDISP.clipx0) { cx -= GDISP.clipx0 - x; srcx += GDISP.clipx0 - x; x = GDISP.clipx0; }
-			if (y < GDISP.clipy0) { cy -= GDISP.clipy0 - y; srcy += GDISP.clipy0 - y; y = GDISP.clipy0; }
-			if (srcx+cx > srccx)		cx = srccx - srcx;
-			if (cx <= 0 || cy <= 0 || x >= GDISP.clipx1 || y >= GDISP.clipy1) return;
-			if (x+cx > GDISP.clipx1)	cx = GDISP.clipx1 - x;
-			if (y+cy > GDISP.clipy1)	cy = GDISP.clipy1 - y;
-		#endif
-
-		buffer += srcx + srcy * srccx;
-
-		acquire_bus();
-		set_viewport(x, y, cx, cy);
-		stream_start();
-
-		#if defined(GDISP_USE_FSMC) && defined(GDISP_USE_DMA) && defined(GDISP_DMA_STREAM)
-			uint32_t area = cx * cy;
-			uint8_t i;
-			dmaStreamSetPeripheral(GDISP_DMA_STREAM, buffer);
-			dmaStreamSetMode(GDISP_DMA_STREAM, STM32_DMA_CR_PL(0) | STM32_DMA_CR_PINC | STM32_DMA_CR_PSIZE_HWORD | STM32_DMA_CR_MSIZE_HWORD | STM32_DMA_CR_DIR_M2M);
-			for (i = area / 65535; i; i--) {
-				dmaStreamSetTransactionSize(GDISP_DMA_STREAM, 65535);
-				dmaStreamEnable(GDISP_DMA_STREAM);
-				dmaWaitCompletion(GDISP_DMA_STREAM);
-			}
-			dmaStreamSetTransactionSize(GDISP_DMA_STREAM, area % 65535);
-			dmaStreamEnable(GDISP_DMA_STREAM);
-			dmaWaitCompletion(GDISP_DMA_STREAM);
-		#else
-			coord_t endx, endy;
-			uint32_t lg;
-			endx = srcx + cx;
-			endy = y + cy;
-			lg = srccx - cx;
-			for(; y < endy; y++, buffer += lg)
-				for(x=srcx; x < endx; x++)
-					write_data(*buffer++);
-		#endif // defined(GDISP_USE_FSMC) && defined(GDISP_USE_DMA) && defined(GDISP_DMA_STREAM)
-
-		stream_stop();
-		release_bus();
-	}
-#endif
-
-#if (GDISP_NEED_PIXELREAD && GDISP_HARDWARE_PIXELREAD) || defined(__DOXYGEN__)
-	/**
-	 * @brief   Get the color of a particular pixel.
-	 * @note    Optional.
-	 * @note    If x,y is off the screen, the result is undefined.
-	 *
-	 * @param[in] x, y     The pixel to be read
-	 *
-	 * @notapi
-	 */
-	color_t gdisp_lld_get_pixel_color(coord_t x, coord_t y) {
-		color_t color;
-
-		#if GDISP_NEED_VALIDATION || GDISP_NEED_CLIP
-			if (x < 0 || x >= GDISP.Width || y < 0 || y >= GDISP.Height) return 0;
-		#endif
-
-		acquire_bus();
-		set_cursor(x, y);
-		stream_start();
-
-		color = read_data(); // dummy read
-		color = read_data();
-
-		stream_stop();
-		release_bus();
-
-		return color;
-	}
-#endif
-
-#if (GDISP_NEED_SCROLL && GDISP_HARDWARE_SCROLL) || defined(__DOXYGEN__)
-	/**
-	 * @brief   Scroll vertically a section of the screen.
-	 * @note    Optional.
-	 * @note    If x,y + cx,cy is off the screen, the result is undefined.
-	 * @note    If lines is >= cy, it is equivelent to a area fill with bgcolor.
-	 *
-	 * @param[in] x, y     The start of the area to be scrolled
-	 * @param[in] cx, cy   The size of the area to be scrolled
-	 * @param[in] lines    The number of lines to scroll (Can be positive or negative)
-	 * @param[in] bgcolor  The color to fill the newly exposed area.
-	 *
-	 * @notapi
-	 */
-	void gdisp_lld_vertical_scroll(coord_t x, coord_t y, coord_t cx, coord_t cy, int lines, color_t bgcolor) {
-		static color_t buf[((GDISP_SCREEN_HEIGHT > GDISP_SCREEN_WIDTH ) ? GDISP_SCREEN_HEIGHT : GDISP_SCREEN_WIDTH)];
-		coord_t row0, row1;
-		unsigned i, gap, abslines, j;
-
-		#if GDISP_NEED_VALIDATION || GDISP_NEED_CLIP
-			if (x < GDISP.clipx0) { cx -= GDISP.clipx0 - x; x = GDISP.clipx0; }
-			if (y < GDISP.clipy0) { cy -= GDISP.clipy0 - y; y = GDISP.clipy0; }
-			if (!lines || cx <= 0 || cy <= 0 || x >= GDISP.clipx1 || y >= GDISP.clipy1) return;
-			if (x+cx > GDISP.clipx1) cx = GDISP.clipx1 - x;
-			if (y+cy > GDISP.clipy1) cy = GDISP.clipy1 - y;
-		#endif
-
-		abslines = lines < 0 ? -lines : lines;
-
-		acquire_bus();
-		if ((coord_t)abslines >= cy) {
-			abslines = cy;
-			gap = 0;
-		} else {
-			gap = cy - abslines;
-			for(i = 0; i < gap; i++) {
-				if(lines > 0) {
-					row0 = y + i + lines;
-					row1 = y + i;
-				} else {
-					row0 = (y - i - 1) + lines;
-					row1 = (y - i - 1);
-				}
-
-				/* read row0 into the buffer and then write at row1*/
-				set_viewport(x, row0, cx, 1);
-				stream_start();
-
-				j = read_data(); // dummy read
-				for (j = 0; (coord_t)j < cx; j++)
-					buf[j] = read_data();
-
-				stream_stop();
-
-				set_viewport(x, row1, cx, 1);
-				stream_start();
-				for (j = 0; (coord_t)j < cx; j++)
-					write_data(buf[j]);
-				stream_stop();
-			}
-		}
-
-		/* fill the remaining gap */
-		set_viewport(x, lines > 0 ? (y+(coord_t)gap) : y, cx, abslines);
-		stream_start();
-		gap = cx*abslines;
-		for(i = 0; i < gap; i++) write_data(bgcolor);
-		stream_stop();
-		release_bus();
-	}
-#endif
-
-#if (GDISP_NEED_CONTROL && GDISP_HARDWARE_CONTROL) || defined(__DOXYGEN__)
-	/**
-	 * @brief	Driver Control
-	 * @details	Unsupported control codes are ignored.
-	 * @note	The value parameter should always be typecast to (void *).
-	 * @note	There are some predefined and some specific to the low level driver.
-	 * @note	GDISP_CONTROL_POWER			- Takes a gdisp_powermode_t
-	 * 			GDISP_CONTROL_ORIENTATION	- Takes a gdisp_orientation_t
-	 * 			GDISP_CONTROL_BACKLIGHT		- Takes an int from 0 to 100. For a driver
-	 * 											that only supports off/on anything other
-	 * 											than zero is on.
-	 *
-	 * @param[in] what		What to do.
-	 * @param[in] value		The value to use (always cast to a void *).
-	 *
-	 * @notapi
-	 */
-	void gdisp_lld_control(unsigned what, void *value) {
-		switch(what) {
-			case GDISP_CONTROL_POWER:
-				if (GDISP.Powermode == (gdisp_powermode_t)value)
-					return;
-				switch((gdisp_powermode_t)value) {
-					case powerOff:
-						acquire_bus();
-						write_reg(SSD2119_REG_SLEEP_MODE_1,	0x0001);	// Enter sleep mode
-						write_reg(SSD2119_REG_DISPLAY_CTRL,	0x0000);	// Display off
-						write_reg(SSD2119_REG_OSC_START,	0x0000);	// Turn off oscillator
-						release_bus();
-						set_backlight(0);
-						break;
-
-					case powerOn:
-						if (GDISP.Powermode == powerSleep) {
-							acquire_bus();
-							write_reg(SSD2119_REG_SLEEP_MODE_1, 0x0000);	// Leave sleep mode
-							write_reg(SSD2119_REG_DISPLAY_CTRL, 0x0033);	// Display on
-							release_bus();
-							gfxSleepMilliseconds(170);
-						} else if (GDISP.Powermode == powerDeepSleep) {
-							acquire_bus();
-							write_reg(SSD2119_REG_SLEEP_MODE_2, 0x0999);	// Disable deep sleep function
-							write_reg(SSD2119_REG_SLEEP_MODE_1, 0x0000);	// Leave sleep mode
-							write_reg(SSD2119_REG_DISPLAY_CTRL, 0x0033);	// Display on
-							release_bus();
-							gfxSleepMilliseconds(170);
-						} else {
-							acquire_bus();
-							write_reg(SSD2119_REG_SLEEP_MODE_1, 0x0000);	// Leave sleep mode
-							release_bus();
-							gdisp_lld_init();
-						}
-						set_backlight(100);
-						break;
-
-					case powerSleep:
-						acquire_bus();
-						write_reg(SSD2119_REG_SLEEP_MODE_1, 0x0001);	// Enter sleep mode
-						write_reg(SSD2119_REG_DISPLAY_CTRL, 0x0000);	// Display off
-						release_bus();
-						set_backlight(0);
-						gfxSleepMilliseconds(25);
-						break;
-
-					case powerDeepSleep:
-						acquire_bus();
-						write_reg(SSD2119_REG_SLEEP_MODE_1, 0x0001);	// Enter sleep mode
-						write_reg(SSD2119_REG_SLEEP_MODE_2, 0x2999);	// Enable deep sleep function
-						write_reg(SSD2119_REG_DISPLAY_CTRL, 0x0000);	// Display off
-						release_bus();
-						set_backlight(0);
-						gfxSleepMilliseconds(25);
-						break;
-
-					default:
-						return;
-				}
-				GDISP.Powermode = (gdisp_powermode_t)value;
+	LLDSPEC void gdisp_lld_control(GDisplay *g) {
+		switch(g->p.x) {
+		case GDISP_CONTROL_POWER:
+			if (g->g.Powermode == (powermode_t)g->p.ptr)
 				return;
-
-			case GDISP_CONTROL_ORIENTATION:
-				if (GDISP.Orientation == (gdisp_orientation_t)value)
-					return;
-				switch((gdisp_orientation_t)value) {
-					case GDISP_ROTATE_0:
-						acquire_bus();
-						/* TB = 0 */
-						write_reg(SSD2119_REG_OUTPUT_CTRL, 0x30EF);
-						/* ID = 11 AM = 0 */
-						write_reg(SSD2119_REG_ENTRY_MODE, 0x6830);
-						release_bus();
-						GDISP.Height = GDISP_SCREEN_HEIGHT;
-						GDISP.Width = GDISP_SCREEN_WIDTH;
-						break;
-
-					case GDISP_ROTATE_90:
-						acquire_bus();
-						/* TB = 1 */
-						write_reg(SSD2119_REG_OUTPUT_CTRL, 0x32EF);
-						/* ID = 10 AM = 1 */
-						write_reg(SSD2119_REG_ENTRY_MODE, 0x6828);
-						release_bus();
-						GDISP.Height = GDISP_SCREEN_WIDTH;
-						GDISP.Width = GDISP_SCREEN_HEIGHT;
-						break;
-
-					case GDISP_ROTATE_180:
-						acquire_bus();
-						/* TB = 0 */
-						write_reg(SSD2119_REG_OUTPUT_CTRL, 0x30EF);
-						/* ID = 00 AM = 0 */
-						write_reg(SSD2119_REG_ENTRY_MODE, 0x6800);
-						release_bus();
-						GDISP.Height = GDISP_SCREEN_HEIGHT;
-						GDISP.Width = GDISP_SCREEN_WIDTH;
-						break;
-
-					case GDISP_ROTATE_270:
-						acquire_bus();
-						/* TB = 1 */
-						write_reg(SSD2119_REG_OUTPUT_CTRL, 0x32EF);
-						/* ID = 01 AM = 1 */
-						write_reg(SSD2119_REG_ENTRY_MODE, 0x6818);
-						release_bus();
-						GDISP.Height = GDISP_SCREEN_WIDTH;
-						GDISP.Width = GDISP_SCREEN_HEIGHT;
-						break;
-
-					default:
-						return;
-				}
-
-				#if GDISP_NEED_CLIP || GDISP_NEED_VALIDATION
-				GDISP.clipx0 = 0;
-				GDISP.clipy0 = 0;
-				GDISP.clipx1 = GDISP.Width;
-				GDISP.clipy1 = GDISP.Height;
-				#endif
-				g->g.Orientation = (orientation_t)g->p.ptr;
-				return;
-
-			case GDISP_CONTROL_BACKLIGHT:
-				if ((unsigned)value > 100)
-					value = (void *)100;
-				set_backlight((unsigned)value);
-				GDISP.Backlight = (unsigned)value;
-				return;
-
+			switch((powermode_t)g->p.ptr) {
+			case powerOff:
+			case powerDeepSleep:
+				acquire_bus(g);
+				write_reg(g, SSD2119_REG_SLEEP_MODE_1,	0x0001);	// Enter sleep mode
+				write_reg(g, SSD2119_REG_SLEEP_MODE_2, 0x2999);		// Enable deep sleep function
+				write_reg(g, SSD2119_REG_DISPLAY_CTRL,	0x0000);	// Display off
+				if ((powermode_t)g->p.ptr == powerOff)
+					write_reg(g, SSD2119_REG_OSC_START,	0x0000);	// Turn off oscillator
+				release_bus(g);
+				set_backlight(g, 0);
+				break;
+			case powerSleep:
+				acquire_bus(g);
+				write_reg(g, SSD2119_REG_SLEEP_MODE_1, 0x0001);		// Enter sleep mode
+				write_reg(g, SSD2119_REG_DISPLAY_CTRL, 0x0000);		// Display off
+				release_bus(g);
+				set_backlight(g, 0);
+				break;
+			case powerOn:
+				acquire_bus(g);
+				if (g->g.Powermode == powerOff) {
+					write_reg(g, SSD2119_REG_OSC_START, 0x0001);	// Start the oscillator
+					gfxSleepMicroseconds(5);
+					write_reg(g, SSD2119_REG_SLEEP_MODE_2, 0x0999);	// Disable deep sleep function
+				} else if (g->g.Powermode == powerDeepSleep)
+					write_reg(g, SSD2119_REG_SLEEP_MODE_2, 0x0999);	// Disable deep sleep function
+				write_reg(g, SSD2119_REG_SLEEP_MODE_1, 0x0000);		// Leave sleep mode
+				write_reg(g, SSD2119_REG_DISPLAY_CTRL, 0x0033);		// Display on
+				release_bus(g);
+				gfxSleepMicroseconds(25);
+				set_backlight(g, g->g.Backlight);
+				break;
 			default:
 				return;
+			}
+			g->g.Powermode = (powermode_t)g->p.ptr;
+			return;
+
+		case GDISP_CONTROL_ORIENTATION:
+			if (g->g.Orientation == (orientation_t)g->p.ptr)
+				return;
+			switch((orientation_t)g->p.ptr) {
+			case GDISP_ROTATE_0:
+				acquire_bus(g);
+				/* ID = 11 AM = 0 */
+				write_reg(g, SSD2119_REG_ENTRY_MODE, 0x6830);
+				release_bus(g);
+				g->g.Height = GDISP_SCREEN_HEIGHT;
+				g->g.Width = GDISP_SCREEN_WIDTH;
+				break;
+			case GDISP_ROTATE_90:
+				acquire_bus(g);
+				/* ID = 01 AM = 1 */
+				write_reg(g, SSD2119_REG_ENTRY_MODE, 0x6818);
+				release_bus(g);
+				g->g.Height = GDISP_SCREEN_WIDTH;
+				g->g.Width = GDISP_SCREEN_HEIGHT;
+				break;
+			case GDISP_ROTATE_180:
+				acquire_bus(g);
+				/* ID = 00 AM = 0 */
+				write_reg(g, SSD2119_REG_ENTRY_MODE, 0x6800);
+				release_bus(g);
+				g->g.Height = GDISP_SCREEN_HEIGHT;
+				g->g.Width = GDISP_SCREEN_WIDTH;
+				break;
+			case GDISP_ROTATE_270:
+				acquire_bus(g);
+				/* ID = 10 AM = 1 */
+				write_reg(g, SSD2119_REG_ENTRY_MODE, 0x6828);
+				release_bus(g);
+				g->g.Height = GDISP_SCREEN_WIDTH;
+				g->g.Width = GDISP_SCREEN_HEIGHT;
+				break;
+			default:
+				return;
+			}
+			g->g.Orientation = (orientation_t)g->p.ptr;
+			return;
+
+        case GDISP_CONTROL_BACKLIGHT:
+            if ((unsigned)g->p.ptr > 100)
+            	g->p.ptr = (void *)100;
+            set_backlight(g, (unsigned)g->p.ptr);
+            g->g.Backlight = (unsigned)g->p.ptr;
+            return;
+
+		//case GDISP_CONTROL_CONTRAST:
+        default:
+            return;
 		}
 	}
 #endif
 
 #endif /* GFX_USE_GDISP */
-/** @} */
