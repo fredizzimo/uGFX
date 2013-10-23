@@ -56,6 +56,13 @@ typedef struct GListObject {
 	gfxQueueASync	list_head;	// The list of items
 } GListObject;
 
+/**
+ * @brief	Enum to change the behaviour of the scroll area
+ *
+ * @note	This might be used with @p gwinListSetScroll()
+ */
+typedef enum scroll_t { scrollAlways, scrollAuto } scroll_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -84,6 +91,18 @@ extern "C" {
  * @api
  */
 GHandle gwinListCreate(GListObject *widget, GWidgetInit *pInit, bool_t multiselect);
+
+/**
+ * @brief				Change the behaviour of the scroll area
+ *
+ * @note				Current possible values: @p scrollAlways and @p scrollAuto
+ *
+ * @param[in] gh		The widget handle (must be a list handle)
+ * @param[in] flag		The behaviour to be set
+ *
+ * @api
+ */
+void gwinListSetScroll(GHandle gh, scroll_t flag);
 
 /**
  * @brief				Add an item to the list

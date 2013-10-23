@@ -2,7 +2,15 @@
 *** Releases                                                              ***
 *****************************************************************************
 
-current release: 1.8
+current release: 2.0
+
+*** changes after 1.9 ***
+FEATURE:	GDISP Streaming
+FEATURE:	New driver interface for GDISP
+FEATURE:	Multiple display support
+FEATURE:	Multiple controller support
+FEATURE:	Add gdispFlush() for those controllers that need it
+FEATURE:	Add GDISP_NEED_AUTOFLUSH to automatically flush when required.
 
 *** changes after 1.8 ***
 FEATURE:	GWIN list boxes.
@@ -13,9 +21,8 @@ FEATURE:	SSD1306 driver by user goeck
 FEATURE:	ST7565 driver by user sam0737
 FEATURE:	ED060SC4 driver by user jpa-
 FIX:		SSD1289 area filling bug fix by user samofab
-FEATURE:	GDISP Streaming
-FEATURE:	New driver interface for GDISP
-FEATURE:	Multiple display support
+FEATURE:	Added gwinListGetSelectedText()
+FEATURE:	Added gwinListSetScroll()
 
 *** changes after 1.7 ***
 FEATURE:	Rename of the project from ChibiOS/GFX to uGFX

@@ -37,6 +37,7 @@
 // Flags for the GListObject
 #define GLIST_FLG_MULTISELECT		(GWIN_FIRST_CONTROL_FLAG << 0)
 #define GLIST_FLG_HASIMAGES			(GWIN_FIRST_CONTROL_FLAG << 1)
+#define GLIST_FLG_SCROLLALWAYS		(GWIN_FIRST_CONTROL_FLAG << 2)
 
 // Flags on a ListItem.
 #define GLIST_FLG_SELECTED			0x0001
@@ -93,7 +94,7 @@ static void gwinListDefaultDraw(GWidgetObject* gw, void* param) {
 	x = 1;
 
 	// the scroll area
-	if (gw2obj->cnt > (gw->g.height-2) / iheight) {
+	if (gw2obj->cnt > (gw->g.height-2) / iheight || gw->g.flags & GLIST_FLG_SCROLLALWAYS) {
 		iwidth = gw->g.width - (SCROLLWIDTH+3);
 		gdispFillArea(gw->g.x+iwidth+2, gw->g.y+1, SCROLLWIDTH, gw->g.height-2, gdispBlendColor(ps->fill, gw->pstyle->background, 128));
 		gdispDrawLine(gw->g.x+iwidth+1, gw->g.y+1, gw->g.x+iwidth+1, gw->g.y+gw->g.height-2, ps->edge);
@@ -327,10 +328,27 @@ GHandle gwinListCreate(GListObject* gobj, GWidgetInit* pInit, bool_t multiselect
 	gobj->top = 0;
 	if (multiselect)
 		gobj->w.g.flags |= GLIST_FLG_MULTISELECT;
+	gobj->w.g.flags |= GLIST_FLG_SCROLLALWAYS;
 
 	gwinSetVisible(&gobj->w.g, pInit->g.show);
 
 	return (GHandle)gobj;
+}
+
+void gwinListSetScroll(GHandle gh, scroll_t flag) {
+	// is it a valid handle?
+	if (gh->vmt != (gwinVMT *)&listVMT)
+		return 0;
+
+	switch (flag) {
+		case scrollAlways:
+			((GListObject*)gh)->w.g.flags |= GLIST_FLG_SCROLLALWAYS;
+			break;
+
+		case scrollAuto:
+			((GListObject*)gh)->w.g.flags &=~ GLIST_FLG_SCROLLALWAYS;	
+			break;
+	}
 }
 
 int gwinListAddItem(GHandle gh, const char* item_name, bool_t useAlloc) {
