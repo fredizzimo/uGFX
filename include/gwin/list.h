@@ -57,7 +57,7 @@ typedef struct GListObject {
 } GListObject;
 
 /**
- * @brief	Enum to change the behaviour of the scroll area
+ * @brief	Enum to change the behaviour of the scroll bar
  *
  * @note	This might be used with @p gwinListSetScroll()
  */
@@ -93,7 +93,7 @@ extern "C" {
 GHandle gwinListCreate(GListObject *widget, GWidgetInit *pInit, bool_t multiselect);
 
 /**
- * @brief				Change the behaviour of the scroll area
+ * @brief				Change the behaviour of the scroll bar
  *
  * @note				Current possible values: @p scrollAlways and @p scrollAuto
  *
