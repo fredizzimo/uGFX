@@ -167,7 +167,7 @@
 			#endif
 
 			// evil floating point bit level hacking
-			i  = 0x5F3759DF - (i >> 1);
+			i  = 0x5F375A86 - (i >> 1);					// The quake code used 0x5F3759DF but this is better.
 
 			// Convert back to a float (no binary format conversion)
 			#if GDISP_INVSQRT_MIXED_ENDIAN
