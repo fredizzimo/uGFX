@@ -64,7 +64,7 @@ static void gwinLabelDefaultDraw(GWidgetObject *gw, void *param) {
 
 	// render the border (if any)
 	if (gw->g.flags & GLABEL_FLG_BORDER)
-		gdispDrawBox(gw->g.x, gw->g.y, gw->g.width, gw->g.height, (gw->g.flags & GWIN_FLG_ENABLED) ? gw->pstyle->enabled.text : gw->pstyle->disabled.text);
+		gdispDrawBox(gw->g.x, gw->g.y, gw->g.width, gw->g.height, (gw->g.flags & GWIN_FLG_ENABLED) ? gw->pstyle->enabled.edge : gw->pstyle->disabled.edge);
 }
 
 static const gwidgetVMT labelVMT = {
@@ -122,8 +122,9 @@ GHandle gwinLabelCreate(GLabelObject *widget, GWidgetInit *pInit) {
 		return 0;
 
 	// no borders by default
-	widget->w.g.flags &=~ GLABEL_FLG_BORDER;
+	flags &=~ GLABEL_FLG_BORDER;
 
+	widget->w.g.flags |= flags;	
 	gwinSetVisible(&widget->w.g, pInit->g.show);
 
 	return (GHandle)widget;
