@@ -338,7 +338,7 @@ GHandle gwinListCreate(GListObject* gobj, GWidgetInit* pInit, bool_t multiselect
 void gwinListSetScroll(GHandle gh, scroll_t flag) {
 	// is it a valid handle?
 	if (gh->vmt != (gwinVMT *)&listVMT)
-		return 0;
+		return;
 
 	switch (flag) {
 		case scrollAlways:
