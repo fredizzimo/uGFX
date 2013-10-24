@@ -52,6 +52,7 @@ typedef struct GCheckboxObject {
  * @brief				Create a checkbox window.
  * @return				NULL if there is no resultant drawing area, otherwise a window handle.
  *
+ * @param[in] g			The GDisplay to display this window on
  * @param[in] gb		The GCheckboxObject structure to initialise. If this is NULL, the structure is dynamically allocated.
  * @param[in] pInit		The initialization parameters to use
  *
@@ -67,7 +68,8 @@ typedef struct GCheckboxObject {
  *
  * @api
  */
-GHandle gwinCheckboxCreate(GCheckboxObject *gb, const GWidgetInit *pInit);
+GHandle gwinGCheckboxCreate(GDisplay *g, GCheckboxObject *gb, const GWidgetInit *pInit);
+#define gwinCheckboxCreate(gb, pInit)			gwinGCheckboxCreate(GDISP, gb, pInit)
 
 /**
  * @brief	Set the state of a checkbox

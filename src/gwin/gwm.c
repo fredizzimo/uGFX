@@ -119,7 +119,7 @@ static void WM_Delete(GHandle gh) {
 	// Make the window invisible and clear the area underneath
 	if ((gh->flags & GWIN_FLG_VISIBLE)) {
 		gh->flags &= ~GWIN_FLG_VISIBLE;
-		gdispFillArea(gh->x, gh->y, gh->width, gh->height, gwinGetDefaultBgColor());
+		gdispGFillArea(gh->display, gh->x, gh->y, gh->width, gh->height, gwinGetDefaultBgColor());
 	}
 
 	// Remove it from the queue
@@ -128,16 +128,16 @@ static void WM_Delete(GHandle gh) {
 
 static void WM_Visible(GHandle gh) {
 	#if GDISP_NEED_CLIP
-		gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+		gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 	#endif
 	if ((gh->flags & GWIN_FLG_VISIBLE)) {
 		if (gh->vmt->Redraw)
 			gh->vmt->Redraw(gh);
 		else
-			gdispFillArea(gh->x, gh->y, gh->width, gh->height, gh->bgcolor);
+			gdispGFillArea(gh->display, gh->x, gh->y, gh->width, gh->height, gh->bgcolor);
 		// A real window manager would also redraw the borders here
 	} else
-		gdispFillArea(gh->x, gh->y, gh->width, gh->height, gwinGetDefaultBgColor());
+		gdispGFillArea(gh->display, gh->x, gh->y, gh->width, gh->height, gwinGetDefaultBgColor());
 }
 
 static void WM_Redim(GHandle gh, coord_t x, coord_t y, coord_t w, coord_t h) {
@@ -145,12 +145,12 @@ static void WM_Redim(GHandle gh, coord_t x, coord_t y, coord_t w, coord_t h) {
 	// If it won't fit on the screen move it around until it does.
 	if (x < 0) { w += x; x = 0; }
 	if (y < 0) { h += y; y = 0; }
-	if (x > gdispGetWidth()-MIN_WIN_WIDTH)		x = gdispGetWidth()-MIN_WIN_WIDTH;
-	if (y > gdispGetHeight()-MIN_WIN_HEIGHT)	y = gdispGetHeight()-MIN_WIN_HEIGHT;
+	if (x > gdispGGetWidth(gh->display)-MIN_WIN_WIDTH)		x = gdispGGetWidth(gh->display)-MIN_WIN_WIDTH;
+	if (y > gdispGGetHeight(gh->display)-MIN_WIN_HEIGHT)	y = gdispGGetHeight(gh->display)-MIN_WIN_HEIGHT;
 	if (w < MIN_WIN_WIDTH) { w = MIN_WIN_WIDTH; }
 	if (h < MIN_WIN_HEIGHT) { h = MIN_WIN_HEIGHT; }
-	if (x+w > gdispGetWidth()) w = gdispGetWidth() - x;
-	if (y+h > gdispGetHeight()) h = gdispGetHeight() - y;
+	if (x+w > gdispGGetWidth(gh->display)) w = gdispGGetWidth(gh->display) - x;
+	if (y+h > gdispGGetHeight(gh->display)) h = gdispGGetHeight(gh->display) - y;
 
 	// If there has been no resize just exit
 	if (gh->x == x && gh->y == y && gh->width == w && gh->height == h)
@@ -158,7 +158,7 @@ static void WM_Redim(GHandle gh, coord_t x, coord_t y, coord_t w, coord_t h) {
 
 	// Clear the old area
 	if ((gh->flags & GWIN_FLG_VISIBLE))
-		gdispFillArea(gh->x, gh->y, gh->width, gh->height, gwinGetDefaultBgColor());
+		gdispGFillArea(gh->display, gh->x, gh->y, gh->width, gh->height, gwinGetDefaultBgColor());
 
 	// Set the new size
 	gh->x = x; gh->y = y;
@@ -168,7 +168,7 @@ static void WM_Redim(GHandle gh, coord_t x, coord_t y, coord_t w, coord_t h) {
 	if ((gh->flags & GWIN_FLG_VISIBLE)) {
 		if (gh->vmt->Redraw) {
 			#if GDISP_NEED_CLIP
-				gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+				gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 			#endif
 			gh->vmt->Redraw(gh);
 		}
@@ -190,7 +190,7 @@ static void WM_Raise(GHandle gh) {
 	if ((gh->flags & GWIN_FLG_VISIBLE)) {
 		if (gh->vmt->Redraw) {
 			#if GDISP_NEED_CLIP
-				gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+				gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 			#endif
 			gh->vmt->Redraw(gh);
 		}

@@ -96,15 +96,15 @@ static void gwinListDefaultDraw(GWidgetObject* gw, void* param) {
 	// the scroll area
 	if ((gw2obj->cnt > (gw->g.height-2) / iheight) || (gw->g.flags & GLIST_FLG_SCROLLALWAYS)) {
 		iwidth = gw->g.width - (SCROLLWIDTH+3);
-		gdispFillArea(gw->g.x+iwidth+2, gw->g.y+1, SCROLLWIDTH, gw->g.height-2, gdispBlendColor(ps->fill, gw->pstyle->background, 128));
-		gdispDrawLine(gw->g.x+iwidth+1, gw->g.y+1, gw->g.x+iwidth+1, gw->g.y+gw->g.height-2, ps->edge);
+		gdispGFillArea(gw->g.display, gw->g.x+iwidth+2, gw->g.y+1, SCROLLWIDTH, gw->g.height-2, gdispBlendColor(ps->fill, gw->pstyle->background, 128));
+		gdispGDrawLine(gw->g.display, gw->g.x+iwidth+1, gw->g.y+1, gw->g.x+iwidth+1, gw->g.y+gw->g.height-2, ps->edge);
 		#if GDISP_NEED_CONVEX_POLYGON
-			gdispFillConvexPoly(gw->g.x+iwidth+((SCROLLWIDTH-ARROW)/2+2), gw->g.y+(ARROW/2+1), upArrow, 3, ps->fill);
-			gdispFillConvexPoly(gw->g.x+iwidth+((SCROLLWIDTH-ARROW)/2+2), gw->g.y+gw->g.height-(ARROW+ARROW/2+1), downArrow, 3, ps->fill);
+			gdispGFillConvexPoly(gw->g.display, gw->g.x+iwidth+((SCROLLWIDTH-ARROW)/2+2), gw->g.y+(ARROW/2+1), upArrow, 3, ps->fill);
+			gdispGFillConvexPoly(gw->g.display, gw->g.x+iwidth+((SCROLLWIDTH-ARROW)/2+2), gw->g.y+gw->g.height-(ARROW+ARROW/2+1), downArrow, 3, ps->fill);
 		#else
 			#warning "GWIN: Lists display better when GDISP_NEED_CONVEX_POLGON is turned on"
-			gdispFillArea(gw->g.x+iwidth+((SCROLLWIDTH-ARROW)/2+2), gw->g.y+(ARROW/2+1), ARROW, ARROW, ps->fill);
-			gdispFillArea(gw->g.x+iwidth+((SCROLLWIDTH-ARROW)/2+2), gw->g.y+gw->g.height-(ARROW+ARROW/2+1), ARROW, ARROW, ps->fill);
+			gdispGFillArea(gw->g.display, gw->g.x+iwidth+((SCROLLWIDTH-ARROW)/2+2), gw->g.y+(ARROW/2+1), ARROW, ARROW, ps->fill);
+			gdispGFillArea(gw->g.display, gw->g.x+iwidth+((SCROLLWIDTH-ARROW)/2+2), gw->g.y+gw->g.height-(ARROW+ARROW/2+1), ARROW, ARROW, ps->fill);
 		#endif
 	} else
 		iwidth = gw->g.width - 2;
@@ -126,7 +126,7 @@ static void gwinListDefaultDraw(GWidgetObject* gw, void* param) {
 		#if GWIN_NEED_LIST_IMAGES
 			if ((gw->g.flags & GLIST_FLG_HASIMAGES)) {
 				// Clear the image area
-				gdispFillArea(gw->g.x+1, gw->g.y+y, x-1, iheight, fill);
+				gdispGFillArea(gw->g.display, gw->g.x+1, gw->g.y+y, x-1, iheight, fill);
 				if (qi2li->pimg && gdispImageIsOpen(qi2li->pimg)) {
 					// Calculate which image
 					sy = (qi2li->flags & GLIST_FLG_SELECTED) ? 0 : (iheight-TEXTGAP);
@@ -136,19 +136,19 @@ static void gwinListDefaultDraw(GWidgetObject* gw, void* param) {
 						sy -= iheight-TEXTGAP;
 					// Draw the image
 					gdispImageSetBgColor(qi2li->pimg, fill);
-					gdispImageDraw(qi2li->pimg, gw->g.x+1, gw->g.y+y, iheight-TEXTGAP, iheight-TEXTGAP, 0, sy);
+					gdispGImageDraw(gw->g.display, qi2li->pimg, gw->g.x+1, gw->g.y+y, iheight-TEXTGAP, iheight-TEXTGAP, 0, sy);
 				}
 			}
 		#endif
-		gdispFillStringBox(gw->g.x+x, gw->g.y+y, iwidth, iheight, qi2li->text, gw->g.font, ps->text, fill, justifyLeft);
+		gdispGFillStringBox(gw->g.display, gw->g.x+x, gw->g.y+y, iwidth, iheight, qi2li->text, gw->g.font, ps->text, fill, justifyLeft);
 	}
 
 	// Fill any remaining item space
 	if (y < gw->g.height-1)
-		gdispFillArea(gw->g.x+1, gw->g.y+y, iwidth, gw->g.height-1-y, gw->pstyle->background);
+		gdispGFillArea(gw->g.display, gw->g.x+1, gw->g.y+y, iwidth, gw->g.height-1-y, gw->pstyle->background);
 
 	// the list frame
-	gdispDrawBox(gw->g.x, gw->g.y, gw->g.width, gw->g.height, ps->edge);
+	gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, ps->edge);
 }
 
 #if GINPUT_NEED_MOUSE
@@ -318,8 +318,8 @@ static const gwidgetVMT listVMT = {
 	#endif
 };
 
-GHandle gwinListCreate(GListObject* gobj, GWidgetInit* pInit, bool_t multiselect) {
-	if (!(gobj = (GListObject *)_gwidgetCreate(&gobj->w, pInit, &listVMT)))
+GHandle gwinGListCreate(GDisplay *g, GListObject* gobj, GWidgetInit* pInit, bool_t multiselect) {
+	if (!(gobj = (GListObject *)_gwidgetCreate(g, &gobj->w, pInit, &listVMT)))
 		return 0;
 
 	// initialize the item queue

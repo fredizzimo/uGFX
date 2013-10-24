@@ -47,6 +47,7 @@ extern "C" {
  * @details				Display's a picture.
  * @return				NULL if there is no resultant drawing area, otherwise the widget handle.
  *
+ * @param[in] g			The GDisplay to display this window on
  * @param[in] widget	The image widget structure to initialise. If this is NULL, the structure is dynamically allocated.
  * @param[in] pInit		The initialization parameters to use.
  *
@@ -55,7 +56,8 @@ extern "C" {
  *
  * @api
  */
-GHandle gwinImageCreate(GImageObject *widget, GWindowInit *pInit);
+GHandle gwinGImageCreate(GDisplay *g, GImageObject *widget, GWindowInit *pInit);
+#define gwinImageCreate(w, pInit)			gwinGImageCreate(GDISP, w, pInit)
 
 /**
  * @brief				Sets the input routines that support reading the image from memory

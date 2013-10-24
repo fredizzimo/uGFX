@@ -102,6 +102,10 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 		// Cycle through all windows
 		for(qi = gfxQueueASyncPeek(&_GWINList); qi; qi = gfxQueueASyncNext(qi)) {
 
+			// check if the widget matches this display
+			if (gh->display != pme->display)
+				continue;
+
 			// check if it a widget that is enabled and visible
 			if ((gh->flags & (GWIN_FLG_WIDGET|GWIN_FLG_ENABLED|GWIN_FLG_VISIBLE)) != (GWIN_FLG_WIDGET|GWIN_FLG_ENABLED|GWIN_FLG_VISIBLE))
 				continue;
@@ -225,8 +229,8 @@ void _gwidgetInit(void) {
 	geventRegisterCallback(&gl, gwidgetEvent, 0);
 }
 
-GHandle _gwidgetCreate(GWidgetObject *pgw, const GWidgetInit *pInit, const gwidgetVMT *vmt) {
-	if (!(pgw = (GWidgetObject *)_gwindowCreate(&pgw->g, &pInit->g, &vmt->g, GWIN_FLG_WIDGET|GWIN_FLG_ENABLED)))
+GHandle _gwidgetCreate(GDisplay *g, GWidgetObject *pgw, const GWidgetInit *pInit, const gwidgetVMT *vmt) {
+	if (!(pgw = (GWidgetObject *)_gwindowCreate(g, &pgw->g, &pInit->g, &vmt->g, GWIN_FLG_WIDGET|GWIN_FLG_ENABLED)))
 		return 0;
 
 	pgw->text = pInit->text ? pInit->text : "";
@@ -281,7 +285,7 @@ void _gwidgetRedraw(GHandle gh) {
 		return;
 
 	#if GDISP_NEED_CLIP
-		gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+		gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 	#endif
 
 	gw->fnDraw(gw, gw->fnParam);

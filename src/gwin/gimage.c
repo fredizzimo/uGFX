@@ -51,7 +51,7 @@ static void _redraw(GHandle gh) {
 
 	// If the image isn't open just clear the area
 	if (!gdispImageIsOpen(&widget(gh)->image)) {
-		gdispFillArea(x, y, w, h, bg);
+		gdispGFillArea(gh->display, x, y, w, h, bg);
 		return;
 	}
 
@@ -61,8 +61,8 @@ static void _redraw(GHandle gh) {
 		dx = (gh->width-w)/2;
 		x += dx;
 		if (dx)
-			gdispFillArea(gh->x, y, dx, h, bg);
-		gdispFillArea(x+w, y, gh->width-dx-w, h, bg);
+			gdispGFillArea(gh->display, gh->x, y, dx, h, bg);
+		gdispGFillArea(gh->display, x+w, y, gh->width-dx-w, h, bg);
 		dx = 0;
 	}
 
@@ -77,8 +77,8 @@ static void _redraw(GHandle gh) {
 		dy = (gh->height-h)/2;
 		y += dy;
 		if (dy)
-			gdispFillArea(x, gh->y, w, dy, bg);
-		gdispFillArea(x, y+h, w, gh->height-dy-h, bg);
+			gdispGFillArea(gh->display, x, gh->y, w, dy, bg);
+		gdispGFillArea(gh->display, x, y+h, w, gh->height-dy-h, bg);
 		dy = 0;
 	}
 
@@ -91,7 +91,7 @@ static void _redraw(GHandle gh) {
 	gdispImageSetBgColor(&widget(gh)->image, bg);
 
 	// Display the image
-	gdispImageDraw(&widget(gh)->image, x, y, w, h, dx, dy);
+	gdispGImageDraw(gh->display, &widget(gh)->image, x, y, w, h, dx, dy);
 
 	#if GWIN_NEED_IMAGE_ANIMATION
 		// read the delay for the next frame
@@ -122,8 +122,8 @@ static const gwinVMT imageVMT = {
 	0,							// The after-clear routine
 };
 
-GHandle gwinImageCreate(GImageObject *gobj, GWindowInit *pInit) {
-	if (!(gobj = (GImageObject *)_gwindowCreate(&gobj->g, pInit, &imageVMT, 0)))
+GHandle gwinGImageCreate(GDisplay *g, GImageObject *gobj, GWindowInit *pInit) {
+	if (!(gobj = (GImageObject *)_gwindowCreate(g, &gobj->g, pInit, &imageVMT, 0)))
 		return 0;
 
 	// Ensure the gdispImageIsOpen() gives valid results
@@ -153,7 +153,7 @@ bool_t gwinImageOpenMemory(GHandle gh, const void* memory) {
 		// Setting the clip here shouldn't be necessary if the redraw doesn't overdraw
 		//	but we put it in for safety anyway
 		#if GDISP_NEED_CLIP
-			gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+			gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 		#endif
 		_redraw(gh);
 	}
@@ -176,7 +176,7 @@ bool_t gwinImageOpenFile(GHandle gh, const char* filename) {
 		// Setting the clip here shouldn't be necessary if the redraw doesn't overdraw
 		//	but we put it in for safety anyway
 		#if GDISP_NEED_CLIP
-			gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+			gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 		#endif
 		_redraw(gh);
 	}
@@ -200,7 +200,7 @@ bool_t gwinImageOpenStream(GHandle gh, void *streamPtr) {
 		// Setting the clip here shouldn't be necessary if the redraw doesn't overdraw
 		//	but we put it in for safety anyway
 		#if GDISP_NEED_CLIP
-			gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+			gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 		#endif
 		_redraw(gh);
 	}

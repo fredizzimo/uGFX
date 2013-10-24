@@ -90,7 +90,7 @@ void _gwinInit(void) {
 
 // Internal routine for use by GWIN components only
 // Initialise a window creating it dynamically if required.
-GHandle _gwindowCreate(GWindowObject *pgw, const GWindowInit *pInit, const gwinVMT *vmt, uint16_t flags) {
+GHandle _gwindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pInit, const gwinVMT *vmt, uint16_t flags) {
 	// Allocate the structure if necessary
 	if (!pgw) {
 		if (!(pgw = (GWindowObject *)gfxAlloc(vmt->size)))
@@ -100,6 +100,7 @@ GHandle _gwindowCreate(GWindowObject *pgw, const GWindowInit *pInit, const gwinV
 		pgw->flags = flags;
 	
 	// Initialise all basic fields
+	pgw->display = g;
 	pgw->vmt = vmt;
 	pgw->color = defaultFgColor;
 	pgw->bgcolor = defaultBgColor;
@@ -154,8 +155,8 @@ color_t gwinGetDefaultBgColor(void) {
  * The GWindow Routines
  *-----------------------------------------------*/
 
-GHandle gwinWindowCreate(GWindowObject *pgw, const GWindowInit *pInit) {
-	if (!(pgw = _gwindowCreate(pgw, pInit, &basegwinVMT, 0)))
+GHandle gwinGWindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pInit) {
+	if (!(pgw = _gwindowCreate(g, pgw, pInit, &basegwinVMT, 0)))
 		return 0;
 	gwinSetVisible(pgw, pInit->show);
 	return pgw;
@@ -213,7 +214,7 @@ void gwinSetEnabled(GHandle gh, bool_t enabled) {
 			gh->flags |= GWIN_FLG_ENABLED;
 			if ((gh->flags & GWIN_FLG_VISIBLE) && gh->vmt->Redraw) {
 				#if GDISP_NEED_CLIP
-					gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+					gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 				#endif
 				gh->vmt->Redraw(gh);
 			}
@@ -223,7 +224,7 @@ void gwinSetEnabled(GHandle gh, bool_t enabled) {
 			gh->flags &= ~GWIN_FLG_ENABLED;
 			if ((gh->flags & GWIN_FLG_VISIBLE) && gh->vmt->Redraw) {
 				#if GDISP_NEED_CLIP
-					gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+					gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 				#endif
 				gh->vmt->Redraw(gh);
 			}
@@ -271,9 +272,9 @@ void gwinClear(GHandle gh) {
 		return;
 
 	#if GDISP_NEED_CLIP
-		gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+		gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 	#endif
-	gdispFillArea(gh->x, gh->y, gh->width, gh->height, gh->bgcolor);
+	gdispGFillArea(gh->display, gh->x, gh->y, gh->width, gh->height, gh->bgcolor);
 	if (gh->vmt->AfterClear)
 		gh->vmt->AfterClear(gh);
 }
@@ -283,9 +284,9 @@ void gwinDrawPixel(GHandle gh, coord_t x, coord_t y) {
 		return;
 
 	#if GDISP_NEED_CLIP
-		gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+		gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 	#endif
-	gdispDrawPixel(gh->x+x, gh->y+y, gh->color);
+	gdispGDrawPixel(gh->display, gh->x+x, gh->y+y, gh->color);
 }
 
 void gwinDrawLine(GHandle gh, coord_t x0, coord_t y0, coord_t x1, coord_t y1) {
@@ -293,9 +294,9 @@ void gwinDrawLine(GHandle gh, coord_t x0, coord_t y0, coord_t x1, coord_t y1) {
 		return;
 
 	#if GDISP_NEED_CLIP
-		gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+		gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 	#endif
-	gdispDrawLine(gh->x+x0, gh->y+y0, gh->x+x1, gh->y+y1, gh->color);
+	gdispGDrawLine(gh->display, gh->x+x0, gh->y+y0, gh->x+x1, gh->y+y1, gh->color);
 }
 
 void gwinDrawBox(GHandle gh, coord_t x, coord_t y, coord_t cx, coord_t cy) {
@@ -303,9 +304,9 @@ void gwinDrawBox(GHandle gh, coord_t x, coord_t y, coord_t cx, coord_t cy) {
 		return;
 
 	#if GDISP_NEED_CLIP
-		gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+		gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 	#endif
-	gdispDrawBox(gh->x+x, gh->y+y, cx, cy, gh->color);
+	gdispGDrawBox(gh->display, gh->x+x, gh->y+y, cx, cy, gh->color);
 }
 
 void gwinFillArea(GHandle gh, coord_t x, coord_t y, coord_t cx, coord_t cy) {
@@ -313,9 +314,9 @@ void gwinFillArea(GHandle gh, coord_t x, coord_t y, coord_t cx, coord_t cy) {
 		return;
 
 	#if GDISP_NEED_CLIP
-		gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+		gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 	#endif
-	gdispFillArea(gh->x+x, gh->y+y, cx, cy, gh->color);
+	gdispGFillArea(gh->display, gh->x+x, gh->y+y, cx, cy, gh->color);
 }
 
 void gwinBlitArea(GHandle gh, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx, coord_t srcy, coord_t srccx, const pixel_t *buffer) {
@@ -323,9 +324,9 @@ void gwinBlitArea(GHandle gh, coord_t x, coord_t y, coord_t cx, coord_t cy, coor
 		return;
 
 	#if GDISP_NEED_CLIP
-		gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+		gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 	#endif
-	gdispBlitAreaEx(gh->x+x, gh->y+y, cx, cy, srcx, srcy, srccx, buffer);
+	gdispGBlitArea(gh->display, gh->x+x, gh->y+y, cx, cy, srcx, srcy, srccx, buffer);
 }
 
 #if GDISP_NEED_CIRCLE
@@ -334,9 +335,9 @@ void gwinBlitArea(GHandle gh, coord_t x, coord_t y, coord_t cx, coord_t cy, coor
 			return;
 
 		#if GDISP_NEED_CLIP
-			gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+			gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 		#endif
-		gdispDrawCircle(gh->x+x, gh->y+y, radius, gh->color);
+		gdispGDrawCircle(gh->display, gh->x+x, gh->y+y, radius, gh->color);
 	}
 
 	void gwinFillCircle(GHandle gh, coord_t x, coord_t y, coord_t radius) {
@@ -344,9 +345,9 @@ void gwinBlitArea(GHandle gh, coord_t x, coord_t y, coord_t cx, coord_t cy, coor
 			return;
 
 		#if GDISP_NEED_CLIP
-			gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+			gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 		#endif
-		gdispFillCircle(gh->x+x, gh->y+y, radius, gh->color);
+		gdispGFillCircle(gh->display, gh->x+x, gh->y+y, radius, gh->color);
 	}
 #endif
 
@@ -356,9 +357,9 @@ void gwinBlitArea(GHandle gh, coord_t x, coord_t y, coord_t cx, coord_t cy, coor
 			return;
 
 		#if GDISP_NEED_CLIP
-			gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+			gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 		#endif
-		gdispDrawEllipse(gh->x+x, gh->y+y, a, b, gh->color);
+		gdispGDrawEllipse(gh->display, gh->x+x, gh->y+y, a, b, gh->color);
 	}
 
 	void gwinFillEllipse(GHandle gh, coord_t x, coord_t y, coord_t a, coord_t b) {
@@ -366,9 +367,9 @@ void gwinBlitArea(GHandle gh, coord_t x, coord_t y, coord_t cx, coord_t cy, coor
 			return;
 
 		#if GDISP_NEED_CLIP
-			gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+			gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 		#endif
-		gdispFillEllipse(gh->x+x, gh->y+y, a, b, gh->color);
+		gdispGFillEllipse(gh->display, gh->x+x, gh->y+y, a, b, gh->color);
 	}
 #endif
 
@@ -378,9 +379,9 @@ void gwinBlitArea(GHandle gh, coord_t x, coord_t y, coord_t cx, coord_t cy, coor
 			return;
 
 		#if GDISP_NEED_CLIP
-			gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+			gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 		#endif
-		gdispDrawArc(gh->x+x, gh->y+y, radius, startangle, endangle, gh->color);
+		gdispGDrawArc(gh->display, gh->x+x, gh->y+y, radius, startangle, endangle, gh->color);
 	}
 
 	void gwinFillArc(GHandle gh, coord_t x, coord_t y, coord_t radius, coord_t startangle, coord_t endangle) {
@@ -388,9 +389,9 @@ void gwinBlitArea(GHandle gh, coord_t x, coord_t y, coord_t cx, coord_t cy, coor
 			return;
 
 		#if GDISP_NEED_CLIP
-			gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+			gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 		#endif
-		gdispFillArc(gh->x+x, gh->y+y, radius, startangle, endangle, gh->color);
+		gdispGFillArc(gh->display, gh->x+x, gh->y+y, radius, startangle, endangle, gh->color);
 	}
 #endif
 
@@ -400,9 +401,9 @@ void gwinBlitArea(GHandle gh, coord_t x, coord_t y, coord_t cx, coord_t cy, coor
 			return defaultBgColor;
 
 		#if GDISP_NEED_CLIP
-			gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+			gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 		#endif
-		return gdispGetPixelColor(gh->x+x, gh->y+y);
+		return gdispGGetPixelColor(gh->display, gh->x+x, gh->y+y);
 	}
 #endif
 
@@ -412,9 +413,9 @@ void gwinBlitArea(GHandle gh, coord_t x, coord_t y, coord_t cx, coord_t cy, coor
 			return;
 
 		#if GDISP_NEED_CLIP
-			gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+			gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 		#endif
-		gdispDrawChar(gh->x+x, gh->y+y, c, gh->font, gh->color);
+		gdispGDrawChar(gh->display, gh->x+x, gh->y+y, c, gh->font, gh->color);
 	}
 
 	void gwinFillChar(GHandle gh, coord_t x, coord_t y, char c) {
@@ -422,9 +423,9 @@ void gwinBlitArea(GHandle gh, coord_t x, coord_t y, coord_t cx, coord_t cy, coor
 			return;
 
 		#if GDISP_NEED_CLIP
-			gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+			gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 		#endif
-		gdispFillChar(gh->x+x, gh->y+y, c, gh->font, gh->color, gh->bgcolor);
+		gdispGFillChar(gh->display, gh->x+x, gh->y+y, c, gh->font, gh->color, gh->bgcolor);
 	}
 
 	void gwinDrawString(GHandle gh, coord_t x, coord_t y, const char *str) {
@@ -432,9 +433,9 @@ void gwinBlitArea(GHandle gh, coord_t x, coord_t y, coord_t cx, coord_t cy, coor
 			return;
 
 		#if GDISP_NEED_CLIP
-			gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+			gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 		#endif
-		gdispDrawString(gh->x+x, gh->y+y, str, gh->font, gh->color);
+		gdispGDrawString(gh->display, gh->x+x, gh->y+y, str, gh->font, gh->color);
 	}
 
 	void gwinFillString(GHandle gh, coord_t x, coord_t y, const char *str) {
@@ -442,9 +443,9 @@ void gwinBlitArea(GHandle gh, coord_t x, coord_t y, coord_t cx, coord_t cy, coor
 			return;
 
 		#if GDISP_NEED_CLIP
-			gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+			gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 		#endif
-		gdispFillString(gh->x+x, gh->y+y, str, gh->font, gh->color, gh->bgcolor);
+		gdispGFillString(gh->display, gh->x+x, gh->y+y, str, gh->font, gh->color, gh->bgcolor);
 	}
 
 	void gwinDrawStringBox(GHandle gh, coord_t x, coord_t y, coord_t cx, coord_t cy, const char* str, justify_t justify) {
@@ -452,9 +453,9 @@ void gwinBlitArea(GHandle gh, coord_t x, coord_t y, coord_t cx, coord_t cy, coor
 			return;
 
 		#if GDISP_NEED_CLIP
-			gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+			gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 		#endif
-		gdispDrawStringBox(gh->x+x, gh->y+y, cx, cy, str, gh->font, gh->color, justify);
+		gdispGDrawStringBox(gh->display, gh->x+x, gh->y+y, cx, cy, str, gh->font, gh->color, justify);
 	}
 
 	void gwinFillStringBox(GHandle gh, coord_t x, coord_t y, coord_t cx, coord_t cy, const char* str, justify_t justify) {
@@ -462,9 +463,9 @@ void gwinBlitArea(GHandle gh, coord_t x, coord_t y, coord_t cx, coord_t cy, coor
 			return;
 
 		#if GDISP_NEED_CLIP
-			gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+			gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 		#endif
-		gdispFillStringBox(gh->x+x, gh->y+y, cx, cy, str, gh->font, gh->color, gh->bgcolor, justify);
+		gdispGFillStringBox(gh->display, gh->x+x, gh->y+y, cx, cy, str, gh->font, gh->color, gh->bgcolor, justify);
 	}
 #endif
 
@@ -474,9 +475,9 @@ void gwinBlitArea(GHandle gh, coord_t x, coord_t y, coord_t cx, coord_t cy, coor
 			return;
 
 		#if GDISP_NEED_CLIP
-			gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+			gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 		#endif
-		gdispDrawPoly(tx+gh->x, ty+gh->y, pntarray, cnt, gh->color);
+		gdispGDrawPoly(gh->display, tx+gh->x, ty+gh->y, pntarray, cnt, gh->color);
 	}
 
 	void gwinFillConvexPoly(GHandle gh, coord_t tx, coord_t ty, const point *pntarray, unsigned cnt) {
@@ -484,9 +485,9 @@ void gwinBlitArea(GHandle gh, coord_t x, coord_t y, coord_t cx, coord_t cy, coor
 			return;
 
 		#if GDISP_NEED_CLIP
-			gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+			gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 		#endif
-		gdispFillConvexPoly(tx+gh->x, ty+gh->y, pntarray, cnt, gh->color);
+		gdispGFillConvexPoly(gh->display, tx+gh->x, ty+gh->y, pntarray, cnt, gh->color);
 	}
 #endif
 
@@ -496,9 +497,9 @@ void gwinBlitArea(GHandle gh, coord_t x, coord_t y, coord_t cx, coord_t cy, coor
 			return GDISP_IMAGE_ERR_OK;
 
 		#if GDISP_NEED_CLIP
-			gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+			gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 		#endif
-		return gdispImageDraw(img, gh->x+x, gh->y+y, cx, cy, sx, sy);
+		return gdispGImageDraw(gh->display, img, gh->x+x, gh->y+y, cx, cy, sx, sy);
 	}
 #endif
 

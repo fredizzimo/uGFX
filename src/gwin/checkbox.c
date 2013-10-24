@@ -108,8 +108,8 @@ static const gwidgetVMT checkboxVMT = {
 	#endif
 };
 
-GHandle gwinCheckboxCreate(GCheckboxObject *gb, const GWidgetInit *pInit) {
-	if (!(gb = (GCheckboxObject *)_gwidgetCreate(&gb->w, pInit, &checkboxVMT)))
+GHandle gwinGCheckboxCreate(GDisplay *g, GCheckboxObject *gb, const GWidgetInit *pInit) {
+	if (!(gb = (GCheckboxObject *)_gwidgetCreate(g, &gb->w, pInit, &checkboxVMT)))
 		return 0;
 
 	#if GINPUT_NEED_TOGGLE
@@ -161,14 +161,14 @@ void gwinCheckboxDraw_CheckOnLeft(GWidgetObject *gw, void *param) {
 	pcol = getDrawColors(gw);
 
 	ld = gw->g.width < gw->g.height ? gw->g.width : gw->g.height;
-	gdispFillArea(gw->g.x+1, gw->g.y+1, ld, ld-2, gw->pstyle->background);
-	gdispDrawBox(gw->g.x, gw->g.y, ld, ld, pcol->edge);
+	gdispGFillArea(gw->g.display, gw->g.x+1, gw->g.y+1, ld, ld-2, gw->pstyle->background);
+	gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, ld, ld, pcol->edge);
 
 	df = ld < 4 ? 1 : 2;
 	if (gw->g.flags & GCHECKBOX_FLG_CHECKED)
-		gdispFillArea(gw->g.x+df, gw->g.y+df, ld-2*df, ld-2*df, pcol->fill);
+		gdispGFillArea(gw->g.display, gw->g.x+df, gw->g.y+df, ld-2*df, ld-2*df, pcol->fill);
 
-	gdispFillStringBox(gw->g.x+ld+1, gw->g.y, gw->g.width-ld-1, gw->g.height, gw->text, gw->g.font, pcol->text, gw->pstyle->background, justifyLeft);
+	gdispGFillStringBox(gw->g.display, gw->g.x+ld+1, gw->g.y, gw->g.width-ld-1, gw->g.height, gw->text, gw->g.font, pcol->text, gw->pstyle->background, justifyLeft);
 	#undef gcw
 }
 
@@ -183,14 +183,14 @@ void gwinCheckboxDraw_CheckOnRight(GWidgetObject *gw, void *param) {
 
 	ld = gw->g.width < gw->g.height ? gw->g.width : gw->g.height;
 	ep = gw->g.width-ld-1;
-	gdispFillArea(gw->g.x+ep-1, gw->g.y+1, ld, ld-2, gw->pstyle->background);
-	gdispDrawBox(gw->g.x+ep, gw->g.y, ld, ld, pcol->edge);
+	gdispGFillArea(gw->g.display, gw->g.x+ep-1, gw->g.y+1, ld, ld-2, gw->pstyle->background);
+	gdispGDrawBox(gw->g.display, gw->g.x+ep, gw->g.y, ld, ld, pcol->edge);
 
 	df = ld < 4 ? 1 : 2;
 	if (gw->g.flags & GCHECKBOX_FLG_CHECKED)
-		gdispFillArea(gw->g.x+ep+df, gw->g.y+df, ld-2*df, ld-2*df, pcol->fill);
+		gdispGFillArea(gw->g.display, gw->g.x+ep+df, gw->g.y+df, ld-2*df, ld-2*df, pcol->fill);
 
-	gdispFillStringBox(gw->g.x, gw->g.y, ep-1, gw->g.height, gw->text, gw->g.font, pcol->text, gw->pstyle->background, justifyRight);
+	gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, ep-1, gw->g.height, gw->text, gw->g.font, pcol->text, gw->pstyle->background, justifyRight);
 	#undef gcw
 }
 

@@ -66,8 +66,8 @@ static const gwinVMT consoleVMT = {
 		AfterClear,				// The after-clear routine
 };
 
-GHandle gwinConsoleCreate(GConsoleObject *gc, const GWindowInit *pInit) {
-	if (!(gc = (GConsoleObject *)_gwindowCreate(&gc->g, pInit, &consoleVMT, 0)))
+GHandle gwinGConsoleCreate(GDisplay *g, GConsoleObject *gc, const GWindowInit *pInit) {
+	if (!(gc = (GConsoleObject *)_gwindowCreate(g, &gc->g, pInit, &consoleVMT, 0)))
 		return 0;
 	#if GFX_USE_OS_CHIBIOS && GWIN_CONSOLE_USE_BASESTREAM
 		gc->stream.vmt = &GWindowConsoleVMT;
@@ -97,7 +97,7 @@ void gwinPutChar(GHandle gh, char c) {
 	fp = gdispGetFontMetric(gh->font, fontCharPadding);
 
 	#if GDISP_NEED_CLIP
-		gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+		gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 	#endif
 	
 	if (c == '\n') {
@@ -116,13 +116,13 @@ void gwinPutChar(GHandle gh, char c) {
 		if (gcw->cy + fy > gh->height) {
 #if GDISP_NEED_SCROLL
 			/* scroll the console */
-			gdispVerticalScroll(gh->x, gh->y, gh->width, gh->height, fy, gh->bgcolor);
+			gdispGVerticalScroll(gh->display, gh->x, gh->y, gh->width, gh->height, fy, gh->bgcolor);
 			/* reset the cursor to the start of the last line */
 			gcw->cx = 0;
 			gcw->cy = (((coord_t)(gh->height/fy))-1)*fy;
 #else
 			/* clear the console */
-			gdispFillArea(gh->x, gh->y, gh->width, gh->height, gh->bgcolor);
+			gdispGFillArea(gh->display, gh->x, gh->y, gh->width, gh->height, gh->bgcolor);
 			/* reset the cursor to the top of the window */
 			gcw->cx = 0;
 			gcw->cy = 0;
@@ -132,12 +132,12 @@ void gwinPutChar(GHandle gh, char c) {
 #if GWIN_CONSOLE_USE_CLEAR_LINES
 		/* clear to the end of the line */
 		if (gcw->cx == 0)
-			gdispFillArea(gh->x, gh->y + gcw->cy, gh->width, fy, gh->bgcolor);
+			gdispGFillArea(gh->display, gh->x, gh->y + gcw->cy, gh->width, fy, gh->bgcolor);
 #endif
 #if GWIN_CONSOLE_USE_FILLED_CHARS
-		gdispFillChar(gh->x + gcw->cx, gh->y + gcw->cy, c, gh->font, gh->color, gh->bgcolor);
+		gdispGFillChar(gh->display, gh->x + gcw->cx, gh->y + gcw->cy, c, gh->font, gh->color, gh->bgcolor);
 #else
-		gdispDrawChar(gh->x + gcw->cx, gh->y + gcw->cy, c, gh->font, gh->color);
+		gdispGDrawChar(gh->display, gh->x + gcw->cx, gh->y + gcw->cy, c, gh->font, gh->color);
 #endif
 
 		/* update cursor */

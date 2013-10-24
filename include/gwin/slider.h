@@ -58,6 +58,7 @@ extern "C" {
  * @brief   Create a slider window.
  * @return  NULL if there is no resultant drawing area, otherwise a window handle.
  *
+ * @param[in] g			The GDisplay to display this window on
  * @param[in] gb		The GSliderObject structure to initialise. If this is NULL the structure is dynamically allocated.
  * @param[in] pInit		The initialization parameters to use
  *
@@ -77,7 +78,8 @@ extern "C" {
  *
  * @api
  */	
-GHandle gwinSliderCreate(GSliderObject *gb, const GWidgetInit *pInit);
+GHandle gwinGSliderCreate(GDisplay *g, GSliderObject *gb, const GWidgetInit *pInit);
+#define gwinSliderCreate(w, pInit)			gwinGSliderCreate(GDISP, w, pInit)
 
 /**
  * @brief   Set the slider range.

@@ -46,22 +46,22 @@ static void pointto(GGraphObject *gg, coord_t x, coord_t y, const GGraphPointSty
 	y = gg->g.y + gg->g.height - 1 - gg->yorigin - y;
 
 	if (style->size <= 1) {
-		gdispDrawPixel(x, y, style->color);
+		gdispGDrawPixel(gg->g.display, x, y, style->color);
 		return;
 	}
 
 	switch(style->type) {
 	case GGRAPH_POINT_SQUARE:
-		gdispDrawBox(x-style->size, y-style->size, 2*style->size, 2*style->size, style->color);
+		gdispGDrawBox(gg->g.display, x-style->size, y-style->size, 2*style->size, 2*style->size, style->color);
 		break;
 #if GDISP_NEED_CIRCLE
 	case GGRAPH_POINT_CIRCLE:
-		gdispDrawCircle(x, y, style->size, style->color);
+		gdispGDrawCircle(gg->g.display, x, y, style->size, style->color);
 		break;
 #endif
 	case GGRAPH_POINT_DOT:
 	default:
-		gdispDrawPixel(x, y, style->color);
+		gdispGDrawPixel(gg->g.display, x, y, style->color);
 		break;
 	}
 }
@@ -83,7 +83,7 @@ static void lineto(GGraphObject *gg, coord_t x0, coord_t y0, coord_t x1, coord_t
 
 	if (style->size <= 0) {
 		// Use the driver to draw a solid line
-		gdispDrawLine(x0, y0, x1, y1, style->color);
+		gdispGDrawLine(gg->g.display, x0, y0, x1, y1, style->color);
 		return;
 	}
 
@@ -101,7 +101,7 @@ static void lineto(GGraphObject *gg, coord_t x0, coord_t y0, coord_t x1, coord_t
 	case GGRAPH_LINE_SOLID:
 	default:
 		// Use the driver to draw a solid line
-		gdispDrawLine(x0, y0, x1, y1, style->color);
+		gdispGDrawLine(gg->g.display, x0, y0, x1, y1, style->color);
 		return;
 	}
 
@@ -131,7 +131,7 @@ static void lineto(GGraphObject *gg, coord_t x0, coord_t y0, coord_t x1, coord_t
 			if (run++ >= 0) {
 				if (run >= run_on)
 					run = run_off;
-				gdispDrawPixel(x0, y0, style->color);
+				gdispGDrawPixel(gg->g.display, x0, y0, style->color);
 			}
 			if (P < 0) {
 				P  += dy;
@@ -151,7 +151,7 @@ static void lineto(GGraphObject *gg, coord_t x0, coord_t y0, coord_t x1, coord_t
 			if (run++ >= 0) {
 				if (run >= run_on)
 					run = run_off;
-				gdispDrawPixel(x0, y0, style->color);
+				gdispGDrawPixel(gg->g.display, x0, y0, style->color);
 			}
 			if (P < 0) {
 				P  += dx;
@@ -165,8 +165,8 @@ static void lineto(GGraphObject *gg, coord_t x0, coord_t y0, coord_t x1, coord_t
 	}
 }
 
-GHandle gwinGraphCreate(GGraphObject *gg, const GWindowInit *pInit) {
-	if (!(gg = (GGraphObject *)_gwindowCreate(&gg->g, pInit, &graphVMT, 0)))
+GHandle gwinGGraphCreate(GDisplay *g, GGraphObject *gg, const GWindowInit *pInit) {
+	if (!(gg = (GGraphObject *)_gwindowCreate(g, &gg->g, pInit, &graphVMT, 0)))
 		return 0;
 	gg->xorigin = gg->yorigin = 0;
 	gg->lastx = gg->lasty = 0;

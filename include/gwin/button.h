@@ -59,6 +59,7 @@ extern "C" {
  * @brief   Create a button widget.
  * @return  NULL if there is no resultant drawing area, otherwise a window handle.
  *
+ * @param[in] g			The GDisplay to display this window on
  * @param[in] gb		The GButtonObject structure to initialise. If this is NULL the structure is dynamically allocated.
  * @param[in] pInit		The initialisation parameters
  *
@@ -74,7 +75,8 @@ extern "C" {
  *
  * @api
  */	
-GHandle gwinButtonCreate(GButtonObject *gb, const GWidgetInit *pInit);
+GHandle gwinGButtonCreate(GDisplay *g, GButtonObject *gb, const GWidgetInit *pInit);
+#define gwinButtonCreate(gb, pInit)			gwinGButtonCreate(GDISP, gb, pInit)
 
 /**
  * @brief	Is the button current pressed

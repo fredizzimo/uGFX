@@ -223,8 +223,8 @@ static const gwidgetVMT sliderVMT = {
 	#endif
 };
 
-GHandle gwinSliderCreate(GSliderObject *gs, const GWidgetInit *pInit) {
-	if (!(gs = (GSliderObject *)_gwidgetCreate(&gs->w, pInit, &sliderVMT)))
+GHandle gwinGSliderCreate(GDisplay *g, GSliderObject *gs, const GWidgetInit *pInit) {
+	if (!(gs = (GSliderObject *)_gwidgetCreate(g, &gs->w, pInit, &sliderVMT)))
 		return 0;
 	#if GINPUT_NEED_TOGGLE
 		gs->t_dn = GWIDGET_NO_INSTANCE;
@@ -294,30 +294,30 @@ void gwinSliderDraw_Std(GWidgetObject *gw, void *param) {
 
 	if (gw->g.width < gw->g.height) {			// Vertical slider
 		if (gsw->dpos != gw->g.height-1)
-			gdispFillArea(gw->g.x, gw->g.y+gsw->dpos, gw->g.width, gw->g.height - gsw->dpos, pcol->progress);	// Active Area
+			gdispGFillArea(gw->g.display, gw->g.x, gw->g.y+gsw->dpos, gw->g.width, gw->g.height - gsw->dpos, pcol->progress);	// Active Area
 		if (gsw->dpos != 0)
-			gdispFillArea(gw->g.x, gw->g.y, gw->g.width, gsw->dpos, gw->pstyle->enabled.progress);			// Inactive area
-		gdispDrawBox(gw->g.x, gw->g.y, gw->g.width, gw->g.height, pcol->edge);								// Edge
-		gdispDrawLine(gw->g.x, gw->g.y+gsw->dpos, gw->g.x+gw->g.width-1, gw->g.y+gsw->dpos, pcol->edge);	// Thumb
+			gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gsw->dpos, gw->pstyle->enabled.progress);			// Inactive area
+		gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, pcol->edge);								// Edge
+		gdispGDrawLine(gw->g.display, gw->g.x, gw->g.y+gsw->dpos, gw->g.x+gw->g.width-1, gw->g.y+gsw->dpos, pcol->edge);	// Thumb
 		if (gsw->dpos >= 2)
-			gdispDrawLine(gw->g.x, gw->g.y+gsw->dpos-2, gw->g.x+gw->g.width-1, gw->g.y+gsw->dpos-2, pcol->edge);	// Thumb
+			gdispGDrawLine(gw->g.display, gw->g.x, gw->g.y+gsw->dpos-2, gw->g.x+gw->g.width-1, gw->g.y+gsw->dpos-2, pcol->edge);	// Thumb
 		if (gsw->dpos <= gw->g.height-2)
-			gdispDrawLine(gw->g.x, gw->g.y+gsw->dpos+2, gw->g.x+gw->g.width-1, gw->g.y+gsw->dpos+2, pcol->edge);	// Thumb
+			gdispGDrawLine(gw->g.display, gw->g.x, gw->g.y+gsw->dpos+2, gw->g.x+gw->g.width-1, gw->g.y+gsw->dpos+2, pcol->edge);	// Thumb
 
 	// Horizontal slider
 	} else {
 		if (gsw->dpos != gw->g.width-1)
-			gdispFillArea(gw->g.x+gsw->dpos, gw->g.y, gw->g.width-gsw->dpos, gw->g.height, gw->pstyle->enabled.progress);	// Inactive area
+			gdispGFillArea(gw->g.display, gw->g.x+gsw->dpos, gw->g.y, gw->g.width-gsw->dpos, gw->g.height, gw->pstyle->enabled.progress);	// Inactive area
 		if (gsw->dpos != 0)
-			gdispFillArea(gw->g.x, gw->g.y, gsw->dpos, gw->g.height, pcol->progress);	// Active Area
-		gdispDrawBox(gw->g.x, gw->g.y, gw->g.width, gw->g.height, pcol->edge);								// Edge
-		gdispDrawLine(gw->g.x+gsw->dpos, gw->g.y, gw->g.x+gsw->dpos, gw->g.y+gw->g.height-1, pcol->edge);	// Thumb
+			gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gsw->dpos, gw->g.height, pcol->progress);	// Active Area
+		gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, pcol->edge);								// Edge
+		gdispGDrawLine(gw->g.display, gw->g.x+gsw->dpos, gw->g.y, gw->g.x+gsw->dpos, gw->g.y+gw->g.height-1, pcol->edge);	// Thumb
 		if (gsw->dpos >= 2)
-			gdispDrawLine(gw->g.x+gsw->dpos-2, gw->g.y, gw->g.x+gsw->dpos-2, gw->g.y+gw->g.height-1, pcol->edge);	// Thumb
+			gdispGDrawLine(gw->g.display, gw->g.x+gsw->dpos-2, gw->g.y, gw->g.x+gsw->dpos-2, gw->g.y+gw->g.height-1, pcol->edge);	// Thumb
 		if (gsw->dpos <= gw->g.width-2)
-			gdispDrawLine(gw->g.x+gsw->dpos+2, gw->g.y, gw->g.x+gsw->dpos+2, gw->g.y+gw->g.height-1, pcol->edge);	// Thumb
+			gdispGDrawLine(gw->g.display, gw->g.x+gsw->dpos+2, gw->g.y, gw->g.x+gsw->dpos+2, gw->g.y+gw->g.height-1, pcol->edge);	// Thumb
 	}
-	gdispDrawStringBox(gw->g.x+1, gw->g.y+1, gw->g.width-2, gw->g.height-2, gw->text, gw->g.font, pcol->text, justifyCenter);
+	gdispGDrawStringBox(gw->g.display, gw->g.x+1, gw->g.y+1, gw->g.width-2, gw->g.height-2, gw->text, gw->g.font, pcol->text, justifyCenter);
 
 	#undef gsw
 }
@@ -338,7 +338,7 @@ void gwinSliderDraw_Image(GWidgetObject *gw, void *param) {
 
 	if (gw->g.width < gw->g.height) {			// Vertical slider
 		if (gsw->dpos != 0)							// The unfilled area
-			gdispFillArea(gw->g.x, gw->g.y, gw->g.width, gsw->dpos, gw->pstyle->enabled.progress);	// Inactive area
+			gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gsw->dpos, gw->pstyle->enabled.progress);	// Inactive area
 		if (gsw->dpos != gw->g.height-1) {			// The filled area
 			for(z=gw->g.height, v=gi->height; z > gsw->dpos;) {
 				z -= v;
@@ -346,27 +346,27 @@ void gwinSliderDraw_Image(GWidgetObject *gw, void *param) {
 					v -= gsw->dpos - z;
 					z = gsw->dpos;
 				}
-				gdispImageDraw(gi, gw->g.x, gw->g.y+z, gw->g.width, v, 0, gi->height-v);
+				gdispGImageDraw(gw->g.display, gi, gw->g.x, gw->g.y+z, gw->g.width, v, 0, gi->height-v);
 			}
 		}
-		gdispDrawBox(gw->g.x, gw->g.y, gw->g.width, gw->g.height, pcol->edge);								// Edge
-		gdispDrawLine(gw->g.x, gw->g.y+gsw->dpos, gw->g.x+gw->g.width-1, gw->g.y+gsw->dpos, pcol->edge);	// Thumb
+		gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, pcol->edge);								// Edge
+		gdispGDrawLine(gw->g.display, gw->g.x, gw->g.y+gsw->dpos, gw->g.x+gw->g.width-1, gw->g.y+gsw->dpos, pcol->edge);	// Thumb
 
 	// Horizontal slider
 	} else {
 		if (gsw->dpos != gw->g.width-1)				// The unfilled area
-			gdispFillArea(gw->g.x+gsw->dpos, gw->g.y, gw->g.width-gsw->dpos, gw->g.height, gw->pstyle->enabled.progress);	// Inactive area
+			gdispGFillArea(gw->g.display, gw->g.x+gsw->dpos, gw->g.y, gw->g.width-gsw->dpos, gw->g.height, gw->pstyle->enabled.progress);	// Inactive area
 		if (gsw->dpos != 0) {						// The filled area
 			for(z=0, v=gi->width; z < gsw->dpos; z += v) {
 				if (z+v > gsw->dpos)
 					v -= z+v - gsw->dpos;
-				gdispImageDraw(gi, gw->g.x+z, gw->g.y, v, gw->g.height, 0, 0);
+				gdispGImageDraw(gw->g.display, gi, gw->g.x+z, gw->g.y, v, gw->g.height, 0, 0);
 			}
 		}
-		gdispDrawBox(gw->g.x, gw->g.y, gw->g.width, gw->g.height, pcol->edge);								// Edge
-		gdispDrawLine(gw->g.x+gsw->dpos, gw->g.y, gw->g.x+gsw->dpos, gw->g.y+gw->g.height-1, pcol->edge);	// Thumb
+		gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, pcol->edge);								// Edge
+		gdispGDrawLine(gw->g.display, gw->g.x+gsw->dpos, gw->g.y, gw->g.x+gsw->dpos, gw->g.y+gw->g.height-1, pcol->edge);	// Thumb
 	}
-	gdispDrawStringBox(gw->g.x+1, gw->g.y+1, gw->g.width-2, gw->g.height-2, gw->text, gw->g.font, pcol->text, justifyCenter);
+	gdispGDrawStringBox(gw->g.display, gw->g.x+1, gw->g.y+1, gw->g.width-2, gw->g.height-2, gw->text, gw->g.font, pcol->text, justifyCenter);
 
 	#undef gsw
 }
