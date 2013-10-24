@@ -1114,7 +1114,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
  *
  * @api
  */
-#define gdispGUnsetClip(g)							gdispGSetClip((g),0,0,(g)->Width,(g)->Height)
+#define gdispGUnsetClip(g)							gdispGSetClip((g),0,0,gdispGGetWidth(g),gdispGGetHeight(g))
 #define gdispUnsetClip()							gdispGUnsetClip(GDISP)
 
 #ifdef __cplusplus
