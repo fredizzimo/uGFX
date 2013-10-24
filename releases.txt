@@ -23,6 +23,7 @@ FEATURE:	ED060SC4 driver by user jpa-
 FIX:		SSD1289 area filling bug fix by user samofab
 FEATURE:	Added gwinListGetSelectedText()
 FEATURE:	Added gwinListSetScroll()
+FEATURE:	Added gwinLabelSetBorder()
 
 *** changes after 1.7 ***
 FEATURE:	Rename of the project from ChibiOS/GFX to uGFX

@@ -39,8 +39,8 @@ extern "C" {
 #endif
 
 /**
- * @brief		Create a label widget.
- * @details		A label widget is a simple window which has a static text.
+ * @brief				Create a label widget.
+ * @details				A label widget is a simple window which has a static text.
  * 
  * @param[in] widget	The label structure to initialise. If this is NULL, the structure is dynamically allocated.
  * @param[in] pInit		The initialisation parameters to use.
@@ -50,6 +50,16 @@ extern "C" {
  * @api
  */
 GHandle gwinLabelCreate(GLabelObject *widget, GWidgetInit *pInit);
+
+/**
+ * @brief				Border settings for the default rendering routine
+ *
+ * @param[in] gh		The widget handle (must be a list handle)
+ * @param[in] border	Shall a border be rendered?
+ *
+ * @api
+ */
+void gwinLabelSetBorder(GHandle gh, bool_t border);
 
 #ifdef __cplusplus
 }
