@@ -12,7 +12,7 @@
 
 #include "gfx.h"
 
-#if GFX_USE_GDISP || defined(__DOXYGEN__)
+#if GFX_USE_GDISP
 
 #define GDISP_DRIVER_VMT			GDISPVMT_SSD1306
 #include "../drivers/gdisp/SSD1306/gdisp_lld_config.h"

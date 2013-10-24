@@ -41,6 +41,10 @@
 // I2C configuration structure.
 static I2CConfig i2cconfig;
 
+#if GFX_USE_OS_CHIBIOS
+	static int32_t thdPriority = 0;
+#endif
+
 static inline void init_board(GDisplay *g) {
 
 	// As we are not using multiple displays we set g->board to NULL as we don't use it.
@@ -62,10 +66,10 @@ static inline void init_board(GDisplay *g) {
 		 * 0x0030020A;		// 400kHz Fast Mode
 		 * 0x00100002;		// 800kHz Fast Mode +
 		 */
-		i2cconfig.timingr = 0x00100002;		// 800kHz Fast Mode+
-		i2cInit();
 		palSetPadMode(SSD1306_SCL_PORT, SSD1306_SCL_PIN, PAL_MODE_ALTERNATE(1));
 		palSetPadMode(SSD1306_SDA_PORT, SSD1306_SDA_PIN, PAL_MODE_ALTERNATE(1));
+		i2cconfig.timingr = 0x00100002;		// 800kHz Fast Mode+
+		i2cInit();
 		break;
 	}
 }
@@ -84,11 +88,18 @@ static inline void setpin_reset(GDisplay *g, bool_t state) {
 
 static inline void acquire_bus(GDisplay *g) {
 	(void) g;
+	#if GFX_USE_OS_CHIBIOS
+		thdPriority = (int32_t)chThdGetPriority();
+		chThdSetPriority(HIGHPRIO);
+	#endif
 	i2cAcquireBus(&I2CD1);
 }
 
 static inline void release_bus(GDisplay *g) {
 	(void) g;
+	#if GFX_USE_OS_CHIBIOS
+		chThdSetPriority(thdPriority);
+	#endif
 	i2cReleaseBus(&I2CD1);
 }
 

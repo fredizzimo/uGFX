@@ -44,6 +44,10 @@ static const SPIConfig spi1config = {
 	//SPI_CR1_BR_0
 };
 
+#if GFX_USE_OS_CHIBIOS
+	static int32_t thdPriority = 0;
+#endif
+
 static inline void init_board(GDisplay *g) {
 
 	// As we are not using multiple displays we set g->board to NULL as we don't use it.
@@ -54,7 +58,6 @@ static inline void init_board(GDisplay *g) {
 		// RESET pin.
 		palSetPadMode(SSD1306_RESET_PORT, SSD1306_RESET_PIN, PAL_MODE_OUTPUT_PUSHPULL);
 
-		spiInit();
 		palSetPadMode(SSD1306_MISO_PORT, SSD1306_MISO_PIN, 	PAL_MODE_ALTERNATE(1)|
 															PAL_STM32_OSPEED_HIGHEST);
 		palSetPadMode(SSD1306_MOSI_PORT, SSD1306_MOSI_PIN, 	PAL_MODE_ALTERNATE(1)|
@@ -64,6 +67,7 @@ static inline void init_board(GDisplay *g) {
 		palSetPad(SSD1306_CS_PORT, SSD1306_CS_PIN);
 		palSetPadMode(SSD1306_CS_PORT,   SSD1306_CS_PIN,   	PAL_MODE_ALTERNATE(1)|
 															PAL_STM32_OSPEED_HIGHEST);
+		spiInit();
 		break;
 	}
 }
@@ -82,11 +86,18 @@ static inline void setpin_reset(GDisplay *g, bool_t state) {
 
 static inline void acquire_bus(GDisplay *g) {
 	(void) g;
+	#if GFX_USE_OS_CHIBIOS
+		thdPriority = (int32_t)chThdGetPriority();
+		chThdSetPriority(HIGHPRIO);
+	#endif
 	spiAcquireBus(&SPID1);
 }
 
 static inline void release_bus(GDisplay *g) {
 	(void) g;
+	#if GFX_USE_OS_CHIBIOS
+		chThdSetPriority(thdPriority);
+	#endif
 	spiReleaseBus(&SPID1);
 }
 
