@@ -31,15 +31,29 @@
 #include "gfx.h"
 #include <math.h>
 
-#define Lightgrey ()
-#define Midgrey ()
-#define Darkgrey (HTML2COLOR(0x303030))
-
-#define BALLCOLOR1	Red
-#define BALLCOLOR2	Yellow
-#define WALLCOLOR	HTML2COLOR(0x303030)
-#define BACKCOLOR	HTML2COLOR(0xC0C0C0)
-#define FLOORCOLOR	HTML2COLOR(0x606060)
+/**
+ * NOTE:
+ *
+ * This demo uses floating point operations. Don't expect it to work with any
+ * speed unless your processor has an FPU.
+ *
+ * If you see garbage inside the ball as it is running rather than the red and yellow
+ * checkerboard pattern then the fast invsqrt() function in GMISC does not work on
+ * your processor.
+ *
+ * You can modify the implementation of invsqrt() by firstly defining
+ * 		#define GDISP_INVSQRT_MIXED_ENDIAN	TRUE
+ * in your gfxconf.h file.
+ *
+ * If it still doesn't work then instead define
+ * 		#define GDISP_INVSQRT_REAL_SLOW		TRUE
+ * in your gfxconf.h file. This should always work although it will probably be slow.
+ */
+#define BALLCOLOR1		Red
+#define BALLCOLOR2		Yellow
+#define WALLCOLOR		HTML2COLOR(0x303030)
+#define BACKCOLOR		HTML2COLOR(0xC0C0C0)
+#define FLOORCOLOR		HTML2COLOR(0x606060)
 #define SHADOWALPHA		(255-255*0.2)
 
 int main(void) {
