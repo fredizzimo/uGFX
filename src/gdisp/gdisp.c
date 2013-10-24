@@ -510,7 +510,41 @@ static void line_clip(GDisplay *g) {
 
 #if GDISP_STARTUP_LOGO_TIMEOUT > 0
 	static void StatupLogoDisplay(GDisplay *g) {
-		gdispGFillArea(g, g->g.Width/4, g->g.Height/4, g->g.Width/2, g->g.Height/2, Blue);
+		coord_t			x, y, w;
+		const coord_t *	p;
+		static const coord_t blks[] = {
+				// u
+				2, 6, 1, 10,
+				3, 11, 4, 1,
+				6, 6, 1, 6,
+				// G
+				8, 0, 1, 12,
+				9, 0, 6, 1,
+				9, 11, 6, 1,
+				14, 6, 1, 5,
+				12, 6, 2, 1,
+				// F
+				16, 0, 1, 12,
+				17, 0, 6, 1,
+				17, 6, 3, 1,
+				// X
+				22, 6, 7, 1,
+				24, 0, 1, 6,
+				22, 7, 1, 5,
+				28, 0, 1, 6,
+				26, 7, 1, 5,
+		};
+
+		// Get a starting position and a scale
+		// Work on a 8x16 grid for each char, 4 chars (uGFX) in 1 line, using half the screen
+		w = g->g.Width/(8*4*2);
+		if (!w) w = 1;
+		x = (g->g.Width - (8*4)*w)/2;
+		y = (g->g.Height - (16*1)*w)/2;
+
+		// Simple but crude!
+		for(p = blks; p < blks+sizeof(blks)/sizeof(blks[0]); p+=4)
+			gdispGFillArea(g, x+p[0]*w, y+p[1]*w, p[2]*w, p[3]*w, Blue);
 	}
 #endif
 
