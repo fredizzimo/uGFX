@@ -73,6 +73,9 @@ static DWORD			winThreadId;
 static ATOM				winClass;
 static volatile bool_t	QReady;
 static HANDLE			drawMutex;
+#if GINPUT_NEED_MOUSE
+	static GDisplay *	mouseDisplay;
+#endif
 
 /*===========================================================================*/
 /* Driver local routines    .                                                */
@@ -441,8 +444,10 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 	// Only turn on mouse on the first window for now
 	#if GINPUT_NEED_MOUSE
-		if (!g->controllerdisplay)
+		if (!g->controllerdisplay) {
+			mouseDisplay = g;
 			g->flags |= GDISP_FLG_HASMOUSE;
+		}
 	#endif
 
 	// Create a private area for this window
@@ -811,6 +816,8 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		
 		// Copy the bits we need
 		switch(g->g.Orientation) {
+		case GDISP_ROTATE_0:
+			return 0;					// not handled as it doesn't need to be.
 		case GDISP_ROTATE_90:
 			for(src = buffer+g->p.x1, j = 0; j < g->p.cy; j++, src += g->p.x2 - g->p.cx) {
 				dst = dstbuf+sz-g->p.cy+j;
@@ -931,7 +938,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 		#if GDISP_NEED_CONTROL
 			if (buffer != (pixel_t *)g->p.ptr)
-				free(srcimg);
+				free(buffer);
 		#endif
 	}
 #endif
@@ -977,7 +984,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		priv = g->priv;
 
 		#if GDISP_NEED_CONTROL
-			switch(GC->g.Orientation) {
+			switch(g->g.Orientation) {
 			case GDISP_ROTATE_0:
 				rect.top = g->p.y;
 				rect.bottom = rect.top+g->p.cy;
@@ -995,7 +1002,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			case GDISP_ROTATE_180:
 				rect.bottom = g->g.Height - g->p.y;
 				rect.top = rect.bottom-g->p.cy;
-				rect.right = GC->g.Width - g->p.x;
+				rect.right = g->g.Width - g->p.x;
 				rect.left = rect.right-g->p.cx;
 				lines = g->p.y1;
 			vertical_scroll:
@@ -1116,13 +1123,16 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 #if GINPUT_NEED_MOUSE
 	void ginput_lld_mouse_init(void) {}
 	void ginput_lld_mouse_get_reading(MouseReading *pt) {
-		GDisplay *g;
+		GDisplay *	g;
+		winPriv	*	priv;
 
-		g = GDISP_WIN32;
-		pt->x = g->priv->mousex;
-		pt->y = g->priv->mousey > g->g.Height ? g->g.Height : mousey;
-		pt->z = (g->priv->mousebuttons & GINPUT_MOUSE_BTN_LEFT) ? 100 : 0;
-		pt->buttons = g->priv->mousebuttons;
+		g = mouseDisplay;
+		priv = g->priv;
+
+		pt->x = priv->mousex;
+		pt->y = priv->mousey > g->g.Height ? g->g.Height : priv->mousey;
+		pt->z = (priv->mousebuttons & GINPUT_MOUSE_BTN_LEFT) ? 100 : 0;
+		pt->buttons = priv->mousebuttons;
 	}
 #endif /* GINPUT_NEED_MOUSE */
 
