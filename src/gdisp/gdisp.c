@@ -87,6 +87,7 @@ GDisplay	*GDISP = GDisplayArray;
 	static INLINE void setglobalwindow(GDisplay *g) {
 		coord_t	x, y;
 		x = g->p.x; y = g->p.y;
+		g->p.x = g->p.y = 0;
 		g->p.cx = g->g.Width; g->p.cy = g->g.Height;
 		gdisp_lld_write_start(g);
 		g->p.x = x; g->p.y = y;
@@ -304,8 +305,9 @@ static void hline_clip(GDisplay *g) {
 		{
 			if (!(g->flags & GDISP_FLG_SCRSTREAM))
 				setglobalwindow(g);
+			g->p.cx = g->p.x1 - g->p.x + 1;
 			gdisp_lld_write_pos(g);
-			do { gdisp_lld_write_color(g); } while(g->p.cx--);
+			do { gdisp_lld_write_color(g); } while(--g->p.cx);
 			return;
 		}
 	#endif
@@ -319,7 +321,7 @@ static void hline_clip(GDisplay *g) {
 			g->p.cx = g->p.x1 - g->p.x + 1;
 			g->p.cy = 1;
 			gdisp_lld_write_start(g);
-			do { gdisp_lld_write_color(g); } while(g->p.cx--);
+			do { gdisp_lld_write_color(g); } while(--g->p.cx);
 			gdisp_lld_write_stop(g);
 			return;
 		}
@@ -404,7 +406,7 @@ static void vline_clip(GDisplay *g) {
 				#endif
 				gdisp_lld_write_pos(g);
 			#endif
-			do { gdisp_lld_write_color(g); } while(g->p.cy--);
+			do { gdisp_lld_write_color(g); } while(--g->p.cy);
 			gdisp_lld_write_stop(g);
 			return;
 		}
