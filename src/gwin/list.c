@@ -94,7 +94,7 @@ static void gwinListDefaultDraw(GWidgetObject* gw, void* param) {
 	x = 1;
 
 	// the scroll area
-	if (gw2obj->cnt > (gw->g.height-2) / iheight || gw->g.flags & GLIST_FLG_SCROLLALWAYS) {
+	if ((gw2obj->cnt > (gw->g.height-2) / iheight) || (gw->g.flags & GLIST_FLG_SCROLLALWAYS)) {
 		iwidth = gw->g.width - (SCROLLWIDTH+3);
 		gdispFillArea(gw->g.x+iwidth+2, gw->g.y+1, SCROLLWIDTH, gw->g.height-2, gdispBlendColor(ps->fill, gw->pstyle->background, 128));
 		gdispDrawLine(gw->g.x+iwidth+1, gw->g.y+1, gw->g.x+iwidth+1, gw->g.y+gw->g.height-2, ps->edge);
