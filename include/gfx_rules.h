@@ -138,10 +138,32 @@
 		#ifndef GDISP_CONTROLLER_LIST
 			#error "GDISP Multiple Controllers: You must specify a value for GDISP_CONTROLLER_LIST"
 		#endif
+		#ifndef GDISP_CONTROLLER_DISPLAYS
+			#error "GDISP Multiple Controllers: You must specify a value for GDISP_CONTROLLER_DISPLAYS"
+		#endif
 		#ifndef GDISP_PIXELFORMAT
+			#error "GDISP Multiple Controllers: You must specify a value for GDISP_PIXELFORMAT"
+		#endif
+	#endif
+	#if GDISP_NEED_AUTOFLUSH && GDISP_NEED_TIMERFLUSH
+		#if GFX_DISPLAY_RULE_WARNINGS
+			#warning "GDISP: Both GDISP_NEED_AUTOFLUSH and GDISP_NEED_TIMERFLUSH has been set. GDISP_NEED_TIMERFLUSH has disabled for you."
+		#endif
+		#undef GDISP_NEED_TIMERFLUSH
+		#define GDISP_NEED_TIMERFLUSH		FALSE
+	#endif
+	#if GDISP_NEED_TIMERFLUSH
+		#if GDISP_NEED_TIMERFLUSH < 50 || GDISP_NEED_TIMERFLUSH > 1200
+			#error "GDISP: GDISP_NEED_TIMERFLUSH has been set to an invalid value (FALSE, 50-1200)."
+		#endif
+		#if !GFX_USE_GTIMER
 			#if GFX_DISPLAY_RULE_WARNINGS
-				#error "GDISP Multiple Controllers: You must specify a value for GDISP_PIXELFORMAT"
+				#warning "GDISP: GDISP_NEED_TIMERFLUSH has been set but GFX_USE_GTIMER has not been set. It has been turned on for you."
 			#endif
+			#undef GFX_USE_GTIMER
+			#define GFX_USE_GTIMER				TRUE
+			#undef GDISP_NEED_MULTITHREAD
+			#define GDISP_NEED_MULTITHREAD		TRUE
 		#endif
 	#endif
 	#if GDISP_NEED_ANTIALIAS && !GDISP_NEED_PIXELREAD
@@ -194,9 +216,9 @@
 #endif
 
 #if GFX_USE_GTIMER
-	#if GFX_USE_GDISP && !GDISP_NEED_MULTITHREAD && !GDISP_NEED_ASYNC
+	#if GFX_USE_GDISP && !GDISP_NEED_MULTITHREAD
 		#if GFX_DISPLAY_RULE_WARNINGS
-			#warning "GTIMER: Neither GDISP_NEED_MULTITHREAD nor GDISP_NEED_ASYNC has been specified."
+			#warning "GTIMER: GDISP_NEED_MULTITHREAD has not been specified."
 			#warning "GTIMER: Make sure you are not performing any GDISP/GWIN drawing operations in the timer callback!"
 		#endif
 	#endif

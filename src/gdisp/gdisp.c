@@ -44,6 +44,11 @@
 	static const struct GDISPVMT const *	ControllerList[GDISP_TOTAL_CONTROLLERS] = {GDISP_CONTROLLER_LIST};
 	static const unsigned					DisplayCountList[GDISP_TOTAL_CONTROLLERS] = {GDISP_CONTROLLER_DISPLAYS};
 #endif
+
+#if GDISP_NEED_TIMERFLUSH
+	static GTimer	FlushTimer;
+#endif
+
 static GDisplay GDisplayArray[GDISP_TOTAL_DISPLAYS];
 GDisplay	*GDISP = GDisplayArray;
 
@@ -509,6 +514,16 @@ static void line_clip(GDisplay *g) {
 	}
 #endif
 
+#if GDISP_NEED_TIMERFLUSH
+	static void FlushTimerFn(void *param) {
+		GDisplay *	g;
+		(void)		param;
+
+		for(g = GDisplayArray; g < &GDisplayArray[GDISP_TOTAL_DISPLAYS]; g++)
+			gdispGFlush(g);
+	}
+#endif
+
 /*===========================================================================*/
 /* Driver exported functions.                                                */
 /*===========================================================================*/
@@ -520,7 +535,6 @@ void _gdispInit(void) {
 	#if GDISP_TOTAL_CONTROLLERS > 1
 		uint16_t	j;
 	#endif
-
 
 	/* Initialise driver */
 	#if GDISP_TOTAL_CONTROLLERS > 1
@@ -586,6 +600,11 @@ void _gdispInit(void) {
 				gdispGFlush(g);
 			#endif
 		}
+	#endif
+
+	#if GDISP_NEED_TIMERFLUSH
+		gtimerInit(&FlushTimer);
+		gtimerStart(&FlushTimer, FlushTimerFn, 0, TRUE, GDISP_NEED_TIMERFLUSH);
 	#endif
 }
 

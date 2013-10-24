@@ -35,6 +35,7 @@
 
 /* Features for the GDISP subsystem */
 #define GDISP_NEED_AUTOFLUSH		FALSE
+#define GDISP_NEED_TIMERFLUSH		FALSE
 #define GDISP_NEED_VALIDATION		TRUE
 #define GDISP_NEED_CLIP				TRUE
 #define GDISP_NEED_TEXT				TRUE

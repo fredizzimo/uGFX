@@ -28,11 +28,24 @@
 	 * 			Setting this to TRUE causes GDISP to automatically flush
 	 * 			after each drawing operation. Note this may be slow but enables
 	 * 			an application to avoid having to manually call the flush routine.
+	 * @note	If TRUE and GDISP_NEED_TIMERFLUSH is also TRUE, this takes precedence.
 	 * @note	Most controllers don't need flushing which is why this is set to
 	 * 			FALSE by default.
 	 */
 	#ifndef GDISP_NEED_AUTOFLUSH
 		#define GDISP_NEED_AUTOFLUSH			FALSE
+	#endif
+	/**
+	 * @brief   Should drawing operations be automatically flushed on a timer.
+	 * @details	Defaults to FALSE, Can be set to FALSE or a timer period in milliseconds.
+	 * @note	The period should not be set too short or it will consume all your CPU. A
+	 * 			value between 250 and 500 milliseconds would probably be suitable.
+	 * @note	If TRUE and GDISP_NEED_AUTOFLUSH is also TRUE, this is ineffective.
+	 * @note	Most controllers don't need flushing which is why this is set to
+	 * 			FALSE by default.
+	 */
+	#ifndef GDISP_NEED_TIMERFLUSH
+		#define GDISP_NEED_TIMERFLUSH			FALSE
 	#endif
 	/**
 	 * @brief   Should all operations be clipped to the screen and colors validated.
