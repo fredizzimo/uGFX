@@ -56,6 +56,7 @@ typedef struct GEventMouse_t {
 		GMETA_MOUSE_CXTCLICK = 8			// For mice - The right button has just been depressed
 											// For touch - a long press has just occurred
 		}				meta;
+	GDisplay *			display;		// The display this mouse is currently associated with.
 	} GEventMouse;
 
 // Mouse/Touch Listen Flags - passed to geventAddSourceToListener()
@@ -105,6 +106,15 @@ extern "C" {
 	 * @param[in] g				The GDisplay to which this mouse belongs
 	 */
 	void ginputSetMouseDisplay(uint16_t instance, GDisplay *g);
+
+	/**
+	 * @brief	Get the display currently associated with the mouse
+	 * @return	A pointer to the display
+	 *
+	 * @param[in] instance		The ID of the mouse input instance
+	 * @param[in] g				The GDisplay to which this mouse belongs
+	 */
+	GDisplay *ginputGetMouseDisplay(uint16_t instance);
 
 	/**
 	 * @brief	Get the current mouse position and button status

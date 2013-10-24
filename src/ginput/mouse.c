@@ -19,8 +19,6 @@
 
 #include "ginput/lld/mouse.h"
 
-static GDisplay *mouseDisplay = 0;
-
 #if GINPUT_MOUSE_NEED_CALIBRATION
 	#if !defined(GFX_USE_GDISP) || !GFX_USE_GDISP
 		#error "GINPUT: GFX_USE_GDISP must be defined when mouse or touch calibration is required"
@@ -72,30 +70,31 @@ static struct MouseConfig_t {
 		GMouseCalibrationLoadRoutine	fnloadcal;
 		Calibration						caldata;
 	#endif
+	GDisplay *							display;
 	} MouseConfig;
 
 #if GINPUT_MOUSE_NEED_CALIBRATION
 	static inline void _tsDrawCross(const MousePoint *pp) {
-		gdispGDrawLine(mouseDisplay, pp->x-15, pp->y, pp->x-2, pp->y, White);
-		gdispGDrawLine(mouseDisplay, pp->x+2, pp->y, pp->x+15, pp->y, White);
-		gdispGDrawLine(mouseDisplay, pp->x, pp->y-15, pp->x, pp->y-2, White);
-		gdispGDrawLine(mouseDisplay, pp->x, pp->y+2, pp->x, pp->y+15, White);
+		gdispGDrawLine(MouseConfig.display, pp->x-15, pp->y, pp->x-2, pp->y, White);
+		gdispGDrawLine(MouseConfig.display, pp->x+2, pp->y, pp->x+15, pp->y, White);
+		gdispGDrawLine(MouseConfig.display, pp->x, pp->y-15, pp->x, pp->y-2, White);
+		gdispGDrawLine(MouseConfig.display, pp->x, pp->y+2, pp->x, pp->y+15, White);
 
-		gdispGDrawLine(mouseDisplay, pp->x-15, pp->y+15, pp->x-7, pp->y+15, RGB2COLOR(184,158,131));
-		gdispGDrawLine(mouseDisplay, pp->x-15, pp->y+7, pp->x-15, pp->y+15, RGB2COLOR(184,158,131));
+		gdispGDrawLine(MouseConfig.display, pp->x-15, pp->y+15, pp->x-7, pp->y+15, RGB2COLOR(184,158,131));
+		gdispGDrawLine(MouseConfig.display, pp->x-15, pp->y+7, pp->x-15, pp->y+15, RGB2COLOR(184,158,131));
 
-		gdispGDrawLine(mouseDisplay, pp->x-15, pp->y-15, pp->x-7, pp->y-15, RGB2COLOR(184,158,131));
-		gdispGDrawLine(mouseDisplay, pp->x-15, pp->y-7, pp->x-15, pp->y-15, RGB2COLOR(184,158,131));
+		gdispGDrawLine(MouseConfig.display, pp->x-15, pp->y-15, pp->x-7, pp->y-15, RGB2COLOR(184,158,131));
+		gdispGDrawLine(MouseConfig.display, pp->x-15, pp->y-7, pp->x-15, pp->y-15, RGB2COLOR(184,158,131));
 
-		gdispGDrawLine(mouseDisplay, pp->x+7, pp->y+15, pp->x+15, pp->y+15, RGB2COLOR(184,158,131));
-		gdispGDrawLine(mouseDisplay, pp->x+15, pp->y+7, pp->x+15, pp->y+15, RGB2COLOR(184,158,131));
+		gdispGDrawLine(MouseConfig.display, pp->x+7, pp->y+15, pp->x+15, pp->y+15, RGB2COLOR(184,158,131));
+		gdispGDrawLine(MouseConfig.display, pp->x+15, pp->y+7, pp->x+15, pp->y+15, RGB2COLOR(184,158,131));
 
-		gdispGDrawLine(mouseDisplay, pp->x+7, pp->y-15, pp->x+15, pp->y-15, RGB2COLOR(184,158,131));
-		gdispGDrawLine(mouseDisplay, pp->x+15, pp->y-15, pp->x+15, pp->y-7, RGB2COLOR(184,158,131));
+		gdispGDrawLine(MouseConfig.display, pp->x+7, pp->y-15, pp->x+15, pp->y-15, RGB2COLOR(184,158,131));
+		gdispGDrawLine(MouseConfig.display, pp->x+15, pp->y-15, pp->x+15, pp->y-7, RGB2COLOR(184,158,131));
 	}
 
 	static inline void _tsClearCross(const MousePoint *pp) {
-		gdispGFillArea(mouseDisplay, pp->x - 15, pp->y - 15, 42, 42, Blue);
+		gdispGFillArea(MouseConfig.display, pp->x - 15, pp->y - 15, 42, 42, Blue);
 	}
 
 	static inline void _tsTransform(MouseReading *pt, const Calibration *c) {
@@ -171,8 +170,8 @@ static void get_calibrated_reading(MouseReading *pt) {
 	get_raw_reading(pt);
 
 	#if GINPUT_MOUSE_NEED_CALIBRATION || GDISP_NEED_CONTROL
-		w = gdispGGetWidth(mouseDisplay);
-		h = gdispGGetHeight(mouseDisplay);
+		w = gdispGGetWidth(MouseConfig.display);
+		h = gdispGGetHeight(MouseConfig.display);
 	#endif
 
 	#if GINPUT_MOUSE_NEED_CALIBRATION
@@ -180,7 +179,7 @@ static void get_calibrated_reading(MouseReading *pt) {
 	#endif
 
 	#if GDISP_NEED_CONTROL
-		switch(gdispGGetOrientation(mouseDisplay)) {
+		switch(gdispGGetOrientation(MouseConfig.display)) {
 			case GDISP_ROTATE_0:
 				break;
 			case GDISP_ROTATE_90:
@@ -305,6 +304,7 @@ static void MousePoll(void *param) {
 				pe->meta |= psl->srcflags;
 				psl->srcflags = 0;
 			}
+			pe->display = MouseConfig.display;
 			geventSendEvent(psl);
 		}
 	}
@@ -322,8 +322,8 @@ GSourceHandle ginputGetMouse(uint16_t instance) {
 		return 0;
 
 	// Make sure we have a valid mouse display
-	if (!mouseDisplay)
-		mouseDisplay = GDISP;
+	if (!MouseConfig.display)
+		MouseConfig.display = GDISP;
 
 	// Do we need to initialise the mouse subsystem?
 	if (!(MouseConfig.flags & FLG_INIT_DONE)) {
@@ -372,7 +372,14 @@ void ginputSetMouseDisplay(uint16_t instance, GDisplay *g) {
 	if (instance)
 		return;
 
-	mouseDisplay = g ? g : GDISP;
+	MouseConfig.display = g ? g : GDISP;
+}
+
+GDisplay *ginputGetMouseDisplay(uint16_t instance) {
+	if (instance)
+		return 0;
+
+	return MouseConfig.display;
 }
 
 bool_t ginputGetMouseStatus(uint16_t instance, GEventMouse *pe) {
@@ -406,8 +413,8 @@ bool_t ginputCalibrateMouse(uint16_t instance) {
 		return FALSE;
 	#else
 
-		const coord_t height  =  gdispGGetHeight(mouseDisplay);
-		const coord_t width  =  gdispGGetWidth(mouseDisplay);
+		const coord_t height  =  gdispGGetHeight(MouseConfig.display);
+		const coord_t width  =  gdispGGetWidth(MouseConfig.display);
 		const MousePoint cross[]  =  {{(width / 4), (height / 4)},
 										{(width - (width / 4)) , (height / 4)},
 										{(width - (width / 4)) , (height - (height / 4))},
@@ -433,19 +440,19 @@ bool_t ginputCalibrateMouse(uint16_t instance) {
 		MouseConfig.flags &= ~(FLG_CAL_OK|FLG_CAL_SAVED);
 
 		#if GDISP_NEED_CONTROL
-			gdispGSetOrientation(mouseDisplay, GDISP_ROTATE_0);
+			gdispGSetOrientation(MouseConfig.display, GDISP_ROTATE_0);
 		#endif
 
 		#if GDISP_NEED_CLIP
-			gdispGSetClip(mouseDisplay, 0, 0, width, height);
+			gdispGSetClip(MouseConfig.display, 0, 0, width, height);
 		#endif
 
 		#if GINPUT_MOUSE_MAX_CALIBRATION_ERROR >= 0
 			while(1) {
 		#endif
-				gdispGClear(mouseDisplay, Blue);
+				gdispGClear(MouseConfig.display, Blue);
 
-				gdispGFillStringBox(mouseDisplay, 0, 5, width, 30, GINPUT_MOUSE_CALIBRATION_TEXT, font1,  White, Blue, justifyCenter);
+				gdispGFillStringBox(MouseConfig.display, 0, 5, width, 30, GINPUT_MOUSE_CALIBRATION_TEXT, font1,  White, Blue, justifyCenter);
 
 				for(i = 0, pt = points, pc = cross; i < GINPUT_MOUSE_CALIBRATION_POINTS; i++, pt++, pc++) {
 					_tsDrawCross(pc);
@@ -474,9 +481,9 @@ bool_t ginputCalibrateMouse(uint16_t instance) {
 					_tsClearCross(pc);
 
 					if (i >= 1 && pt->x == (pt-1)->x && pt->y == (pt-1)->y) {
-						gdispGFillStringBox(mouseDisplay, 0, 35, width, 40, GINPUT_MOUSE_CALIBRATION_SAME_TEXT, font2,  Red, Yellow, justifyCenter);
+						gdispGFillStringBox(MouseConfig.display, 0, 35, width, 40, GINPUT_MOUSE_CALIBRATION_SAME_TEXT, font2,  Red, Yellow, justifyCenter);
 						gfxSleepMilliseconds(5000);
-						gdispGFillArea(mouseDisplay, 0, 35, width, 40, Blue);
+						gdispGFillArea(MouseConfig.display, 0, 35, width, 40, Blue);
 					}
 
 				}
@@ -502,7 +509,7 @@ bool_t ginputCalibrateMouse(uint16_t instance) {
 				if (err <= GINPUT_MOUSE_MAX_CALIBRATION_ERROR * GINPUT_MOUSE_MAX_CALIBRATION_ERROR)
 					break;
 
-				gdispGFillStringBox(mouseDisplay, 0, 35, width, 40, GINPUT_MOUSE_CALIBRATION_ERROR_TEXT, font2,  Red, Yellow, justifyCenter);
+				gdispGFillStringBox(MouseConfig.display, 0, 35, width, 40, GINPUT_MOUSE_CALIBRATION_ERROR_TEXT, font2,  Red, Yellow, justifyCenter);
 				gfxSleepMilliseconds(5000);
 			}
 		#endif
@@ -525,9 +532,9 @@ bool_t ginputCalibrateMouse(uint16_t instance) {
 
 		// Clear the screen using the GWIN default background color
 		#if GFX_USE_GWIN
-			gdispGClear(mouseDisplay, gwinGetDefaultBgColor());
+			gdispGClear(MouseConfig.display, gwinGetDefaultBgColor());
 		#else
-			gdispGClear(mouseDisplay, Black);
+			gdispGClear(MouseConfig.display, Black);
 		#endif
 	
 		return TRUE;
