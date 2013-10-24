@@ -262,6 +262,10 @@ int main(void) {
 	// Initialize the display
 	gfxInit();
 
+	#if GDISP_NEED_CONTROL
+		gdispSetOrientation(GDISP_ROTATE_90);
+	#endif
+
 	// Set the widget defaults
 	gwinSetDefaultFont(gdispOpenFont("*"));
 	gwinSetDefaultStyle(&WhiteWidgetStyle, FALSE);
