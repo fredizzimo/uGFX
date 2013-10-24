@@ -21,16 +21,22 @@
 
 #include "gwin/class_gwin.h"
 
-#define GLABEL_FLG_WAUTO		(GWIN_FIRST_CONTROL_FLAG<<0)
-#define GLABEL_FLG_HAUTO		(GWIN_FIRST_CONTROL_FLAG<<1)
+// macros to assist in data type conversions
+#define gh2obj					((GLabelObject *)gh)
 
-// Simple: single line with no wrapping
+// flags for the GLabelObject
+#define GLABEL_FLG_WAUTO		(GWIN_FIRST_CONTROL_FLAG << 0)
+#define GLABEL_FLG_HAUTO		(GWIN_FIRST_CONTROL_FLAG << 1)
+#define GLABEL_FLG_BORDER		(GWIN_FIRST_CONTROL_FLAG << 2)
+
+// simple: single line with no wrapping
 static coord_t getwidth(const char *text, font_t font, coord_t maxwidth) {
 	(void) maxwidth;
+
 	return gdispGetStringWidth(text, font)+2;		// Allow one pixel of padding on each side
 }
 
-// Simple: single line with no wrapping
+// simple: single line with no wrapping
 static coord_t getheight(const char *text, font_t font, coord_t maxwidth) {
 	(void) text;
 	(void) maxwidth;
@@ -47,12 +53,18 @@ static void gwinLabelDefaultDraw(GWidgetObject *gw, void *param) {
 
 	if (gw->g.width != w || gw->g.height != h) {
 		gwinResize(&gw->g, w, h);
+
 		return;
 	}
 
+	// render the text
 	gdispFillStringBox(gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->text, gw->g.font,
 			(gw->g.flags & GWIN_FLG_ENABLED) ? gw->pstyle->enabled.text : gw->pstyle->disabled.text, gw->pstyle->background,
 			justifyLeft);
+
+	// render the border (if any)
+	if (gw->g.flags & GLABEL_FLG_BORDER)
+		gdispDrawBox(gw->g.x, gw->g.y, gw->g.width, gw->g.height, (gw->g.flags & GWIN_FLG_ENABLED) ? gw->pstyle->enabled.text : gw->pstyle->disabled.text);
 }
 
 static const gwidgetVMT labelVMT = {
@@ -109,10 +121,23 @@ GHandle gwinLabelCreate(GLabelObject *widget, GWidgetInit *pInit) {
 	if (!(widget = (GLabelObject *)_gwidgetCreate(&widget->w, pInit, &labelVMT)))
 		return 0;
 
-	widget->w.g.flags |= flags;
+	// no borders by default
+	widget->w.g.flags &=~ GLABEL_FLG_BORDER;
 
 	gwinSetVisible(&widget->w.g, pInit->g.show);
+
 	return (GHandle)widget;
+}
+
+void gwinLabelSetBorder(GHandle gh, bool_t border) {
+	// is it a valid handle?
+	if (gh->vmt != (gwinVMT *)&labelVMT)
+		return;
+	
+	if (border)
+		gh2obj->w.g.flags |= GLABEL_FLG_BORDER;
+	else
+		gh2obj->w.g.flags &=~ GLABEL_FLG_BORDER;
 }
 
 #endif // GFX_USE_GWIN && GFX_NEED_LABEL
