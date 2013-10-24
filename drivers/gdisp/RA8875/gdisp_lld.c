@@ -19,7 +19,7 @@
 #include "gdisp/lld/gdisp_lld.h"
 
 /* include the users board interface */
-#include "board_ra8875.h"
+#include "board_RA8875.h"
 
 /*===========================================================================*/
 /* Driver local definitions.                                                 */
