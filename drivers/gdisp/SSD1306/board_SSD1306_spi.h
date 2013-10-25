@@ -13,7 +13,8 @@
 #ifndef _GDISP_LLD_BOARD_H
 #define _GDISP_LLD_BOARD_H
 
-#define GDISP_BUS_MAX_TRANSFER_SIZE		64
+// The command byte to put on the front of each page line
+#define SSD1306_PAGE_PREFIX		0x40			 		// Co = 0, D/C = 1
 
 // For a multiple display configuration we would put all this in a structure and then
 //	set g->board to that structure.
@@ -49,9 +50,11 @@ static const SPIConfig spi1config = {
 #endif
 
 static inline void init_board(GDisplay *g) {
+	unsigned	i;
 
 	// As we are not using multiple displays we set g->board to NULL as we don't use it.
 	g->board = 0;
+
 
 	switch(g->controllerdisplay) {
 	case 0:											// Set up for Display 0
@@ -115,14 +118,10 @@ static inline void write_cmd(GDisplay *g, uint8_t cmd) {
 }
 
 static inline void write_data(GDisplay *g, uint8_t* data, uint16_t length) {
-	uint8_t command[1];
 	(void) g;
-
-	command[0] = 0x40; 		// Co = 0, D/C = 1
 
 	spiStart(&SPID1, &spi1config);
 	spiSelect(&SPID1);
-	spiStartSend(&SPID1, 1, command);
 	spiStartSend(&SPID1, length, data);
 	spiUnselect(&SPID1);
 	spiStop(&SPID1);

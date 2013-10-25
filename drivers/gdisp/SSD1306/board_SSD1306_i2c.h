@@ -13,7 +13,8 @@
 #ifndef _GDISP_LLD_BOARD_H
 #define _GDISP_LLD_BOARD_H
 
-#define GDISP_BUS_MAX_TRANSFER_SIZE		64
+// The command byte to put on the front of each page line
+#define SSD1306_PAGE_PREFIX		0x40			 		// Co = 0, D/C = 1
 
 // For a multiple display configuration we would put all this in a structure and then
 //	set g->board to that structure.
@@ -116,14 +117,10 @@ static inline void write_cmd(GDisplay *g, uint8_t cmd) {
 }
 
 static inline void write_data(GDisplay *g, uint8_t* data, uint16_t length) {
-	uint8_t command[1];
 	(void) g;
 
-	command[0] = 0x40; 		// Co = 0, D/C = 1
-
 	i2cStart(&I2CD1, &i2cconfig);
-	i2cMasterTransmitTimeout(&I2CD1, SSD1306_I2C_ADDRESS, command, 1, NULL, 0, MS2ST(10));
-	i2cMasterTransmitTimeout(&I2CD1, SSD1306_I2C_ADDRESS, command, data, NULL, length, MS2ST(10));
+	i2cMasterTransmitTimeout(&I2CD1, SSD1306_I2C_ADDRESS, data, length, NULL, 0, MS2ST(10));
 	i2cStop(&I2CD1);
 }
 

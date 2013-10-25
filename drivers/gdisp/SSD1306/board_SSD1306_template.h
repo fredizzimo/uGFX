@@ -17,12 +17,12 @@
 #define _GDISP_LLD_BOARD_H
 
 /**
- * @brief   How many bytes to write in one operation when updating the display.
- * @note	The screen size (in bytes) must evenly divide by this number.
+ * @brief   Optional: A byte to prefix on each display page line.
+ * @note	If not defined then no byte is prefixed on each page line.
  *
  * @notapi
  */
-#define GDISP_BUS_MAX_TRANSFER_SIZE		64
+//#define SSD1306_PAGE_PREFIX		0x40
 
 /**
  * @brief   Initialise the board for the display.
