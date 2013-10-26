@@ -248,7 +248,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		case GDISP_CONTROL_CONTRAST:
 			if ((unsigned)g->p.ptr > 100) g->p.ptr = (void *)100;
 			acquire_bus(g);
-			write_reg(g, CONTRAST,(unsigned)128*g->p.ptr/101-64);
+			write_reg(g, SETCON,(unsigned)128*(unsigned)g->p.ptr/101-64);
 			release_bus(g);
 			g->g.Contrast = (unsigned)g->p.ptr;
 			return;
