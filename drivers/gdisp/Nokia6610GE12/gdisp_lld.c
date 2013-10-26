@@ -71,7 +71,7 @@
 
 // Use the priv pointer itself to save our color. This save allocating ram for it
 //	and works provided sizeof(color_t) <= sizeof(void *)
-#define savecolor(g)					((color_t)g->priv)
+#define savecolor(g)					(*(color_t *)&g->priv)
 
 #define GDISP_FLG_ODDBYTE				(GDISP_FLG_DRIVER<<0)
 
