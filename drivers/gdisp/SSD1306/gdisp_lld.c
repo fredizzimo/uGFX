@@ -36,6 +36,13 @@
 #ifndef GDISP_INITIAL_BACKLIGHT
 	#define GDISP_INITIAL_BACKLIGHT	100
 #endif
+#ifdef SSD1306_PAGE_PREFIX
+	#define SSD1306_PAGE_WIDTH		(GDISP_SCREEN_WIDTH+1)
+	#define SSD1306_PAGE_OFFSET		1
+#else
+	#define SSD1306_PAGE_WIDTH		GDISP_SCREEN_WIDTH
+	#define SSD1306_PAGE_OFFSET		0
+#endif
 
 #define GDISP_FLG_NEEDFLUSH			(GDISP_FLG_DRIVER<<0)
 
@@ -54,7 +61,7 @@
 #define delay(us)			gfxSleepMicroseconds(us)
 #define delayms(ms)			gfxSleepMilliseconds(ms)
 
-#define xyaddr(x, y)		((x) + ((y)>>3)*GDISP_SCREEN_WIDTH)
+#define xyaddr(x, y)		(SSD1306_PAGE_OFFSET + (x) + ((y)>>3)*SSD1306_PAGE_WIDTH)
 #define xybit(y)			(1<<((y)&7))
 
 /*===========================================================================*/
@@ -70,7 +77,18 @@
 
 LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	// The private area is the display surface.
-	g->priv = gfxAlloc(GDISP_SCREEN_HEIGHT * GDISP_SCREEN_WIDTH / 8);
+	g->priv = gfxAlloc(GDISP_SCREEN_HEIGHT/8 * SSD1306_PAGE_WIDTH);
+
+	// Fill in the prefix command byte on each page line of the display buffer
+	// We can do it during initialisation as this byte is never overwritten.
+	#ifdef SSD1306_PAGE_PREFIX
+		{
+			unsigned	i;
+
+			for(i=0; i < GDISP_SCREEN_HEIGHT/8 * SSD1306_PAGE_WIDTH; i+=SSD1306_PAGE_WIDTH)
+				RAM(g)[i] = SSD1306_PAGE_PREFIX;
+		}
+	#endif
 
 	// Initialise the board interface
 	init_board(g);
@@ -131,8 +149,8 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 		write_cmd(g, SSD1306_SETSTARTLINE | 0);
 
-		for(i=0; i < GDISP_SCREEN_WIDTH * GDISP_SCREEN_HEIGHT/8; i+=GDISP_BUS_MAX_TRANSFER_SIZE)
-			write_data(g, RAM(g)+i, GDISP_BUS_MAX_TRANSFER_SIZE);
+		for(i=0; i < GDISP_SCREEN_HEIGHT/8 * SSD1306_PAGE_WIDTH; i+=SSD1306_PAGE_WIDTH)
+			write_data(g, RAM(g)+i, SSD1306_PAGE_WIDTH);
 	}
 #endif
 
