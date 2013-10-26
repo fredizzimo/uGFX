@@ -328,6 +328,10 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		acquire_bus(g);
 		set_viewport(g);
 
+		/* to surpress compiler warnings */
+		x = 0;
+		y = 0;
+
 		/*
 		 * Due to the way the Nokia6610 handles a decrementing column or page,
 		 * we have to make adjustments as to where it is actually drawing from in the bitmap.
