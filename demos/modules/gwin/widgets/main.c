@@ -262,10 +262,6 @@ int main(void) {
 	// Initialize the display
 	gfxInit();
 
-	#if GDISP_NEED_CONTROL
-		gdispSetOrientation(GDISP_ROTATE_90);
-	#endif
-
 	// Set the widget defaults
 	gwinSetDefaultFont(gdispOpenFont("*"));
 	gwinSetDefaultStyle(&WhiteWidgetStyle, FALSE);
@@ -274,6 +270,10 @@ int main(void) {
 	// Connect the mouse
 	#if GINPUT_NEED_MOUSE
 		gwinAttachMouse(0);
+	#endif
+
+	#if GDISP_NEED_CONTROL
+		gdispSetOrientation(GDISP_ROTATE_90);
 	#endif
 
 	// Create the gwin windows/widgets
