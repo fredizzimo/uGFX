@@ -79,11 +79,11 @@
 	#endif
 	/**
 	 * @brief   Are text functions needed.
-	 * @details	Defaults to TRUE
+	 * @details	Defaults to FALSE
 	 * @note	You must also define at least one font.
 	 */
 	#ifndef GDISP_NEED_TEXT
-		#define GDISP_NEED_TEXT					TRUE
+		#define GDISP_NEED_TEXT					FALSE
 	#endif
 	/**
 	 * @brief   Are circle functions needed.
