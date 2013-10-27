@@ -50,10 +50,10 @@
 	#endif
 	/**
 	 * @brief   Are text functions needed.
-	 * @details	Defaults to TRUE
+	 * @details	Defaults to FALSE
 	 */
 	#ifndef GDISP_NEED_TEXT
-		#define GDISP_NEED_TEXT			TRUE
+		#define GDISP_NEED_TEXT			FALSE
 	#endif
 	/**
 	 * @brief   Are circle functions needed.
@@ -64,10 +64,10 @@
 	#endif
 	/**
 	 * @brief   Are ellipse functions needed.
-	 * @details	Defaults to TRUE
+	 * @details	Defaults to FALSE
 	 */
 	#ifndef GDISP_NEED_ELLIPSE
-		#define GDISP_NEED_ELLIPSE		TRUE
+		#define GDISP_NEED_ELLIPSE		FALSE
 	#endif
 	/**
 	 * @brief   Are arc functions needed.
