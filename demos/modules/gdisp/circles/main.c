@@ -30,43 +30,23 @@
 #include "gfx.h"
 
 int main(void) {
-	coord_t		width;
-	font_t		font1, font2, font3, font4;
-	const char	*msg;
+	coord_t		width, height;
 
-    /* Initialize and clear the display */
+    // Initialize and clear the display
     gfxInit();
 
     // Get the screen size
     width = gdispGetWidth();
+    height = gdispGetHeight();
 
-    // Get the fonts we want to use
-	font1 = gdispOpenFont("UI2");
-	font2 = gdispOpenFont("UI2 Double");
-	font3 = gdispOpenFont("UI2 Narrow");
-	font4 = gdispOpenFont("LargeNumbers");
+    // Code Here
+	gdispFillArc(width/2, height/2, width/4, -10, -45, White);
+	gdispDrawCircle(width/2+width/8, height/2-height/8, 13, Green);
+	gdispFillCircle (width/2+width/8, height/2-height/8, 10, Red);
+	gdispDrawArc(width/2+width/8, height/2-height/8, 20, 25, 115, Gray);
+	gdispFillEllipse (width-width/6, height-height/6, width/8, height/16, Blue);
+	gdispDrawEllipse (width-width/6, height-height/6, width/16, height/8, Yellow);
 
-	// Display large numbers on the right (measuring the string)
-	msg = "123456";
-	gdispDrawString(width-gdispGetStringWidth(msg, font4)-3, 3, msg, font4, Green);
-	
-	// Display the font name under it.
-	msg = gdispGetFontName(font4);
-	gdispDrawString(width-gdispGetStringWidth(msg, font1)-3, 20, msg, font1, Green);
-
-	// Demonstrate our other fonts
-	gdispDrawString(10, 10, "Writing with Font 'UI2'", font1, Yellow);
-	gdispFillString(10, 35, "Writing with Font 'UI2 Double'", font2, Red, White);
-	gdispDrawStringBox(0, 50, width, 40, "Writing with Font 'UI2 Narrow'", font3, Red, justifyCenter);
-	gdispFillStringBox(0, 90, width, 40, "Filled Centered", font3, Pink, Gray, justifyCenter);
-
-	// Clean up the fonts
-	gdispCloseFont(font1);
-	gdispCloseFont(font2);
-	gdispCloseFont(font3);
-	gdispCloseFont(font4);
-
-	// Wait forever
     while(TRUE) {
     	gfxSleepMilliseconds(500);
     }   

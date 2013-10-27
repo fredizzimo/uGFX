@@ -37,7 +37,7 @@ int main(void) {
 
     /* Initialize and clear the display */
     gfxInit();
-    gdispClear(Lime);
+    gdispClear(White);
 
     /* Create two windows */
     {
@@ -60,7 +60,7 @@ int main(void) {
     gwinClear(GW2);
 
     gwinDrawLine(GW1, 5, 30, 150, 110);
-    for(i=5, j=0; i < 200 && j < 150; i+=3, j+=i/20)
+    for(i = 5, j = 0; i < 200 && j < 150; i += 3, j += i/20)
         	gwinDrawPixel(GW1, i, j);
 
     /*  

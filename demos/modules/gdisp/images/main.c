@@ -27,46 +27,45 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _GFXCONF_H
-#define _GFXCONF_H
+#include "gfx.h"
 
-/* The operating system to use - one of these must be defined */
-//#define GFX_USE_OS_CHIBIOS		TRUE
-//#define GFX_USE_OS_WIN32		FALSE
-//#define GFX_USE_OS_POSIX		FALSE
+#ifdef WIN32
+	#define USE_MEMORY_FILE		TRUE				// Can be true or false for Win32
+#else
+	#define USE_MEMORY_FILE		TRUE				// Non-Win32 - use the compiled in image
+#endif
 
-/* GFX sub-systems to turn on */
-#define GFX_USE_GDISP			TRUE
+#if USE_MEMORY_FILE
+	#include "test-pal8.h"
+#endif
 
-/* Features for the GDISP sub-system. */
-#define GDISP_NEED_VALIDATION		TRUE
-#define GDISP_NEED_CLIP				TRUE
-#define GDISP_NEED_TEXT				FALSE
-#define GDISP_NEED_CIRCLE			FALSE
-#define GDISP_NEED_ELLIPSE			FALSE
-#define GDISP_NEED_ARC				FALSE
-#define GDISP_NEED_CONVEX_POLYGON	FALSE
-#define GDISP_NEED_SCROLL			FALSE
-#define GDISP_NEED_PIXELREAD		FALSE
-#define GDISP_NEED_CONTROL			FALSE
-#define GDISP_NEED_IMAGE			TRUE
-#define GDISP_NEED_MULTITHREAD		FALSE
-#define GDISP_NEED_ASYNC			FALSE
-#define GDISP_NEED_MSGAPI			FALSE
+static gdispImage myImage;
 
-/* Builtin Fonts */
-#define GDISP_INCLUDE_FONT_SMALL		FALSE
-#define GDISP_INCLUDE_FONT_LARGER		FALSE
-#define GDISP_INCLUDE_FONT_UI1			FALSE
-#define GDISP_INCLUDE_FONT_UI2			FALSE
-#define GDISP_INCLUDE_FONT_LARGENUMBERS	FALSE
+int main(void) {
+	coord_t			swidth, sheight;
 
-/* GDISP image decoders */
-#define GDISP_NEED_IMAGE_NATIVE		FALSE
-#define GDISP_NEED_IMAGE_GIF		TRUE
-#define GDISP_NEED_IMAGE_BMP		FALSE
-#define GDISP_NEED_IMAGE_JPG		FALSE
-#define GDISP_NEED_IMAGE_PNG		FALSE
-#define GDISP_NEED_IMAGE_ACCOUNTING	FALSE
+	// Initialize uGFX and the underlying system
+	gfxInit();
 
-#endif /* _GFXCONF_H */
+	// Get the display dimensions
+	swidth = gdispGetWidth();
+	sheight = gdispGetHeight();
+
+	// Set up IO for our image
+#if USE_MEMORY_FILE
+	gdispImageSetMemoryReader(&myImage, test_pal8);
+#else
+	gdispImageSetSimulFileReader(&myImage, "test-pal8.bmp");
+#endif
+
+	gdispImageOpen(&myImage);
+	gdispImageDraw(&myImage, 0, 0, swidth, sheight, 0, 0);
+	gdispImageClose(&myImage);
+
+	while(1) {
+		gfxSleepMilliseconds(1000);
+	}
+
+	return 0;
+}
+

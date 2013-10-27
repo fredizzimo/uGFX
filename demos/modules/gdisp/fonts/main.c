@@ -29,41 +29,54 @@
 
 #include "gfx.h"
 
-#ifdef WIN32
-	#define USE_MEMORY_FILE		TRUE				// Can be true or false for Win32
-#else
-	#define USE_MEMORY_FILE		TRUE				// Non-Win32 - use the compiled in image
-#endif
-
-#if USE_MEMORY_FILE
-	#include "test-pal8.h"
-#endif
-
-static gdispImage myImage;
-
 int main(void) {
-	coord_t			swidth, sheight;
+	coord_t		width;
+	font_t		font1, font2;
+	coord_t		fheight1, fheight2;
+	const char	*line1, *line2;
+	char		buf[8];
 
-	gfxInit();		// Initialize the display
+    // Initialize and clear the display
+    gfxInit();
 
-	// Get the display dimensions
-	swidth = gdispGetWidth();
-	sheight = gdispGetHeight();
+    // Get the screen size
+    width = gdispGetWidth();
 
-	// Set up IO for our image
-#if USE_MEMORY_FILE
-	gdispImageSetMemoryReader(&myImage, test_pal8);
-#else
-	gdispImageSetSimulFileReader(&myImage, "test-pal8.bmp");
-#endif
+    // Get the fonts we want to use
+	font1 = gdispOpenFont("DejaVu*");
+	font2 = gdispOpenFont("UI2*");
+	//font2 = gdispOpenFont("Geosans*");
+	//font2 = gdispOpenFont("Free*");
+	//font2 = gdispOpenFont("Hellovetica*");
+	//font2 = gdispOpenFont("babyblue*");
+	//font2 = gdispOpenFont("PF Ronda*");
+	//font2 = gdispOpenFont("Apple*");
 
-	gdispImageOpen(&myImage);
-	gdispImageDraw(&myImage, 0, 0, swidth, sheight, 0, 0);
-	gdispImageClose(&myImage);
+	// Font 1
+	line1 = "a b c d e f h i j k l m n o p q r s t u v w x y z A B C D E F G H I J K L M N O P Q R S T U V W X Y Z";
+	line2 = "0 1 2 3 4 5 6 7 8 9 ~ ! @ # $ % ^ & * _ - + = ( ) { } [ ] < > | / \\ : ; , . ? ' \" `";
+	fheight1 = gdispGetFontMetric(font1, fontHeight)+2;
+	gdispFillStringBox(0, 0, width,  fheight1, line1, font1, Black, White, justifyCenter);
+	gdispFillStringBox(0, fheight1+1, width,  fheight1, line2, font1, Black, White, justifyCenter);
 
-	while(1) {
-		gfxSleepMilliseconds(1000);
-	}
+	// Font 2
+	fheight2 = gdispGetFontMetric(font2, fontHeight)+2;
+	gdispFillStringBox(0, 2*fheight1+2, width,  fheight2, line1, font2, Black, White, justifyCenter);
+	gdispFillStringBox(0, 2*fheight1+fheight2+3, width,  fheight2, line2, font2, Black, White, justifyCenter);
 
-	return 0;
+	// Show Sizes
+	buf[0] = (fheight1-2)/10 + '0';
+	buf[1] = (fheight1-2)%10 + '0';
+	buf[2] = ',';
+	buf[3] = ' ';
+	buf[4] = (fheight2-2)/10 + '0';
+	buf[5] = (fheight2-2)%10 + '0';
+	buf[6] = 0;
+	gdispFillStringBox(0, 2*fheight1+2*fheight2+4, width,  fheight1, buf, font1, Red, White, justifyCenter);
+	
+	// Wait forever
+    while(TRUE) {
+    	gfxSleepMilliseconds(500);
+    }   
 }
+
