@@ -279,14 +279,25 @@ bool_t gwinAttachListener(GListener *pl);
 #if GWIN_NEED_BUTTON || defined(__DOXYGEN__)
 	#include "gwin/button.h"
 #endif
+
 #if GWIN_NEED_SLIDER || defined(__DOXYGEN__)
 	#include "gwin/slider.h"
 #endif
+
 #if GWIN_NEED_CHECKBOX || defined(__DOXYGEN__)
 	#include "gwin/checkbox.h"
 #endif
+
 #if GWIN_NEED_RADIO || defined(__DOXYGEN__)
 	#include "gwin/radio.h"
+#endif
+
+#if GWIN_NEED_LABEL || defined(__DOXYGEN__)
+	#include "gwin/label.h"
+#endif
+
+#if GWIN_NEED_LIST || defined(__DOXYGEN__)
+	#include "gwin/list.h"
 #endif
 
 #endif /* _GWIDGET_H */
