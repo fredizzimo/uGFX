@@ -27,28 +27,21 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "gfx.h"
+#ifndef _GFXCONF_H
+#define _GFXCONF_H
 
-int main(void) {
-	coord_t		width, height;
+/* The operating system to use - one of these must be defined */
+#define GFX_USE_OS_CHIBIOS		FALSE
+#define GFX_USE_OS_WIN32		FALSE
+#define GFX_USE_OS_LINUX		FALSE
+#define GFX_USE_OS_OSX			FALSE
 
-    /* Initialize and clear the display */
-    gfxInit();
+/* GFX sub-systems to turn on */
+#define GFX_USE_GDISP			TRUE
 
-    // Get the screen size
-    width = gdispGetWidth();
-    height = gdispGetHeight();
+/* Features for the GDISP sub-system. */
+#define GDISP_NEED_VALIDATION	TRUE
+#define GDISP_NEED_CLIP			TRUE
 
-    // Code Here
-	gdispFillArc(width/2, height/2, width/4, -10, -45, White);
-	gdispDrawCircle(width/2+width/8, height/2-height/8, 13, Green);
-	gdispFillCircle (width/2+width/8, height/2-height/8, 10, Red);
-	gdispDrawArc(width/2+width/8, height/2-height/8, 20, 25, 115, Gray);
-	gdispFillEllipse (width-width/6, height-height/6, width/8, height/16, Blue);
-	gdispDrawEllipse (width-width/6, height-height/6, width/16, height/8, Yellow);
-
-    while(TRUE) {
-    	gfxSleepMilliseconds(500);
-    }   
-}
+#endif /* _GFXCONF_H */
 

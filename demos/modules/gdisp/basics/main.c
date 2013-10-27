@@ -27,49 +27,29 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _GFXCONF_H
-#define _GFXCONF_H
+#include "gfx.h"
 
-/* The operating system to use - one of these must be defined */
-//#define GFX_USE_OS_CHIBIOS	FALSE
-//#define GFX_USE_OS_WIN32		FALSE
-//#define GFX_USE_OS_POSIX		FALSE
+int main(void) {
+	coord_t		width, height;
+	coord_t		i, j;
 
-/* GFX sub-systems to turn on */
-#define GFX_USE_GDISP			TRUE
+    // Initialize and clear the display
+    gfxInit();
 
-/* Features for the GDISP sub-system. */
-#define GDISP_NEED_VALIDATION	TRUE
-#define GDISP_NEED_CLIP			TRUE
-#define GDISP_NEED_TEXT			TRUE
-#define GDISP_NEED_CIRCLE		FALSE
-#define GDISP_NEED_ELLIPSE		FALSE
-#define GDISP_NEED_ARC			FALSE
-#define GDISP_NEED_SCROLL		FALSE
-#define GDISP_NEED_PIXELREAD	FALSE
-#define GDISP_NEED_CONTROL		FALSE
-#define GDISP_NEED_MULTITHREAD	FALSE
-#define GDISP_NEED_ASYNC		FALSE
-#define GDISP_NEED_MSGAPI		FALSE
+    // Get the screen size
+    width = gdispGetWidth();
+    height = gdispGetHeight();
 
-/* GDISP - fonts to include */
-#define GDISP_INCLUDE_FONT_DEJAVUSANS10			FALSE
-#define GDISP_INCLUDE_FONT_DEJAVUSANS12			FALSE
-#define GDISP_INCLUDE_FONT_DEJAVUSANS16			FALSE
-#define GDISP_INCLUDE_FONT_DEJAVUSANS24			FALSE
-#define GDISP_INCLUDE_FONT_DEJAVUSANS32			FALSE
-#define GDISP_INCLUDE_FONT_DEJAVUSANSBOLD12		FALSE
-#define GDISP_INCLUDE_FONT_FIXED_10x20			FALSE
-#define GDISP_INCLUDE_FONT_FIXED_7x14			FALSE
-#define GDISP_INCLUDE_FONT_FIXED_5x8			FALSE
-#define GDISP_INCLUDE_FONT_DEJAVUSANS12_AA		FALSE
-#define GDISP_INCLUDE_FONT_DEJAVUSANS16_AA		FALSE
-#define GDISP_INCLUDE_FONT_DEJAVUSANS24_AA		FALSE
-#define GDISP_INCLUDE_FONT_DEJAVUSANS32_AA		FALSE
-#define GDISP_INCLUDE_FONT_DEJAVUSANSBOLD12_AA	FALSE
+    // Code Here
+	gdispDrawBox(10, 10, width/2, height/2, Yellow);
+    gdispFillArea(width/2, height/2, width/2-10, height/2-10, Blue);
+    gdispDrawLine(5, 30, width-50, height-40, Red);
+    
+	for(i = 5, j = 0; i < width && j < height; i += 7, j += i/20)
+    	gdispDrawPixel(i, j, White);
 
-#define GDISP_INCLUDE_FONT_UI1					FALSE
-#define GDISP_INCLUDE_FONT_UI2					TRUE
-#define GDISP_INCLUDE_FONT_LARGENUMBERS			TRUE
+    while(TRUE) {
+    	gfxSleepMilliseconds(500);
+    }   
+}
 
-#endif /* _GFXCONF_H */

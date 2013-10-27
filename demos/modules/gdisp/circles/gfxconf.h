@@ -31,25 +31,25 @@
 #define _GFXCONF_H
 
 /* The operating system to use - one of these must be defined */
-//#define GFX_USE_OS_CHIBIOS		TRUE
-//#define GFX_USE_OS_WIN32		FALSE
-//#define GFX_USE_OS_POSIX		FALSE
+#define GFX_USE_OS_CHIBIOS		FALSE
+#define GFX_USE_OS_WIN32		FALSE
+#define GFX_USE_OS_LINUX		FALSE
+#define GFX_USE_OS_OSX			FALSE
 
 /* GFX sub-systems to turn on */
 #define GFX_USE_GDISP			TRUE
+#define GFX_USE_GMISC			TRUE
 
-/* Features for the GDISP sub-system. */
+/* Features for the GDISP subsystem. */
 #define GDISP_NEED_VALIDATION	TRUE
 #define GDISP_NEED_CLIP			TRUE
-#define GDISP_NEED_TEXT			FALSE
-#define GDISP_NEED_CIRCLE		FALSE
-#define GDISP_NEED_ELLIPSE		FALSE
-#define GDISP_NEED_ARC			FALSE
-#define GDISP_NEED_SCROLL		FALSE
-#define GDISP_NEED_PIXELREAD	FALSE
-#define GDISP_NEED_CONTROL		FALSE
-#define GDISP_NEED_MULTITHREAD	FALSE
-#define GDISP_NEED_ASYNC		FALSE
-#define GDISP_NEED_MSGAPI		FALSE
+#define GDISP_NEED_CIRCLE		TRUE
+#define GDISP_NEED_ELLIPSE		TRUE
+#define GDISP_NEED_ARC			TRUE
+
+/* Features for the GMISC subsystem */
+#define GMISC_NEED_FIXEDTRIG	TRUE
+#define GMISC_NEED_FASTTRIG		TRUE
 
 #endif /* _GFXCONF_H */
+

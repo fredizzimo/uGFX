@@ -27,33 +27,23 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _GFXCONF_H
-#define _GFXCONF_H
+#include "gfx.h"
 
-/* The operating system to use - one of these must be defined */
-//#define GFX_USE_OS_CHIBIOS		TRUE
-//#define GFX_USE_OS_WIN32		FALSE
-//#define GFX_USE_OS_POSIX		FALSE
+int main(void) {
+	font_t font1;
 
-/* GFX sub-systems to turn on */
-#define GFX_USE_GDISP			TRUE
+    // Initialize uGFX and the underlying system
+    gfxInit();
 
-/* Features for the GDISP sub-system. */
-#define GDISP_NEED_VALIDATION	TRUE
-#define GDISP_NEED_CLIP			TRUE
-#define GDISP_NEED_TEXT			FALSE
-#define GDISP_NEED_CIRCLE		TRUE
-#define GDISP_NEED_ELLIPSE		TRUE
-#define GDISP_NEED_ARC			TRUE
-#define GDISP_NEED_SCROLL		FALSE
-#define GDISP_NEED_PIXELREAD	FALSE
-#define GDISP_NEED_CONTROL		FALSE
-#define GDISP_NEED_MULTITHREAD	FALSE
-#define GDISP_NEED_ASYNC		FALSE
-#define GDISP_NEED_MSGAPI		FALSE
+    // Get the fonts we want to use
+	font1 = gdispOpenFont("Archangelsk Regular 12");
 
-#define GFX_USE_GMISC			TRUE
-#define GMISC_NEED_FIXEDTRIG	TRUE
-#define GMISC_NEED_FASTTRIG		TRUE
+	// Demonstrate our other fonts
+	gdispDrawString(10, 10, "привет мир", font1, Yellow);
 
-#endif /* _GFXCONF_H */
+	// Wait forever
+    while(TRUE) {
+    	gfxSleepMilliseconds(500);
+    }   
+}
+

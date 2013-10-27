@@ -41,7 +41,7 @@ int main(void) {
 
 	/* Set some fonts */
 	font1 = gdispOpenFont("UI2");
-	font2 = gdispOpenFont("UI2 Double");
+	font2 = gdispOpenFont("DejaVu Sans 12");
 	gwinSetDefaultFont(font1);
 
 	/* create the three console windows */
@@ -75,7 +75,7 @@ int main(void) {
 
 	/* Output some data on the first console */
 	for(i = 0; i < 10; i++) {
-		gwinPrintf(GW1, "Hello ChibiOS/GFX!\r\n");
+		gwinPrintf(GW1, "Hello uGFX!\r\n");
 	}
 
 	/* Output some data on the second console */
