@@ -2,7 +2,11 @@
 *** Releases                                                              ***
 *****************************************************************************
 
-current release: 1.8
+current release: 1.9
+
+
+*** changes after 1.9 ***
+
 
 *** changes after 1.8 ***
 FEATURE:	GWIN list boxes.
