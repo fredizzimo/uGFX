@@ -6,7 +6,7 @@
  */
 
 /**
- * @file    drivers/ginput/dial/GADC/ginput_lld_dial_board_olimexsam7ex256.h
+ * @file    drivers/ginput/dial/GADC/ginput_lld_dial_board_template.h
  * @brief   GINPUT Dial Driver config file.
  *
  * @defgroup Dial Dial
@@ -14,8 +14,8 @@
  * @{
  */
 
-#ifndef _GINPUT_LLD_DIAL_BOARD_OLIMEXSAM7EX256_H
-#define _GINPUT_LLD_DIAL_BOARD_OLIMEXSAM7EX256_H
+#ifndef _GINPUT_LLD_DIAL_BOARD_H
+#define _GINPUT_LLD_DIAL_BOARD_H
 
 #if GFX_USE_GINPUT && GINPUT_NEED_DIAL
 
@@ -23,6 +23,7 @@
 /* Analogue devices on this board                                            */
 /*===========================================================================*/
 
+/* Example values */
 #define GINPUT_DIAL_NUM_PORTS			1
 #define GINPUT_DIAL_DEVICE0				GADC_PHYSDEV_DIAL
 #define GINPUT_DIAL_POLL_PERIOD			200
@@ -30,6 +31,6 @@
 
 #endif	/* GFX_USE_GINPUT && GINPUT_NEED_DIAL */
 
-#endif	/* _GINPUT_LLD_DIAL_BOARD_OLIMEXSAM7EX256_H */
+#endif	/* _GINPUT_LLD_DIAL_BOARD_H */
 /** @} */
 

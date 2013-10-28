@@ -6,12 +6,8 @@
  */
 
 /**
- * @file    drivers/ginput/toggle/Pal/ginput_lld_toggle_board_olimexsam7ex256.h
+ * @file    boards/base/Olimex-SAM7EX256-GE8/ginput_lld_toggle_board.h
  * @brief   GINPUT Toggle low level driver source for the ChibiOS PAL hardware on the Olimex SAM7EX256 board.
- *
- * @defgroup Toggle Toggle
- * @ingroup GINPUT
- * @{
  */
 
 #ifndef _GDISP_LLD_TOGGLE_BOARD_H
@@ -41,4 +37,4 @@
 	}
 
 #endif /* _GDISP_LLD_TOGGLE_BOARD_H */
-/** @} */
+

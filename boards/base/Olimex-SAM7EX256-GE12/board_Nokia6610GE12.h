@@ -6,7 +6,7 @@
  */
 
 /**
- * @file    drivers/gdisp/Nokia6610GE8/board_Nokia6610GE12_olimexsam7ex256.h
+ * @file    boards/base/Olimex-SAM7EX256-GE12/board_Nokia6610GE12.h
  * @brief   GDISP Graphic Driver subsystem board interface for the Olimex SAM7-EX256 board.
  */
 
@@ -17,12 +17,14 @@
  * Set various display properties. These properties mostly depend on the exact controller chip you get.
  * The defaults should work for most controllers.
  */
+//#define GDISP_GE8_BROKEN_CONTROLLER		FALSE	// Uncomment this out if you have a controller thats not window wrap broken.
 //#define GDISP_SCREEN_HEIGHT				130		// The visible display height
 //#define GDISP_SCREEN_WIDTH				130		// The visible display width
 //#define GDISP_RAM_X_OFFSET				0		// The x offset of the visible area
 //#define GDISP_RAM_Y_OFFSET				2		// The y offset of the visible area
+//#define GDISP_SLEEP_SIZE					32		// The size of the sleep mode partial display
 //#define GDISP_SLEEP_POS					50		// The position of the sleep mode partial display
-//#define GDISP_INITIAL_CONTRAST			50		// The initial contrast percentage
+//#define GDISP_INITIAL_CONTRAST			38		// The initial contrast percentage
 //#define GDISP_INITIAL_BACKLIGHT			100		// The initial backlight percentage
 
 // For a multiple display configuration we would put all this in a structure and then
@@ -57,6 +59,16 @@ static const PWMConfig pwmcfg = {
 
 static bool_t pwmRunning = FALSE;
 
+/**
+ * @brief   Initialise the board for the display.
+ * @notes	Performs the following functions:
+ *			1. initialise the spi port used by your display
+ *			2. initialise the reset pin (initial state not-in-reset)
+ *			3. initialise the chip select pin (initial state not-active)
+ *			4. initialise the backlight pin (initial state back-light off)
+ *
+ * @notapi
+ */
 static inline void init_board(GDisplay *g) {
 
 	// As we are not using multiple displays we set g->board to NULL as we don't use it.
@@ -132,7 +144,6 @@ static inline void setpin_reset(GDisplay *g, bool_t state) {
 
 static inline void set_backlight(GDisplay *g, uint8_t percent) {
 	(void) g;
-
 	if (percent == 100) {
 		/* Turn the pin on - No PWM */
 		if (pwmRunning) {
@@ -165,18 +176,16 @@ static inline void release_bus(GDisplay *g) {
 	(void) g;
 }
 
-static inline void write_index(GDisplay *g, uint16_t cmd) {
+static inline void write_index(GDisplay *g, uint16_t index) {
 	(void) g;
-
 	// wait for the previous transfer to complete
 	while((pSPI->SPI_SR & AT91C_SPI_TXEMPTY) == 0);
 	// send the command
-	pSPI->SPI_TDR = cmd & 0xFF;
+	pSPI->SPI_TDR = index & 0xFF;
 }
 
 static inline void write_data(GDisplay *g, uint16_t data) {
 	(void) g;
-
 	// wait for the previous transfer to complete
 	while((pSPI->SPI_SR & AT91C_SPI_TXEMPTY) == 0);
 	// send the data

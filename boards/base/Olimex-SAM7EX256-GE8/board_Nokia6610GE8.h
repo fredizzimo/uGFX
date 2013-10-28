@@ -6,7 +6,7 @@
  */
 
 /**
- * @file    drivers/gdisp/Nokia6610GE8/board_Nokia6610GE8_olimexsam7ex256.h
+ * @file    boards/base/Olimex-SAM7EX256-GE8/board_Nokia6610GE8.h
  * @brief   GDISP Graphic Driver subsystem board interface for the Olimex SAM7-EX256 board.
  */
 
