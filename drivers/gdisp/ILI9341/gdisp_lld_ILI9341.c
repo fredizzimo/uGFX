@@ -60,22 +60,6 @@
 #define delay(us)					gfxSleepMicroseconds(us)
 #define delayms(ms)					gfxSleepMilliseconds(ms)
 
-static inline void set_cursor(GDisplay *g) {
-	write_index(g, 0x2A);
-	write_data(g, (g->p.x >> 8));
-	write_data(g, (uint8_t) g->p.x);
-	write_data(g, (g->p.x) >> 8);
-	write_data(g, (uint8_t) (g->p.x));
-
-	write_index(g, 0x2B);
-	write_data(g, (g->p.y >> 8));
-	write_data(g, (uint8_t) g->p.y);
-	write_data(g, (g->p.y) >> 8);
-	write_data(g, (uint8_t) (g->p.y));
-
-	write_index(g, 0x2C);
-}
-
 static void set_viewport(GDisplay *g) {
 	write_index(g, 0x2A);
 	write_data(g, (g->p.x >> 8));
@@ -259,9 +243,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	LLDSPEC	void gdisp_lld_write_start(GDisplay *g) {
 		acquire_bus(g);
 		set_viewport(g);
-		#if !GDISP_HARDWARE_STREAM_POS
-			set_cursor(g);
-		#endif
+		write_index(g, 0x2C);
 	}
 	LLDSPEC	void gdisp_lld_write_color(GDisplay *g) {
 		write_data16(g, g->p.color);
@@ -269,18 +251,13 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	LLDSPEC	void gdisp_lld_write_stop(GDisplay *g) {
 		release_bus(g);
 	}
-	#if GDISP_HARDWARE_STREAM_POS
-		LLDSPEC void gdisp_lld_write_pos(GDisplay *g) {
-			set_cursor(g);
-		}
-	#endif
 #endif
 
 #if GDISP_HARDWARE_STREAM_READ
 	LLDSPEC	void gdisp_lld_read_start(GDisplay *g) {
 		acquire_bus(g);
 		set_viewport(g);
-		set_cursor(g);
+		write_index(g, 0x2E);
 		setreadmode(g);
 		dummy_read(g);
 	}
@@ -331,21 +308,21 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 				break;
 			case GDISP_ROTATE_90:
 				acquire_bus(g);
-				write_reg(g, 0x36, 0x20);	/* Invert X and Y axes */
+				write_reg(g, 0x36, 0xE8);	/* Invert X and Y axes */
 				release_bus(g);
 				g->g.Height = GDISP_SCREEN_WIDTH;
 				g->g.Width = GDISP_SCREEN_HEIGHT;
 				break;
 			case GDISP_ROTATE_180:
 				acquire_bus(g);
-				write_reg(g, 0x36, 0x80);	/* X and Y axes non-inverted */
+				write_reg(g, 0x36, 0x88);		/* X and Y axes non-inverted */
 				release_bus(g);
 				g->g.Height = GDISP_SCREEN_HEIGHT;
 				g->g.Width = GDISP_SCREEN_WIDTH;
 				break;
 			case GDISP_ROTATE_270:
 				acquire_bus(g);
-				write_reg(g, 0x36, 0xE0);	/* Invert X and Y axes */
+				write_reg(g, 0x36, 0x28);	/* Invert X and Y axes */
 				release_bus(g);
 				g->g.Height = GDISP_SCREEN_WIDTH;
 				g->g.Width = GDISP_SCREEN_HEIGHT;
