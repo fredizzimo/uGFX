@@ -7,14 +7,12 @@
 
 #include "gfx.h"
 
-#if GFX_USE_GDISP || defined(__DOXYGEN__)
-
+#if GFX_USE_GDISP
 
 /* Include the emulation code for things we don't support */
 #include "gdisp/lld/emulation.c"
 #include "st7565.h"
 #include "gdisp_lld_board.h"
-
 
 /*===========================================================================*/
 /* Driver local definitions.                                                 */
