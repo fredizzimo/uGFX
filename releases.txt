@@ -10,7 +10,7 @@ FEATURE:	New driver interface for GDISP
 FEATURE:	Multiple display support
 FEATURE:	Multiple controller support
 FEATURE:	Add gdispFlush() for those controllers that need it
-FEATURE:	Add GDISP_NEED_AUTOFLUSH to automatically flush when required.
+FEATURE:	Add GDISP_NEED_AUTOFLUSH and GDISP_NEED_TIMERFLUSH to automatically flush when required.
 
 *** changes after 1.8 ***
 FEATURE:	GWIN list boxes.
