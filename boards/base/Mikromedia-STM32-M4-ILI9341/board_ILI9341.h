@@ -36,14 +36,6 @@ static inline void init_board(GDisplay *g) {
 		SET_RD;
 		SET_WR;
 		CLR_CS;
-
-		/* Hardware reset */
-		palSetPad(GPIOE, GPIOE_LCD_RST);
-		chThdSleepMilliseconds(100);
-		palClearPad(GPIOE, GPIOE_LCD_RST);
-		chThdSleepMilliseconds(100);
-		palSetPad(GPIOE, GPIOE_LCD_RST);
-		chThdSleepMilliseconds(100);
 		break;
 	}
 }

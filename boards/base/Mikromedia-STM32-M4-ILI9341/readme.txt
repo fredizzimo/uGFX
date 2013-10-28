@@ -12,5 +12,3 @@ As this is not a standard ChibiOS supported board the necessary board files have
 been provided in the ChibiOS_Board directory.
 
 There is an example Makefile and project in the examples directory.
-
-Note: The video driver currently has bugs!

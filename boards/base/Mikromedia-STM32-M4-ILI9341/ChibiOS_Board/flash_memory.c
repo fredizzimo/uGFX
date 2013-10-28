@@ -70,7 +70,6 @@ void flash_read(uint32_t address, size_t bytes, uint8_t *out) {
   sector_read_cmd[1] = (address >> 16) & 0xFF;
   sector_read_cmd[2] = (address >> 8) & 0xFF;
   sector_read_cmd[3] = address & 0xFF;
-  uint8_t dummy[1];
 
   spiAcquireBus(&SPID3);
   spiStart(&SPID3, &flash_spicfg);
@@ -81,7 +80,7 @@ void flash_read(uint32_t address, size_t bytes, uint8_t *out) {
   spiReleaseBus(&SPID3);
 }
 
-void flash_write(uint32_t address, size_t bytes, uint8_t *data) {
+void flash_write(uint32_t address, size_t bytes, const uint8_t *data) {
   static uint8_t flash_write_cmd[4];
 
   flash_write_enable();
@@ -90,7 +89,6 @@ void flash_write(uint32_t address, size_t bytes, uint8_t *data) {
   flash_write_cmd[1] = (address >> 16) & 0xFF;
   flash_write_cmd[2] = (address >> 8) & 0xFF;
   flash_write_cmd[3] = address & 0xFF;
-  uint8_t dummy[1];
 
   spiAcquireBus(&SPID3);
   spiStart(&SPID3, &flash_spicfg);
@@ -112,14 +110,18 @@ bool flash_tp_calibrated(void) {
 }
 
 void flash_tp_calibration_save(uint16_t instance, const uint8_t *calbuf, size_t sz) {
+  if (instance) return;
   flash_sector_erase(0x0F0000);
   uint8_t calibrated = 0x01;
   flash_write(0x0F0000, 1, &calibrated);
   flash_write(0x0F0001, sz, calbuf);
 }
 const char *flash_tp_calibration_load(uint16_t instance) {
-  static char foo[24];
+  static uint8_t foo[24];
+
+  if (instance) return 0;
+  if (!flash_tp_calibrated()) return 0;
   flash_read(0x0F0001, 24, foo);
 
-  return foo;
+  return (char *)foo;
 }
