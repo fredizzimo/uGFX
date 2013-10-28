@@ -21,15 +21,7 @@
 
 #include "ginput/lld/mouse.h"
 
-#if defined(GINPUT_MOUSE_USE_CUSTOM_BOARD) && GINPUT_MOUSE_USE_CUSTOM_BOARD
-	#include "ginput_lld_mouse_board.h"
-#elif defined(BOARD_OLIMEX_STM32_LCD)
-	#include "ginput_lld_mouse_board_olimex_stm32_lcd.h"
-#elif defined(BOARD_OLIMEX_PIC32MX_LCD)
-	#include "ginput_lld_mouse_board_olimex_pic32mx_lcd.h"
-#else
-	#include "ginput_lld_mouse_board.h"
-#endif
+#include "ginput_lld_mouse_board.h"
 
 static uint16_t sampleBuf[7];
 static coord_t	lastx, lasty;
