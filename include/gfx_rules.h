@@ -87,10 +87,9 @@
 			#undef GWIN_NEED_WINDOWMANAGER
 			#define GWIN_NEED_WINDOWMANAGER	TRUE
 		#endif
-		#if !GDISP_NEED_MULTITHREAD && !GDISP_NEED_ASYNC
+		#if !GDISP_NEED_MULTITHREAD
 			#if GFX_DISPLAY_RULE_WARNINGS
-				#warning "GWIN: Either GDISP_NEED_MULTITHREAD or GDISP_NEED_ASYNC is required if GWIN_NEED_WIDGET is TRUE."
-				#warning "GWIN: GDISP_NEED_MULTITHREAD has been turned on for you."
+				#warning "GWIN: GDISP_NEED_MULTITHREAD is required if GWIN_NEED_WIDGET is TRUE. It has been turned on for you"
 			#endif
 			#undef GDISP_NEED_MULTITHREAD
 			#define GDISP_NEED_MULTITHREAD	TRUE
