@@ -9,10 +9,11 @@
 #ifndef _GFXCONF_H
 #define _GFXCONF_H
 
-/* GFX operating system to use */
-#define GFX_USE_OS_CHIBIOS		TRUE
-//#define GFX_USE_OS_WIN32		TRUE
-//#define GFX_USE_OS_POSIX		TRUE
+/* The operating system to use. One of these must be defined - preferably in your Makefile */
+//#define GFX_USE_OS_CHIBIOS	FALSE
+//#define GFX_USE_OS_WIN32		FALSE
+//#define GFX_USE_OS_LINUX		FALSE
+//#define GFX_USE_OS_OSX		FALSE
 
 /* GFX sub-systems to turn on */
 #define GFX_USE_GDISP			TRUE

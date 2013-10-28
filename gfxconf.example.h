@@ -14,7 +14,7 @@
 #ifndef _GFXCONF_H
 #define _GFXCONF_H
 
-/* The operating system to use. One of these must be defined - perferably in your Makefile */
+/* The operating system to use. One of these must be defined - preferably in your Makefile */
 //#define GFX_USE_OS_CHIBIOS	FALSE
 //#define GFX_USE_OS_WIN32		FALSE
 //#define GFX_USE_OS_LINUX		FALSE
