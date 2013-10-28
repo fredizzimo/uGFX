@@ -1,2 +1,2 @@
 GFXINC +=	$(GFXLIB)/drivers/multiple/Win32
-GFXSRC +=	$(GFXLIB)/drivers/multiple/Win32/gdisp_lld.c
+GFXSRC +=	$(GFXLIB)/drivers/multiple/Win32/gdisp_lld_Win32.c
