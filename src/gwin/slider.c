@@ -322,7 +322,7 @@ void gwinSliderDraw_Std(GWidgetObject *gw, void *param) {
 	#undef gsw
 }
 
-#if GDISP_NEED_IMAGE || defined(__DOXYGEN__)
+#if GDISP_NEED_IMAGE
 void gwinSliderDraw_Image(GWidgetObject *gw, void *param) {
 	#define gsw			((GSliderObject *)gw)
 	#define gi			((gdispImage *)param)
