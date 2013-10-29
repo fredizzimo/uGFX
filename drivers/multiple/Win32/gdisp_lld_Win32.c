@@ -487,9 +487,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 #if GDISP_HARDWARE_STREAM_WRITE || GDISP_HARDWARE_STREAM_READ
 	void BAD_PARAMETER(const char *msg) {
-		volatile int a;
-		// This is really just a point for us to set the debugger
-		a = 0;
+		fprintf(stderr, "%s\n", msg);
 	}
 #endif
 
