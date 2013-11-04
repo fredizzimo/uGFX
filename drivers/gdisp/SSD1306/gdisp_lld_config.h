@@ -19,7 +19,7 @@
 #define GDISP_HARDWARE_PIXELREAD		TRUE
 #define GDISP_HARDWARE_CONTROL			TRUE
 
-#define GDISP_PIXELFORMAT				GDISP_PIXELFORMAT_MONO
+#define GDISP_LLD_PIXELFORMAT			GDISP_PIXELFORMAT_MONO
 
 // This controller supports a special gdispControl() to inverse the display.
 // Pass a parameter of 1 for inverse and 0 for normal.

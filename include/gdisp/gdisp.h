@@ -120,47 +120,6 @@ extern GDisplay	*GDISP;
 #define GDISP_CONTROL_CONTRAST		3
 #define GDISP_CONTROL_LLD			1000
 
-/**
- * @brief   Driver Pixel Format Constants
- */
-#define GDISP_PIXELFORMAT_MONO		1
-#define GDISP_PIXELFORMAT_RGB565	565
-#define GDISP_PIXELFORMAT_BGR565	9565
-#define GDISP_PIXELFORMAT_RGB888	888
-#define GDISP_PIXELFORMAT_RGB444	444
-#define GDISP_PIXELFORMAT_RGB332	332
-#define GDISP_PIXELFORMAT_RGB666	666
-#define GDISP_PIXELFORMAT_CUSTOM	99999
-#define GDISP_PIXELFORMAT_ERROR		88888
-
-/**
- * @name   Some basic colors
- * @{
- */
-#define White			HTML2COLOR(0xFFFFFF)
-#define Black			HTML2COLOR(0x000000)
-#define Gray			HTML2COLOR(0x808080)
-#define Grey			Gray
-#define Blue			HTML2COLOR(0x0000FF)
-#define Red				HTML2COLOR(0xFF0000)
-#define Fuchsia			HTML2COLOR(0xFF00FF)
-#define Magenta			Fuchsia
-#define Green			HTML2COLOR(0x008000)
-#define Yellow			HTML2COLOR(0xFFFF00)
-#define Aqua			HTML2COLOR(0x00FFFF)
-#define Cyan			Aqua
-#define Lime			HTML2COLOR(0x00FF00)
-#define Maroon			HTML2COLOR(0x800000)
-#define Navy			HTML2COLOR(0x000080)
-#define Olive			HTML2COLOR(0x808000)
-#define Purple			HTML2COLOR(0x800080)
-#define Silver			HTML2COLOR(0xC0C0C0)
-#define Teal			HTML2COLOR(0x008080)
-#define Orange			HTML2COLOR(0xFFA500)
-#define Pink			HTML2COLOR(0xFFC0CB)
-#define SkyBlue			HTML2COLOR(0x87CEEB)
-/** @} */
-
 /*===========================================================================*/
 /* Defines relating to the display hardware									 */
 /*===========================================================================*/
@@ -170,6 +129,12 @@ extern GDisplay	*GDISP;
 	// If we have multiple controllers the settings must be set in the
 	// users gfxconf.h file.
 	#include "gdisp_lld_config.h"
+
+	// Unless the user has specified a specific pixel format, use
+	// the native format for the controller.
+	#if !defined(GDISP_PIXELFORMAT) && defined(GDISP_LLD_PIXELFORMAT)
+		#define GDISP_PIXELFORMAT 			GDISP_LLD_PIXELFORMAT
+	#endif
 #endif
 
 /**
@@ -181,40 +146,24 @@ extern GDisplay	*GDISP;
 	 * @default	It generally defaults to the hardware pixel format.
 	 * @note	This doesn't need to match the hardware pixel format.
 	 * 			It is definitely more efficient when it does.
-	 * @note	When GDISP_TOTAL_CONTROLLERS > 1, this should
-	 * 			also be explicitly defined to ensure the best match
+	 * @note	When GDISP_TOTAL_CONTROLLERS > 1, this must
+	 * 			be explicitly defined and should ensure the best match
 	 * 			with your hardware across all devices.
-	 * @note	Should be set to one of the following:
-	 *				GDISP_PIXELFORMAT_RGB565
-	 *				GDISP_PIXELFORMAT_BGR565
-	 *				GDISP_PIXELFORMAT_RGB888
-	 *				GDISP_PIXELFORMAT_RGB444
-	 *				GDISP_PIXELFORMAT_RGB332
-	 *				GDISP_PIXELFORMAT_RGB666
-	 *				GDISP_PIXELFORMAT_CUSTOM
-	 * @note	If you set GDISP_PIXELFORMAT_CUSTOM you need to also define
-	 *				color_t, RGB2COLOR(r,g,b), HTML2COLOR(h),
-	 *              RED_OF(c), GREEN_OF(c), BLUE_OF(c),
-	 *              COLOR(c) and MASKCOLOR.
 	 */
 	#ifndef GDISP_PIXELFORMAT
 		#define GDISP_PIXELFORMAT 			GDISP_PIXELFORMAT_ERROR
 	#endif
 	/**
 	 * @brief   Do pixels require packing for a blit
-	 * @note	Is only valid for a pixel format that doesn't fill it's datatype. ie formats:
+	 * @note	Is only valid for a pixel format that doesn't fill it's datatype. eg formats:
 	 *				GDISP_PIXELFORMAT_RGB888
 	 *				GDISP_PIXELFORMAT_RGB444
 	 *				GDISP_PIXELFORMAT_RGB666
 	 *				GDISP_PIXELFORMAT_CUSTOM
-	 * @note	If you use GDISP_PIXELFORMAT_CUSTOM and packed bit fills
-	 *				you need to also define @p gdispPackPixels(buf,cx,x,y,c)
-	 * @note	If you are using GDISP_HARDWARE_BITFILLS = FALSE then the pixel
-	 *				format must not be a packed format as the software blit does
-	 *				not support packed pixels
 	 * @note	Very few cases should actually require packed pixels as the low
 	 *				level driver can also pack on the fly as it is sending it
 	 *				to the graphics device.
+	 * @note	Packed pixels are not really supported at this point.
 	 */
 	#ifndef GDISP_PACKED_PIXELS
 		#define GDISP_PACKED_PIXELS			FALSE
@@ -233,114 +182,8 @@ extern GDisplay	*GDISP;
 /* Defines related to the pixel format										 */
 /*===========================================================================*/
 
-#if defined(__DOXYGEN__)
-	/**
-	 * @brief   The color of a pixel.
-	 */
-	typedef uint16_t color_t;
-	/**
-	 * @brief   Convert a number (of any type) to a color_t.
-	 * @details Masks any invalid bits in the color
-	 */
-	#define COLOR(c)			((color_t)(c))
-	/**
-	 * @brief   Does the color_t type contain invalid bits that need masking.
-	 */
-	#define MASKCOLOR			FALSE
-	/**
-	 * @brief   Convert red, green, blue (each 0 to 255) into a color value.
-	 */
-	#define RGB2COLOR(r,g,b)	((color_t)((((r) & 0xF8)<<8) | (((g) & 0xFC)<<3) | (((b) & 0xF8)>>3)))
-	/**
-	 * @brief   Convert a 6 digit HTML code (hex) into a color value.
-	 */
-	#define HTML2COLOR(h)		((color_t)((((h) & 0xF80000)>>8) | (((h) & 0x00FC00)>>5) | (((h) & 0x0000F8)>>3)))
-	/**
-	 * @brief   Extract the red component (0 to 255) of a color value.
-	 */
-	#define RED_OF(c)			(((c) & 0xF800)>>8)
-	/**
-	 * @brief   Extract the green component (0 to 255) of a color value.
-	 */
-	#define GREEN_OF(c)			(((c)&0x007E)>>3)
-	/**
-	 * @brief   Extract the blue component (0 to 255) of a color value.
-	 */
-	#define BLUE_OF(c)			(((c)&0x001F)<<3)
-
-#elif GDISP_PIXELFORMAT == GDISP_PIXELFORMAT_MONO
-	typedef uint8_t 			color_t;
-	#define COLOR(c)			((color_t)(c))
-	#define MASKCOLOR			TRUE
-	#define RGB2COLOR(r,g,b)	((r|g|b) ? 1 : 0)
-	#define HTML2COLOR(h)		(h ? 1 : 0)
-	#define RED_OF(c)			(c ? 255 : 0)
-	#define GREEN_OF(c)			(c ? 255 : 0)
-	#define BLUE_OF(c)			(c ? 255 : 0)
-
-#elif GDISP_PIXELFORMAT == GDISP_PIXELFORMAT_RGB565
-	typedef uint16_t			color_t;
-	#define COLOR(c)			((color_t)(c))
-	#define MASKCOLOR			FALSE
-	#define RGB2COLOR(r,g,b)	((color_t)((((r) & 0xF8)<<8) | (((g) & 0xFC)<<3) | (((b) & 0xF8)>>3)))
-	#define HTML2COLOR(h)		((color_t)((((h) & 0xF80000)>>8) | (((h) & 0x00FC00)>>5) | (((h) & 0x0000F8)>>3)))
-	#define RED_OF(c)			(((c)&0xF800)>>8)
-	#define GREEN_OF(c)			(((c)&0x07E0)>>3)
-	#define BLUE_OF(c)			(((c)&0x001F)<<3)
-
-#elif GDISP_PIXELFORMAT == GDISP_PIXELFORMAT_BGR565
-	typedef uint16_t			color_t;
-	#define COLOR(c)			((color_t)(c))
-	#define MASKCOLOR			FALSE
-	#define RGB2COLOR(r,g,b)	((color_t)((((r) & 0xF8)>>3) | (((g) & 0xFC)<<3) | (((b) & 0xF8)<<8)))
-	#define HTML2COLOR(h)		((color_t)((((h) & 0x0000F8)>>3) | (((h) & 0x00FC00)>>5) | (((h) & 0xF80000)>>8)))
-	#define RED_OF(c)			(((c)&0x001F)<<3)
-	#define GREEN_OF(c)			(((c)&0x07E0)>>3)
-	#define BLUE_OF(c)			(((c)& 0xF800)>>8)
-
-#elif GDISP_PIXELFORMAT == GDISP_PIXELFORMAT_RGB888
-	typedef uint32_t color_t;
-	#define COLOR(c)			((color_t)(((c) & 0xFFFFFF)))
-	#define MASKCOLOR			TRUE
-	#define RGB2COLOR(r,g,b)	((color_t)((((r) & 0xFF)<<16) | (((g) & 0xFF) << 8) | ((b) & 0xFF)))
-	#define HTML2COLOR(h)		((color_t)(h))
-	#define RED_OF(c)			(((c) & 0xFF0000)>>16)
-	#define GREEN_OF(c)			(((c)&0x00FF00)>>8)
-	#define BLUE_OF(c)			((c)&0x0000FF)
-
-#elif GDISP_PIXELFORMAT == GDISP_PIXELFORMAT_RGB444
-	typedef uint16_t color_t;
-	#define COLOR(c)			((color_t)(((c) & 0x0FFF)))
-	#define MASKCOLOR			TRUE
-	#define RGB2COLOR(r,g,b)	((color_t)((((r) & 0xF0)<<4) | ((g) & 0xF0) | (((b) & 0xF0)>>4)))
-	#define HTML2COLOR(h)		((color_t)((((h) & 0xF00000)>>12) | (((h) & 0x00F000)>>8) | (((h) & 0x0000F0)>>4)))
-	#define RED_OF(c)			(((c) & 0x0F00)>>4)
-	#define GREEN_OF(c)			((c)&0x00F0)
-	#define BLUE_OF(c)			(((c)&0x000F)<<4)
-
-#elif GDISP_PIXELFORMAT == GDISP_PIXELFORMAT_RGB332
-	typedef uint8_t color_t;
-	#define COLOR(c)			((color_t)(c))
-	#define MASKCOLOR			FALSE
-	#define RGB2COLOR(r,g,b)	((color_t)(((r) & 0xE0) | (((g) & 0xE0)>>3) | (((b) & 0xC0)>>6)))
-	#define HTML2COLOR(h)		((color_t)((((h) & 0xE00000)>>16) | (((h) & 0x00E000)>>11) | (((h) & 0x0000C0)>>6)))
-	#define RED_OF(c)			((c) & 0xE0)
-	#define GREEN_OF(c)			(((c)&0x1C)<<3)
-	#define BLUE_OF(c)			(((c)&0x03)<<6)
-
-#elif GDISP_PIXELFORMAT == GDISP_PIXELFORMAT_RGB666
-	typedef uint32_t color_t;
-	#define COLOR(c)			((color_t)(((c) & 0x03FFFF)))
-	#define MASKCOLOR			TRUE
-	#define RGB2COLOR(r,g,b)	((color_t)((((r) & 0xFC)<<10) | (((g) & 0xFC)<<4) | (((b) & 0xFC)>>2)))
-	#define HTML2COLOR(h)		((color_t)((((h) & 0xFC0000)>>6) | (((h) & 0x00FC00)>>4) | (((h) & 0x0000FC)>>2)))
-	#define RED_OF(c)			(((c) & 0x03F000)>>12)
-	#define GREEN_OF(c)			(((c)&0x00FC00)>>8)
-	#define BLUE_OF(c)			(((c)&0x00003F)<<2)
-
-#elif GDISP_PIXELFORMAT != GDISP_PIXELFORMAT_CUSTOM
-	#error "GDISP: No supported pixel format has been specified."
-#endif
+/* Load our color definitions and pixel formats */
+#include "colors.h"
 
 /**
  * @brief   The type of a pixel.
