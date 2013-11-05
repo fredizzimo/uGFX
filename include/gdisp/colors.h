@@ -119,7 +119,7 @@
 	 */
 	#define COLOR_NEEDS_MASK	FALSE
 	/**
-	 * @brief	If the color need masking to remove invalid bits, this is the mask
+	 * @brief	If the color needs masking to remove invalid bits, this is the mask
 	 */
 	#define COLOR_MASK			0xFFFF
 	/**
