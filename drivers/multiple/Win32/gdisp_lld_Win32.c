@@ -641,20 +641,20 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		#if GDISP_NEED_CONTROL
 			switch(g->g.Orientation) {
 			case GDISP_ROTATE_0:
-				color = GetPixel(priv->dcBuffer, g->p.x, g->p.y);
+				color = GetPixel(priv->dcBuffer, priv->x, priv->y);
 				break;
 			case GDISP_ROTATE_90:
-				color = GetPixel(priv->dcBuffer, g->p.y, g->g.Width - 1 - g->p.x);
+				color = GetPixel(priv->dcBuffer, priv->y, g->g.Width - 1 - priv->x);
 				break;
 			case GDISP_ROTATE_180:
-				color = GetPixel(priv->dcBuffer, g->g.Width - 1 - g->p.x, g->g.Height - 1 - g->p.y);
+				color = GetPixel(priv->dcBuffer, g->g.Width - 1 - priv->x, g->g.Height - 1 - priv->y);
 				break;
 			case GDISP_ROTATE_270:
-				color = GetPixel(priv->dcBuffer, g->g.Height - 1 - g->p.y, g->p.x);
+				color = GetPixel(priv->dcBuffer, g->g.Height - 1 - priv->y, priv->x);
 				break;
 			}
 		#else
-			color = GetPixel(priv->dcBuffer, g->p.x, g->p.y);
+			color = GetPixel(priv->dcBuffer, priv->x, priv->y);
 		#endif
 		ReleaseMutex(drawMutex);
 
