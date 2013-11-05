@@ -1041,7 +1041,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 			if (!g->vmt->setclip)
 		#endif
 		{
-			// This is a different cliping to fillarea(g) as it needs to take into account srcx,srcy
+			// This is a different clipping to fillarea(g) as it needs to take into account srcx,srcy
 			if (x < g->clipx0) { cx -= g->clipx0 - x; srcx += g->clipx0 - x; x = g->clipx0; }
 			if (y < g->clipy0) { cy -= g->clipy0 - y; srcy += g->clipy0 - x; y = g->clipy0; }
 			if (x+cx > g->clipx1)	cx = g->clipx1 - x;
@@ -2130,7 +2130,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 #if GDISP_NEED_SCROLL
 	void gdispGVerticalScroll(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, int lines, color_t bgcolor) {
 		coord_t		abslines;
-		#if !GDISP_HARDWARE_SCROLL
+		#if GDISP_HARDWARE_SCROLL != TRUE
 			coord_t 	fy, dy, ix, fx, i, j;
 		#endif
 
@@ -2232,9 +2232,11 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 									}
 								}
 								#if GDISP_HARDWARE_PIXELREAD == HARDWARE_AUTODETECT
-									else
+									else {
 										// Worst is "not possible"
+										MUTEX_EXIT(g);
 										return;
+									}
 								#endif
 							#endif
 
@@ -2291,8 +2293,40 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 								#endif
 							#endif
 
+							// Next best line write is drawing pixels in combination with filling
+							#if GDISP_HARDWARE_BITFILLS != TRUE && GDISP_HARDWARE_STREAM_WRITE != TRUE && GDISP_HARDWARE_FILLS && GDISP_HARDWARE_DRAWPIXEL
+								// We don't need to test for auto-detect on drawpixel as we know we have it because we don't have streaming.
+								#if GDISP_HARDWARE_FILLS == HARDWARE_AUTODETECT
+									if (g->vmt->fill)
+								#endif
+								{
+									g->p.y = fy;
+									g->p.cy = 1;
+									g->p.x = x+ix;
+									g->p.cx = 1;
+									for(j = 0; j < fx; ) {
+										g->p.color = g->linebuf[j];
+										if (j + g->p.cx < fx && g->linebuf[j] == g->linebuf[j + g->p.cx])
+											g->p.cx++;
+										else if (g->p.cx == 1) {
+											gdisp_lld_draw_pixel(g);
+											j++;
+											g->p.x++;
+										} else {
+											gdisp_lld_fill_area(g);
+											j += g->p.cx;
+											g->p.x += g->p.cx;
+											g->p.cx = 1;
+										}
+									}
+								}
+								#if GDISP_HARDWARE_FILLS == HARDWARE_AUTODETECT
+									else
+								#endif
+							#endif
+
 							// Worst line write is drawing pixels
-							#if GDISP_HARDWARE_BITFILLS != TRUE && GDISP_HARDWARE_STREAM_WRITE != TRUE && GDISP_HARDWARE_DRAWPIXEL
+							#if GDISP_HARDWARE_BITFILLS != TRUE && GDISP_HARDWARE_STREAM_WRITE != TRUE && GDISP_HARDWARE_FILLS != TRUE && GDISP_HARDWARE_DRAWPIXEL
 								// The following test is unneeded because we are guaranteed to have draw pixel if we don't have streaming
 								//#if GDISP_HARDWARE_DRAWPIXEL == HARDWARE_AUTODETECT
 								//	if (g->vmt->pixel)
