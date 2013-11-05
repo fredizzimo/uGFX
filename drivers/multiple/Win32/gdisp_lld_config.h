@@ -41,11 +41,19 @@
 	#define GDISP_HARDWARE_DRAWPIXEL		TRUE
 	#define GDISP_HARDWARE_FILLS			TRUE
 	#define GDISP_HARDWARE_PIXELREAD		TRUE
-	#define GDISP_HARDWARE_BITFILLS			TRUE
 	#define GDISP_HARDWARE_SCROLL			TRUE
+
+	// Bit-blits on Win32 are currently only supported for True-Color bit-depths greater than 8 bits
+	// Note: At the time this file is included we have not calculated all our color
+	//			definitions so we need to do this by hand.
+	#if !defined(GDISP_PIXELFORMAT)
+		#define GDISP_HARDWARE_BITFILLS			TRUE
+	#elif (GDISP_PIXELFORMAT & 0x2000) && (((GDISP_PIXELFORMAT & 0x0F00)>>8)+((GDISP_PIXELFORMAT & 0x00F0)>>4)+((GDISP_PIXELFORMAT & 0x000F))) > 8
+		#define GDISP_HARDWARE_BITFILLS			TRUE
+	#endif
 #endif
 
-#define GDISP_LLD_PIXELFORMAT				GDISP_PIXELFORMAT_RGB888
+#define GDISP_LLD_PIXELFORMAT				GDISP_PIXELFORMAT_BGR888
 
 #endif	/* GFX_USE_GDISP */
 

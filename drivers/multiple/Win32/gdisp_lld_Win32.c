@@ -23,9 +23,7 @@
 #ifndef GDISP_SCREEN_HEIGHT
 	#define GDISP_SCREEN_HEIGHT	480
 #endif
-#if GDISP_PIXELFORMAT != GDISP_PIXELFORMAT_RGB888
-	#error "GDISP Win32: This driver currently only supports the RGB888 pixel format."
-#endif
+
 // Setting this to TRUE delays updating the screen
 // to the windows paint routine. Due to the
 // drawing lock this does not add as much speed
@@ -88,9 +86,6 @@ static HANDLE			drawMutex;
 #endif
 
 #define APP_NAME "uGFX"
-
-#define COLOR2BGR(c)	((((c) & 0xFF)<<16)|((c) & 0xFF00)|(((c)>>16) & 0xFF))
-#define BGR2COLOR(c)	COLOR2BGR(c)
 
 typedef struct winPriv {
 	HWND			hwnd;
@@ -291,9 +286,9 @@ static LRESULT myWindowProc(HWND hWnd,	UINT Msg, WPARAM wParam, LPARAM lParam)
 		// Paint the toggle area
 		#if GINPUT_NEED_TOGGLE
 			if (ps.rcPaint.bottom >= GDISP_SCREEN_HEIGHT && (g->flags & GDISP_FLG_HASTOGGLE)) {
-				pen = CreatePen(PS_SOLID, 1, COLOR2BGR(Black));
-				hbrOn = CreateSolidBrush(COLOR2BGR(Blue));
-				hbrOff = CreateSolidBrush(COLOR2BGR(Gray));
+				pen = CreatePen(PS_SOLID, 1, COLOR2NATIVE(Black));
+				hbrOn = CreateSolidBrush(COLOR2NATIVE(Blue));
+				hbrOff = CreateSolidBrush(COLOR2NATIVE(Gray));
 				old = SelectObject(dc, pen);
 				MoveToEx(dc, 0, GDISP_SCREEN_HEIGHT, &p);
 				LineTo(dc, GDISP_SCREEN_WIDTH, GDISP_SCREEN_HEIGHT);
@@ -519,7 +514,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		COLORREF	color;
 
 		priv = g->priv;
-		color = COLOR2BGR(g->p.color);
+		color = COLOR2NATIVE(g->p.color);
 
 		if (!(g->flags & GDISP_FLG_WSTREAM))
 			BAD_PARAMETER("write_color: not in streaming mode");
@@ -667,7 +662,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			}
 		}
 
-		return BGR2COLOR(color);
+		return NATIVE2COLOR(color);
 	}
 	LLDSPEC	void gdisp_lld_read_stop(GDisplay *g) {
 		if (!(g->flags & GDISP_FLG_WSTREAM))
@@ -683,7 +678,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		COLORREF	color;
 	
 		priv = g->priv;
-		color = COLOR2BGR(g->p.color);
+		color = COLOR2NATIVE(g->p.color);
 	
 		#if GDISP_NEED_CONTROL
 			switch(g->g.Orientation) {
@@ -742,7 +737,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		COLORREF	color;
 
 		priv = g->priv;
-		color = COLOR2BGR(g->p.color);
+		color = COLOR2NATIVE(g->p.color);
 		hbr = CreateSolidBrush(color);
 
 		#if GDISP_NEED_CONTROL
@@ -841,6 +836,10 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 #endif
 	
 #if GDISP_HARDWARE_BITFILLS
+	#if COLOR_SYSTEM != GDISP_COLORSYSTEM_TRUECOLOR || COLOR_TYPE_BITS <= 8
+		#error "GDISP Win32: This driver's bitblit currently only supports true-color with bit depths > 8 bits."
+	#endif
+
 	LLDSPEC void gdisp_lld_blit_area(GDisplay *g) {
 		winPriv	*		priv;
 		pixel_t	*		buffer;
@@ -855,7 +854,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		memset(&bmpInfo, 0, sizeof(bmpInfo));
 		bmpInfo.bV4Size = sizeof(bmpInfo);
 		bmpInfo.bV4Planes = 1;
-		bmpInfo.bV4BitCount = sizeof(pixel_t)*8;
+		bmpInfo.bV4BitCount = COLOR_TYPE_BITS;
 		bmpInfo.bV4AlphaMask = 0;
 		bmpInfo.bV4RedMask		= RGB2COLOR(255,0,0);
 		bmpInfo.bV4GreenMask	= RGB2COLOR(0,255,0);
@@ -969,7 +968,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		#endif
 		ReleaseMutex(drawMutex);
 		
-		return BGR2COLOR(color);
+		return NATIVE2COLOR(color);
 	}
 #endif
 

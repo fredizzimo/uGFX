@@ -238,7 +238,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay* g) {
 		set_viewport(g);
 	}
 	LLDSPEC void gdisp_lld_write_color(GDisplay* g) {
-		write_data(g, g->p.color);
+		write_data(g, COLOR2NATIVE(g->p.color));
 	}
 	LLDSPEC void gdisp_lld_write_stop(GDisplay* g) {
 		release_bus(g);
@@ -257,7 +257,10 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay* g) {
 		dummy_read(g);
 	}
 	LLDSPEC color_t gdisp_lld_read_color(GDisplay* g) {
-		return read_data(g);
+		uint16_t	data;
+
+		data = read_data(g);
+		return NATIVE2COLOR(data);
 	}
 	LLDSPEC void gdisp_lld_read_stop(GDisplay* g) {
 		setwritemode(g);
@@ -267,15 +270,22 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay* g) {
 
 #if GDISP_HARDWARE_FILLS && defined(GDISP_USE_DMA)
 	LLDSPEC void gdisp_lld_fill_area(GDisplay* g) {
+		uint16_t	c;
+
+		c = COLOR2NATIVE(g->p.color);
 		acquire_bus(g);
 		set_viewport(g);
 		set_cursor(g);	
-		dma_with_noinc(g, &g->p.color, g->p.cx * g->p.cy);
+		dma_with_noinc(g, &c, g->p.cx * g->p.cy);
 		release_bus(g);
 	}
 #endif
 
 #if GDISP_HARDWARE_BITFILLS && defined(GDISP_USE_DMA)
+	#if GDISP_PIXELFORMAT != GDISP_LLD_PIXELFORMAT
+		#error "GDISP: SSD2119: BitBlit is only available in RGB565 pixel format"
+	#endif
+
 	LLDSPEC void gdisp_lld_blit_area(GDisplay* g) {
 		pixel_t*	buffer;
 		coord_t		ynct;

@@ -29,7 +29,10 @@
 
 #if defined(GDISP_USE_DMA)
 	#define GDISP_HARDWARE_FILLS		TRUE
-	#define GDISP_HARDWARE_BITFILLS		TRUE
+	#if !defined(GDISP_PIXELFORMAT) || GDISP_PIXELFORMAT == 0x2565
+		// Hardware BitBlts are only supported in native pixel format on this controller
+		#define GDISP_HARDWARE_BITFILLS		TRUE
+	#endif
 #endif
 
 #define GDISP_LLD_PIXELFORMAT			GDISP_PIXELFORMAT_RGB565

@@ -111,9 +111,9 @@
 
 #if GDISP_HARDWARE_STREAM_WRITE
 	typedef struct dvrPriv {
-		color_t			savecolor;
+		uint16_t			savecolor;
 		#if GDISP_GE8_BROKEN_CONTROLLER
-			color_t		firstcolor;
+			uint16_t		firstcolor;
 		#endif
 	} dvrPriv;
 	#define PRIV		((dvrPriv *)g->priv)
@@ -231,20 +231,23 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		g->flags &= ~(GDISP_FLG_ODDBYTE|GDISP_FLG_RUNBYTE);
 	}
 	LLDSPEC	void gdisp_lld_write_color(GDisplay *g) {
+		uint16_t	c;
+
+		c = COLOR2NATIVE(g->p.color);
 		#if GDISP_GE8_BROKEN_CONTROLLER
 			if (!(g->flags & GDISP_FLG_RUNBYTE)) {
-				PRIV->firstcolor = g->p.color;
+				PRIV->firstcolor = c;
 				g->flags |= GDISP_FLG_RUNBYTE;
 			}
 		#endif
 		if ((g->flags & GDISP_FLG_ODDBYTE)) {
 			// Write the pair of pixels to the display
 			write_data3(g, ((PRIV->savecolor >> 4) & 0xFF),
-					(((PRIV->savecolor << 4) & 0xF0)|((g->p.color >> 8) & 0x0F)),
-					(g->p.color & 0xFF));
+					(((PRIV->savecolor << 4) & 0xF0)|((c >> 8) & 0x0F)),
+					(c & 0xFF));
 			g->flags &= ~GDISP_FLG_ODDBYTE;
 		} else {
-			PRIV->savecolor = g->p.color;
+			PRIV->savecolor = c;
 			g->flags |= GDISP_FLG_ODDBYTE;
 		}
 	}
@@ -284,9 +287,12 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 #if GDISP_HARDWARE_DRAWPIXEL
 	LLDSPEC void gdisp_lld_draw_pixel(GDisplay *g) {
+		uint16_t	c;
+
+		c = COLOR2NATIVE(g->p.color);
 		acquire_bus(g);
 		set_viewport(g);
-		write_data3(g, 0, (g->p.color>>8) & 0x0F, g->p.color & 0xFF);
+		write_data3(g, 0, (c>>8) & 0x0F, c & 0xFF);
 		release_bus(g);
 	}
 #endif
@@ -295,15 +301,17 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 #if GDISP_HARDWARE_FILLS
 	LLDSPEC void gdisp_lld_fill_area(GDisplay *g) {
-		unsigned tuples;
+		unsigned	tuples;
+		uint16_t	c;
 
 		tuples = (g->p.cx*g->p.cy+1)>>1;	// With an odd sized area we over-print by one pixel.
 											// This extra pixel overwrites the first pixel (harmless as it is the same colour)
 
+		c = COLOR2NATIVE(g->p.color);
 		acquire_bus(g);
 		set_viewport(g);
 		while(tuples--)
-			write_data3(g, ((g->p.color >> 4) & 0xFF), (((g->p.color << 4) & 0xF0)|((g->p.color >> 8) & 0x0F)), (g->p.color & 0xFF));
+			write_data3(g, ((c >> 4) & 0xFF), (((c << 4) & 0xF0)|((c >> 8) & 0x0F)), (c & 0xFF));
 		release_bus(g);
 	}
 #endif
@@ -311,7 +319,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 #if GDISP_HARDWARE_BITFILLS
 	LLDSPEC void gdisp_lld_blit_area(GDisplay *g) {
 		coord_t			lg, x, y;
-		color_t			c1, c2;
+		uint16_t		c1, c2;
 		unsigned		tuples;
 		const pixel_t	*buffer;
 		#if GDISP_PACKED_PIXELS
@@ -328,7 +336,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		acquire_bus(g);
 		set_viewport(g);
 
-		/* to surpress compiler warnings */
+		/* to suppress compiler warnings */
 		x = 0;
 		y = 0;
 
@@ -356,7 +364,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 			while(tuples--) {
 				/* Get a pixel */
-				c1 = *p++;
+				c1 = COLOR2NATIVE(*p++);
 
 				/* Check for line or buffer wrapping */
 				if (++x >= g->p.cx) {
@@ -369,7 +377,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 				}
 
 				/* Get the next pixel */
-				c2 = *p++;
+				c2 = COLOR2NATIVE(*p++);
 
 				/* Check for line or buffer wrapping */
 				if (++x >= g->p.cx) {
@@ -385,7 +393,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 				write_data3(g, ((c1 >> 4) & 0xFF), (((c1 << 4) & 0xF0)|((c2 >> 8) & 0x0F)), (c2 & 0xFF));
 			}
 
-		#else
+		#elif GDISP_PIXELFORMAT == GDISP_LLD_PIXELFORMAT
 
 			// Although this controller uses packed pixels, we may have to feed it into
 			//  the controller with different packing to the source bitmap
@@ -440,6 +448,9 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 				/* Write the pair of pixels to the display */
 				write_data3(g, ((c1 >> 4) & 0xFF), (((c1 << 4) & 0xF0)|((c2 >> 8) & 0x0F)), (c2 & 0xFF));
 			}
+
+		#else
+			#error "Packed pixels is broken if you are not running native pixel format"
 		#endif
 
 		/* All done */

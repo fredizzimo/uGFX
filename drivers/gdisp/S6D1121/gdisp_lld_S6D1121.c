@@ -221,7 +221,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		set_viewport(g);
 	}
 	LLDSPEC	void gdisp_lld_write_color(GDisplay *g) {
-		write_data(g, g->p.color);
+		write_data(g, COLOR2NATIVE(g->p.color));
 	}
 	LLDSPEC	void gdisp_lld_write_stop(GDisplay *g) {
 		release_bus(g);
@@ -240,7 +240,10 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		dummy_read(g);
 	}
 	LLDSPEC	color_t gdisp_lld_read_color(GDisplay *g) {
-		return read_data(g);
+		uint16_t	data;
+
+		data = read_data(g);
+		return NATIVE2COLOR(data);
 	}
 	LLDSPEC	void gdisp_lld_read_stop(GDisplay *g) {
 		setwritemode(g);

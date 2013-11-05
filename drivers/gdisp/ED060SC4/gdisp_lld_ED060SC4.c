@@ -524,7 +524,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		bitpos = (6 - 2 * (dx % EINK_PPB));
 		byte = block->data[dy][dx / EINK_PPB];
 		byte &= ~(PIXELMASK << bitpos);
-		if (g->p.color != Black)
+		if (COLOR2NATIVE(g->p.color) != Black)
 			byte |= PIXEL_WHITE << bitpos;
 		else
 			byte |= PIXEL_BLACK << bitpos;
