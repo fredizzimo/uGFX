@@ -106,6 +106,7 @@ static inline void release_bus(GDisplay *g) {
 
 static inline void write_cmd(GDisplay *g, uint8_t cmd) {
 	uint8_t command[2];
+	(void)	g;
 
 	command[0] = 0x00;		// Co = 0, D/C = 0
 	command[1] = cmd;
