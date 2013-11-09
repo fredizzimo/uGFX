@@ -171,6 +171,7 @@
 
 /* Optional Parameters for various subsystems */
 /*
+	#define GDISP_DEFAULT_ORIENTATION		GDISP_ROTATE_LANDSCAPE
 	#define GDISP_LINEBUF_SIZE				128
 	#define GEVENT_MAXIMUM_SIZE				32
 	#define GEVENT_MAX_SOURCE_LISTENERS		32

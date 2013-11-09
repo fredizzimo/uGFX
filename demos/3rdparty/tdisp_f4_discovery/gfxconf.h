@@ -136,7 +136,6 @@
 
 /* Optional Low Level Driver Definitions */
 /*
-	#define GDISP_USE_CUSTOM_BOARD		FALSE
 	#define GDISP_SCREEN_WIDTH			320
 	#define GDISP_SCREEN_HEIGHT			240
 	#define GDISP_USE_FSMC

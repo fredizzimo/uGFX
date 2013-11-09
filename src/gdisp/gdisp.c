@@ -587,6 +587,15 @@ void _gdispInit(void) {
 			g->flags = 0;
 			gdisp_lld_init(g);
 
+			#if defined(GDISP_DEFAULT_ORIENTATION) && GDISP_NEED_CONTROL && GDISP_HARDWARE_CONTROL
+				g->p.x = GDISP_CONTROL_ORIENTATION;
+				g->p.ptr = GDISP_DEFAULT_ORIENTATION;
+				#if GDISP_HARDWARE_CONTROL == HARDWARE_AUTODETECT
+					if (g->vmt->control)
+				#endif
+				gdisp_lld_control(g);
+			#endif
+
 			// Set the initial clipping region
 			#if GDISP_NEED_VALIDATION || GDISP_NEED_CLIP
 

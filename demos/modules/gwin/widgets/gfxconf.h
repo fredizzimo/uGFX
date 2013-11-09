@@ -50,10 +50,11 @@
 #define GDISP_NEED_TEXT			TRUE
 #define GDISP_NEED_IMAGE		TRUE
 #define GDISP_NEED_CONVEX_POLYGON	TRUE
+#define GDISP_NEED_CONTROL		TRUE
+#define GDISP_DEFAULT_ORIENTATION	GDISP_ROTATE_LANDSCAPE
 
 /* The following are optional depending on your hardware */
 //#define GDISP_NEED_SCROLL		TRUE
-//#define GDISP_NEED_CONTROL		TRUE
 
 /* GDISP fonts to include */
 #define GDISP_INCLUDE_FONT_UI2	TRUE

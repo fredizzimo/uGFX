@@ -346,14 +346,10 @@
  * @{
  */
 	/**
-	 * @brief   Use a custom board definition even if a board definition exists.
-	 * @details	Defaults to FALSE
-	 * @details	If TRUE, add gdisp_lld_board.h to your project directory and customise it.
-	 * @note	Not all GDISP low level drivers currently use board definition files.
+	 * @brief	Define the default orientation for all displays in the system.
+	 * @note	GDISP_NEED_CONTROL must also be set (and the hardware must support it)
 	 */
-	#ifndef GDISP_USE_CUSTOM_BOARD
-		#define GDISP_USE_CUSTOM_BOARD		FALSE
-	#endif
+	// #define GDISP_DEFAULT_ORIENTATION	GDISP_ROTATE_LANDSCAPE
 	/**
 	 * @brief   Set the screen height and width.
 	 * @note	Ignored by some low level GDISP drivers, optional for others.
@@ -368,8 +364,8 @@
 	 * @details	Only required by the SSD1963 driver.
 	 * @note	This will be replaced eventually by board definition files
 	 */
-	/* #define GDISP_USE_FSMC */
-	/* #define GDISP_USE_GPIO */
+	// #define GDISP_USE_FSMC
+	// #define GDISP_USE_GPIO
 /** @} */
 
 #endif /* _GDISP_OPTIONS_H */
