@@ -144,7 +144,7 @@
 
 #if GMISC_NEED_INVSQRT
 	// Algorithm based on Quake code.
-	#if GDISP_INVSQRT_REAL_SLOW
+	#if GMISC_INVSQRT_REAL_SLOW
 		#include <math.h>
 		float invsqrt(float n) {
 			return 1.0/sqrt(n);
@@ -157,7 +157,7 @@
 			x2 = n * 0.5F;
 
 			// Convert into an int32 (no binary format conversion)
-			#if GDISP_INVSQRT_MIXED_ENDIAN
+			#if GMISC_INVSQRT_MIXED_ENDIAN
 				((char *)&i)[0] = ((char *)&n)[3];
 				((char *)&i)[1] = ((char *)&n)[2];
 				((char *)&i)[2] = ((char *)&n)[1];
@@ -170,7 +170,7 @@
 			i  = 0x5F375A86 - (i >> 1);					// The quake code used 0x5F3759DF but this is better.
 
 			// Convert back to a float (no binary format conversion)
-			#if GDISP_INVSQRT_MIXED_ENDIAN
+			#if GMISC_INVSQRT_MIXED_ENDIAN
 				((char *)&n)[0] = ((char *)&i)[3];
 				((char *)&n)[1] = ((char *)&i)[2];
 				((char *)&n)[2] = ((char *)&i)[1];

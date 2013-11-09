@@ -53,15 +53,15 @@
 	 * 			the same endianness. Unfortunately there are some strange
 	 * 			processors that don't eg. some very early ARM devices.
 	 * 			For those where the endianness doesn't match you can fix it by
-	 * 			defining GDISP_INVSQRT_MIXED_ENDIAN.
+	 * 			defining GMISC_INVSQRT_MIXED_ENDIAN.
 	 * @note	This still assumes the processor is using an ieee floating point format.
 	 *
 	 * If you have a software floating point that uses a non-standard
 	 * floating point format (or very strange hardware) then define
-	 * GDISP_INVSQRT_REAL_SLOW and it will do it the hard way.
+	 * GMISC_INVSQRT_REAL_SLOW and it will do it the hard way.
 	 */
-	#ifndef GDISP_INVSQRT_MIXED_ENDIAN
-		#define GDISP_INVSQRT_MIXED_ENDIAN	FALSE
+	#ifndef GMISC_INVSQRT_MIXED_ENDIAN
+		#define GMISC_INVSQRT_MIXED_ENDIAN	FALSE
 	#endif
 	/**
 	 * @brief	Modifies the @p invsqrt() function to do things the long slow way.
@@ -69,8 +69,8 @@
 	 * 			processor floating point format.
 	 * @note	This makes the @p invsqrt() function very slow.
 	 */
-	#ifndef GDISP_INVSQRT_REAL_SLOW
-		#define GDISP_INVSQRT_REAL_SLOW		FALSE
+	#ifndef GMISC_INVSQRT_REAL_SLOW
+		#define GMISC_INVSQRT_REAL_SLOW		FALSE
 	#endif
 /** @} */
 

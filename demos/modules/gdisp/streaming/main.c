@@ -42,11 +42,11 @@
  * your processor.
  *
  * You can modify the implementation of invsqrt() by firstly defining
- * 		#define GDISP_INVSQRT_MIXED_ENDIAN	TRUE
+ * 		#define GMISC_INVSQRT_MIXED_ENDIAN	TRUE
  * in your gfxconf.h file.
  *
  * If it still doesn't work then instead define
- * 		#define GDISP_INVSQRT_REAL_SLOW		TRUE
+ * 		#define GMISC_INVSQRT_REAL_SLOW		TRUE
  * in your gfxconf.h file. This should always work although it will probably be slow.
  */
 #define BALLCOLOR1		Red
