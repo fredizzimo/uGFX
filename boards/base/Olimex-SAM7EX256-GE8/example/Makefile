@@ -5,8 +5,9 @@
 
 # Compiler options here.
 ifeq ($(USE_OPT),)
-#  USE_OPT = -O2 -ggdb -gstabs+ -fomit-frame-pointer -mabi=apcs-gnu
-  USE_OPT = -O0 -ggdb -gstabs+ -fomit-frame-pointer -mabi=apcs-gnu
+  # If you are using gcc V4.5.1 or older then replace -g with -ggdb -gstabs+
+  # For debugging you probably want -O0 rather than -O2
+  USE_OPT = -O0 -g -fomit-frame-pointer -mabi=apcs-gnu
 endif
 
 # C specific options here (added to USE_OPT).
@@ -126,7 +127,8 @@ CPPC = $(TRGT)g++
 # Enable loading with g++ only if you need C++ runtime support.
 # NOTE: You can use C++ even without C++ support if you are careful. C++
 #       runtime support makes code size explode.
-LD   = $(TRGT)gcc -ggdb -gstabs+
+# If you are using gcc V4.5.1 or older then add -ggdb -gstabs+ to the LD line
+LD   = $(TRGT)gcc
 #LD   = $(TRGT)g++
 CP   = $(TRGT)objcopy
 AS   = $(TRGT)gcc -x assembler-with-cpp
