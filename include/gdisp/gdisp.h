@@ -62,8 +62,10 @@ typedef enum fontmetric { fontHeight, fontDescendersHeight, fontLineSpacing, fon
 typedef const struct mf_font_s* font_t;
 /**
  * @brief   Type for the screen orientation.
+ * @note	GDISP_ROTATE_LANDSCAPE and GDISP_ROTATE_PORTRAIT are internally converted to the
+ * 			most appropriate other orientation.
  */
-typedef enum orientation { GDISP_ROTATE_0=0, GDISP_ROTATE_90=90, GDISP_ROTATE_180=180, GDISP_ROTATE_270=270 } orientation_t;
+typedef enum orientation { GDISP_ROTATE_0=0, GDISP_ROTATE_90=90, GDISP_ROTATE_180=180, GDISP_ROTATE_270=270, GDISP_ROTATE_PORTRAIT=1000,  GDISP_ROTATE_LANDSCAPE=1001 } orientation_t;
 /**
  * @brief   Type for the available power modes for the screen.
  */

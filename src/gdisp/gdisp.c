@@ -2367,6 +2367,16 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 			MUTEX_ENTER(g);
 			g->p.x = what;
 			g->p.ptr = value;
+			if (what == GDISP_CONTROL_ORIENTATION) {
+				switch ((orientation_t) value) {
+				case GDISP_ROTATE_LANDSCAPE:
+					g->p.ptr = g->g.Width >= g->g.Height ? GDISP_ROTATE_0 : GDISP_ROTATE_90;
+					break;
+				case GDISP_ROTATE_PORTRAIT:
+					g->p.ptr = g->g.Width >= g->g.Height ? GDISP_ROTATE_90 : GDISP_ROTATE_0;
+					break;
+				}
+			}
 			gdisp_lld_control(g);
 			#if GDISP_NEED_CLIP || GDISP_NEED_VALIDATION
 				if (what == GDISP_CONTROL_ORIENTATION) {
