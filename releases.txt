@@ -4,6 +4,7 @@
 
 current release: 2.0
 
+
 *** changes after 1.9 ***
 FEATURE:	GDISP Streaming API and demos.
 DEPRECATE:	GDISP_NEED_ASYNC is now deprecated.
