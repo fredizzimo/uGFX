@@ -5,11 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    drivers/gdisp/SSD2119/board_SSD2119_embest_dmstf4bb.h
- * @brief   GDISP Graphic Driver subsystem board FSMC interface for the SSD2119 display.
- */
-
 #ifndef _GDISP_LLD_BOARD_H
 #define _GDISP_LLD_BOARD_H
 

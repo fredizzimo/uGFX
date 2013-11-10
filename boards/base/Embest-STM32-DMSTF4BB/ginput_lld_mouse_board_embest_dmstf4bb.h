@@ -5,15 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    drivers/ginput/touch/STMPE811/ginput_lld_mouse_board_embest_dmstf4bb.h
- * @brief   GINPUT Touch low level driver source for the STMPE811 on the Embest DM-STF4BB board.
- *
- * @defgroup Mouse Mouse
- * @ingroup GINPUT
- * @{
- */
-
 #ifndef _GINPUT_LLD_MOUSE_BOARD_H
 #define _GINPUT_LLD_MOUSE_BOARD_H
 
@@ -23,11 +14,6 @@ static const I2CConfig i2ccfg = {
 	FAST_DUTY_CYCLE_2,
 };
 
-/**
- * @brief   Initialise the board for the touch.
- *
- * @notapi
- */
 static void init_board(void)
 {
 	palSetPadMode(GPIOC, 13, PAL_MODE_INPUT | PAL_STM32_PUDR_FLOATING);			/* TP IRQ */
@@ -37,25 +23,11 @@ static void init_board(void)
 	i2cStart(&I2CD1, &i2ccfg);
 }
 
-/**
- * @brief   Check whether an interrupt is raised
- * @return	TRUE if there is an interrupt signal present
- *
- * @notapi
- */
-static inline bool_t getpin_irq(void) {
+static inline bool_t getpin_irq(void)
+{
 	return (!(palReadPad(GPIOC, 13)));
 }
 
-/**
- * @brief	Write a value into a certain register
- *
- * @param[in] reg	The register address
- * @param[in] n		The amount of bytes (one or two)
- * @param[in] val	The value
- *
- * @notapi
- */
 static void write_reg(uint8_t reg, uint8_t n, uint16_t val)
 {
 	uint8_t txbuf[3];
@@ -76,16 +48,6 @@ static void write_reg(uint8_t reg, uint8_t n, uint16_t val)
 	i2cReleaseBus(&I2CD1);
 }
  
-/**
- * @brief	Read the value of a certain register
- *
- * @param[in] reg	The register address
- * @param[in] n		The amount of bytes (one or two)
- *
- * @return Data read from device (one byte or two depending on n param)
- *
- * @notapi
- */
 static uint16_t read_reg(uint8_t reg, uint8_t n)
 {
 	uint8_t txbuf[1], rxbuf[2];
@@ -123,4 +85,4 @@ static void read_reg_n(uint8_t reg, uint8_t n, uint8_t *rxbuf)
 }
 
 #endif /* _GINPUT_LLD_MOUSE_BOARD_H */
-/** @} */
+
