@@ -589,7 +589,7 @@ void _gdispInit(void) {
 
 			#if defined(GDISP_DEFAULT_ORIENTATION) && GDISP_NEED_CONTROL && GDISP_HARDWARE_CONTROL
 				g->p.x = GDISP_CONTROL_ORIENTATION;
-				g->p.ptr = GDISP_DEFAULT_ORIENTATION;
+				g->p.ptr = (void *)GDISP_DEFAULT_ORIENTATION;
 				#if GDISP_HARDWARE_CONTROL == HARDWARE_AUTODETECT
 					if (g->vmt->control)
 				#endif
@@ -2379,10 +2379,12 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 			if (what == GDISP_CONTROL_ORIENTATION) {
 				switch ((orientation_t) value) {
 				case GDISP_ROTATE_LANDSCAPE:
-					g->p.ptr = g->g.Width >= g->g.Height ? GDISP_ROTATE_0 : GDISP_ROTATE_90;
+					g->p.ptr = g->g.Width >= g->g.Height ? (void *)GDISP_ROTATE_0 : (void *)GDISP_ROTATE_90;
 					break;
 				case GDISP_ROTATE_PORTRAIT:
-					g->p.ptr = g->g.Width >= g->g.Height ? GDISP_ROTATE_90 : GDISP_ROTATE_0;
+					g->p.ptr = g->g.Width >= g->g.Height ? (void *)GDISP_ROTATE_90 : (void *)GDISP_ROTATE_0;
+					break;
+				default:
 					break;
 				}
 			}
