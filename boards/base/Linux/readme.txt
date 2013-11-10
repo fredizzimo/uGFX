@@ -6,3 +6,4 @@ On this board uGFX currently supports:
 	- GINPUT-touch via the X driver
 
 There is an example Makefile and project in the examples directory.
+
