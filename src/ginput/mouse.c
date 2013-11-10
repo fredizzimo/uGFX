@@ -65,6 +65,7 @@ static struct MouseConfig_t {
 			#define FLG_CAL_OK			0x0020
 			#define FLG_CAL_SAVED		0x0040
 			#define FLG_CAL_FREE		0x0080
+			#define FLG_CAL_RAW			0x0100
 	#if GINPUT_MOUSE_NEED_CALIBRATION
 		GMouseCalibrationSaveRoutine	fnsavecal;
 		GMouseCalibrationLoadRoutine	fnloadcal;
@@ -200,14 +201,18 @@ static void get_calibrated_reading(MouseReading *pt) {
 					pt->x = t;
 				}
 				break;
+			default:
+				break;
 		}
 	#endif
 
 	#if GINPUT_MOUSE_NEED_CALIBRATION
+	if (!(MouseConfig.flags & FLG_CAL_RAW)) {
 		if (pt->x < 0)	pt->x = 0;
 		else if (pt->x >= w) pt->x = w-1;
 		if (pt->y < 0)	pt->y = 0;
 		else if (pt->y >= h) pt->y = h-1;
+	}
 	#endif
 }
 
@@ -350,7 +355,7 @@ GSourceHandle ginputGetMouse(uint16_t instance) {
 				MouseConfig.caldata.ay = 0;
 				MouseConfig.caldata.by = 1;
 				MouseConfig.caldata.cy = 0;
-				MouseConfig.flags |= (FLG_CAL_OK|FLG_CAL_SAVED);
+				MouseConfig.flags |= (FLG_CAL_OK|FLG_CAL_SAVED|FLG_CAL_RAW);
 			} else
 				ginputCalibrateMouse(instance);
 		#endif
@@ -437,7 +442,7 @@ bool_t ginputCalibrateMouse(uint16_t instance) {
 
 		MouseConfig.flags |= FLG_IN_CAL;
 		gtimerStop(&MouseTimer);
-		MouseConfig.flags &= ~(FLG_CAL_OK|FLG_CAL_SAVED);
+		MouseConfig.flags &= ~(FLG_CAL_OK|FLG_CAL_SAVED|FLG_CAL_RAW);
 
 		#if GDISP_NEED_CONTROL
 			gdispGSetOrientation(MouseConfig.display, GDISP_ROTATE_0);
