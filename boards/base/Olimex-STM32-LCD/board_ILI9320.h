@@ -5,11 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    drivers/gdisp/ILI9320/board_ILI9320_olimex_stm32_lcd.h
- * @brief   GDISP Graphic Driver subsystem board interface for the ILI9320 display.
- */
-
 #ifndef GDISP_LLD_BOARD_H
 #define GDISP_LLD_BOARD_H
 
@@ -52,6 +47,7 @@ static inline void post_init_board(GDisplay *g) {
 
 static inline void setpin_reset(GDisplay *g, bool_t state) {
 	(void) g;
+
 	if(state)
 		palClearPad(GPIOE, GPIOE_TFT_RST);
 	else
@@ -60,6 +56,7 @@ static inline void setpin_reset(GDisplay *g, bool_t state) {
 
 static inline void set_backlight(GDisplay *g, uint8_t percent) {
 	(void) g;
+
 	if(percent)
 		palClearPad(GPIOD, GPIOD_TFT_LIGHT);
 	else
@@ -76,11 +73,13 @@ static inline void release_bus(GDisplay *g) {
 
 static inline void write_index(GDisplay *g, uint16_t index) {
 	(void) g;
+
 	GDISP_REG = index;
 }
 
 static inline void write_data(GDisplay *g, uint16_t data) {
 	(void) g;
+
 	GDISP_RAM = data;
 }
 
@@ -94,7 +93,9 @@ static inline void setwritemode(GDisplay *g) {
 
 static inline uint16_t read_data(GDisplay *g) {
 	(void) g;
+
 	return GDISP_RAM;
 }
 
 #endif /* GDISP_LLD_BOARD_H */
+
