@@ -30,11 +30,11 @@
 #ifndef _GFXCONF_H
 #define _GFXCONF_H
 
-/* The operating system to use. One of these must be defined - perferably in your Makefile */
-//#define GFX_USE_OS_CHIBIOS		FALSE
+/* The operating system to use. One of these must be defined - preferably in your Makefile */
+//#define GFX_USE_OS_CHIBIOS	FALSE
 //#define GFX_USE_OS_WIN32		FALSE
 //#define GFX_USE_OS_LINUX		FALSE
-//#define GFX_USE_OS_OSX			FALSE
+//#define GFX_USE_OS_OSX		FALSE
 
 /* GFX sub-systems to turn on */
 #define GFX_USE_GDISP			TRUE
@@ -43,18 +43,13 @@
 #define GDISP_NEED_VALIDATION	TRUE
 #define GDISP_NEED_CLIP			TRUE
 #define GDISP_NEED_TEXT			TRUE
-#define GDISP_NEED_CIRCLE		FALSE
-#define GDISP_NEED_ELLIPSE		FALSE
-#define GDISP_NEED_ARC			FALSE
-#define GDISP_NEED_SCROLL		FALSE
-#define GDISP_NEED_PIXELREAD	FALSE
-#define GDISP_NEED_CONTROL		FALSE
-#define GDISP_NEED_MULTITHREAD	FALSE
-#define GDISP_NEED_ASYNC		FALSE
-#define GDISP_NEED_MSGAPI		FALSE
 #define GDISP_NEED_ANTIALIAS	TRUE
 
 /* GDISP - fonts to include */
+#define GDISP_INCLUDE_USER_FONTS				TRUE
+#define GDISP_INCLUDE_FONT_UI1					FALSE
+#define GDISP_INCLUDE_FONT_UI2					TRUE
+#define GDISP_INCLUDE_FONT_LARGENUMBERS			FALSE
 #define GDISP_INCLUDE_FONT_DEJAVUSANS10			TRUE
 #define GDISP_INCLUDE_FONT_DEJAVUSANS12			FALSE
 #define GDISP_INCLUDE_FONT_DEJAVUSANS16			FALSE
@@ -70,9 +65,6 @@
 #define GDISP_INCLUDE_FONT_DEJAVUSANS32_AA		FALSE
 #define GDISP_INCLUDE_FONT_DEJAVUSANSBOLD12_AA	FALSE
 
-#define GDISP_INCLUDE_FONT_UI1					FALSE
-#define GDISP_INCLUDE_FONT_UI2					TRUE
-#define GDISP_INCLUDE_FONT_LARGENUMBERS			FALSE
 
 #endif /* _GFXCONF_H */
 

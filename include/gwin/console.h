@@ -50,6 +50,7 @@ extern "C" {
  * @note	Text in a console window supports newlines and will wrap text as required.
  * @return  NULL if there is no resultant drawing area, otherwise a window handle.
  *
+ * @param[in] g			The GDisplay to display this window on
  * @param[in] gc		The GConsoleObject structure to initialise. If this is NULL the structure is dynamically allocated.
  * @param[in] pInit		The initialization parameters to use
  *
@@ -64,7 +65,8 @@ extern "C" {
  *
  * @api
  */
-GHandle gwinConsoleCreate(GConsoleObject *gc, const GWindowInit *pInit);
+GHandle gwinGConsoleCreate(GDisplay *g, GConsoleObject *gc, const GWindowInit *pInit);
+#define gwinConsoleCreate(gc, pInit)			gwinGConsoleCreate(GDISP, gc, pInit)
 
 #if GFX_USE_OS_CHIBIOS && GWIN_CONSOLE_USE_BASESTREAM
 	/**

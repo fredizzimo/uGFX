@@ -28,25 +28,50 @@
 		#define GMISC_NEED_ARRAYOPS		FALSE
 	#endif
 	/**
-	 * @brief   Include fast array based trig functions (sin, cos)
-	 * @details	Defaults to FALSE
-	 */
-	#ifndef GMISC_NEED_FASTTRIG
-		#define GMISC_NEED_FASTTRIG		FALSE
-	#endif
-	/**
 	 * @brief   Include fast fixed point trig functions (sin, cos)
 	 * @details	Defaults to FALSE
 	 */
 	#ifndef GMISC_NEED_FIXEDTRIG
 		#define GMISC_NEED_FIXEDTRIG		FALSE
 	#endif
+	/**
+	 * @brief   Include fast inverse square root (x^-1/2)
+	 * @details	Defaults to FALSE
+	 */
+	#ifndef GMISC_NEED_INVSQRT
+		#define GMISC_NEED_INVSQRT		FALSE
+	#endif
 /**
  * @}
  *
- * @name    GMISC Optional Sizing Parameters
+ * @name    GMISC Optional Parameters
  * @{
  */
+	/**
+	 * @brief	Modifies the @p invsqrt() function to assume a different integer to floating point endianness.
+	 * @note	Normally the floating point format and the integer format have
+	 * 			the same endianness. Unfortunately there are some strange
+	 * 			processors that don't eg. some very early ARM devices.
+	 * 			For those where the endianness doesn't match you can fix it by
+	 * 			defining GMISC_INVSQRT_MIXED_ENDIAN.
+	 * @note	This still assumes the processor is using an ieee floating point format.
+	 *
+	 * If you have a software floating point that uses a non-standard
+	 * floating point format (or very strange hardware) then define
+	 * GMISC_INVSQRT_REAL_SLOW and it will do it the hard way.
+	 */
+	#ifndef GMISC_INVSQRT_MIXED_ENDIAN
+		#define GMISC_INVSQRT_MIXED_ENDIAN	FALSE
+	#endif
+	/**
+	 * @brief	Modifies the @p invsqrt() function to do things the long slow way.
+	 * @note	This causes the @p invsqrt() function to work regardless of the
+	 * 			processor floating point format.
+	 * @note	This makes the @p invsqrt() function very slow.
+	 */
+	#ifndef GMISC_INVSQRT_REAL_SLOW
+		#define GMISC_INVSQRT_REAL_SLOW		FALSE
+	#endif
 /** @} */
 
 #endif /* _GMISC_OPTIONS_H */

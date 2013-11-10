@@ -136,8 +136,8 @@ static const gwidgetVMT buttonVMT = {
 	#endif
 };
 
-GHandle gwinButtonCreate(GButtonObject *gw, const GWidgetInit *pInit) {
-	if (!(gw = (GButtonObject *)_gwidgetCreate(&gw->w, pInit, &buttonVMT)))
+GHandle gwinGButtonCreate(GDisplay *g, GButtonObject *gw, const GWidgetInit *pInit) {
+	if (!(gw = (GButtonObject *)_gwidgetCreate(g, &gw->w, pInit, &buttonVMT)))
 		return 0;
 
 	#if GINPUT_NEED_TOGGLE
@@ -171,9 +171,9 @@ void gwinButtonDraw_3D(GWidgetObject *gw, void *param) {
 	if (gw->g.vmt != (gwinVMT *)&buttonVMT)	return;
 	pcol = getDrawColors(gw);
 	
-	gdispFillStringBox(gw->g.x, gw->g.y, gw->g.width-1, gw->g.height-1, gw->text, gw->g.font, pcol->text, pcol->fill, justifyCenter);
-	gdispDrawLine(gw->g.x+gw->g.width-1, gw->g.y, gw->g.x+gw->g.width-1, gw->g.y+gw->g.height-1, pcol->edge);
-	gdispDrawLine(gw->g.x, gw->g.y+gw->g.height-1, gw->g.x+gw->g.width-2, gw->g.y+gw->g.height-1, pcol->edge);
+	gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width-1, gw->g.height-1, gw->text, gw->g.font, pcol->text, pcol->fill, justifyCenter);
+	gdispGDrawLine(gw->g.display, gw->g.x+gw->g.width-1, gw->g.y, gw->g.x+gw->g.width-1, gw->g.y+gw->g.height-1, pcol->edge);
+	gdispGDrawLine(gw->g.display, gw->g.x, gw->g.y+gw->g.height-1, gw->g.x+gw->g.width-2, gw->g.y+gw->g.height-1, pcol->edge);
 }
 
 #if GDISP_NEED_ARC
@@ -184,14 +184,14 @@ void gwinButtonDraw_3D(GWidgetObject *gw, void *param) {
 		if (gw->g.vmt != (gwinVMT *)&buttonVMT)	return;
 		pcol = getDrawColors(gw);
 
-		gdispFillArea(gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->pstyle->background);
+		gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->pstyle->background);
 		if (gw->g.width >= 2*RND_CNR_SIZE+10) {
-			gdispFillRoundedBox(gw->g.x+1, gw->g.y+1, gw->g.width-2, gw->g.height-2, RND_CNR_SIZE-1, pcol->fill);
-			gdispDrawStringBox(gw->g.x+1, gw->g.y+RND_CNR_SIZE, gw->g.width-2, gw->g.height-(2*RND_CNR_SIZE), gw->text, gw->g.font, pcol->text, justifyCenter);
-			gdispDrawRoundedBox(gw->g.x, gw->g.y, gw->g.width, gw->g.height, RND_CNR_SIZE, pcol->edge);
+			gdispGFillRoundedBox(gw->g.display, gw->g.x+1, gw->g.y+1, gw->g.width-2, gw->g.height-2, RND_CNR_SIZE-1, pcol->fill);
+			gdispGDrawStringBox(gw->g.display, gw->g.x+1, gw->g.y+RND_CNR_SIZE, gw->g.width-2, gw->g.height-(2*RND_CNR_SIZE), gw->text, gw->g.font, pcol->text, justifyCenter);
+			gdispGDrawRoundedBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, RND_CNR_SIZE, pcol->edge);
 		} else {
-			gdispFillStringBox(gw->g.x+1, gw->g.y+1, gw->g.width-2, gw->g.height-2, gw->text, gw->g.font, pcol->text, pcol->fill, justifyCenter);
-			gdispDrawBox(gw->g.x, gw->g.y, gw->g.width, gw->g.height, pcol->edge);
+			gdispGFillStringBox(gw->g.display, gw->g.x+1, gw->g.y+1, gw->g.width-2, gw->g.height-2, gw->text, gw->g.font, pcol->text, pcol->fill, justifyCenter);
+			gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, pcol->edge);
 		}
 	}
 #endif
@@ -204,10 +204,10 @@ void gwinButtonDraw_3D(GWidgetObject *gw, void *param) {
 		if (gw->g.vmt != (gwinVMT *)&buttonVMT)	return;
 		pcol = getDrawColors(gw);
 
-		gdispFillArea(gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->pstyle->background);
-		gdispFillEllipse(gw->g.x+1, gw->g.y+1, gw->g.width/2-1, gw->g.height/2-1, pcol->fill);
-		gdispDrawStringBox(gw->g.x+1, gw->g.y+1, gw->g.width-2, gw->g.height-2, gw->text, gw->g.font, pcol->text, justifyCenter);
-		gdispDrawEllipse(gw->g.x, gw->g.y, gw->g.width/2, gw->g.height/2, pcol->edge);
+		gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->pstyle->background);
+		gdispGFillEllipse(gw->g.display, gw->g.x+1, gw->g.y+1, gw->g.width/2-1, gw->g.height/2-1, pcol->fill);
+		gdispGDrawStringBox(gw->g.display, gw->g.x+1, gw->g.y+1, gw->g.width-2, gw->g.height-2, gw->text, gw->g.font, pcol->text, justifyCenter);
+		gdispGDrawEllipse(gw->g.display, gw->g.x, gw->g.y, gw->g.width/2, gw->g.height/2, pcol->edge);
 	}
 #endif
 
@@ -228,10 +228,10 @@ void gwinButtonDraw_3D(GWidgetObject *gw, void *param) {
 		arw[5].x = (gw->g.width - gw->g.width/ARROWBODY_DIVIDER)/2; arw[5].y = gw->g.height/ARROWHEAD_DIVIDER;
 		arw[6].x = 0; arw[6].y = gw->g.height/ARROWHEAD_DIVIDER;
 
-		gdispFillArea(gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->pstyle->background);
-		gdispFillConvexPoly(gw->g.x, gw->g.y, arw, 7, pcol->fill);
-		gdispDrawPoly(gw->g.x, gw->g.y, arw, 7, pcol->edge);
-		gdispDrawStringBox(gw->g.x+1, gw->g.y+1, gw->g.width-2, gw->g.height-2, gw->text, gw->g.font, pcol->text, justifyCenter);
+		gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->pstyle->background);
+		gdispGFillConvexPoly(gw->g.display, gw->g.x, gw->g.y, arw, 7, pcol->fill);
+		gdispGDrawPoly(gw->g.display, gw->g.x, gw->g.y, arw, 7, pcol->edge);
+		gdispGDrawStringBox(gw->g.display, gw->g.x+1, gw->g.y+1, gw->g.width-2, gw->g.height-2, gw->text, gw->g.font, pcol->text, justifyCenter);
 	}
 
 	void gwinButtonDraw_ArrowDown(GWidgetObject *gw, void *param) {
@@ -250,10 +250,10 @@ void gwinButtonDraw_3D(GWidgetObject *gw, void *param) {
 		arw[5].x = (gw->g.width - gw->g.width/ARROWBODY_DIVIDER)/2; arw[5].y = gw->g.height-1-gw->g.height/ARROWHEAD_DIVIDER;
 		arw[6].x = 0; arw[6].y = gw->g.height-1-gw->g.height/ARROWHEAD_DIVIDER;
 
-		gdispFillArea(gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->pstyle->background);
-		gdispFillConvexPoly(gw->g.x, gw->g.y, arw, 7, pcol->fill);
-		gdispDrawPoly(gw->g.x, gw->g.y, arw, 7, pcol->edge);
-		gdispDrawStringBox(gw->g.x+1, gw->g.y+1, gw->g.width-2, gw->g.height-2, gw->text, gw->g.font, pcol->text, justifyCenter);
+		gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->pstyle->background);
+		gdispGFillConvexPoly(gw->g.display, gw->g.x, gw->g.y, arw, 7, pcol->fill);
+		gdispGDrawPoly(gw->g.display, gw->g.x, gw->g.y, arw, 7, pcol->edge);
+		gdispGDrawStringBox(gw->g.display, gw->g.x+1, gw->g.y+1, gw->g.width-2, gw->g.height-2, gw->text, gw->g.font, pcol->text, justifyCenter);
 	}
 
 	void gwinButtonDraw_ArrowLeft(GWidgetObject *gw, void *param) {
@@ -272,10 +272,10 @@ void gwinButtonDraw_3D(GWidgetObject *gw, void *param) {
 		arw[5].x = gw->g.width/ARROWHEAD_DIVIDER; arw[5].y = (gw->g.height + gw->g.height/ARROWBODY_DIVIDER)/2;
 		arw[6].x = gw->g.width/ARROWHEAD_DIVIDER; arw[6].y = gw->g.height-1;
 
-		gdispFillArea(gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->pstyle->background);
-		gdispFillConvexPoly(gw->g.x, gw->g.y, arw, 7, pcol->fill);
-		gdispDrawPoly(gw->g.x, gw->g.y, arw, 7, pcol->edge);
-		gdispDrawStringBox(gw->g.x+1, gw->g.y+1, gw->g.width-2, gw->g.height-2, gw->text, gw->g.font, pcol->text, justifyCenter);
+		gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->pstyle->background);
+		gdispGFillConvexPoly(gw->g.display, gw->g.x, gw->g.y, arw, 7, pcol->fill);
+		gdispGDrawPoly(gw->g.display, gw->g.x, gw->g.y, arw, 7, pcol->edge);
+		gdispGDrawStringBox(gw->g.display, gw->g.x+1, gw->g.y+1, gw->g.width-2, gw->g.height-2, gw->text, gw->g.font, pcol->text, justifyCenter);
 	}
 
 	void gwinButtonDraw_ArrowRight(GWidgetObject *gw, void *param) {
@@ -294,10 +294,10 @@ void gwinButtonDraw_3D(GWidgetObject *gw, void *param) {
 		arw[5].x = gw->g.width-1-gw->g.width/ARROWHEAD_DIVIDER; arw[5].y = (gw->g.height + gw->g.height/ARROWBODY_DIVIDER)/2;
 		arw[6].x = gw->g.width-1-gw->g.width/ARROWHEAD_DIVIDER; arw[6].y = gw->g.height-1;
 
-		gdispFillArea(gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->pstyle->background);
-		gdispFillConvexPoly(gw->g.x, gw->g.y, arw, 7, pcol->fill);
-		gdispDrawPoly(gw->g.x, gw->g.y, arw, 7, pcol->edge);
-		gdispDrawStringBox(gw->g.x+1, gw->g.y+1, gw->g.width-2, gw->g.height-2, gw->text, gw->g.font, pcol->text, justifyCenter);
+		gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->pstyle->background);
+		gdispGFillConvexPoly(gw->g.display, gw->g.x, gw->g.y, arw, 7, pcol->fill);
+		gdispGDrawPoly(gw->g.display, gw->g.x, gw->g.y, arw, 7, pcol->edge);
+		gdispGDrawStringBox(gw->g.display, gw->g.x+1, gw->g.y+1, gw->g.width-2, gw->g.height-2, gw->text, gw->g.font, pcol->text, justifyCenter);
 	}
 #endif
 
@@ -317,8 +317,8 @@ void gwinButtonDraw_3D(GWidgetObject *gw, void *param) {
 			sy = 0;
 		}
 
-		gdispImageDraw((gdispImage *)param, gw->g.x, gw->g.y, gw->g.width, gw->g.height, 0, sy);
-		gdispDrawStringBox(gw->g.x+1, gw->g.y+1, gw->g.width-2, gw->g.height-2, gw->text, gw->g.font, pcol->text, justifyCenter);
+		gdispGImageDraw(gw->g.display, (gdispImage *)param, gw->g.x, gw->g.y, gw->g.width, gw->g.height, 0, sy);
+		gdispGDrawStringBox(gw->g.display, gw->g.x+1, gw->g.y+1, gw->g.width-2, gw->g.height-2, gw->text, gw->g.font, pcol->text, justifyCenter);
 	}
 #endif
 

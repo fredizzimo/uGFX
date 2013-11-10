@@ -42,6 +42,7 @@ extern "C" {
  * @brief				Create a label widget.
  * @details				A label widget is a simple window which has a static text.
  * 
+ * @param[in] g			The GDisplay to display this window on
  * @param[in] widget	The label structure to initialise. If this is NULL, the structure is dynamically allocated.
  * @param[in] pInit		The initialisation parameters to use.
  *
@@ -49,7 +50,18 @@ extern "C" {
  *
  * @api
  */
-GHandle gwinLabelCreate(GLabelObject *widget, GWidgetInit *pInit);
+GHandle gwinGLabelCreate(GDisplay *g, GLabelObject *widget, GWidgetInit *pInit);
+#define gwinLabelCreate(w, pInit)			gwinGLabelCreate(GDISP, w, pInit)
+
+/**
+ * @brief				Border settings for the default rendering routine
+ *
+ * @param[in] gh		The widget handle (must be a list handle)
+ * @param[in] border	Shall a border be rendered?
+ *
+ * @api
+ */
+void gwinLabelSetBorder(GHandle gh, bool_t border);
 
 /**
  * @brief				Border settings for the default rendering routine

@@ -82,6 +82,7 @@ extern "C" {
  *						one toggle to a role, it will forget the previous toggle. Two roles are supported:
  *						Role 0 = toggle for down, role 1 = toggle for up
  *
+ * @param[in] g			The GDisplay to display this window on
  * @param[in] widget	The GListObject structure to initialize. If this is NULL, the structure is dynamically allocated.
  * @param[in] pInit		The initialization parameters to use
  * @param[in] multiselect	If TRUE the list is multi-select instead of single-select.
@@ -90,7 +91,20 @@ extern "C" {
  *
  * @api
  */
-GHandle gwinListCreate(GListObject *widget, GWidgetInit *pInit, bool_t multiselect);
+GHandle gwinGListCreate(GDisplay *g, GListObject *widget, GWidgetInit *pInit, bool_t multiselect);
+#define gwinListCreate(w, pInit, m)			gwinGListCreate(GDISP, w, pInit, m)
+
+/**
+ * @brief				Change the behaviour of the scroll bar
+ *
+ * @note				Current possible values: @p scrollAlways and @p scrollAuto
+ *
+ * @param[in] gh		The widget handle (must be a list handle)
+ * @param[in] flag		The behaviour to be set
+ *
+ * @api
+ */
+void gwinListSetScroll(GHandle gh, scroll_t flag);
 
 /**
  * @brief				Change the behaviour of the scroll bar

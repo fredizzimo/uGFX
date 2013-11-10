@@ -108,8 +108,8 @@ static const gwidgetVMT radioVMT = {
 	#endif
 };
 
-GHandle gwinRadioCreate(GRadioObject *gw, const GWidgetInit *pInit, uint16_t group) {
-	if (!(gw = (GRadioObject *)_gwidgetCreate(&gw->w, pInit, &radioVMT)))
+GHandle gwinGRadioCreate(GDisplay *g, GRadioObject *gw, const GWidgetInit *pInit, uint16_t group) {
+	if (!(gw = (GRadioObject *)_gwidgetCreate(g, &gw->w, pInit, &radioVMT)))
 		return 0;
 
 	#if GINPUT_NEED_TOGGLE
@@ -177,21 +177,21 @@ void gwinRadioDraw_Radio(GWidgetObject *gw, void *param) {
 
 	#if GDISP_NEED_CIRCLE
 		df = (ld-1)/2;
-		gdispFillArea(gw->g.x, gw->g.y, ld, ld, gw->pstyle->background);
-		gdispDrawCircle(gw->g.x+df, gw->g.y+df, df, pcol->edge);
+		gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, ld, ld, gw->pstyle->background);
+		gdispGDrawCircle(gw->g.display, gw->g.x+df, gw->g.y+df, df, pcol->edge);
 
 		if (gw->g.flags & GRADIO_FLG_PRESSED)
-			gdispFillCircle(gw->g.x+df, gw->g.y+df, df <= 2 ? 1 : (df-2), pcol->fill);
+			gdispGFillCircle(gw->g.display, gw->g.x+df, gw->g.y+df, df <= 2 ? 1 : (df-2), pcol->fill);
 	#else
-		gdispFillArea(gw->g.x+1, gw->g.y+1, ld, ld-2, gw->pstyle->background);
-		gdispDrawBox(gw->g.x, gw->g.y, ld, ld, pcol->edge);
+		gdispGFillArea(gw->g.display, gw->g.x+1, gw->g.y+1, ld, ld-2, gw->pstyle->background);
+		gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, ld, ld, pcol->edge);
 
 		df = ld < 4 ? 1 : 2;
 		if (gw->g.flags & GRADIO_FLG_PRESSED)
-			gdispFillArea(gw->g.x+df, gw->g.y+df, ld-2*df, ld-2*df, pcol->fill);
+			gdispGFillArea(gw->g.display, gw->g.x+df, gw->g.y+df, ld-2*df, ld-2*df, pcol->fill);
 	#endif
 
-	gdispFillStringBox(gw->g.x+ld+1, gw->g.y, gw->g.width-ld-1, gw->g.height, gw->text, gw->g.font, pcol->text, gw->pstyle->background, justifyLeft);
+	gdispGFillStringBox(gw->g.display, gw->g.x+ld+1, gw->g.y, gw->g.width-ld-1, gw->g.height, gw->text, gw->g.font, pcol->text, gw->pstyle->background, justifyLeft);
 	#undef gcw
 }
 
@@ -202,9 +202,9 @@ void gwinRadioDraw_Button(GWidgetObject *gw, void *param) {
 	if (gw->g.vmt != (gwinVMT *)&radioVMT) return;
 	pcol = getDrawColors(gw);
 	
-	gdispFillStringBox(gw->g.x, gw->g.y, gw->g.width-1, gw->g.height-1, gw->text, gw->g.font, pcol->text, pcol->fill, justifyCenter);
-	gdispDrawLine(gw->g.x+gw->g.width-1, gw->g.y, gw->g.x+gw->g.width-1, gw->g.y+gw->g.height-1, pcol->edge);
-	gdispDrawLine(gw->g.x, gw->g.y+gw->g.height-1, gw->g.x+gw->g.width-2, gw->g.y+gw->g.height-1, pcol->edge);
+	gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width-1, gw->g.height-1, gw->text, gw->g.font, pcol->text, pcol->fill, justifyCenter);
+	gdispGDrawLine(gw->g.display, gw->g.x+gw->g.width-1, gw->g.y, gw->g.x+gw->g.width-1, gw->g.y+gw->g.height-1, pcol->edge);
+	gdispGDrawLine(gw->g.display, gw->g.x, gw->g.y+gw->g.height-1, gw->g.x+gw->g.width-2, gw->g.y+gw->g.height-1, pcol->edge);
 }
 
 void gwinRadioDraw_Tab(GWidgetObject *gw, void *param) {
@@ -215,12 +215,12 @@ void gwinRadioDraw_Tab(GWidgetObject *gw, void *param) {
 	pcol = getDrawColors(gw);
 	
 	if ((gw->g.flags & GRADIO_FLG_PRESSED)) {
-		gdispDrawBox(gw->g.x, gw->g.y, gw->g.width, gw->g.height, pcol->edge);
-		gdispFillStringBox(gw->g.x+1, gw->g.y+1, gw->g.width-2, gw->g.height-1, gw->text, gw->g.font, pcol->text, pcol->fill, justifyCenter);
+		gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, pcol->edge);
+		gdispGFillStringBox(gw->g.display, gw->g.x+1, gw->g.y+1, gw->g.width-2, gw->g.height-1, gw->text, gw->g.font, pcol->text, pcol->fill, justifyCenter);
 	} else {
-		gdispFillStringBox(gw->g.x, gw->g.y, gw->g.width-1, gw->g.height-1, gw->text, gw->g.font, pcol->text, pcol->fill, justifyCenter);
-		gdispDrawLine(gw->g.x+gw->g.width-1, gw->g.y, gw->g.x+gw->g.width-1, gw->g.y+gw->g.height-1, pcol->edge);
-		gdispDrawLine(gw->g.x, gw->g.y+gw->g.height-1, gw->g.x+gw->g.width-2, gw->g.y+gw->g.height-1, pcol->edge);
+		gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width-1, gw->g.height-1, gw->text, gw->g.font, pcol->text, pcol->fill, justifyCenter);
+		gdispGDrawLine(gw->g.display, gw->g.x+gw->g.width-1, gw->g.y, gw->g.x+gw->g.width-1, gw->g.y+gw->g.height-1, pcol->edge);
+		gdispGDrawLine(gw->g.display, gw->g.x, gw->g.y+gw->g.height-1, gw->g.x+gw->g.width-2, gw->g.y+gw->g.height-1, pcol->edge);
 	}
 }
 

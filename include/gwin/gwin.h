@@ -38,6 +38,7 @@ typedef struct GWindowObject {
 		gfxQueueASyncItem	wmq;				// @< The next window (for the window manager)
 	#endif
 	const struct gwinVMT	*vmt;				// @< The VMT for this GWIN
+	GDisplay *				display;			// @< The display this window is on.
 	coord_t					x, y;				// @< Screen relative position
 	coord_t					width, height;		// @< Dimensions of this window
 	color_t					color, bgcolor;		// @< The current drawing colors
@@ -165,6 +166,7 @@ extern "C" {
 	 * @brief   Create a basic window.
 	 * @return  NULL if there is no resultant drawing area, otherwise a window handle.
 	 *
+	 * @param[in] g			The GDisplay to display this window on
 	 * @param[in] pgw		The window structure to initialize. If this is NULL the structure is dynamically allocated.
 	 * @param[in] pInit		How to initialise the window
 	 *
@@ -177,7 +179,8 @@ extern "C" {
 	 *
 	 * @api
 	 */
-	GHandle gwinWindowCreate(GWindowObject *pgw, const GWindowInit *pInit);
+	GHandle gwinGWindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pInit);
+	#define gwinWindowCreate(pgw, pInit)		gwinGWindowCreate(GDISP, pgw, pInit);
 
 	/**
 	 * @brief   Destroy a window (of any type). Releases any dynamically allocated memory.

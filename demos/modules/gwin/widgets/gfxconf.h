@@ -30,11 +30,11 @@
 #ifndef _GFXCONF_H
 #define _GFXCONF_H
 
-/* The operating system to use. One of these must be defined - perferably in your Makefile */
-//#define GFX_USE_OS_CHIBIOS		FALSE
+/* The operating system to use. One of these must be defined - preferably in your Makefile */
+//#define GFX_USE_OS_CHIBIOS	FALSE
 //#define GFX_USE_OS_WIN32		FALSE
 //#define GFX_USE_OS_LINUX		FALSE
-//#define GFX_USE_OS_OSX			FALSE
+//#define GFX_USE_OS_OSX		FALSE
 
 /* GFX sub-systems to turn on */
 #define GFX_USE_GDISP			TRUE
@@ -49,6 +49,12 @@
 #define GDISP_NEED_CIRCLE		TRUE
 #define GDISP_NEED_TEXT			TRUE
 #define GDISP_NEED_IMAGE		TRUE
+#define GDISP_NEED_CONVEX_POLYGON	TRUE
+#define GDISP_NEED_CONTROL		TRUE
+#define GDISP_DEFAULT_ORIENTATION	GDISP_ROTATE_LANDSCAPE
+
+/* The following are optional depending on your hardware */
+//#define GDISP_NEED_SCROLL		TRUE
 
 /* GDISP fonts to include */
 #define GDISP_INCLUDE_FONT_UI2	TRUE

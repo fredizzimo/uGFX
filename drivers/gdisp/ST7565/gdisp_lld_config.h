@@ -14,13 +14,12 @@
 /* Driver hardware support.                                                  */
 /*===========================================================================*/
 
-#define GDISP_DRIVER_NAME         "ST7565"
+#define GDISP_HARDWARE_FLUSH			TRUE		// This controller requires flushing
+#define GDISP_HARDWARE_DRAWPIXEL		TRUE
+#define GDISP_HARDWARE_PIXELREAD		TRUE
+#define GDISP_HARDWARE_CONTROL			TRUE
 
-#define GDISP_HARDWARE_CONTROL    TRUE
-
-#define GDISP_PIXELFORMAT         GDISP_PIXELFORMAT_MONO
-
-#define GDISP_CONTROL_LLD_FLUSH   (GDISP_CONTROL_LLD + 1)
+#define GDISP_LLD_PIXELFORMAT			GDISP_PIXELFORMAT_MONO
 
 #endif	/* GFX_USE_GDISP */
 

@@ -59,6 +59,7 @@ extern "C" {
  * @brief   Create a radio widget.
  * @return  NULL if there is no resultant drawing area, otherwise a window handle.
  *
+ * @param[in] g			The GDisplay to display this window on
  * @param[in] gb		The GRadioObject structure to initialise. If this is NULL the structure is dynamically allocated.
  * @param[in] pInit		The initialisation parameters
  * @param[in] group		The group of radio buttons this radio button belongs to.
@@ -77,7 +78,8 @@ extern "C" {
  *
  * @api
  */	
-GHandle gwinRadioCreate(GRadioObject *gb, const GWidgetInit *pInit, uint16_t group);
+GHandle gwinGRadioCreate(GDisplay *g, GRadioObject *gb, const GWidgetInit *pInit, uint16_t group);
+#define gwinRadioCreate(w, pInit, gr)			gwinGRadioCreate(GDISP, w, pInit, gr)
 
 /**
  * @brief	Press this radio button (and by definition unset any others in the group)

@@ -17,6 +17,10 @@
  *
  * @pre			GFX_USE_GDISP must be set to TRUE in gfxconf.h
  *
+ * @note		Each drawing routine supports a gispXXXX and a gdispGXXXX function. The difference is that the
+ * 				gdispXXXX function does not require a display to be specified. Note there is a slight anomoly
+ * 				in the naming with gdispGBlitArea() vs gdispBlitAreaEx() and gdispBlitArea(), the later of
+ * 				which is now deprecated.
  * @{
  */
 
@@ -43,53 +47,56 @@ typedef int16_t	coord_t;
 /**
  * @brief   Type for a 2D point on the screen.
  */
-typedef struct point_t {
-	coord_t		x, y;
-	} point;
+typedef struct point { coord_t x, y; } point, point_t;
 /**
  * @brief   Type for the text justification.
  */
-typedef enum justify {
-	justifyLeft = 0,
-	justifyCenter = 1,
-	justifyRight = 2
-} justify_t;
+typedef enum justify { justifyLeft=0, justifyCenter=1, justifyRight=2 } justify_t;
 /**
  * @brief   Type for the font metric.
  */
-typedef enum fontmetric {fontHeight, fontDescendersHeight, fontLineSpacing, fontCharPadding, fontMinWidth, fontMaxWidth} fontmetric_t;
+typedef enum fontmetric { fontHeight, fontDescendersHeight, fontLineSpacing, fontCharPadding, fontMinWidth, fontMaxWidth } fontmetric_t;
 /**
  * @brief   The type of a font.
  */
 typedef const struct mf_font_s* font_t;
 /**
  * @brief   Type for the screen orientation.
+ * @note	GDISP_ROTATE_LANDSCAPE and GDISP_ROTATE_PORTRAIT are internally converted to the
+ * 			most appropriate other orientation.
  */
-typedef enum orientation {GDISP_ROTATE_0, GDISP_ROTATE_90, GDISP_ROTATE_180, GDISP_ROTATE_270} gdisp_orientation_t;
+typedef enum orientation { GDISP_ROTATE_0=0, GDISP_ROTATE_90=90, GDISP_ROTATE_180=180, GDISP_ROTATE_270=270, GDISP_ROTATE_PORTRAIT=1000,  GDISP_ROTATE_LANDSCAPE=1001 } orientation_t;
 /**
  * @brief   Type for the available power modes for the screen.
  */
-typedef enum powermode {powerOff, powerSleep, powerDeepSleep, powerOn} gdisp_powermode_t;
+typedef enum powermode { powerOff, powerSleep, powerDeepSleep, powerOn } powermode_t;
 
 /*
  * This is not documented in Doxygen as it is meant to be a black-box.
  * Applications should always use the routines and macros defined
  * below to access it in case the implementation ever changed.
  */
-typedef struct GDISPDriver_t {
+typedef struct GDISPControl {
 		coord_t				Width;
 		coord_t				Height;
-		gdisp_orientation_t	Orientation;
-		gdisp_powermode_t	Powermode;
+		orientation_t		Orientation;
+		powermode_t			Powermode;
 		uint8_t				Backlight;
 		uint8_t				Contrast;
-		#if GDISP_NEED_CLIP || GDISP_NEED_VALIDATION
-			coord_t				clipx0, clipy0;
-			coord_t				clipx1, clipy1;		/* not inclusive */
-		#endif
-		} GDISPDriver;
+	} GDISPControl;
 
-extern GDISPDriver	GDISP;
+/*
+ * Our black box display structure. We know only one thing about it...
+ * The first member is a GDISPControl structure.
+ */
+typedef struct GDisplay		GDisplay;
+
+/**
+ * @brief   The default screen to use for the gdispXXXX calls.
+ * @note	This is set by default to the first display in the system. You can change
+ * 			it by calling @p gdispGSetDisplay().
+ */
+extern GDisplay	*GDISP;
 
 /*===========================================================================*/
 /* Constants.                                                                */
@@ -115,177 +122,70 @@ extern GDISPDriver	GDISP;
 #define GDISP_CONTROL_CONTRAST		3
 #define GDISP_CONTROL_LLD			1000
 
-/**
- * @brief   Driver Query Constants
- * @details	Unsupported query codes return (void *)-1.
- * @note	The result should be typecast the required type.
- * @note	GDISP_QUERY_LLD				- Low level driver control constants start at
- * 											this value.
- */
-#define GDISP_QUERY_LLD				1000
+/*===========================================================================*/
+/* Defines relating to the display hardware									 */
+/*===========================================================================*/
+
+#if !defined(GDISP_TOTAL_CONTROLLERS) || GDISP_TOTAL_CONTROLLERS == 1
+	// Pull in the default hardware configuration for a single controller.
+	// If we have multiple controllers the settings must be set in the
+	// users gfxconf.h file.
+	#include "gdisp_lld_config.h"
+
+	// Unless the user has specified a specific pixel format, use
+	// the native format for the controller.
+	#if !defined(GDISP_PIXELFORMAT) && defined(GDISP_LLD_PIXELFORMAT)
+		#define GDISP_PIXELFORMAT 			GDISP_LLD_PIXELFORMAT
+	#endif
+#endif
 
 /**
- * @brief   Driver Pixel Format Constants
- */
-#define GDISP_PIXELFORMAT_MONO		1
-#define GDISP_PIXELFORMAT_RGB565	565
-#define GDISP_PIXELFORMAT_RGB888	888
-#define GDISP_PIXELFORMAT_RGB444	444
-#define GDISP_PIXELFORMAT_RGB332	332
-#define GDISP_PIXELFORMAT_RGB666	666
-#define GDISP_PIXELFORMAT_CUSTOM	99999
-#define GDISP_PIXELFORMAT_ERROR		88888
-
-/**
- * @name   Some basic colors
+ * @name    GDISP pixel format choices
  * @{
  */
-#define White			HTML2COLOR(0xFFFFFF)
-#define Black			HTML2COLOR(0x000000)
-#define Gray			HTML2COLOR(0x808080)
-#define Grey			Gray
-#define Blue			HTML2COLOR(0x0000FF)
-#define Red				HTML2COLOR(0xFF0000)
-#define Fuchsia			HTML2COLOR(0xFF00FF)
-#define Magenta			Fuchsia
-#define Green			HTML2COLOR(0x008000)
-#define Yellow			HTML2COLOR(0xFFFF00)
-#define Aqua			HTML2COLOR(0x00FFFF)
-#define Cyan			Aqua
-#define Lime			HTML2COLOR(0x00FF00)
-#define Maroon			HTML2COLOR(0x800000)
-#define Navy			HTML2COLOR(0x000080)
-#define Olive			HTML2COLOR(0x808000)
-#define Purple			HTML2COLOR(0x800080)
-#define Silver			HTML2COLOR(0xC0C0C0)
-#define Teal			HTML2COLOR(0x008080)
-#define Orange			HTML2COLOR(0xFFA500)
-#define Pink			HTML2COLOR(0xFFC0CB)
-#define SkyBlue			HTML2COLOR(0x87CEEB)
+	/**
+	 * @brief   The pixel format.
+	 * @default	It generally defaults to the hardware pixel format.
+	 * @note	This doesn't need to match the hardware pixel format.
+	 * 			It is definitely more efficient when it does.
+	 * @note	When GDISP_TOTAL_CONTROLLERS > 1, this must
+	 * 			be explicitly defined and should ensure the best match
+	 * 			with your hardware across all devices.
+	 */
+	#ifndef GDISP_PIXELFORMAT
+		#define GDISP_PIXELFORMAT 			GDISP_PIXELFORMAT_ERROR
+	#endif
+	/**
+	 * @brief   Do pixels require packing for a blit
+	 * @note	Is only valid for a pixel format that doesn't fill it's datatype. eg formats:
+	 *				GDISP_PIXELFORMAT_RGB888
+	 *				GDISP_PIXELFORMAT_RGB444
+	 *				GDISP_PIXELFORMAT_RGB666
+	 *				GDISP_PIXELFORMAT_CUSTOM
+	 * @note	Very few cases should actually require packed pixels as the low
+	 *				level driver can also pack on the fly as it is sending it
+	 *				to the graphics device.
+	 * @note	Packed pixels are not really supported at this point.
+	 */
+	#ifndef GDISP_PACKED_PIXELS
+		#define GDISP_PACKED_PIXELS			FALSE
+	#endif
+
+	/**
+	 * @brief   Do lines of pixels require packing for a blit
+	 * @note	Ignored if GDISP_PACKED_PIXELS is FALSE
+	 */
+	#ifndef GDISP_PACKED_LINES
+		#define GDISP_PACKED_LINES			FALSE
+	#endif
 /** @} */
 
 /*===========================================================================*/
 /* Defines related to the pixel format										 */
 /*===========================================================================*/
 
-#if defined(__DOXYGEN__)
-	/**
-	 * @brief   The color of a pixel.
-	 */
-	typedef uint16_t color_t;
-	/**
-	 * @brief   Convert a number (of any type) to a color_t.
-	 * @details Masks any invalid bits in the color
-	 */
-	#define COLOR(c)			((color_t)(c))
-	/**
-	 * @brief   Does the color_t type contain invalid bits that need masking.
-	 */
-	#define MASKCOLOR			FALSE
-	/**
-	 * @brief   Convert red, green, blue (each 0 to 255) into a color value.
-	 */
-	#define RGB2COLOR(r,g,b)	((color_t)((((r) & 0xF8)<<8) | (((g) & 0xFC)<<3) | (((b) & 0xF8)>>3)))
-	/**
-	 * @brief   Convert a 6 digit HTML code (hex) into a color value.
-	 */
-	#define HTML2COLOR(h)		((color_t)((((h) & 0xF80000)>>8) | (((h) & 0x00FC00)>>5) | (((h) & 0x0000F8)>>3)))
-	/**
-	 * @brief   Extract the red component (0 to 255) of a color value.
-	 */
-	#define RED_OF(c)			(((c) & 0xF800)>>8)
-	/**
-	 * @brief   Extract the green component (0 to 255) of a color value.
-	 */
-	#define GREEN_OF(c)			(((c)&0x007E)>>3)
-	/**
-	 * @brief   Extract the blue component (0 to 255) of a color value.
-	 */
-	#define BLUE_OF(c)			(((c)&0x001F)<<3)
-
-#elif GDISP_PIXELFORMAT == GDISP_PIXELFORMAT_MONO
-	typedef uint8_t 			color_t;
-	#define COLOR(c)			((color_t)(c))
-	#define MASKCOLOR			FALSE
-	#define RGB2COLOR(r,g,b)	((r|g|b) ? 1 : 0)
-	#define HTML2COLOR(h)		(h ? 1 : 0)
-	#define RED_OF(c)			(c ? 255 : 0)
-	#define GREEN_OF(c)			(c ? 255 : 0)
-	#define BLUE_OF(c)			(c ? 255 : 0)
-
-#elif GDISP_PIXELFORMAT == GDISP_PIXELFORMAT_RGB565
-	typedef uint16_t			color_t;
-	#define COLOR(c)			((color_t)(c))
-	#define MASKCOLOR			FALSE
-	#define RGB2COLOR(r,g,b)	((color_t)((((r) & 0xF8)<<8) | (((g) & 0xFC)<<3) | (((b) & 0xF8)>>3)))
-	#define HTML2COLOR(h)		((color_t)((((h) & 0xF80000)>>8) | (((h) & 0x00FC00)>>5) | (((h) & 0x0000F8)>>3)))
-	#define RED_OF(c)			(((c) & 0xF800)>>8)
-	#define GREEN_OF(c)			(((c)&0x07E0)>>3)
-	#define BLUE_OF(c)			(((c)&0x001F)<<3)
-
-#elif GDISP_PIXELFORMAT == GDISP_PIXELFORMAT_RGB888
-	typedef uint32_t color_t;
-	#define COLOR(c)			((color_t)(((c) & 0xFFFFFF)))
-	#define MASKCOLOR			TRUE
-	#define RGB2COLOR(r,g,b)	((color_t)((((r) & 0xFF)<<16) | (((g) & 0xFF) << 8) | ((b) & 0xFF)))
-	#define HTML2COLOR(h)		((color_t)(h))
-	#define RED_OF(c)			(((c) & 0xFF0000)>>16)
-	#define GREEN_OF(c)			(((c)&0x00FF00)>>8)
-	#define BLUE_OF(c)			((c)&0x0000FF)
-
-#elif GDISP_PIXELFORMAT == GDISP_PIXELFORMAT_RGB444
-	typedef uint16_t color_t;
-	#define COLOR(c)			((color_t)(((c) & 0x0FFF)))
-	#define MASKCOLOR			TRUE
-	#define RGB2COLOR(r,g,b)	((color_t)((((r) & 0xF0)<<4) | ((g) & 0xF0) | (((b) & 0xF0)>>4)))
-	#define HTML2COLOR(h)		((color_t)((((h) & 0xF00000)>>12) | (((h) & 0x00F000)>>8) | (((h) & 0x0000F0)>>4)))
-	#define RED_OF(c)			(((c) & 0x0F00)>>4)
-	#define GREEN_OF(c)			((c)&0x00F0)
-	#define BLUE_OF(c)			(((c)&0x000F)<<4)
-
-#elif GDISP_PIXELFORMAT == GDISP_PIXELFORMAT_RGB332
-	typedef uint8_t color_t;
-	#define COLOR(c)			((color_t)(c))
-	#define MASKCOLOR			FALSE
-	#define RGB2COLOR(r,g,b)	((color_t)(((r) & 0xE0) | (((g) & 0xE0)>>3) | (((b) & 0xC0)>>6)))
-	#define HTML2COLOR(h)		((color_t)((((h) & 0xE00000)>>16) | (((h) & 0x00E000)>>11) | (((h) & 0x0000C0)>>6)))
-	#define RED_OF(c)			((c) & 0xE0)
-	#define GREEN_OF(c)			(((c)&0x1C)<<3)
-	#define BLUE_OF(c)			(((c)&0x03)<<6)
-
-#elif GDISP_PIXELFORMAT == GDISP_PIXELFORMAT_RGB666
-	typedef uint32_t color_t;
-	#define COLOR(c)			((color_t)(((c) & 0x03FFFF)))
-	#define MASKCOLOR			TRUE
-	#define RGB2COLOR(r,g,b)	((color_t)((((r) & 0xFC)<<10) | (((g) & 0xFC)<<4) | (((b) & 0xFC)>>2)))
-	#define HTML2COLOR(h)		((color_t)((((h) & 0xFC0000)>>6) | (((h) & 0x00FC00)>>4) | (((h) & 0x0000FC)>>2)))
-	#define RED_OF(c)			(((c) & 0x03F000)>>12)
-	#define GREEN_OF(c)			(((c)&0x00FC00)>>8)
-	#define BLUE_OF(c)			(((c)&0x00003F)<<2)
-
-#elif GDISP_PIXELFORMAT != GDISP_PIXELFORMAT_CUSTOM
-	#error "GDISP: No supported pixel format has been specified."
-#endif
-
-/* Verify information for packed pixels and define a non-packed pixel macro */
-#if !GDISP_PACKED_PIXELS
-	#define gdispPackPixels(buf,cx,x,y,c)	{ ((color_t *)(buf))[(y)*(cx)+(x)] = (c); }
-#elif !GDISP_HARDWARE_BITFILLS
-	#error "GDISP: packed pixel formats are only supported for hardware accelerated drivers."
-#elif GDISP_PIXELFORMAT != GDISP_PIXELFORMAT_RGB888 \
-		&& GDISP_PIXELFORMAT != GDISP_PIXELFORMAT_RGB444 \
-		&& GDISP_PIXELFORMAT != GDISP_PIXELFORMAT_RGB666 \
-		&& GDISP_PIXELFORMAT != GDISP_PIXELFORMAT_CUSTOM
-	#error "GDISP: A packed pixel format has been specified for an unsupported pixel format."
-#endif
-
-#if GDISP_NEED_SCROLL && !GDISP_HARDWARE_SCROLL
-	#error "GDISP: Hardware scrolling is wanted but not supported."
-#endif
-
-#if GDISP_NEED_PIXELREAD && !GDISP_HARDWARE_PIXELREAD
-	#error "GDISP: Pixel read-back is wanted but not supported."
-#endif
+/* Load our color definitions and pixel formats */
+#include "colors.h"
 
 /**
  * @brief   The type of a pixel.
@@ -296,294 +196,402 @@ typedef color_t		pixel_t;
 extern "C" {
 #endif
 
-#if GDISP_NEED_MULTITHREAD || GDISP_NEED_ASYNC || defined(__DOXYGEN__)
-	/* These routines can be hardware accelerated
-	 *	- Do not add a routine here unless it has also been added to the hardware acceleration layer
-	 */
-
-	/* Base Functions */
-
-	/**
-	 * @brief   Test if the GDISP engine is currently drawing.
-	 * @note    This function will always return FALSE if
-	 * 			GDISP_NEED_ASYNC is not defined.
-	 *
-	 * @return	TRUE if gdisp is busy, FALSE otherwise
-	 *
-	 * @api
-	 */
-	bool_t gdispIsBusy(void);
-
-	/* Drawing Functions */
-
-	/**
-	 * @brief   Clear the display to the specified color.
-	 *
-	 * @param[in] color The color to use when clearing the screen
-	 *
-	 * @api
-	 */
-	void gdispClear(color_t color);
-
-	/**
-	 * @brief   Set a pixel in the specified color.
-	 *
-	 * @param[in] x,y   The position to set the pixel.
-	 * @param[in] color The color to use
-	 *
-	 * @api
-	 */
-	void gdispDrawPixel(coord_t x, coord_t y, color_t color);
-
-	/**
-	 * @brief   Draw a line.
-	 *
-	 * @param[in] x0,y0		The start position
-	 * @param[in] x1,y1 	The end position
-	 * @param[in] color		The color to use
-	 *
-	 * @api
-	 */
-	void gdispDrawLine(coord_t x0, coord_t y0, coord_t x1, coord_t y1, color_t color);
-
-	/**
-	 * @brief   Fill an area with a color.
-	 *
-	 * @param[in] x,y		The start position
-	 * @param[in] cx,cy		The size of the box (outside dimensions)
-	 * @param[in] color		The color to use
-	 *
-	 * @api
-	 */
-	void gdispFillArea(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color);
-
-	/**
-	 * @brief   Fill an area using the supplied bitmap.
-	 * @details The bitmap is in the pixel format specified by the low level driver
-	 * @note	If a packed pixel format is used and the width doesn't
-	 *			match a whole number of bytes, the next line will start on a
-	 *			non-byte boundary (no end-of-line padding).
-	 * @note	If GDISP_NEED_ASYNC is defined then the buffer must be static
-	 * 			or at least retained until this call has finished the blit. You can
-	 * 			tell when all graphics drawing is finished by @p gdispIsBusy() going FALSE.
-	 *
-	 * @param[in] x,y		The start position
-	 * @param[in] cx,cy		The size of the filled area
-	 * @param[in] srcx,srcy The bitmap position to start the fill form
-	 * @param[in] srccx		The width of a line in the bitmap
-	 * @param[in] buffer	The bitmap in the driver's pixel format
-	 *
-	 * @api
-	 */
-	void gdispBlitAreaEx(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx, coord_t srcy, coord_t srccx, const pixel_t *buffer);
-
-	/* Clipping Functions */
-
-	#if GDISP_NEED_CLIP || defined(__DOXYGEN__)
-		/**
-		 * @brief   Clip all drawing to the defined area.
-		 *
-		 * @param[in] x,y     The start position
-		 * @param[in] cx,cy   The size of the clip area
-		 *
-		 * @api
-		 */
-		void gdispSetClip(coord_t x, coord_t y, coord_t cx, coord_t cy);
-	#endif
-
-	/* Circle Functions */
-
-	#if GDISP_NEED_CIRCLE || defined(__DOXYGEN__)
-		/**
-		 * @brief   Draw a circle.
-		 *
-		 * @param[in] x,y		The center of the circle
-		 * @param[in] radius	The radius of the circle
-		 * @param[in] color		The color to use
-		 *
-		 * @api
-		 */
-		void gdispDrawCircle(coord_t x, coord_t y, coord_t radius, color_t color);
-
-		/**
-		 * @brief   Draw a filled circle.
-		 *
-		 * @param[in] x,y		The center of the circle
-		 * @param[in] radius	The radius of the circle
-		 * @param[in] color		The color to use
-		 *
-		 * @api
-		 */
-		void gdispFillCircle(coord_t x, coord_t y, coord_t radius, color_t color);
-	#endif
-	
-	/* Ellipse Functions */
-
-	#if GDISP_NEED_ELLIPSE || defined(__DOXYGEN__)
-		/**
-		 * @brief   Draw an ellipse.
-		 *
-		 * @param[in] x,y   The center of the ellipse
-		 * @param[in] a,b     The dimensions of the ellipse
-		 * @param[in] color   The color to use
-		 *
-		 * @api
-		 */
-		void gdispDrawEllipse(coord_t x, coord_t y, coord_t a, coord_t b, color_t color);
-
-		/**
-		 * @brief   Draw a filled ellipse.
-		 *
-		 * @param[in] x,y   The center of the ellipse
-		 * @param[in] a,b     The dimensions of the ellipse
-		 * @param[in] color   The color to use
-		 *
-		 * @api
-		 */
-		void gdispFillEllipse(coord_t x, coord_t y, coord_t a, coord_t b, color_t color);
-	#endif
-
-	/* Arc Functions */
-
-	#if GDISP_NEED_ARC || defined(__DOXYGEN__)
-		/*
-		 * @brief	Draw an arc.
-		 *
-		 * @param[in] x0,y0		The center point
-		 * @param[in] radius	The radius of the arc
-		 * @param[in] start		The start angle (0 to 360)
-		 * @param[in] end		The end angle (0 to 360)
-		 * @param[in] color		The color of the arc
-		 *
-		 * @api
-		 */
-		void gdispDrawArc(coord_t x, coord_t y, coord_t radius, coord_t startangle, coord_t endangle, color_t color);
-
-		/*
-		 * @brief	Draw a filled arc.
-		 * @note				Not very efficient currently - does lots of overdrawing
-		 *
-		 * @param[in] x0,y0		The center point
-		 * @param[in] radius	The radius of the arc
-		 * @param[in] start		The start angle (0 to 360)
-		 * @param[in] end		The end angle (0 to 360)
-		 * @param[in] color		The color of the arc
-		 *
-		 * @api
-		 */
-		void gdispFillArc(coord_t x, coord_t y, coord_t radius, coord_t startangle, coord_t endangle, color_t color);
-	#endif
-
-	/* Read a pixel Function */
-
-	#if GDISP_NEED_PIXELREAD || defined(__DOXYGEN__)
-		/**
-		 * @brief   Get the color of a pixel.
-		 * @return  The color of the pixel.
-		 *
-		 * @param[in] x,y     The position of the pixel
-		 *
-		 * @api
-		 */
-		color_t gdispGetPixelColor(coord_t x, coord_t y);
-	#endif
-
-	/* Scrolling Function - clears the area scrolled out */
-
-	#if GDISP_NEED_SCROLL || defined(__DOXYGEN__)
-		/**
-		 * @brief   Scroll vertically a section of the screen.
-		 * @pre		GDISP_NEED_SCROLL must be set to TRUE in gfxconf.h
-		 * @note    Optional.
-		 * @note    If lines is >= cy, it is equivelent to a area fill with bgcolor.
-		 *
-		 * @param[in] x, y     The start of the area to be scrolled
-		 * @param[in] cx, cy   The size of the area to be scrolled
-		 * @param[in] lines    The number of lines to scroll (Can be positive or negative)
-		 * @param[in] bgcolor  The color to fill the newly exposed area.
-		 *
-		 * @api
-		 */
-		void gdispVerticalScroll(coord_t x, coord_t y, coord_t cx, coord_t cy, int lines, color_t bgcolor);
-	#endif
-
-	/* Set driver specific control */
-
-	#if GDISP_NEED_CONTROL || defined(__DOXYGEN__)
-		/**
-		 * @brief   Control hardware specific parts of the display. eg powermodes, backlight etc
-		 * @note    Depending on the hardware implementation this function may not
-		 *          support some codes. They will be ignored.
-		 *
-		 * @param[in] what		what you want to control
-		 * @param[in] value		The value to be assigned
-		 *
-		 * @api
-		 */
-		void gdispControl(unsigned what, void *value);
-	#endif
-
-	/* Query driver specific data */
-
-	#if GDISP_NEED_QUERY || defined(__DOXYGEN__)
-		/**
-		 * @brief   Query a property of the display.
-		 * @note    The result must be typecast to the correct type.
-		 * @note    An unsupported query will return (void *)-1.
-		 *
-		 * @param[in] what		What to query
-		 *
-		 * @api
-		 */
-		void *gdispQuery(unsigned what);
-	#endif
-
-#else
-	/* Include the low level driver information */
-	#include "gdisp/lld/gdisp_lld.h"
-
-	/* The same as above but use the low level driver directly if no multi-thread support is needed */
-	#define gdispIsBusy()										FALSE
-	#define gdispClear(color)									gdisp_lld_clear(color)
-	#define gdispDrawPixel(x, y, color)							gdisp_lld_draw_pixel(x, y, color)
-	#define gdispDrawLine(x0, y0, x1, y1, color)				gdisp_lld_draw_line(x0, y0, x1, y1, color)
-	#define gdispFillArea(x, y, cx, cy, color)					gdisp_lld_fill_area(x, y, cx, cy, color)
-	#define gdispBlitAreaEx(x, y, cx, cy, sx, sy, scx, buf)		gdisp_lld_blit_area_ex(x, y, cx, cy, sx, sy, scx, buf)
-	#define gdispSetClip(x, y, cx, cy)							gdisp_lld_set_clip(x, y, cx, cy)
-	#define gdispDrawCircle(x, y, radius, color)				gdisp_lld_draw_circle(x, y, radius, color)
-	#define gdispFillCircle(x, y, radius, color)				gdisp_lld_fill_circle(x, y, radius, color)
-	#define gdispDrawArc(x, y, radius, sangle, eangle, color)	gdisp_lld_draw_arc(x, y, radius, sangle, eangle, color)
-	#define gdispFillArc(x, y, radius, sangle, eangle, color)	gdisp_lld_fill_arc(x, y, radius, sangle, eangle, color)
-	#define gdispDrawEllipse(x, y, a, b, color)					gdisp_lld_draw_ellipse(x, y, a, b, color)
-	#define gdispFillEllipse(x, y, a, b, color)					gdisp_lld_fill_ellipse(x, y, a, b, color)
-	#define gdispGetPixelColor(x, y)							gdisp_lld_get_pixel_color(x, y)
-	#define gdispVerticalScroll(x, y, cx, cy, lines, bgcolor)	gdisp_lld_vertical_scroll(x, y, cx, cy, lines, bgcolor)
-	#define gdispControl(what, value)							gdisp_lld_control(what, value)
-	#define gdispQuery(what)									gdisp_lld_query(what)
-
-#endif
-
-/* These routines are not hardware accelerated
- *	- Do not add a hardware accelerated routines here.
- */
-
-/* Extra drawing functions */
+/* Base Functions */
 
 /**
- * @brief   Draw a rectangular box.
+ * @brief   Blend 2 colors according to the alpha
+ * @return	The combined color
  *
+ * @param[in] fg		The foreground color
+ * @param[in] bg		The background color
+ * @param[in] alpha		The alpha value (0-255). 0 is all background, 255 is all foreground.
+ *
+ * @api
+ */
+color_t gdispBlendColor(color_t fg, color_t bg, uint8_t alpha);
+
+/**
+ * @brief   Get the specified display
+ * @return	The pointer to the display or NULL if the display doesn't exist
+ * @note	The GDISP variable contains the display used by the gdispXxxx routines
+ * 			as opposed to the gdispGXxxx routines which take an explicit display
+ * 			parameter.
+ * @note	Displays are numbered from 0 to GDISP_TOTAL_DISPLAYS - 1
+ *
+ * @param[in] display	The display number (0..n)
+ *
+ * @api
+ */
+GDisplay *gdispGetDisplay(unsigned display);
+
+/**
+ * @brief   Set the current default display to the specified display
+ * @note	The default display is used for the gdispXxxx functions.
+ * @note	The default display is contained in the variable GDISP. Using
+ * 			this function to set it protects against it being set to a NULL
+ * 			value.
+ * @note	If a NULL is passed for the dispay this call is ignored.
+ *
+ * @param[in] display	The display number (0..n)
+ *
+ * @api
+ */
+void gdispSetDisplay(GDisplay *g);
+
+/* Drawing Functions */
+
+/**
+ * @brief   Flush current drawing operations to the display
+ * @note	Some low level drivers do not update the display until
+ * 			the display is flushed. For others it is optional but can
+ * 			help prevent tearing effects. For some it is ignored.
+ * 			Calling it at the end of a logic set of drawing operations
+ * 			in your application will ensure controller portability. If you
+ * 			know your controller does not need to be flushed there is no
+ * 			need to call it (which is in reality most controllers).
+ * @note	Even for displays that require flushing, there is no need to
+ * 			call this function if GDISP_NEED_AUTOFLUSH is TRUE.
+ * 			Calling it again won't hurt though.
+ *
+ *
+ * @param[in] display	The display number (0..n)
+ *
+ * @api
+ */
+void gdispGFlush(GDisplay *g);
+#define gdispFlush()									gdispGFlush(GDISP)
+
+/**
+ * @brief   Clear the display to the specified color.
+ *
+ * @param[in] g 	The display to use
+ * @param[in] color The color to use when clearing the screen
+ *
+ * @api
+ */
+void gdispGClear(GDisplay *g, color_t color);
+#define gdispClear(c)									gdispGClear(GDISP, c)
+
+/**
+ * @brief   Set a pixel in the specified color.
+ *
+ * @param[in] g 	The display to use
+ * @param[in] x,y   The position to set the pixel.
+ * @param[in] color The color to use
+ *
+ * @api
+ */
+void gdispGDrawPixel(GDisplay *g, coord_t x, coord_t y, color_t color);
+#define gdispDrawPixel(x,y,c)							gdispGDrawPixel(GDISP,x,y,c)
+
+/**
+ * @brief   Draw a line.
+ *
+ * @param[in] g 	The display to use
+ * @param[in] x0,y0		The start position
+ * @param[in] x1,y1 	The end position
+ * @param[in] color		The color to use
+ *
+ * @api
+ */
+void gdispGDrawLine(GDisplay *g, coord_t x0, coord_t y0, coord_t x1, coord_t y1, color_t color);
+#define gdispDrawLine(x0,y0,x1,y1,c)					gdispGDrawLine(GDISP,x0,y0,x1,y1,c)
+
+/**
+ * @brief   Fill an area with a color.
+ *
+ * @param[in] g 		The display to use
  * @param[in] x,y		The start position
  * @param[in] cx,cy		The size of the box (outside dimensions)
  * @param[in] color		The color to use
  *
  * @api
  */
-void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color);
+void gdispGFillArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color);
+#define gdispFillArea(x,y,cx,cy,c)						gdispGFillArea(GDISP,x,y,cx,cy,c)
+
+/**
+ * @brief   Fill an area using the supplied bitmap.
+ * @details The bitmap is in the pixel format specified by the low level driver
+ * @note	If a packed pixel format is used and the width doesn't
+ *			match a whole number of bytes, the next line will start on a
+ *			non-byte boundary (no end-of-line padding).
+ * @note	If GDISP_NEED_ASYNC is defined then the buffer must be static
+ * 			or at least retained until this call has finished the blit. You can
+ * 			tell when all graphics drawing is finished by @p gdispIsBusy() going FALSE.
+ *
+ * @param[in] g 		The display to use
+ * @param[in] x,y		The start position
+ * @param[in] cx,cy		The size of the filled area
+ * @param[in] srcx,srcy The bitmap position to start the fill form
+ * @param[in] srccx		The width of a line in the bitmap
+ * @param[in] buffer	The bitmap in the driver's pixel format
+ *
+ * @api
+ */
+void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx, coord_t srcy, coord_t srccx, const pixel_t *buffer);
+#define gdispBlitAreaEx(x,y,cx,cy,sx,sy,rx,b)			gdispGBlitArea(GDISP,x,y,cx,cy,sx,sy,rx,b)
+
+/**
+ * @brief   Draw a rectangular box.
+ *
+ * @param[in] g 		The display to use
+ * @param[in] x,y		The start position
+ * @param[in] cx,cy		The size of the box (outside dimensions)
+ * @param[in] color		The color to use
+ *
+ * @api
+ */
+void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color);
+#define gdispDrawBox(x,y,cx,cy,c)						gdispGDrawBox(GDISP,x,y,cx,cy,c)
+
+/* Streaming Functions */
+
+#if GDISP_NEED_STREAMING || defined(__DOXYGEN__)
+	/**
+	 * @brief   Start a streaming operation.
+	 * @details Stream data to a window on the display sequentially and very fast.
+	 * @note	While streaming is in operation - no other calls to GDISP functions
+	 * 			can be made (with the exception of @p gdispBlendColor() and streaming
+	 * 			functions). If a call is made (eg in a multi-threaded application) the other
+	 * 			call is blocked waiting for the streaming operation to finish.
+	 * @note	@p gdispStreamStop() must be called to finish the streaming operation.
+	 * @note	If more data is written than the defined area then the results are unspecified.
+	 * 			Some drivers may wrap back to the beginning of the area, others may just
+	 * 			ignore subsequent data.
+	 * @note	Unlike most operations that clip the defined area to the display to generate
+	 * 			a smaller active area, this call will just silently fail if any of the stream
+	 * 			region lies outside the current clipping area.
+	 * @note	A streaming operation may be terminated early (without writing to every location
+	 * 			in the stream area) by calling @p gdispStreamStop().
+	 *
+	 * @param[in] g 		The display to use
+	 * @param[in] x,y		The start position
+	 * @param[in] cx,cy		The size of the streamable area
+	 *
+	 * @api
+	 */
+	void gdispGStreamStart(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy);
+	#define gdispStreamStart(x,y,cx,cy)						gdispGStreamStart(GDISP,x,y,cx,cy)
+
+	/**
+	 * @brief   Send pixel data to the stream.
+	 * @details Write a pixel to the next position in the streamed area and increment the position
+	 * @pre		@p gdispStreamStart() has been called.
+	 * @note	If the gdispStreamStart() has not been called (or failed due to clipping), the
+	 * 			data provided here is simply thrown away.
+	 *
+	 * @param[in] g 		The display to use
+	 * @param[in] color		The color of the pixel to write
+	 *
+	 * @api
+	 */
+	void gdispGStreamColor(GDisplay *g, color_t color);
+	#define gdispStreamColor(c)								gdispGStreamColor(GDISP,c)
+
+	/**
+	 * @brief   Finish the current streaming operation.
+	 * @details	Completes the current streaming operation and allows other GDISP calls to operate again.
+	 * @pre		@p gdispStreamStart() has been called.
+	 * @note	If the gdispStreamStart() has not been called (or failed due to clipping), this
+	 * 			call is simply ignored.
+	 *
+	 * @param[in] g 		The display to use
+	 *
+	 * @api
+	 */
+	void gdispGStreamStop(GDisplay *g);
+	#define gdispStreamStop()								gdispGStreamStop(GDISP)
+#endif
+
+/* Clipping Functions */
+
+#if GDISP_NEED_CLIP || defined(__DOXYGEN__)
+	/**
+	 * @brief   Clip all drawing to the defined area.
+	 *
+	 * @param[in] g 		The display to use
+	 * @param[in] x,y		The start position
+	 * @param[in] cx,cy		The size of the clip area
+	 *
+	 * @api
+	 */
+	void gdispGSetClip(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy);
+	#define gdispSetClip(x,y,cx,cy)							gdispGSetClip(GDISP,x,y,cx,cy)
+#endif
+
+/* Circle Functions */
+
+#if GDISP_NEED_CIRCLE || defined(__DOXYGEN__)
+	/**
+	 * @brief   Draw a circle.
+	 *
+	 * @param[in] g 		The display to use
+	 * @param[in] x,y		The center of the circle
+	 * @param[in] radius	The radius of the circle
+	 * @param[in] color		The color to use
+	 *
+	 * @api
+	 */
+	void gdispGDrawCircle(GDisplay *g, coord_t x, coord_t y, coord_t radius, color_t color);
+	#define gdispDrawCircle(x,y,r,c)						gdispGDrawCircle(GDISP,x,y,r,c)
+
+	/**
+	 * @brief   Draw a filled circle.
+	 *
+	 * @param[in] g 		The display to use
+	 * @param[in] x,y		The center of the circle
+	 * @param[in] radius	The radius of the circle
+	 * @param[in] color		The color to use
+	 *
+	 * @api
+	 */
+	void gdispGFillCircle(GDisplay *g, coord_t x, coord_t y, coord_t radius, color_t color);
+	#define gdispFillCircle(x,y,r,c)						gdispGFillCircle(GDISP,x,y,r,c)
+#endif
+
+/* Ellipse Functions */
+
+#if GDISP_NEED_ELLIPSE || defined(__DOXYGEN__)
+	/**
+	 * @brief   Draw an ellipse.
+	 *
+	 * @param[in] g 		The display to use
+	 * @param[in] x,y		The center of the ellipse
+	 * @param[in] a,b		The dimensions of the ellipse
+	 * @param[in] color		The color to use
+	 *
+	 * @api
+	 */
+	void gdispGDrawEllipse(GDisplay *g, coord_t x, coord_t y, coord_t a, coord_t b, color_t color);
+	#define gdispDrawEllipse(x,y,a,b,c)						gdispGDrawEllipse(GDISP,x,y,a,b,c)
+
+	/**
+	 * @brief   Draw a filled ellipse.
+	 *
+	 * @param[in] g 		The display to use
+	 * @param[in] x,y		The center of the ellipse
+	 * @param[in] a,b		The dimensions of the ellipse
+	 * @param[in] color		The color to use
+	 *
+	 * @api
+	 */
+	void gdispGFillEllipse(GDisplay *g, coord_t x, coord_t y, coord_t a, coord_t b, color_t color);
+	#define gdispFillEllipse(x,y,a,b,c)						gdispGFillEllipse(GDISP,x,y,a,b,c)
+#endif
+
+/* Arc Functions */
+
+#if GDISP_NEED_ARC || defined(__DOXYGEN__)
+	/*
+	 * @brief	Draw an arc.
+	 *
+	 * @param[in] g 		The display to use
+	 * @param[in] x0,y0		The center point
+	 * @param[in] radius	The radius of the arc
+	 * @param[in] start		The start angle (0 to 360)
+	 * @param[in] end		The end angle (0 to 360)
+	 * @param[in] color		The color of the arc
+	 *
+	 * @api
+	 */
+	void gdispGDrawArc(GDisplay *g, coord_t x, coord_t y, coord_t radius, coord_t startangle, coord_t endangle, color_t color);
+	#define gdispDrawArc(x,y,r,s,e,c)						gdispGDrawArc(GDISP,x,y,r,s,e,c)
+
+	/*
+	 * @brief	Draw a filled arc.
+	 * @note				Not very efficient currently - does lots of overdrawing
+	 *
+	 * @param[in] g 		The display to use
+	 * @param[in] x0,y0		The center point
+	 * @param[in] radius	The radius of the arc
+	 * @param[in] start		The start angle (0 to 360)
+	 * @param[in] end		The end angle (0 to 360)
+	 * @param[in] color		The color of the arc
+	 *
+	 * @api
+	 */
+	void gdispGFillArc(GDisplay *g, coord_t x, coord_t y, coord_t radius, coord_t startangle, coord_t endangle, color_t color);
+	#define gdispFillArc(x,y,r,s,e,c)						gdispGFillArc(GDISP,x,y,r,s,e,c)
+#endif
+
+/* Read a pixel Function */
+
+#if GDISP_NEED_PIXELREAD || defined(__DOXYGEN__)
+	/**
+	 * @brief   Get the color of a pixel.
+	 * @return  The color of the pixel.
+	 *
+	 * @param[in] g 		The display to use
+	 * @param[in] x,y		The position of the pixel
+	 *
+	 * @api
+	 */
+	color_t gdispGGetPixelColor(GDisplay *g, coord_t x, coord_t y);
+	#define gdispGetPixelColor(x,y)							gdispGGetPixelColor(GDISP,x,y)
+#endif
+
+/* Scrolling Function - clears the area scrolled out */
+
+#if GDISP_NEED_SCROLL || defined(__DOXYGEN__)
+	/**
+	 * @brief   Scroll vertically a section of the screen.
+	 * @pre		GDISP_NEED_SCROLL must be set to TRUE in gfxconf.h
+	 * @note    Optional.
+	 * @note    If lines is >= cy, it is equivelent to a area fill with bgcolor.
+	 *
+	 * @param[in] g 		The display to use
+	 * @param[in] x, y		The start of the area to be scrolled
+	 * @param[in] cx, cy	The size of the area to be scrolled
+	 * @param[in] lines		The number of lines to scroll (Can be positive or negative)
+	 * @param[in] bgcolor	The color to fill the newly exposed area.
+	 *
+	 * @api
+	 */
+	void gdispGVerticalScroll(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, int lines, color_t bgcolor);
+	#define gdispVerticalScroll(x,y,cx,cy,l,b)				gdispGVerticalScroll(GDISP,x,y,cx,cy,l,b)
+#endif
+
+/* Set driver specific control */
+
+#if GDISP_NEED_CONTROL || defined(__DOXYGEN__)
+	/**
+	 * @brief   Control hardware specific parts of the display. eg powermodes, backlight etc
+	 * @note    Depending on the hardware implementation this function may not
+	 *          support some codes. They will be ignored.
+	 *
+	 * @param[in] g 		The display to use
+	 * @param[in] what		what you want to control
+	 * @param[in] value		The value to be assigned
+	 *
+	 * @api
+	 */
+	void gdispGControl(GDisplay *g, unsigned what, void *value);
+	#define gdispControl(w,v)								gdispGControl(GDISP,w,v)
+#endif
+
+/* Query driver specific data */
+
+#if GDISP_NEED_QUERY || defined(__DOXYGEN__)
+	/**
+	 * @brief   Query a property of the display.
+	 * @note    The result must be typecast to the correct type.
+	 * @note    An unsupported query will return (void *)-1.
+	 *
+	 * @param[in] g 		The display to use
+	 * @param[in] what		What to query
+	 *
+	 * @api
+	 */
+	void *gdispGQuery(GDisplay *g, unsigned what);
+	#define gdispQuery(w)									gdispGQuery(GDISP,w)
+#endif
 
 #if GDISP_NEED_CONVEX_POLYGON || defined(__DOXYGEN__)
 	/**
 	 * @brief   Draw an enclosed polygon (convex, non-convex or complex).
 	 *
+	 * @param[in] g 		The display to use
 	 * @param[in] tx, ty	Transform all points in pntarray by tx, ty
 	 * @param[in] pntarray	An array of points
 	 * @param[in] cnt		The number of points in the array
@@ -591,12 +599,14 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color);
 	 *
 	 * @api
 	 */
-	void gdispDrawPoly(coord_t tx, coord_t ty, const point *pntarray, unsigned cnt, color_t color);
+	void gdispGDrawPoly(GDisplay *g, coord_t tx, coord_t ty, const point *pntarray, unsigned cnt, color_t color);
+	#define gdispDrawPoly(x,y,p,i,c)						gdispGDrawPoly(GDISP,x,y,p,i,c)
 
 	/**
 	 * @brief   Fill a convex polygon
 	 * @details Doesn't handle non-convex or complex polygons.
 	 *
+	 * @param[in] g 		The display to use
 	 * @param[in] tx, ty	Transform all points in pntarray by tx, ty
 	 * @param[in] pntarray	An array of points
 	 * @param[in] cnt		The number of points in the array
@@ -612,7 +622,8 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color);
 	 *
 	 * @api
 	 */
-	void gdispFillConvexPoly(coord_t tx, coord_t ty, const point *pntarray, unsigned cnt, color_t color);
+	void gdispGFillConvexPoly(GDisplay *g, coord_t tx, coord_t ty, const point *pntarray, unsigned cnt, color_t color);
+	#define gdispFillConvexPoly(x,y,p,i,c)					gdispGFillConvexPoly(GDISP,x,y,p,i,c)
 #endif
 
 /* Text Functions */
@@ -621,6 +632,7 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color);
 	/**
 	 * @brief   Draw a text character.
 	 *
+	 * @param[in] g 		The display to use
 	 * @param[in] x,y		The position for the text
 	 * @param[in] c			The character to draw
 	 * @param[in] font		The font to use
@@ -628,11 +640,13 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color);
 	 *
 	 * @api
 	 */
-	void gdispDrawChar(coord_t x, coord_t y, uint16_t c, font_t font, color_t color);
+	void gdispGDrawChar(GDisplay *g, coord_t x, coord_t y, uint16_t c, font_t font, color_t color);
+	#define	gdispDrawChar(x,y,s,f,c)						gdispGDrawChar(GDISP,x,y,s,f,c)
 
 	/**
 	 * @brief   Draw a text character with a filled background.
 	 *
+	 * @param[in] g 		The display to use
 	 * @param[in] x,y		The position for the text
 	 * @param[in] c			The character to draw
 	 * @param[in] font		The font to use
@@ -641,11 +655,13 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color);
 	 *
 	 * @api
 	 */
-	void gdispFillChar(coord_t x, coord_t y, uint16_t c, font_t font, color_t color, color_t bgcolor);
+	void gdispGFillChar(GDisplay *g, coord_t x, coord_t y, uint16_t c, font_t font, color_t color, color_t bgcolor);
+	#define	gdispFillChar(x,y,s,f,c,b)						gdispGFillChar(GDISP,x,y,s,f,c,b)
 
 	/**
 	 * @brief   Draw a text string.
 	 *
+	 * @param[in] g 		The display to use
 	 * @param[in] x,y		The position for the text
 	 * @param[in] font		The font to use
 	 * @param[in] str		The string to draw
@@ -653,11 +669,13 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color);
 	 *
 	 * @api
 	 */
-	void gdispDrawString(coord_t x, coord_t y, const char *str, font_t font, color_t color);
+	void gdispGDrawString(GDisplay *g, coord_t x, coord_t y, const char *str, font_t font, color_t color);
+	#define	gdispDrawString(x,y,s,f,c)						gdispGDrawString(GDISP,x,y,s,f,c)
 
 	/**
 	 * @brief   Draw a text string.
 	 *
+	 * @param[in] g 		The display to use
 	 * @param[in] x,y		The position for the text
 	 * @param[in] str		The string to draw
 	 * @param[in] font		The font to use
@@ -666,11 +684,13 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color);
 	 *
 	 * @api
 	 */
-	void gdispFillString(coord_t x, coord_t y, const char *str, font_t font, color_t color, color_t bgcolor);
+	void gdispGFillString(GDisplay *g, coord_t x, coord_t y, const char *str, font_t font, color_t color, color_t bgcolor);
+	#define	gdispFillString(x,y,s,f,c,b)					gdispGFillString(GDISP,x,y,s,f,c,b)
 
 	/**
 	 * @brief   Draw a text string vertically centered within the specified box.
 	 *
+	 * @param[in] g 		The display to use
 	 * @param[in] x,y		The position for the text (need to define top-right or base-line - check code)
 	 * @param[in] cx,cy		The width and height of the box
 	 * @param[in] str		The string to draw
@@ -680,12 +700,14 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color);
 	 *
 	 * @api
 	 */
-	void gdispDrawStringBox(coord_t x, coord_t y, coord_t cx, coord_t cy, const char* str, font_t font, color_t color, justify_t justify);
+	void gdispGDrawStringBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, const char* str, font_t font, color_t color, justify_t justify);
+	#define	gdispDrawStringBox(x,y,cx,cy,s,f,c,j)			gdispGDrawStringBox(GDISP,x,y,cx,cy,s,f,c,j)
 
 	/**
 	 * @brief   Draw a text string vertically centered within the specified box. The box background is filled with the specified background color.
 	 * @note    The entire box is filled
 	 *
+	 * @param[in] g 		The display to use
 	 * @param[in] x,y		The position for the text (need to define top-right or base-line - check code)
 	 * @param[in] cx,cy		The width and height of the box
 	 * @param[in] str		The string to draw
@@ -696,7 +718,8 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color);
 	 *
 	 * @api
 	 */
-	void gdispFillStringBox(coord_t x, coord_t y, coord_t cx, coord_t cy, const char* str, font_t font, color_t color, color_t bgColor, justify_t justify);
+	void gdispGFillStringBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, const char* str, font_t font, color_t color, color_t bgColor, justify_t justify);
+	#define	gdispFillStringBox(x,y,cx,cy,s,f,c,b,j)			gdispGFillStringBox(GDISP,x,y,cx,cy,s,f,c,b,j)
 
 	/**
 	 * @brief   Get a metric of a font.
@@ -781,6 +804,7 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color);
 	/**
 	 * @brief   Draw a rectangular box with rounded corners
 	 *
+	 * @param[in] g 		The display to use
 	 * @param[in] x,y		The start position
 	 * @param[in] cx,cy		The size of the box (outside dimensions)
 	 * @param[in] radius	The radius of the rounded corners
@@ -788,11 +812,13 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color);
 	 *
 	 * @api
 	 */
-	void gdispDrawRoundedBox(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t radius, color_t color);
+	void gdispGDrawRoundedBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t radius, color_t color);
+	#define gdispDrawRoundedBox(x,y,cx,cy,r,c)		gdispGDrawRoundedBox(GDISP,x,y,cx,cy,r,c)
 
 	/**
 	 * @brief   Draw a filled rectangular box with rounded corners
 	 *
+	 * @param[in] g 		The display to use
 	 * @param[in] x,y		The start position
 	 * @param[in] cx,cy		The size of the box (outside dimensions)
 	 * @param[in] radius	The radius of the rounded corners
@@ -800,37 +826,8 @@ void gdispDrawBox(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color);
 	 *
 	 * @api
 	 */
-	void gdispFillRoundedBox(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t radius, color_t color);
-#endif
-
-
-/**
- * @brief   Blend 2 colors according to the alpha
- * @return	The combined color
- *
- * @param[in] fg		The foreground color
- * @param[in] bg		The background color
- * @param[in] alpha		The alpha value (0-255). 0 is all background, 255 is all foreground.
- *
- * @api
- */
-color_t gdispBlendColor(color_t fg, color_t bg, uint8_t alpha);
-
-/* Support routine for packed pixel formats */
-#if !defined(gdispPackPixels) || defined(__DOXYGEN__)
-	/**
-	 * @brief   Pack a pixel into a pixel buffer.
-	 * @note    This function performs no buffer boundary checking
-	 *			regardless of whether GDISP_NEED_CLIP has been specified.
-	 *
-	 * @param[in] buf		The buffer to put the pixel in
-	 * @param[in] cx		The width of a pixel line
-	 * @param[in] x, y		The location of the pixel to place
-	 * @param[in] color		The color to put into the buffer
-	 *
-	 * @api
-	 */
-	void gdispPackPixels(const pixel_t *buf, coord_t cx, coord_t x, coord_t y, color_t color);
+	void gdispGFillRoundedBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t radius, color_t color);
+	#define gdispFillRoundedBox(x,y,cx,cy,r,c)		gdispGFillRoundedBox(GDISP,x,y,cx,cy,r,c)
 #endif
 
 /* 
@@ -838,7 +835,7 @@ color_t gdispBlendColor(color_t fg, color_t bg, uint8_t alpha);
  */
 
 /* Now obsolete functions */
-#define gdispBlitArea(x, y, cx, cy, buffer)		gdispBlitAreaEx(x, y, cx, cy, 0, 0, cx, buffer)
+#define gdispBlitArea(x, y, cx, cy, buffer)			gdispGBlitArea(GDISP, x, y, cx, cy, 0, 0, cx, buffer)
 
 /* Macro definitions for common gets and sets */
 
@@ -846,26 +843,31 @@ color_t gdispBlendColor(color_t fg, color_t bg, uint8_t alpha);
  * @brief   Set the display power mode.
  * @note    Ignored if not supported by the display.
  *
+ * @param[in] g 			The display to use
  * @param[in] powerMode		The new power mode
  *
  * @api
  */
-#define gdispSetPowerMode(powerMode)			gdispControl(GDISP_CONTROL_POWER, (void *)(unsigned)(powerMode))
+#define gdispGSetPowerMode(g, powerMode)			gdispGControl((g), GDISP_CONTROL_POWER, (void *)(unsigned)(powerMode))
+#define gdispSetPowerMode(powerMode)				gdispGControl(GDISP, GDISP_CONTROL_POWER, (void *)(unsigned)(powerMode))
 
 /**
  * @brief   Set the display orientation.
  * @note    Ignored if not supported by the display.
  *
+ * @param[in] g 					The display to use
  * @param[in] newOrientation		The new orientation
  *
  * @api
  */
-#define gdispSetOrientation(newOrientation)		gdispControl(GDISP_CONTROL_ORIENTATION, (void *)(unsigned)(newOrientation))
+#define gdispGSetOrientation(g, newOrientation)		gdispGControl((g), GDISP_CONTROL_ORIENTATION, (void *)(unsigned)(newOrientation))
+#define gdispSetOrientation(newOrientation)			gdispGControl(GDISP, GDISP_CONTROL_ORIENTATION, (void *)(unsigned)(newOrientation))
 
 /**
  * @brief   Set the display backlight.
  * @note    Ignored if not supported by the display.
  *
+ * @param[in] g 			The display to use
  * @param[in] percent		The new brightness (0 - 100%)
  *
  * @note	For displays that only support backlight off and on,
@@ -873,69 +875,92 @@ color_t gdispBlendColor(color_t fg, color_t bg, uint8_t alpha);
  *
  * @api
  */
-#define gdispSetBacklight(percent)				gdispControl(GDISP_CONTROL_BACKLIGHT, (void *)(unsigned)(percent))
+#define gdispGSetBacklight(g, percent)				gdispGControl((g), GDISP_CONTROL_BACKLIGHT, (void *)(unsigned)(percent))
+#define gdispSetBacklight(percent)					gdispGControl(GDISP, GDISP_CONTROL_BACKLIGHT, (void *)(unsigned)(percent))
 
 /**
  * @brief   Set the display contrast.
  * @note    Ignored if not supported by the display.
  *
+ * @param[in] g 			The display to use
  * @param[in] percent		The new contrast (0 - 100%)
  *
  * @api
  */
-#define gdispSetContrast(percent)				gdispControl(GDISP_CONTROL_CONTRAST, (void *)(unsigned)(percent))
+#define gdispGSetContrast(g, percent)				gdispGControl((g), GDISP_CONTROL_CONTRAST, (void *)(unsigned)(percent))
+#define gdispSetContrast(percent)					gdispGControl(GDISP, GDISP_CONTROL_CONTRAST, (void *)(unsigned)(percent))
 
 /**
  * @brief   Get the display width in pixels.
  *
+ * @param[in] g 		The display to use
+ *
  * @api
  */
-#define gdispGetWidth()							(GDISP.Width)
+#define gdispGGetWidth(g)							(((GDISPControl *)(g))->Width)
+#define gdispGetWidth()								gdispGGetWidth(GDISP)
 
 /**
  * @brief   Get the display height in pixels.
  *
+ * @param[in] g 		The display to use
+ *
  * @api
  */
-#define gdispGetHeight()						(GDISP.Height)
+#define gdispGGetHeight(g)							(((GDISPControl *)(g))->Height)
+#define gdispGetHeight()							gdispGGetHeight(GDISP)
 
 /**
  * @brief   Get the current display power mode.
  *
+ * @param[in] g 		The display to use
+ *
  * @api
  */
-#define gdispGetPowerMode()						(GDISP.Powermode)
+#define gdispGGetPowerMode(g)						(((GDISPControl *)(g))->Powermode)
+#define gdispGetPowerMode()							gdispGGetPowerMode(GDISP)
 
 /**
  * @brief   Get the current display orientation.
  *
+ * @param[in] g 		The display to use
+ *
  * @api
  */
-#define gdispGetOrientation()					(GDISP.Orientation)
+#define gdispGGetOrientation(g)						(((GDISPControl *)(g))->Orientation)
+#define gdispGetOrientation()						gdispGGetOrientation(GDISP)
 
 /**
  * @brief   Get the current display backlight brightness.
  *
+ * @param[in] g 		The display to use
+ *
  * @api
  */
-#define gdispGetBacklight()						(GDISP.Backlight)
+#define gdispGGetBacklight(g)						(((GDISPControl *)(g))->Backlight)
+#define gdispGetBacklight()							gdispGGetBacklight(GDISP)
 
 /**
  * @brief   Get the current display contrast.
  *
+ * @param[in] g 		The display to use
+ *
  * @api
  */
-#define gdispGetContrast()						(GDISP.Contrast)
+#define gdispGGetContrast(g)						(((GDISPControl *)(g))->Contrast)
+#define gdispGetContrast()							gdispGGetContrast(GDISP)
 
 /* More interesting macro's */
 
 /**
  * @brief   Reset the clip area to the full screen
  *
+ * @param[in] g 		The display to use
+ *
  * @api
  */
-#define gdispUnsetClip()						gdispSetClip(0,0,gdispGetWidth(),gdispGetHeight())
-
+#define gdispGUnsetClip(g)							gdispGSetClip((g),0,0,gdispGGetWidth(g),gdispGGetHeight(g))
+#define gdispUnsetClip()							gdispGUnsetClip(GDISP)
 
 #ifdef __cplusplus
 }

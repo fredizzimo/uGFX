@@ -22,16 +22,20 @@
 /* Driver hardware support.                                                  */
 /*===========================================================================*/
 
-#define GDISP_DRIVER_NAME				"SSD2119"
-
-#define GDISP_HARDWARE_CLEARS			TRUE
-#define GDISP_HARDWARE_FILLS			TRUE
-#define GDISP_HARDWARE_BITFILLS			TRUE
-#define GDISP_HARDWARE_SCROLL			TRUE
-#define GDISP_HARDWARE_PIXELREAD		TRUE
+#define GDISP_HARDWARE_STREAM_WRITE		TRUE
+#define GDISP_HARDWARE_STREAM_READ		TRUE
+#define GDISP_HARDWARE_STREAM_POS		TRUE
 #define GDISP_HARDWARE_CONTROL			TRUE
 
-#define GDISP_PIXELFORMAT				GDISP_PIXELFORMAT_RGB565
+#if defined(GDISP_USE_DMA)
+	#define GDISP_HARDWARE_FILLS		TRUE
+	#if !defined(GDISP_PIXELFORMAT) || GDISP_PIXELFORMAT == 0x2565
+		// Hardware BitBlts are only supported in native pixel format on this controller
+		#define GDISP_HARDWARE_BITFILLS		TRUE
+	#endif
+#endif
+
+#define GDISP_LLD_PIXELFORMAT			GDISP_PIXELFORMAT_RGB565
 
 #endif	/* GFX_USE_GDISP */
 

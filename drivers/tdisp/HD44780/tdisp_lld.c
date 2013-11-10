@@ -17,15 +17,7 @@
 
 #if GFX_USE_TDISP /*|| defined(__DOXYGEN__)*/
 
-/* check first if the user has defined his/her own lowlevel-board file */
-#if defined(TDISP_USE_CUSTOM_BOARD) && TDISP_USE_CUSTOM_BOARD
-	/* Include the user supplied board definitions */
-	#include "tdisp_lld_board.h"
-#elif defined(BOARD_OLIMEX_STM32_E407)
-	#include "tdisp_lld_board_olimex_e407.h"
-#elif defined(BOARD_ST_STM32F4_DISCOVERY)
-	#include "tdisp_lld_board_example.h"
-#endif
+#include "tdisp_lld_board.h"
 
 /* Controller Specific Properties */
 #define CUSTOM_CHAR_COUNT		8

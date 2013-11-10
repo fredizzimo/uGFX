@@ -243,6 +243,7 @@ extern "C" {
 	 * @brief	Draw the image
 	 * @return	GDISP_IMAGE_ERR_OK (0) on success or an error code.
 	 * 
+	 * @param[in] g   	The display to draw on
 	 * @param[in] img   The image structure
 	 * @param[in] x,y	The screen location to draw the image
 	 * @param[in] cx,cy	The area on the screen to draw
@@ -257,7 +258,8 @@ extern "C" {
 	 * 			is drawing. This may be significantly slower than if the image has been cached (but
 	 * 			uses a lot less RAM)
 	 */
-	gdispImageError gdispImageDraw(gdispImage *img, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t sx, coord_t sy);
+	gdispImageError gdispGImageDraw(GDisplay *g, gdispImage *img, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t sx, coord_t sy);
+	#define gdispImageDraw(img,x,y,cx,cy,sx,sy)		gdispGImageDraw(GDISP,img,x,y,cx,cy,sx,sy)
 
 	/**
 	 * @brief	Prepare for the next frame/page in the image file.
@@ -299,7 +301,7 @@ extern "C" {
 		gdispImageError gdispImageOpen_NATIVE(gdispImage *img);
 		void gdispImageClose_NATIVE(gdispImage *img);
 		gdispImageError gdispImageCache_NATIVE(gdispImage *img);
-		gdispImageError gdispImageDraw_NATIVE(gdispImage *img, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t sx, coord_t sy);
+		gdispImageError gdispGImageDraw_NATIVE(GDisplay *g, gdispImage *img, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t sx, coord_t sy);
 		delaytime_t gdispImageNext_NATIVE(gdispImage *img);
 		/* @} */
 	#endif
@@ -315,7 +317,7 @@ extern "C" {
 		gdispImageError gdispImageOpen_GIF(gdispImage *img);
 		void gdispImageClose_GIF(gdispImage *img);
 		gdispImageError gdispImageCache_GIF(gdispImage *img);
-		gdispImageError gdispImageDraw_GIF(gdispImage *img, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t sx, coord_t sy);
+		gdispImageError gdispGImageDraw_GIF(GDisplay *g, gdispImage *img, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t sx, coord_t sy);
 		delaytime_t gdispImageNext_GIF(gdispImage *img);
 		/* @} */
 	#endif
@@ -331,7 +333,7 @@ extern "C" {
 		gdispImageError gdispImageOpen_BMP(gdispImage *img);
 		void gdispImageClose_BMP(gdispImage *img);
 		gdispImageError gdispImageCache_BMP(gdispImage *img);
-		gdispImageError gdispImageDraw_BMP(gdispImage *img, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t sx, coord_t sy);
+		gdispImageError gdispGImageDraw_BMP(GDisplay *g, gdispImage *img, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t sx, coord_t sy);
 		delaytime_t gdispImageNext_BMP(gdispImage *img);
 		/* @} */
 	#endif
@@ -347,7 +349,7 @@ extern "C" {
 		gdispImageError gdispImageOpen_JPG(gdispImage *img);
 		void gdispImageClose_JPG(gdispImage *img);
 		gdispImageError gdispImageCache_JPG(gdispImage *img);
-		gdispImageError gdispImageDraw_JPG(gdispImage *img, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t sx, coord_t sy);
+		gdispImageError gdispGImageDraw_JPG(GDisplay *g, gdispImage *img, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t sx, coord_t sy);
 		delaytime_t gdispImageNext_JPG(gdispImage *img);
 		/* @} */
 	#endif
@@ -363,7 +365,7 @@ extern "C" {
 		gdispImageError gdispImageOpen_PNG(gdispImage *img);
 		void gdispImageClose_PNG(gdispImage *img);
 		gdispImageError gdispImageCache_PNG(gdispImage *img);
-		gdispImageError gdispImageDraw_PNG(gdispImage *img, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t sx, coord_t sy);
+		gdispImageError gdispGImageDraw_PNG(GDisplay *g, gdispImage *img, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t sx, coord_t sy);
 		delaytime_t gdispImageNext_PNG(gdispImage *img);
 		/* @} */
 	#endif

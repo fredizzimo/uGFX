@@ -22,16 +22,10 @@
 /* Driver hardware support.                                                  */
 /*===========================================================================*/
 
-#define GDISP_DRIVER_NAME				"SSD1963"
-#define GDISP_LLD(x)					gdisp_lld_##x##_SSD1963
+#define GDISP_HARDWARE_STREAM_WRITE		TRUE
+//#define GDISP_HARDWARE_CONTROL			TRUE			// Not Yet.
 
-#define GDISP_HARDWARE_FILLS			TRUE
-#define GDISP_HARDWARE_BITFILLS		TRUE
-/* Maybe someday soon */
-#define GDISP_HARDWARE_SCROLL			FALSE
-#define GDISP_HARDWARE_CONTROL		FALSE
-
-#define GDISP_PIXELFORMAT				GDISP_PIXELFORMAT_RGB565
+#define GDISP_LLD_PIXELFORMAT			GDISP_PIXELFORMAT_RGB565
 
 #endif	/* GFX_USE_GDISP */
 

@@ -91,7 +91,7 @@ gdispImageError gdispImageCache_NATIVE(gdispImage *img) {
 	return GDISP_IMAGE_ERR_OK;
 }
 
-gdispImageError gdispImageDraw_NATIVE(gdispImage *img, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t sx, coord_t sy) {
+gdispImageError gdispImageGDraw_NATIVE(GDisplay *g, gdispImage *img, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t sx, coord_t sy) {
 	coord_t		mx, mcx;
 	size_t		pos, len;
 
@@ -102,7 +102,7 @@ gdispImageError gdispImageDraw_NATIVE(gdispImage *img, coord_t x, coord_t y, coo
 
 	/* Draw from the image cache - if it exists */
 	if (img->priv->frame0cache) {
-		gdispBlitAreaEx(x, y, cx, cy, sx, sy, img->width, img->priv->frame0cache);
+		gdispGBlitArea(g, x, y, cx, cy, sx, sy, img->width, img->priv->frame0cache);
 		return GDISP_IMAGE_ERR_OK;
 	}
 
@@ -125,7 +125,7 @@ gdispImageError gdispImageDraw_NATIVE(gdispImage *img, coord_t x, coord_t y, coo
 				return GDISP_IMAGE_ERR_BADDATA;
 
 			/* Blit the chunk of data */
-			gdispBlitAreaEx(mx, y, len, 1, 0, 0, len, img->priv->buf);
+			gdispGBlitArea(g, mx, y, len, 1, 0, 0, len, img->priv->buf);
 		}
 
 		/* Get the position for the start of the next line */

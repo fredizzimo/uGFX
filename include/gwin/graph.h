@@ -90,6 +90,7 @@ extern "C" {
  * @brief   Create a graph window.
  * @return  NULL if there is no resultant drawing area, otherwise a window handle.
  *
+ * @param[in] g			The GDisplay to display this window on
  * @param[in] gg		The GGraphObject structure to initialise. If this is NULL the structure is dynamically allocated.
  * @param[in] pInit		The initialization parameters to use
  *
@@ -107,7 +108,8 @@ extern "C" {
  *
  * @api
  */
-GHandle gwinGraphCreate(GGraphObject *gg, const GWindowInit *pInit);
+GHandle gwinGGraphCreate(GDisplay *g, GGraphObject *gg, const GWindowInit *pInit);
+#define gwinGraphCreate(gg, pInit)			gwinGGraphCreate(GDISP, gg, pInit)
 
 /**
  * @brief   Set the style of the graphing operations.

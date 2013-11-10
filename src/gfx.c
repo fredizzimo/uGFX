@@ -71,7 +71,6 @@ void gfxInit(void) {
 	#endif
 	#if GFX_USE_GDISP
 		_gdispInit();
-		gdispClear(Black);
 	#endif
 	#if GFX_USE_GWIN
 		_gwinInit();

@@ -38,8 +38,7 @@ result in faster drawing, but also use more RAM on the processor:
 After drawing your images, you should flush the buffers using the following
 command:
 
-    #include <ed060sc4.h>
-    gdispControl(GDISP_CONTROL_FLUSH, 0);
+    gdispFlush();
 
 The buffers are also flushed whenever you turn the display off using:
 

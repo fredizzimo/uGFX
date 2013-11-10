@@ -828,7 +828,7 @@ gdispImageError gdispImageCache_BMP(gdispImage *img) {
 	return GDISP_IMAGE_ERR_OK;
 }
 
-gdispImageError gdispImageDraw_BMP(gdispImage *img, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t sx, coord_t sy) {
+gdispImageError gdispGImageDraw_BMP(GDisplay *g, gdispImage *img, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t sx, coord_t sy) {
 	gdispImagePrivate *	priv;
 	coord_t				mx, my;
 	coord_t				pos, len, st;
@@ -842,7 +842,7 @@ gdispImageError gdispImageDraw_BMP(gdispImage *img, coord_t x, coord_t y, coord_
 
 	/* Draw from the image cache - if it exists */
 	if (priv->frame0cache) {
-		gdispBlitAreaEx(x, y, cx, cy, sx, sy, img->width, priv->frame0cache);
+		gdispGBlitArea(g, x, y, cx, cy, sx, sy, img->width, priv->frame0cache);
 		return GDISP_IMAGE_ERR_OK;
 	}
 
@@ -864,9 +864,9 @@ gdispImageError gdispImageDraw_BMP(gdispImage *img, coord_t x, coord_t y, coord_
 					len = pos-st;
 					if (mx+st+len > sx+cx) len = sx+cx-mx-st;
 					if (len == 1)
-						gdispDrawPixel(x+mx+st-sx, y+my-sy, priv->buf[st]);
+						gdispGDrawPixel(g, x+mx+st-sx, y+my-sy, priv->buf[st]);
 					else
-						gdispBlitAreaEx(x+mx+st-sx, y+my-sy, len, 1, st, 0, pos, priv->buf);
+						gdispGBlitArea(g, x+mx+st-sx, y+my-sy, len, 1, st, 0, pos, priv->buf);
 				}
 				mx += pos;
 			}
@@ -882,9 +882,9 @@ gdispImageError gdispImageDraw_BMP(gdispImage *img, coord_t x, coord_t y, coord_
 					len = pos-st;
 					if (mx+st+len > sx+cx) len = sx+cx-mx-st;
 					if (len == 1)
-						gdispDrawPixel(x+mx+st-sx, y+my-sy, priv->buf[st]);
+						gdispGDrawPixel(g, x+mx+st-sx, y+my-sy, priv->buf[st]);
 					else
-						gdispBlitAreaEx(x+mx+st-sx, y+my-sy, len, 1, st, 0, pos, priv->buf);
+						gdispGBlitArea(g, x+mx+st-sx, y+my-sy, len, 1, st, 0, pos, priv->buf);
 				}
 				mx += pos;
 			}

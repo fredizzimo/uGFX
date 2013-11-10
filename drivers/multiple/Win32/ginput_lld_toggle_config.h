@@ -20,9 +20,16 @@
 
 #if GFX_USE_GINPUT && GINPUT_NEED_TOGGLE
 
-#define GINPUT_TOGGLE_POLL_PERIOD		TIME_INFINITE	// We are interrupt driven (or polled - ether works here)
-#define GINPUT_TOGGLE_NUM_PORTS			8			// The total number of toggle inputs
-#define GINPUT_TOGGLE_CONFIG_ENTRIES	1			// The total number of GToggleConfig entries
+#define GINPUT_TOGGLE_POLL_PERIOD		TIME_INFINITE	// We are interrupt driven (or polled - either works here)
+
+// This driver is unique in that it can support 8 buttons per window across multiple windows.
+// GINPUT_TOGGLE_CONFIG_ENTRIES just must be less than the number of GDISP windows (GDISP_DRIVER_COUNT_WIN32).
+#ifndef GINPUT_TOGGLE_CONFIG_ENTRIES
+	#define GINPUT_TOGGLE_CONFIG_ENTRIES	1			// The total number of GToggleConfig entries
+#endif
+
+// The total number of toggle inputs
+#define GINPUT_TOGGLE_NUM_PORTS		(8 * GINPUT_TOGGLE_CONFIG_ENTRIES)
 
 #define GINPUT_TOGGLE_SW1			0				// Switch 1	- Toggle
 #define GINPUT_TOGGLE_SW2			1				// Switch 2	- Toggle
@@ -33,6 +40,8 @@
 #define GINPUT_TOGGLE_MOMENTARY2	5				// Switch 6	- Momentary
 #define GINPUT_TOGGLE_MOMENTARY3	6				// Switch 7	- Momentary
 #define GINPUT_TOGGLE_MOMENTARY4	7				// Switch 8	- Momentary
+
+// This pattern of switch and momentary action is repeated across all windows.
 
 #endif	/* GFX_USE_GDISP && GINPUT_NEED_TOGGLE */
 

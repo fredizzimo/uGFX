@@ -150,6 +150,7 @@ extern "C" {
 /**
  * @brief	Initialise (and allocate if necessary) the base GWIN object
  *
+ * @param[in]	g		The GDisplay to use for this window
  * @param[in]	pgw		The GWindowObject structure. If NULL one is allocated from the heap
  * @param[in]	pInit	The user initialization parameters
  * @param[in]	vmt		The virtual method table for the GWIN object
@@ -159,12 +160,13 @@ extern "C" {
  *
  * @notapi
  */
-GHandle _gwindowCreate(GWindowObject *pgw, const GWindowInit *pInit, const gwinVMT *vmt, uint16_t flags);
+GHandle _gwindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pInit, const gwinVMT *vmt, uint16_t flags);
 
 #if GWIN_NEED_WIDGET || defined(__DOXYGEN__)
 	/**
 	 * @brief	Initialise (and allocate if necessary) the base Widget object
 	 *
+	 * @param[in]	g		The GDisplay to display this window on
 	 * @param[in]	pgw		The GWidgetObject structure. If NULL one is allocated from the heap
 	 * @param[in]	pInit	The user initialization parameters
 	 * @param[in]	vmt		The virtual method table for the Widget object
@@ -173,7 +175,7 @@ GHandle _gwindowCreate(GWindowObject *pgw, const GWindowInit *pInit, const gwinV
  	 *
 	 * @notapi
 	 */
-	GHandle _gwidgetCreate(GWidgetObject *pgw, const GWidgetInit *pInit, const gwidgetVMT *vmt);
+	GHandle _gwidgetCreate(GDisplay *g, GWidgetObject *pgw, const GWidgetInit *pInit, const gwidgetVMT *vmt);
 
 	/**
 	 * @brief	Destroy the Widget object

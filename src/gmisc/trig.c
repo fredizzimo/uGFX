@@ -142,5 +142,49 @@
 
 #endif
 
+#if GMISC_NEED_INVSQRT
+	// Algorithm based on Quake code.
+	#if GMISC_INVSQRT_REAL_SLOW
+		#include <math.h>
+		float invsqrt(float n) {
+			return 1.0/sqrt(n);
+		}
+	#else
+		float invsqrt(float n) {
+			int32_t		i;
+			float		x2;
+
+			x2 = n * 0.5F;
+
+			// Convert into an int32 (no binary format conversion)
+			#if GMISC_INVSQRT_MIXED_ENDIAN
+				((char *)&i)[0] = ((char *)&n)[3];
+				((char *)&i)[1] = ((char *)&n)[2];
+				((char *)&i)[2] = ((char *)&n)[1];
+				((char *)&i)[3] = ((char *)&n)[0];
+			#else
+				i  = *(int32_t *)&n;
+			#endif
+
+			// evil floating point bit level hacking
+			i  = 0x5F375A86 - (i >> 1);					// The quake code used 0x5F3759DF but this is better.
+
+			// Convert back to a float (no binary format conversion)
+			#if GMISC_INVSQRT_MIXED_ENDIAN
+				((char *)&n)[0] = ((char *)&i)[3];
+				((char *)&n)[1] = ((char *)&i)[2];
+				((char *)&n)[2] = ((char *)&i)[1];
+				((char *)&n)[3] = ((char *)&i)[0];
+			#else
+				n  = *(float *)&i;
+			#endif
+
+			n  = n * (1.5F - (x2 * n * n));				// 1st iteration
+			//n  = n * (1.5F - (x2 * n * n));			// 2nd iteration for extra precision, this can be removed
+			return n;
+		}
+	#endif
+#endif
+
 #endif /* GFX_USE_GMISC */
 /** @} */

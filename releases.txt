@@ -2,11 +2,32 @@
 *** Releases                                                              ***
 *****************************************************************************
 
-current release: 1.9
-
+current release: 2.0
 
 *** changes after 1.9 ***
-
+FEATURE:	GDISP Streaming API and demos.
+DEPRECATE:	GDISP_NEED_ASYNC is now deprecated.
+DEPRECATE:	3rd party boing demo is now deprecated (replaced by GDISP Streaming demo)
+FIX:		Remove GOS definitions from demo conf files so that it can be supplied by a makefile.
+FEATURE:	Repair GDISP low level driver interfaces so they can now be included in the doxygen documentation. 
+FEATURE:	New driver interface for GDISP
+FEATURE:	Multiple display support
+FEATURE:	Multiple controller support
+FEATURE:	Application pixel format no longer has to match the low level driver pixel format.
+FEATURE:	Many more pixel formats are now supported.
+FEATURE:	Many performance optimisations
+FEATURE:	Vertical scrolling is now supported if the low level driver supports read_pixel.
+FEATURE:	Add gdispFlush() for those controllers that need it
+FEATURE:	Add GDISP_NEED_AUTOFLUSH and GDISP_NEED_TIMERFLUSH to automatically flush when required.
+FEATURE:	Add support for generic portrait and landscape orientation modes
+FEATURE:	Add macro GDISP_DEFAULT_ORIENTATION so an application can specify a default orientation.
+FEATURE:	Driver files renamed to allow compiles when all object files go in the same directory
+FEATURE:	New directory structure for board files. Predefined boards have all the hardware definitions predefined.
+FEATURE:	Board defintions, example projects and makefiles for Win32.
+FEATURE:	Board defintions, example projects and makefiles for X.
+FEATURE:	Board defintions, example projects and makefiles for Olimex SAM7-EX256 board.
+FEATURE:	Board defintions, example projects and makefiles for Mikromedia STM32-M4 board.
+FEATURE:	New invsqrt() routine added to GMISC
 
 *** changes after 1.8 ***
 FEATURE:	GWIN list boxes.
@@ -20,7 +41,6 @@ FIX:		SSD1289 area filling bug fix by user samofab
 FEATURE:	Added gwinListGetSelectedText()
 FEATURE:	Added gwinListSetScroll()
 FEATURE:	Added gwinLabelSetBorder()
-
 
 *** changes after 1.7 ***
 FEATURE:	Rename of the project from ChibiOS/GFX to uGFX

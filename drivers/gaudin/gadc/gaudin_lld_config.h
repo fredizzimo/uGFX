@@ -50,15 +50,8 @@ typedef adcsample_t		audin_sample_t;
  * For the GAUDIN driver that uses GADC - all the remaining config definitions are specific
  * to the board.
  */
-#if defined(GADC_USE_CUSTOM_BOARD) && GADC_USE_CUSTOM_BOARD
-	/* Include the user supplied board definitions */
-	#include "gaudin_lld_board.h"
-#elif defined(BOARD_OLIMEX_SAM7_EX256)
-	#include "gaudin_lld_board_olimexsam7ex256.h"
-#else
-	/* Include the user supplied board definitions */
-	#include "gaudin_lld_board.h"
-#endif
+/* Include the user supplied board definitions */
+#include "gaudin_lld_board.h"
 
 #endif	/* GFX_USE_GAUDIN */
 

@@ -23,7 +23,8 @@ typedef struct gdispImageHandlers {
 	gdispImageError	(*open)(gdispImage *img);			/* The open function */
 	void			(*close)(gdispImage *img);			/* The close function */
 	gdispImageError	(*cache)(gdispImage *img);			/* The cache function */
-	gdispImageError	(*draw)(gdispImage *img,
+	gdispImageError	(*draw)(GDisplay *g,
+							gdispImage *img,
 							coord_t x, coord_t y,
 							coord_t cx, coord_t cy,
 							coord_t sx, coord_t sy);	/* The draw function */
@@ -33,27 +34,27 @@ typedef struct gdispImageHandlers {
 static gdispImageHandlers ImageHandlers[] = {
 	#if GDISP_NEED_IMAGE_NATIVE
 		{	gdispImageOpen_NATIVE,	gdispImageClose_NATIVE,
-			gdispImageCache_NATIVE,	gdispImageDraw_NATIVE,	gdispImageNext_NATIVE,
+			gdispImageCache_NATIVE,	gdispGImageDraw_NATIVE,	gdispImageNext_NATIVE,
 		},
 	#endif
 	#if GDISP_NEED_IMAGE_GIF
 		{	gdispImageOpen_GIF,		gdispImageClose_GIF,
-			gdispImageCache_GIF,	gdispImageDraw_GIF,		gdispImageNext_GIF,
+			gdispImageCache_GIF,	gdispGImageDraw_GIF,	gdispImageNext_GIF,
 		},
 	#endif
 	#if GDISP_NEED_IMAGE_BMP
 		{	gdispImageOpen_BMP,		gdispImageClose_BMP,
-			gdispImageCache_BMP,	gdispImageDraw_BMP,		gdispImageNext_BMP,
+			gdispImageCache_BMP,	gdispGImageDraw_BMP,	gdispImageNext_BMP,
 		},
 	#endif
 	#if GDISP_NEED_IMAGE_JPG
 		{	gdispImageOpen_JPG,		gdispImageClose_JPG,
-			gdispImageCache_JPG,	gdispImageDraw_JPG,		gdispImageNext_JPG,
+			gdispImageCache_JPG,	gdispGImageDraw_JPG,	gdispImageNext_JPG,
 		},
 	#endif
 	#if GDISP_NEED_IMAGE_PNG
 		{	gdispImageOpen_PNG,		gdispImageClose_PNG,
-			gdispImageCache_PNG,	gdispImageDraw_PNG,		gdispImageNext_PNG,
+			gdispImageCache_PNG,	gdispGImageDraw_PNG,	gdispImageNext_PNG,
 		},
 	#endif
 };
@@ -205,9 +206,9 @@ gdispImageError gdispImageCache(gdispImage *img) {
 	return img->fns->cache(img);
 }
 
-gdispImageError gdispImageDraw(gdispImage *img, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t sx, coord_t sy) {
+gdispImageError gdispGImageDraw(GDisplay *g, gdispImage *img, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t sx, coord_t sy) {
 	if (!img->fns) return GDISP_IMAGE_ERR_BADFORMAT;
-	return img->fns->draw(img, x, y, cx, cy, sx, sy);
+	return img->fns->draw(g, img, x, y, cx, cy, sx, sy);
 }
 
 delaytime_t gdispImageNext(gdispImage *img) {

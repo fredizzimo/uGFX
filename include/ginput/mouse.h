@@ -56,6 +56,7 @@ typedef struct GEventMouse_t {
 		GMETA_MOUSE_CXTCLICK = 8			// For mice - The right button has just been depressed
 											// For touch - a long press has just occurred
 		}				meta;
+	GDisplay *			display;		// The display this mouse is currently associated with.
 	} GEventMouse;
 
 // Mouse/Touch Listen Flags - passed to geventAddSourceToListener()
@@ -84,7 +85,8 @@ extern "C" {
 
 	/**
 	 * @brief	Creates an instance of a mouse and returns the Source handler
-	 * @note	hack: if the instance is 9999, no calibration will be performed!
+	 * @note	HACK: if the instance is 9999, it is treated as instance 0 except
+	 * 			that no calibration will be performed!
 	 *
 	 * @param[in] instance		The ID of the mouse input instance (from 0 to 9999)
 	 *
@@ -92,6 +94,28 @@ extern "C" {
 	 */
 	GSourceHandle ginputGetMouse(uint16_t instance);
 	
+	/**
+	 * @brief	Assign the display associated with the mouse
+	 * @note	This only needs to be called if the mouse is associated with a display
+	 * 			other than the current default display. It must be called before
+	 * 			@p ginputGetMouse() if the new display is to be used during the calibration
+	 * 			process. Other than calibration the display is used for range checking,
+	 * 			and may also be used to display a mouse pointer.
+	 *
+	 * @param[in] instance		The ID of the mouse input instance
+	 * @param[in] g				The GDisplay to which this mouse belongs
+	 */
+	void ginputSetMouseDisplay(uint16_t instance, GDisplay *g);
+
+	/**
+	 * @brief	Get the display currently associated with the mouse
+	 * @return	A pointer to the display
+	 *
+	 * @param[in] instance		The ID of the mouse input instance
+	 * @param[in] g				The GDisplay to which this mouse belongs
+	 */
+	GDisplay *ginputGetMouseDisplay(uint16_t instance);
+
 	/**
 	 * @brief	Get the current mouse position and button status
 	 * @note	Unlinke a listener event, this status cannot record meta events such as
@@ -129,12 +153,11 @@ extern "C" {
 	 *			as the gdispGetMouse() routine may attempt to fetch calibration data and perform a startup calibration if there is no way to get it.
 	 *			If this is called after gdispGetMouse() has been called and the driver requires calibration storage, it will immediately save the
 	 *			data is has already obtained.
- 	 * 			The 'requireFree' parameter indicates if the fetch buffer must be free()'d to deallocate the buffer provided by the Fetch routine.
 	 *
 	 * @param[in] instance		The ID of the mouse input instance
 	 * @param[in] fnsave		The routine to save the data
 	 * @param[in] fnload		The routine to restore the data
-	 * @param[in] requireFree	ToDo
+	 * @param[in] requireFree	TRUE if the buffer returned by the load function must be freed by the mouse code.
 	 */	
 	void ginputSetMouseCalibrationRoutines(uint16_t instance, GMouseCalibrationSaveRoutine fnsave, GMouseCalibrationLoadRoutine fnload, bool_t requireFree);
 

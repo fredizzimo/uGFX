@@ -87,10 +87,9 @@
 			#undef GWIN_NEED_WINDOWMANAGER
 			#define GWIN_NEED_WINDOWMANAGER	TRUE
 		#endif
-		#if !GDISP_NEED_MULTITHREAD && !GDISP_NEED_ASYNC
+		#if !GDISP_NEED_MULTITHREAD
 			#if GFX_DISPLAY_RULE_WARNINGS
-				#warning "GWIN: Either GDISP_NEED_MULTITHREAD or GDISP_NEED_ASYNC is required if GWIN_NEED_WIDGET is TRUE."
-				#warning "GWIN: GDISP_NEED_MULTITHREAD has been turned on for you."
+				#warning "GWIN: GDISP_NEED_MULTITHREAD is required if GWIN_NEED_WIDGET is TRUE. It has been turned on for you"
 			#endif
 			#undef GDISP_NEED_MULTITHREAD
 			#define GDISP_NEED_MULTITHREAD	TRUE
@@ -134,17 +133,37 @@
 #endif
 
 #if GFX_USE_GDISP
-	#if GDISP_NEED_MULTITHREAD && GDISP_NEED_ASYNC
-		#error "GDISP: Only one of GDISP_NEED_MULTITHREAD and GDISP_NEED_ASYNC should be defined."
-	#endif
-	#if GDISP_NEED_ASYNC && !(GFX_USE_GQUEUE && GQUEUE_NEED_GSYNC)
-		#if GFX_DISPLAY_RULE_WARNINGS
-			#warning "GDISP: GDISP_NEED_ASYNC requires GFX_USE_GQUEUE and GQUEUE_NEED_GSYNC. They have been turned on for you."
+	#if GDISP_TOTAL_CONTROLLERS > 1
+		#ifndef GDISP_CONTROLLER_LIST
+			#error "GDISP Multiple Controllers: You must specify a value for GDISP_CONTROLLER_LIST"
 		#endif
-		#undef GFX_USE_GQUEUE
-		#define	GFX_USE_GQUEUE		TRUE
-		#undef GQUEUE_NEED_GSYNC
-		#define	GQUEUE_NEED_GSYNC	TRUE
+		#ifndef GDISP_CONTROLLER_DISPLAYS
+			#error "GDISP Multiple Controllers: You must specify a value for GDISP_CONTROLLER_DISPLAYS"
+		#endif
+		#ifndef GDISP_PIXELFORMAT
+			#error "GDISP Multiple Controllers: You must specify a value for GDISP_PIXELFORMAT"
+		#endif
+	#endif
+	#if GDISP_NEED_AUTOFLUSH && GDISP_NEED_TIMERFLUSH
+		#if GFX_DISPLAY_RULE_WARNINGS
+			#warning "GDISP: Both GDISP_NEED_AUTOFLUSH and GDISP_NEED_TIMERFLUSH has been set. GDISP_NEED_TIMERFLUSH has disabled for you."
+		#endif
+		#undef GDISP_NEED_TIMERFLUSH
+		#define GDISP_NEED_TIMERFLUSH		FALSE
+	#endif
+	#if GDISP_NEED_TIMERFLUSH
+		#if GDISP_NEED_TIMERFLUSH < 50 || GDISP_NEED_TIMERFLUSH > 1200
+			#error "GDISP: GDISP_NEED_TIMERFLUSH has been set to an invalid value (FALSE, 50-1200)."
+		#endif
+		#if !GFX_USE_GTIMER
+			#if GFX_DISPLAY_RULE_WARNINGS
+				#warning "GDISP: GDISP_NEED_TIMERFLUSH has been set but GFX_USE_GTIMER has not been set. It has been turned on for you."
+			#endif
+			#undef GFX_USE_GTIMER
+			#define GFX_USE_GTIMER				TRUE
+			#undef GDISP_NEED_MULTITHREAD
+			#define GDISP_NEED_MULTITHREAD		TRUE
+		#endif
 	#endif
 	#if GDISP_NEED_ANTIALIAS && !GDISP_NEED_PIXELREAD
 		#if GDISP_HARDWARE_PIXELREAD
@@ -161,11 +180,11 @@
 	#endif
 	#if (defined(GDISP_INCLUDE_FONT_SMALL) && GDISP_INCLUDE_FONT_SMALL) || (defined(GDISP_INCLUDE_FONT_LARGER) && GDISP_INCLUDE_FONT_LARGER)
 		#if GFX_DISPLAY_RULE_WARNINGS
-			#warning "GDISP: An old font (Small or Larger) has been defined. A single default font of DEJAVUSANS12 has been added instead."
+			#warning "GDISP: An old font (Small or Larger) has been defined. A single default font of UI2 has been added instead."
 			#warning "GDISP: Please see <$(GFXLIB)/include/gdisp/fonts/fonts.h> for a list of available font names."
 		#endif
-		#undef GDISP_INCLUDE_FONT_DEJAVUSANS12
-		#define GDISP_INCLUDE_FONT_DEJAVUSANS12		TRUE
+		#undef GDISP_INCLUDE_FONT_UI2
+		#define GDISP_INCLUDE_FONT_UI2		TRUE
 	#endif
 #endif
 
@@ -196,9 +215,9 @@
 #endif
 
 #if GFX_USE_GTIMER
-	#if GFX_USE_GDISP && !GDISP_NEED_MULTITHREAD && !GDISP_NEED_ASYNC
+	#if GFX_USE_GDISP && !GDISP_NEED_MULTITHREAD
 		#if GFX_DISPLAY_RULE_WARNINGS
-			#warning "GTIMER: Neither GDISP_NEED_MULTITHREAD nor GDISP_NEED_ASYNC has been specified."
+			#warning "GTIMER: GDISP_NEED_MULTITHREAD has not been specified."
 			#warning "GTIMER: Make sure you are not performing any GDISP/GWIN drawing operations in the timer callback!"
 		#endif
 	#endif

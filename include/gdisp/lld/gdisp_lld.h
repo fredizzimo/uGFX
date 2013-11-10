@@ -22,185 +22,159 @@
 /* Error checks.                                                             */
 /*===========================================================================*/
 
+#if GDISP_TOTAL_CONTROLLERS > 1 && !defined(GDISP_DRIVER_VMT)
+	#define HARDWARE_AUTODETECT		2
+	#define HARDWARE_DEFAULT		HARDWARE_AUTODETECT
+#else
+	#define HARDWARE_AUTODETECT		2
+	#define HARDWARE_DEFAULT		FALSE
+#endif
+
 /**
  * @name    GDISP hardware accelerated support
  * @{
  */
 	/**
-	 * @brief   Hardware accelerated line drawing.
-	 * @details If set to @p FALSE software emulation is used.
+	 * @brief   The display hardware can benefit from being flushed.
+	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
+	 *
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
+	 * @note	Some controllers ** require ** the application to flush
 	 */
-	#ifndef GDISP_HARDWARE_LINES
-		#define GDISP_HARDWARE_LINES			FALSE
+	#ifndef GDISP_HARDWARE_FLUSH
+		#define GDISP_HARDWARE_FLUSH		HARDWARE_DEFAULT
+	#endif
+
+	/**
+	 * @brief   Hardware streaming writing is supported.
+	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
+	 *
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
+	 * @note	Either GDISP_HARDWARE_STREAM_WRITE or GDISP_HARDWARE_DRAWPIXEL must be provided by each driver
+	 */
+	#ifndef GDISP_HARDWARE_STREAM_WRITE
+		#define GDISP_HARDWARE_STREAM_WRITE		HARDWARE_DEFAULT
+	#endif
+
+	/**
+	 * @brief   Hardware streaming reading of the display surface is supported.
+	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
+	 *
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
+	 *
+	 */
+	#ifndef GDISP_HARDWARE_STREAM_READ
+		#define GDISP_HARDWARE_STREAM_READ		HARDWARE_DEFAULT
+	#endif
+
+	/**
+	 * @brief   Hardware supports setting the cursor position within the stream window.
+	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
+	 *
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
+	 * @note	This is used to optimise setting of individual pixels within a stream window.
+	 * 			It should therefore not be implemented unless it is cheaper than just setting
+	 * 			a new window.
+	 */
+	#ifndef GDISP_HARDWARE_STREAM_POS
+		#define GDISP_HARDWARE_STREAM_POS		HARDWARE_DEFAULT
+	#endif
+
+	/**
+	 * @brief   Hardware accelerated draw pixel.
+	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
+	 *
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
+	 * @note	Either GDISP_HARDWARE_STREAM_WRITE or GDISP_HARDWARE_DRAWPIXEL must be provided by the driver
+	 */
+	#ifndef GDISP_HARDWARE_DRAWPIXEL
+		#define GDISP_HARDWARE_DRAWPIXEL		HARDWARE_DEFAULT
 	#endif
 
 	/**
 	 * @brief   Hardware accelerated screen clears.
-	 * @details If set to @p FALSE software emulation is used.
+	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
+	 *
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
+	 * @note	This clears the entire display surface regardless of the clipping area currently set
 	 */
 	#ifndef GDISP_HARDWARE_CLEARS
-		#define GDISP_HARDWARE_CLEARS			FALSE
+		#define GDISP_HARDWARE_CLEARS			HARDWARE_DEFAULT
 	#endif
 
 	/**
 	 * @brief   Hardware accelerated rectangular fills.
-	 * @details If set to @p FALSE software emulation is used.
+	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
+	 *
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
 	 */
 	#ifndef GDISP_HARDWARE_FILLS
-		#define GDISP_HARDWARE_FILLS			FALSE
+		#define GDISP_HARDWARE_FILLS			HARDWARE_DEFAULT
 	#endif
 
 	/**
 	 * @brief   Hardware accelerated fills from an image.
-	 * @details If set to @p FALSE software emulation is used.
+	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
+	 *
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
 	 */
 	#ifndef GDISP_HARDWARE_BITFILLS
-		#define GDISP_HARDWARE_BITFILLS			FALSE
-	#endif
-
-	/**
-	 * @brief   Hardware accelerated circles.
-	 * @details If set to @p FALSE software emulation is used.
-	 */
-	#ifndef GDISP_HARDWARE_CIRCLES
-		#define GDISP_HARDWARE_CIRCLES			FALSE
-	#endif
-
-	/**
-	 * @brief   Hardware accelerated filled circles.
-	 * @details If set to @p FALSE software emulation is used.
-	 */
-	#ifndef GDISP_HARDWARE_CIRCLEFILLS
-		#define GDISP_HARDWARE_CIRCLEFILLS		FALSE
-	#endif
-
-	/**
-	 * @brief   Hardware accelerated ellipses.
-	 * @details If set to @p FALSE software emulation is used.
-	 */
-	#ifndef GDISP_HARDWARE_ELLIPSES
-		#define GDISP_HARDWARE_ELLIPSES			FALSE
-	#endif
-
-	/**
-	 * @brief   Hardware accelerated filled ellipses.
-	 * @details If set to @p FALSE software emulation is used.
-	 */
-	#ifndef GDISP_HARDWARE_ELLIPSEFILLS
-		#define GDISP_HARDWARE_ELLIPSEFILLS		FALSE
-	#endif
-
-	/**
-	 * @brief   Hardware accelerated arc's.
-	 * @details If set to @p FALSE software emulation is used.
-	 */
-	#ifndef GDISP_HARDWARE_ARCS
-		#define GDISP_HARDWARE_ARCS			FALSE
-	#endif
-
-	/**
-	 * @brief   Hardware accelerated filled arcs.
-	 * @details If set to @p FALSE software emulation is used.
-	 */
-	#ifndef GDISP_HARDWARE_ARCFILLS
-		#define GDISP_HARDWARE_ARCFILLS		FALSE
+		#define GDISP_HARDWARE_BITFILLS			HARDWARE_DEFAULT
 	#endif
 
 	/**
 	 * @brief   Hardware accelerated scrolling.
-	 * @details If set to @p FALSE there is no support for scrolling.
+	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
+	 *
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
 	 */
 	#ifndef GDISP_HARDWARE_SCROLL
-		#define GDISP_HARDWARE_SCROLL			FALSE
+		#define GDISP_HARDWARE_SCROLL			HARDWARE_DEFAULT
 	#endif
 
 	/**
 	 * @brief   Reading back of pixel values.
-	 * @details If set to @p FALSE there is no support for pixel read-back.
+	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
+	 *
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
 	 */
 	#ifndef GDISP_HARDWARE_PIXELREAD
-		#define GDISP_HARDWARE_PIXELREAD		FALSE
+		#define GDISP_HARDWARE_PIXELREAD		HARDWARE_DEFAULT
 	#endif
 
 	/**
 	 * @brief   The driver supports one or more control commands.
-	 * @details If set to @p FALSE there is no support for control commands.
+	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
+	 *
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
 	 */
 	#ifndef GDISP_HARDWARE_CONTROL
-		#define GDISP_HARDWARE_CONTROL			FALSE
+		#define GDISP_HARDWARE_CONTROL			HARDWARE_DEFAULT
 	#endif
 
 	/**
 	 * @brief   The driver supports a non-standard query.
-	 * @details If set to @p FALSE there is no support for non-standard queries.
+	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
+	 *
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
 	 */
 	#ifndef GDISP_HARDWARE_QUERY
-		#define GDISP_HARDWARE_QUERY			FALSE
+		#define GDISP_HARDWARE_QUERY			HARDWARE_DEFAULT
 	#endif
 
 	/**
 	 * @brief   The driver supports a clipping in hardware.
-	 * @details If set to @p FALSE there is no support for non-standard queries.
+	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
+	 *
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
+	 * @note	If this is defined the driver must perform its own clipping on all calls to
+	 * 			the driver and respond appropriately if a parameter is outside the display area.
+	 * @note	If this is not defined then the software ensures that all calls to the
+	 * 			driver do not exceed the display area (provided GDISP_NEED_CLIP or GDISP_NEED_VALIDATION
+	 * 			has been set).
 	 */
 	#ifndef GDISP_HARDWARE_CLIP
-		#define GDISP_HARDWARE_CLIP			FALSE
-	#endif
-/** @} */
-
-/**
- * @name    GDISP software algorithm choices
- * @{
- */
-/** @} */
-
-/**
- * @name    GDISP pixel format choices
- * @{
- */
-	/**
-	 * @brief   The native pixel format for this device
-	 * @note	Should be set to one of the following:
-	 *				GDISP_PIXELFORMAT_RGB565
-	 *				GDISP_PIXELFORMAT_RGB888
-	 *				GDISP_PIXELFORMAT_RGB444
-	 *				GDISP_PIXELFORMAT_RGB332
-	 *				GDISP_PIXELFORMAT_RGB666
-	 *				GDISP_PIXELFORMAT_CUSTOM
-	 * @note	If you set GDISP_PIXELFORMAT_CUSTOM you need to also define
-	 *				color_t, RGB2COLOR(r,g,b), HTML2COLOR(h),
-	 *              RED_OF(c), GREEN_OF(c), BLUE_OF(c),
-	 *              COLOR(c) and MASKCOLOR.
-	 */
-	#ifndef GDISP_PIXELFORMAT
-		#define GDISP_PIXELFORMAT	GDISP_PIXELFORMAT_ERROR
-	#endif
-
-	/**
-	 * @brief   Do pixels require packing for a blit
-	 * @note	Is only valid for a pixel format that doesn't fill it's datatype. ie formats:
-	 *				GDISP_PIXELFORMAT_RGB888
-	 *				GDISP_PIXELFORMAT_RGB444
-	 *				GDISP_PIXELFORMAT_RGB666
-	 *				GDISP_PIXELFORMAT_CUSTOM
-	 * @note	If you use GDISP_PIXELFORMAT_CUSTOM and packed bit fills
-	 *				you need to also define @p gdispPackPixels(buf,cx,x,y,c)
-	 * @note	If you are using GDISP_HARDWARE_BITFILLS = FALSE then the pixel
-	 *				format must not be a packed format as the software blit does
-	 *				not support packed pixels
-	 * @note	Very few cases should actually require packed pixels as the low
-	 *				level driver can also pack on the fly as it is sending it
-	 *				to the graphics device.
-	 */
-	#ifndef GDISP_PACKED_PIXELS
-		#define GDISP_PACKED_PIXELS			FALSE
-	#endif
-
-	/**
-	 * @brief   Do lines of pixels require packing for a blit
-	 * @note	Ignored if GDISP_PACKED_PIXELS is FALSE
-	 */
-	#ifndef GDISP_PACKED_LINES
-		#define GDISP_PACKED_LINES			FALSE
+		#define GDISP_HARDWARE_CLIP				HARDWARE_DEFAULT
 	#endif
 /** @} */
 
@@ -208,80 +182,721 @@
 /* External declarations.                                                    */
 /*===========================================================================*/
 
-#ifdef __cplusplus
-extern "C" {
+struct GDisplay {
+	// The public GDISP stuff - must be the first element
+	GDISPControl				g;
+
+	#if GDISP_TOTAL_CONTROLLERS > 1
+		const struct GDISPVMT const *	vmt;		// The Virtual Method Table
+	#endif
+
+	void *						priv;				// A private area just for the drivers use.
+	void *						board;				// A private area just for the board interfaces use.
+
+	uint8_t						systemdisplay;
+	uint8_t						controllerdisplay;
+	uint16_t					flags;
+		#define GDISP_FLG_INSTREAM		0x0001		// We are in a user based stream operation
+		#define GDISP_FLG_SCRSTREAM		0x0002		// The stream area currently covers the whole screen
+		#define GDISP_FLG_DRIVER		0x0004		// This flags and above are for use by the driver
+
+	// Multithread Mutex
+	#if GDISP_NEED_MULTITHREAD
+		gfxMutex				mutex;
+	#endif
+
+	// Software clipping
+	#if GDISP_HARDWARE_CLIP != TRUE && (GDISP_NEED_CLIP || GDISP_NEED_VALIDATION)
+		coord_t					clipx0, clipy0;
+		coord_t					clipx1, clipy1;		/* not inclusive */
+	#endif
+
+	// Driver call parameters
+	struct {
+		coord_t			x, y;
+		coord_t			cx, cy;
+		coord_t			x1, y1;
+		coord_t			x2, y2;
+		color_t			color;
+		void			*ptr;
+	} p;
+
+	// In call working buffers
+
+	#if GDISP_NEED_TEXT
+		// Text rendering parameters
+		struct {
+			font_t		font;
+			color_t		color;
+			color_t		bgcolor;
+			coord_t		clipx0, clipy0;
+			coord_t		clipx1, clipy1;
+		} t;
+	#endif
+	#if GDISP_LINEBUF_SIZE != 0 && ((GDISP_NEED_SCROLL && !GDISP_HARDWARE_SCROLL) || (!GDISP_HARDWARE_STREAM_WRITE && GDISP_HARDWARE_BITFILLS))
+		// A pixel line buffer
+		color_t		linebuf[GDISP_LINEBUF_SIZE];
+	#endif
+
+};
+
+#if GDISP_TOTAL_CONTROLLERS == 1 || defined(GDISP_DRIVER_VMT) || defined(__DOXYGEN__)
+	#if GDISP_TOTAL_CONTROLLERS > 1
+		#define LLDSPEC			static
+	#else
+		#define LLDSPEC
+	#endif
+
+	#ifdef __cplusplus
+	extern "C" {
+	#endif
+
+	/**
+	 * @brief   Initialize the driver.
+	 * @return	TRUE if successful.
+	 * @param[in]	g		The driver structure
+	 * @param[out]	g->g	The driver must fill in the GDISPControl structure
+	 */
+	LLDSPEC	bool_t gdisp_lld_init(GDisplay *g);
+
+	#if GDISP_HARDWARE_FLUSH || defined(__DOXYGEN__)
+		/**
+		 * @brief   Flush the current drawing operations to the display
+		 * @pre		GDISP_HARDWARE_FLUSH is TRUE
+		 *
+		 * @param[in]	g				The driver structure
+		 *
+		 * @note		The parameter variables must not be altered by the driver.
+		 */
+		LLDSPEC	void gdisp_lld_flush(GDisplay *g);
+	#endif
+
+	#if GDISP_HARDWARE_STREAM_WRITE || defined(__DOXYGEN__)
+		/**
+		 * @brief   Start a streamed write operation
+		 * @pre		GDISP_HARDWARE_STREAM_WRITE is TRUE
+		 *
+		 * @param[in]	g				The driver structure
+		 * @param[in]	g->p.x,g->p.y	The window position
+		 * @param[in]	g->p.cx,g->p.cy	The window size
+		 *
+		 * @note		The parameter variables must not be altered by the driver.
+		 * @note		Streaming operations that wrap the defined window have
+		 * 				undefined results.
+		 * @note		This must be followed by a call to @p gdisp_lld_write_pos() if GDISP_HARDWARE_STREAM_POS is TRUE.
+		 */
+		LLDSPEC	void gdisp_lld_write_start(GDisplay *g);
+
+		/**
+		 * @brief   Send a pixel to the current streaming position and then increment that position
+		 * @pre		GDISP_HARDWARE_STREAM_WRITE is TRUE
+		 *
+		 * @param[in]	g				The driver structure
+		 * @param[in]	g->p.color		The color to display at the curent position
+		 *
+		 * @note		The parameter variables must not be altered by the driver.
+		 */
+		LLDSPEC	void gdisp_lld_write_color(GDisplay *g);
+
+		/**
+		 * @brief   End the current streaming write operation
+		 * @pre		GDISP_HARDWARE_STREAM_WRITE is TRUE
+		 *
+		 * @param[in]	g				The driver structure
+		 *
+		 * @note		The parameter variables must not be altered by the driver.
+		 */
+		LLDSPEC	void gdisp_lld_write_stop(GDisplay *g);
+
+		#if GDISP_HARDWARE_STREAM_POS || defined(__DOXYGEN__)
+			/**
+			 * @brief   Change the current position within the current streaming window
+			 * @pre		GDISP_HARDWARE_STREAM_POS is TRUE and GDISP_HARDWARE_STREAM_WRITE is TRUE
+			 *
+			 * @param[in]	g				The driver structure
+			 * @param[in]	g->p.x,g->p.y	The new position (which will always be within the existing stream window)
+			 *
+			 * @note		The parameter variables must not be altered by the driver.
+			 */
+			LLDSPEC	void gdisp_lld_write_pos(GDisplay *g);
+		#endif
+	#endif
+
+	#if GDISP_HARDWARE_STREAM_READ || defined(__DOXYGEN__)
+		/**
+		 * @brief   Start a streamed read operation
+		 * @pre		GDISP_HARDWARE_STREAM_READ is TRUE
+		 *
+		 * @param[in]	g				The driver structure
+		 * @param[in]	g->p.x,g->p.y	The window position
+		 * @param[in]	g->p.cx,g->p.cy	The window size
+		 *
+		 * @note		The parameter variables must not be altered by the driver.
+		 * @note		Streaming operations that wrap the defined window have
+		 * 				undefined results.
+		 */
+		LLDSPEC	void gdisp_lld_read_start(GDisplay *g);
+
+		/**
+		 * @brief   Read a pixel from the current streaming position and then increment that position
+		 * @return	The color at the current position
+		 * @pre		GDISP_HARDWARE_STREAM_READ is TRUE
+		 *
+		 * @param[in]	g				The driver structure
+		 *
+		 * @note		The parameter variables must not be altered by the driver.
+		 */
+		LLDSPEC	color_t gdisp_lld_read_color(GDisplay *g);
+
+		/**
+		 * @brief   End the current streaming operation
+		 * @pre		GDISP_HARDWARE_STREAM_READ is TRUE
+		 *
+		 * @param[in]	g				The driver structure
+		 *
+		 * @note		The parameter variables must not be altered by the driver.
+		 */
+		LLDSPEC	void gdisp_lld_read_stop(GDisplay *g);
+	#endif
+
+	#if GDISP_HARDWARE_DRAWPIXEL || defined(__DOXYGEN__)
+		/**
+		 * @brief   Draw a pixel
+		 * @pre		GDISP_HARDWARE_DRAWPIXEL is TRUE
+		 *
+		 * @param[in]	g				The driver structure
+		 * @param[in]	g->p.x,g->p.y	The pixel position
+		 * @param[in]	g->p.color		The color to set
+		 *
+		 * @note		The parameter variables must not be altered by the driver.
+		 */
+		LLDSPEC	void gdisp_lld_draw_pixel(GDisplay *g);
+	#endif
+
+	#if GDISP_HARDWARE_CLEARS || defined(__DOXYGEN__)
+		/**
+		 * @brief   Clear the screen using the defined color
+		 * @pre		GDISP_HARDWARE_CLEARS is TRUE
+		 *
+		 * @param[in]	g				The driver structure
+		 * @param[in]	g->p.color		The color to set
+		 *
+		 * @note		The parameter variables must not be altered by the driver.
+		 */
+		LLDSPEC	void gdisp_lld_clear(GDisplay *g);
+	#endif
+
+	#if GDISP_HARDWARE_FILLS || defined(__DOXYGEN__)
+		/**
+		 * @brief   Fill an area with a single color
+		 * @pre		GDISP_HARDWARE_FILLS is TRUE
+		 *
+		 * @param[in]	g				The driver structure
+		 * @param[in]	g->p.x,g->p.y	The area position
+		 * @param[in]	g->p.cx,g->p.cy	The area size
+		 * @param[in]	g->p.color		The color to set
+		 *
+		 * @note		The parameter variables must not be altered by the driver.
+		 */
+		LLDSPEC	void gdisp_lld_fill_area(GDisplay *g);
+	#endif
+
+	#if GDISP_HARDWARE_BITFILLS || defined(__DOXYGEN__)
+		/**
+		 * @brief   Fill an area using a bitmap
+		 * @pre		GDISP_HARDWARE_BITFILLS is TRUE
+		 *
+		 * @param[in]	g				The driver structure
+		 * @param[in]	g->p.x,g->p.y	The area position
+		 * @param[in]	g->p.cx,g->p.cy	The area size
+		 * @param[in]	g->p.x1,g->p.y1	The starting position in the bitmap
+		 * @param[in]	g->p.x2			The width of a bitmap line
+		 * @param[in]	g->p.ptr		The pointer to the bitmap
+		 *
+		 * @note		The parameter variables must not be altered by the driver.
+		 */
+		LLDSPEC	void gdisp_lld_blit_area(GDisplay *g);
+	#endif
+
+	#if GDISP_HARDWARE_PIXELREAD || defined(__DOXYGEN__)
+		/**
+		 * @brief   Read a pixel from the display
+		 * @return	The color at the defined position
+		 * @pre		GDISP_HARDWARE_PIXELREAD is TRUE (and the application needs it)
+		 *
+		 * @param[in]	g				The driver structure
+		 * @param[in]	g->p.x,g->p.y	The pixel position
+		 *
+		 * @note		The parameter variables must not be altered by the driver.
+		 */
+		LLDSPEC	color_t gdisp_lld_get_pixel_color(GDisplay *g);
+	#endif
+
+	#if (GDISP_HARDWARE_SCROLL && GDISP_NEED_SCROLL) || defined(__DOXYGEN__)
+		/**
+		 * @brief   Scroll an area of the screen
+		 * @pre		GDISP_HARDWARE_SCROLL is TRUE (and the application needs it)
+		 *
+		 * @param[in]	g				The driver structure
+		 * @param[in]	g->p.x,g->p.y	The area position
+		 * @param[in]	g->p.cx,g->p.cy	The area size
+		 * @param[in]	g->p.y1			The number of lines to scroll (positive or negative)
+		 *
+		 * @note		The parameter variables must not be altered by the driver.
+		 * @note		This can be easily implemented if the hardware supports
+		 * 				display area to display area copying.
+		 * @note		Clearing the exposed area on the scroll operation is not
+		 * 				needed as the high level code handles this.
+		 */
+		LLDSPEC	void gdisp_lld_vertical_scroll(GDisplay *g);
+	#endif
+
+	#if (GDISP_HARDWARE_CONTROL && GDISP_NEED_CONTROL) || defined(__DOXYGEN__)
+		/**
+		 * @brief   Control some feature of the hardware
+		 * @pre		GDISP_HARDWARE_CONTROL is TRUE (and the application needs it)
+		 *
+		 * @param[in]	g				The driver structure
+		 * @param[in]	g->p.x			The operation to perform
+		 * @param[in]	g->p.ptr		The operation parameter
+		 *
+		 * @note		The parameter variables must not be altered by the driver.
+		 */
+		LLDSPEC	void gdisp_lld_control(GDisplay *g);
+	#endif
+
+	#if (GDISP_HARDWARE_QUERY && GDISP_NEED_QUERY) || defined(__DOXYGEN__)
+		/**
+		 * @brief   Query some feature of the hardware
+		 * @return	The information requested (typecast as void *)
+		 * @pre		GDISP_HARDWARE_QUERY is TRUE (and the application needs it)
+		 *
+		 * @param[in]	g				The driver structure
+		 * @param[in]	g->p.x			What to query
+		 *
+		 * @note		The parameter variables must not be altered by the driver.
+		 */
+		LLDSPEC	void *gdisp_lld_query(GDisplay *g);				// Uses p.x (=what);
+	#endif
+
+	#if (GDISP_HARDWARE_CLIP && (GDISP_NEED_CLIP || GDISP_NEED_VALIDATION)) || defined(__DOXYGEN__)
+		/**
+		 * @brief   Set the hardware clipping area
+		 * @pre		GDISP_HARDWARE_CLIP is TRUE (and the application needs it)
+		 *
+		 * @param[in]	g				The driver structure
+		 * @param[in]	g->p.x,g->p.y	The area position
+		 * @param[in]	g->p.cx,g->p.cy	The area size
+		 *
+		 * @note		The parameter variables must not be altered by the driver.
+		 */
+		LLDSPEC	void gdisp_lld_set_clip(GDisplay *g);
+	#endif
+
+	#ifdef __cplusplus
+	}
+	#endif
+#endif  // GDISP_TOTAL_CONTROLLERS == 1 || defined(GDISP_DRIVER_VMT)
+
+
+#if GDISP_TOTAL_CONTROLLERS > 1
+
+	typedef struct GDISPVMT {
+		bool_t (*init)(GDisplay *g);
+		void (*writestart)(GDisplay *g);				// Uses p.x,p.y  p.cx,p.cy
+		void (*writepos)(GDisplay *g);					// Uses p.x,p.y
+		void (*writecolor)(GDisplay *g);				// Uses p.color
+		void (*writestop)(GDisplay *g);					// Uses no parameters
+		void (*readstart)(GDisplay *g);					// Uses p.x,p.y  p.cx,p.cy
+		color_t (*readcolor)(GDisplay *g);				// Uses no parameters
+		void (*readstop)(GDisplay *g);					// Uses no parameters
+		void (*pixel)(GDisplay *g);						// Uses p.x,p.y  p.color
+		void (*clear)(GDisplay *g);						// Uses p.color
+		void (*fill)(GDisplay *g);						// Uses p.x,p.y  p.cx,p.cy  p.color
+		void (*blit)(GDisplay *g);						// Uses p.x,p.y  p.cx,p.cy  p.x1,p.y1 (=srcx,srcy)  p.x2 (=srccx), p.ptr (=buffer)
+		color_t (*get)(GDisplay *g);					// Uses p.x,p.y
+		void (*vscroll)(GDisplay *g);					// Uses p.x,p.y  p.cx,p.cy, p.y1 (=lines) p.color
+		void (*control)(GDisplay *g);					// Uses p.x (=what)  p.ptr (=value)
+		void *(*query)(GDisplay *g);					// Uses p.x (=what);
+		void (*setclip)(GDisplay *g);					// Uses p.x,p.y  p.cx,p.cy
+		void (*flush)(GDisplay *g);						// Uses no parameters
+	} GDISPVMT;
+
+	#if defined(GDISP_DRIVER_VMT)
+		#if !GDISP_HARDWARE_STREAM_WRITE && !GDISP_HARDWARE_DRAWPIXEL
+			#error "GDISP Driver: Either GDISP_HARDWARE_STREAM_WRITE or GDISP_HARDWARE_DRAWPIXEL must be TRUE"
+		#endif
+		const GDISPVMT const GDISP_DRIVER_VMT[1] = {{
+			gdisp_lld_init,
+			#if GDISP_HARDWARE_FLUSH
+				gdisp_lld_flush,
+			#else
+				0,
+			#endif
+			#if GDISP_HARDWARE_STREAM_WRITE
+				gdisp_lld_write_start,
+				#if GDISP_HARDWARE_STREAM_POS
+					gdisp_lld_write_pos,
+				#else
+					0,
+				#endif
+				gdisp_lld_write_color,
+				gdisp_lld_write_stop,
+			#else
+				0, 0, 0, 0,
+			#endif
+			#if GDISP_HARDWARE_STREAM_READ
+				gdisp_lld_read_start,
+				gdisp_lld_read_color,
+				gdisp_lld_read_stop,
+			#else
+				0, 0, 0,
+			#endif
+			#if GDISP_HARDWARE_DRAWPIXEL
+				gdisp_lld_draw_pixel,
+			#else
+				0,
+			#endif
+			#if GDISP_HARDWARE_CLEARS
+				gdisp_lld_clear,
+			#else
+				0,
+			#endif
+			#if GDISP_HARDWARE_FILLS
+				gdisp_lld_fill_area,
+			#else
+				0,
+			#endif
+			#if GDISP_HARDWARE_BITFILLS
+				gdisp_lld_blit_area,
+			#else
+				0,
+			#endif
+			#if GDISP_HARDWARE_PIXELREAD
+				gdisp_lld_get_pixel_color,
+			#else
+				0,
+			#endif
+			#if GDISP_HARDWARE_SCROLL && GDISP_NEED_SCROLL
+				gdisp_lld_vertical_scroll,
+			#else
+				0,
+			#endif
+			#if GDISP_HARDWARE_CONTROL && GDISP_NEED_CONTROL
+				gdisp_lld_control,
+			#else
+				0,
+			#endif
+			#if GDISP_HARDWARE_QUERY && GDISP_NEED_QUERY
+				gdisp_lld_query,
+			#else
+				0,
+			#endif
+			#if GDISP_HARDWARE_CLIP && (GDISP_NEED_CLIP || GDISP_NEED_VALIDATION)
+				gdisp_lld_set_clip,
+			#else
+				0,
+			#endif
+		}};
+
+	#else
+		#define gdisp_lld_init(g)				g->vmt->init(g)
+		#define gdisp_lld_flush(g)				g->vmt->flush(g)
+		#define gdisp_lld_write_start(g)		g->vmt->writestart(g)
+		#define gdisp_lld_write_pos(g)			g->vmt->writepos(g)
+		#define gdisp_lld_write_color(g)		g->vmt->writecolor(g)
+		#define gdisp_lld_write_stop(g)			g->vmt->writestop(g)
+		#define gdisp_lld_read_start(g)			g->vmt->readstart(g)
+		#define gdisp_lld_read_color(g)			g->vmt->readcolor(g)
+		#define gdisp_lld_read_stop(g)			g->vmt->readstop(g)
+		#define gdisp_lld_draw_pixel(g)			g->vmt->pixel(g)
+		#define gdisp_lld_clear(g)				g->vmt->clear(g)
+		#define gdisp_lld_fill_area(g)			g->vmt->fill(g)
+		#define gdisp_lld_blit_area(g)			g->vmt->blit(g)
+		#define gdisp_lld_get_pixel_color(g)	g->vmt->get(g)
+		#define gdisp_lld_vertical_scroll(g)	g->vmt->vscroll(g)
+		#define gdisp_lld_control(g)			g->vmt->control(g)
+		#define gdisp_lld_query(g)				g->vmt->query(g)
+		#define gdisp_lld_set_clip(g)			g->vmt->setclip(g)
+	#endif	// GDISP_LLD_DECLARATIONS
+
+#endif		// GDISP_TOTAL_CONTROLLERS > 1
+
+/* Verify information for packed pixels and define a non-packed pixel macro */
+#if !GDISP_PACKED_PIXELS
+	#define gdispPackPixels(buf,cx,x,y,c)	{ ((color_t *)(buf))[(y)*(cx)+(x)] = (c); }
+#elif !GDISP_HARDWARE_BITFILLS
+	#error "GDISP: packed pixel formats are only supported for hardware accelerated drivers."
+#elif GDISP_PIXELFORMAT != GDISP_PIXELFORMAT_RGB888 \
+		&& GDISP_PIXELFORMAT != GDISP_PIXELFORMAT_RGB444 \
+		&& GDISP_PIXELFORMAT != GDISP_PIXELFORMAT_RGB666 \
+		&& GDISP_PIXELFORMAT != GDISP_PIXELFORMAT_CUSTOM
+	#error "GDISP: A packed pixel format has been specified for an unsupported pixel format."
 #endif
 
-	/* Core functions */
-	extern bool_t gdisp_lld_init(void);
-
-	/* Some of these functions will be implemented in software by the high level driver
-	   depending on the GDISP_HARDWARE_XXX macros defined in gdisp_lld_config.h.
+/* Support routine for packed pixel formats */
+#if !defined(gdispPackPixels) || defined(__DOXYGEN__)
+	/**
+	 * @brief   Pack a pixel into a pixel buffer.
+	 * @note    This function performs no buffer boundary checking
+	 *			regardless of whether GDISP_NEED_CLIP has been specified.
+	 *
+	 * @param[in] buf		The buffer to put the pixel in
+	 * @param[in] cx		The width of a pixel line
+	 * @param[in] x, y		The location of the pixel to place
+	 * @param[in] color		The color to put into the buffer
+	 *
+	 * @api
 	 */
+	void gdispPackPixels(const pixel_t *buf, coord_t cx, coord_t x, coord_t y, color_t color);
+#endif
 
-	/* Drawing functions */
-	extern void gdisp_lld_clear(color_t color);
-	extern void gdisp_lld_draw_pixel(coord_t x, coord_t y, color_t color);
-	extern void gdisp_lld_fill_area(coord_t x, coord_t y, coord_t cx, coord_t cy, color_t color);
-	extern void gdisp_lld_blit_area_ex(coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx, coord_t srcy, coord_t srccx, const pixel_t *buffer);
-	extern void gdisp_lld_draw_line(coord_t x0, coord_t y0, coord_t x1, coord_t y1, color_t color);
+/* Low level driver pixel format information */
+//-------------------------
+//	True-Color color system
+//-------------------------
+#if GDISP_LLD_PIXELFORMAT & GDISP_COLORSYSTEM_TRUECOLOR
+	#define LLDCOLOR_SYSTEM			GDISP_COLORSYSTEM_TRUECOLOR
 
-	/* Circular Drawing Functions */
-	#if GDISP_NEED_CIRCLE
-	extern void gdisp_lld_draw_circle(coord_t x, coord_t y, coord_t radius, color_t color);
-	extern void gdisp_lld_fill_circle(coord_t x, coord_t y, coord_t radius, color_t color);
+	// Calculate the number of bits
+	#define LLDCOLOR_BITS_R			((GDISP_LLD_PIXELFORMAT>>8) & 0x0F)
+	#define LLDCOLOR_BITS_G			((GDISP_LLD_PIXELFORMAT>>4) & 0x0F)
+	#define LLDCOLOR_BITS_B			((GDISP_LLD_PIXELFORMAT>>0) & 0x0F)
+	#define LLDCOLOR_BITS			(LLDCOLOR_BITS_R + LLDCOLOR_BITS_G + LLDCOLOR_BITS_B)
+
+	// From the number of bits determine COLOR_TYPE, COLOR_TYPE_BITS and masking
+	#if LLDCOLOR_BITS <= 8
+		#define LLDCOLOR_TYPE			uint8_t
+		#define LLDCOLOR_TYPE_BITS		8
+	#elif LLDCOLOR_BITS <= 16
+		#define LLDCOLOR_TYPE			uint16_t
+		#define LLDCOLOR_TYPE_BITS		16
+	#elif LLDCOLOR_BITS <= 32
+		#define LLDCOLOR_TYPE			uint32_t
+		#define LLDCOLOR_TYPE_BITS		32
+	#else
+		#error "GDISP: Cannot define low level driver color types with more than 32 bits"
+	#endif
+	#if LLDCOLOR_TYPE_BITS == LLDCOLOR_BITS
+		#define LLDCOLOR_NEEDS_MASK	FALSE
+	#else
+		#define LLDCOLOR_NEEDS_MASK	TRUE
+	#endif
+	#define LLDCOLOR_MASK()			((1 << LLDCOLOR_BITS)-1)
+
+	// Calculate the component bit shifts
+	#if (GDISP_LLD_PIXELFORMAT & GDISP_COLORSYSTEM_MASK) == GDISP_COLORSYSTEM_RGB
+		#define LLDCOLOR_SHIFT_R		(LLDCOLOR_BITS_B+LLDCOLOR_BITS_G)
+		#define LLDCOLOR_SHIFT_G		LLDCOLOR_BITS_B
+		#define LLDCOLOR_SHIFT_B		0
+	#else
+		#define LLDCOLOR_SHIFT_B		(LLDCOLOR_BITS_R+LLDCOLOR_BITS_G)
+		#define LLDCOLOR_SHIFT_G		LLDCOLOR_BITS_R
+		#define LLDCOLOR_SHIFT_R		0
 	#endif
 
-	#if GDISP_NEED_ELLIPSE
-	extern void gdisp_lld_draw_ellipse(coord_t x, coord_t y, coord_t a, coord_t b, color_t color);
-	extern void gdisp_lld_fill_ellipse(coord_t x, coord_t y, coord_t a, coord_t b, color_t color);
+	// Calculate LLDRED_OF, LLDGREEN_OF, LLDBLUE_OF and LLDRGB2COLOR
+	#if LLDCOLOR_BITS_R + LLDCOLOR_SHIFT_R == 8
+		#define LLDRED_OF(c)			((c) & (((1<<LLDCOLOR_BITS_R)-1) << LLDCOLOR_SHIFT_R))
+		#define LLDRGB2COLOR_R(r)		((LLDCOLOR_TYPE)((r) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_R))-1))))
+	#elif LLDCOLOR_BITS_R + LLDCOLOR_SHIFT_R > 8
+		#define LLDRED_OF(c)			(((c) & (((1<<LLDCOLOR_BITS_R)-1) << LLDCOLOR_SHIFT_R)) >> (LLDCOLOR_BITS_R+LLDCOLOR_SHIFT_R-8))
+		#define LLDRGB2COLOR_R(r)		(((LLDCOLOR_TYPE)((r) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_R))-1)))) << (LLDCOLOR_BITS_R+LLDCOLOR_SHIFT_R-8))
+	#else // LLDCOLOR_BITS_R + LLDCOLOR_SHIFT_R < 8
+		#define LLDRED_OF(c)			(((c) & (((1<<LLDCOLOR_BITS_R)-1) << LLDCOLOR_SHIFT_R)) << (8-(LLDCOLOR_BITS_R+LLDCOLOR_SHIFT_R)))
+		#define LLDRGB2COLOR_R(r)		(((LLDCOLOR_TYPE)((r) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_R))-1)))) >> (8-(LLDCOLOR_BITS_R+LLDCOLOR_SHIFT_R)))
+	#endif
+	#if LLDCOLOR_BITS_G + LLDCOLOR_SHIFT_G == 8
+		#define LLDGREEN_OF(c)			((c) & (((1<<LLDCOLOR_BITS_G)-1) << LLDCOLOR_SHIFT_G))
+		#define LLDRGB2COLOR_G(g)		((LLDCOLOR_TYPE)((g) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_G))-1))))
+	#elif LLDCOLOR_BITS_G + LLDCOLOR_SHIFT_G > 8
+		#define LLDGREEN_OF(c)			(((c) & (((1<<LLDCOLOR_BITS_G)-1) << LLDCOLOR_SHIFT_G)) >> (LLDCOLOR_BITS_G+LLDCOLOR_SHIFT_G-8))
+		#define LLDRGB2COLOR_G(g)		(((LLDCOLOR_TYPE)((g) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_G))-1)))) << (LLDCOLOR_BITS_G+LLDCOLOR_SHIFT_G-8))
+	#else // LLDCOLOR_BITS_G + LLDCOLOR_SHIFT_G < 8
+		#define LLDGREEN_OF(c)			(((c) & (((1<<LLDCOLOR_BITS_G)-1) << LLDCOLOR_SHIFT_G)) << (8-(LLDCOLOR_BITS_G+LLDCOLOR_SHIFT_G)))
+		#define LLDRGB2COLOR_G(g)		(((LLDCOLOR_TYPE)((g) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_G))-1)))) >> (8-(LLDCOLOR_BITS_LLDG+COLOR_SHIFT_G)))
+	#endif
+	#if LLDCOLOR_BITS_B + LLDCOLOR_SHIFT_B == 8
+		#define LLDBLUE_OF(c)			((c) & (((1<<LLDCOLOR_BITS_B)-1) << LLDCOLOR_SHIFT_B))
+		#define LLDRGB2COLOR_B(b)		((LLDCOLOR_TYPE)((b) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_B))-1))))
+	#elif LLDCOLOR_BITS_B + LLDCOLOR_SHIFT_B > 8
+		#define LLDBLUE_OF(c)			(((c) & (((1<<LLDCOLOR_BITS_B)-1) << LLDCOLOR_SHIFT_B)) >> (LLDCOLOR_BITS_B+LLDCOLOR_SHIFT_B-8))
+		#define LLDRGB2COLOR_B(b)		(((LLDCOLOR_TYPE)((b) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_B))-1)))) << (LLDCOLOR_BITS_B+LLDCOLOR_SHIFT_B-8))
+	#else // LLDCOLOR_BITS_B + LLDCOLOR_SHIFT_B < 8
+		#define LLDBLUE_OF(c)			(((c) & (((1<<LLDCOLOR_BITS_B)-1) << LLDCOLOR_SHIFT_B)) << (8-(LLDCOLOR_BITS_B+LLDCOLOR_SHIFT_B)))
+		#define LLDRGB2COLOR_B(b)		(((COLOR_TYPE)((b) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_B))-1)))) >> (8-(LLDCOLOR_BITS_B+LLDCOLOR_SHIFT_B)))
+	#endif
+	#define LLDLUMA_OF(c)				((LLDRED_OF(c)+((uint16_t)LLDGREEN_OF(c)<<1)+LLDBLUE_OF(c))>>2)
+	#define LLDEXACT_RED_OF(c)			(((uint16_t)(((c)>>LLDCOLOR_SHIFT_R)&((1<<LLDCOLOR_BITS_R)-1))*255)/((1<<LLDCOLOR_BITS_R)-1))
+	#define LLDEXACT_GREEN_OF(c)		(((uint16_t)(((c)>>LLDCOLOR_SHIFT_G)&((1<<LLDCOLOR_BITS_G)-1))*255)/((1<<LLDCOLOR_BITS_G)-1))
+	#define LLDEXACT_BLUE_OF(c)			(((uint16_t)(((c)>>LLDCOLOR_SHIFT_B)&((1<<LLDCOLOR_BITS_B)-1))*255)/((1<<LLDCOLOR_BITS_B)-1))
+	#define LLDEXACT_LUMA_OF(c)			((LLDEXACT_RED_OF(c)+((uint16_t)LLDEXACT_GREEN_OF(c)<<1)+LLDEXACT_BLUE_OF(c))>>2)
+	#define LLDLUMA2COLOR(l)			(LLDRGB2COLOR_R(l) | LLDRGB2COLOR_G(l) | LLDRGB2COLOR_B(l))
+	#define LLDRGB2COLOR(r,g,b)			(LLDRGB2COLOR_R(r) | LLDRGB2COLOR_G(g) | LLDRGB2COLOR_B(b))
+
+	// Calculate LLDHTML2COLOR
+	#if LLDCOLOR_BITS_R + LLDCOLOR_SHIFT_R == 24
+		#define LLDHTML2COLOR_R(h)		((h) & ((0xFF & ~((1<<(8-LLDCOLOR_BITS_R))-1))<<16))
+	#elif COLOR_BITS_R + COLOR_SHIFT_R > 24
+		#define LLDHTML2COLOR_R(h)		(((h) & ((0xFF & ~((1<<(8-LLDCOLOR_BITS_R))-1))<<16)) << (LLDCOLOR_BITS_R+LLDCOLOR_SHIFT_R-24))
+	#else // COLOR_BITS_R + COLOR_SHIFT_R < 24
+		#define LLDHTML2COLOR_R(h)		(((h) & ((0xFF & ~((1<<(8-LLDCOLOR_BITS_R))-1))<<16)) >> (24-(LLDCOLOR_BITS_R+LLDCOLOR_SHIFT_R)))
+	#endif
+	#if LLDCOLOR_BITS_G + LLDCOLOR_SHIFT_G == 16
+		#define LLDHTML2COLOR_G(h)		((h) & ((0xFF & ~((1<<(8-LLDCOLOR_BITS_G))-1))<<8))
+	#elif LLDCOLOR_BITS_G + LLDCOLOR_SHIFT_G > 16
+		#define LLDHTML2COLOR_G(h)		(((h) & ((0xFF & ~((1<<(8-LLDCOLOR_BITS_G))-1))<<8)) << (LLDCOLOR_BITS_G+LLDCOLOR_SHIFT_G-16))
+	#else // LLDCOLOR_BITS_G + LLDCOLOR_SHIFT_G < 16
+		#define LLDHTML2COLOR_G(h)		(((h) & ((0xFF & ~((1<<(8-LLDCOLOR_BITS_G))-1))<<8)) >> (16-(LLDCOLOR_BITS_G+LLDCOLOR_SHIFT_G)))
+	#endif
+	#if LLDCOLOR_BITS_B + LLDCOLOR_SHIFT_B == 8
+		#define LLDHTML2COLOR_B(h)		((h) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_B))-1)))
+	#elif LLDCOLOR_BITS_B + LLDCOLOR_SHIFT_B > 8
+		#define LLDHTML2COLOR_B(h)		(((h) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_B))-1))) << (LLDCOLOR_BITS_B+LLDCOLOR_SHIFT_B-8))
+	#else // LLDCOLOR_BITS_B + LLDCOLOR_SHIFT_B < 8
+		#define LLDHTML2COLOR_B(h)		(((h) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_B))-1))) >> (8-(LLDCOLOR_BITS_B+LLDCOLOR_SHIFT_B)))
+	#endif
+	#define LLDHTML2COLOR(h)		((LLDCOLOR_TYPE)(LLDHTML2COLOR_R(h) | LLDHTML2COLOR_G(h) | LLDHTML2COLOR_B(h)))
+
+//-------------------------
+//	Gray-scale color system
+//-------------------------
+#elif (GDISP_LLD_PIXELFORMAT & GDISP_COLORSYSTEM_MASK) == GDISP_COLORSYSTEM_GRAYSCALE
+	#define LLDCOLOR_SYSTEM			GDISP_COLORSYSTEM_GRAYSCALE
+
+	// Calculate the number of bits and shifts
+	#define LLDCOLOR_BITS			(GDISP_LLD_PIXELFORMAT & 0xFF)
+	#define LLDCOLOR_BITS_R			LLDCOLOR_BITS
+	#define LLDCOLOR_BITS_G			LLDCOLOR_BITS
+	#define LLDCOLOR_BITS_B			LLDCOLOR_BITS
+	#define LLDCOLOR_SHIFT_R		0
+	#define LLDCOLOR_SHIFT_G		0
+	#define LLDCOLOR_SHIFT_B		0
+
+	// From the number of bits determine COLOR_TYPE, COLOR_TYPE_BITS and masking
+	#if LLDCOLOR_BITS <= 8
+		#define LLDCOLOR_TYPE		uint8_t
+		#define LLDCOLOR_TYPE_BITS	8
+	#else
+		#error "GDISP: Cannot define gray-scale low level driver color types with more than 8 bits"
+	#endif
+	#if LLDCOLOR_TYPE_BITS == LLDCOLOR_BITS
+		#define LLDCOLOR_NEEDS_MASK	FALSE
+	#else
+		#define LLDCOLOR_NEEDS_MASK	TRUE
+	#endif
+	#define LLDCOLOR_MASK()			((1 << LLDCOLOR_BITS)-1)
+
+	#if COLOR_BITS == 1
+		#define LLDRGB2COLOR(r,g,b)		(((r)|(g)|(b)) ? 1 : 0)
+		#define LLDLUMA2COLOR(l)		((l) ? 1 : 0)
+		#define LLDHTML2COLOR(h)		((h) ? 1 : 0)
+		#define LLDLUMA_OF(c)			((c) ? 255 : 0)
+		#define LLDEXACT_LUMA_OF(c)		LLDLUMA_OF(c)
+	#else
+		// They eye is more sensitive to green
+		#define LLDRGB2COLOR(r,g,b)		((LLDCOLOR_TYPE)(((uint16_t)(r)+(g)+(g)+(b)) >> (10-LLDCOLOR_BITS)))
+		#define LLDLUMA2COLOR(l)		((LLDCOLOR_TYPE)((l)>>(8-LLDCOLOR_BITS)))
+		#define LLDHTML2COLOR(h)		((LLDCOLOR_TYPE)(((((h)&0xFF0000)>>16)+(((h)&0x00FF00)>>7)+((h)&0x0000FF)) >> (10-LLDCOLOR_BITS)))
+		#define LLDLUMA_OF(c)			(((c) & ((1<<LLDCOLOR_BITS)-1)) << (8-LLDCOLOR_BITS))
+		#define LLDEXACT_LUMA_OF(c)		((((uint16_t)(c) & ((1<<LLDCOLOR_BITS)-1))*255)/((1<<LLDCOLOR_BITS)-1))
 	#endif
 
-	/* Arc Drawing Functions */
-	#if GDISP_NEED_ARC
-	extern void gdisp_lld_draw_arc(coord_t x, coord_t y, coord_t radius, coord_t startangle, coord_t endangle, color_t color);
-	extern void gdisp_lld_fill_arc(coord_t x, coord_t y, coord_t radius, coord_t startangle, coord_t endangle, color_t color);
-	#endif
+	#define LLDRED_OF(c)			LLDLUMA_OF(c)
+	#define LLDGREEN_OF(c)			LLDLUMA_OF(c)
+	#define LLDBLUE_OF(c)			LLDLUMA_OF(c)
+	#define LLDEXACT_RED_OF(c)		LLDEXACT_LUMA_OF(c)
+	#define LLDEXACT_GREEN_OF(c)	LLDEXACT_LUMA_OF(c)
+	#define LLDEXACT_BLUE_OF(c)		LLDEXACT_LUMA_OF(c)
 
-	/* Text Rendering Functions */
-	#if GDISP_NEED_TEXT
-	extern void gdisp_lld_draw_char(coord_t x, coord_t y, uint16_t c, font_t font, color_t color);
-	extern void gdisp_lld_fill_char(coord_t x, coord_t y, uint16_t c, font_t font, color_t color, color_t bgcolor);
-	#endif
+//-------------------------
+//	Palette color system
+//-------------------------
+#elif (GDISP_LLD_PIXELFORMAT & GDISP_COLORSYSTEM_MASK) == GDISP_COLORSYSTEM_PALETTE
+	#define LLDCOLOR_SYSTEM			GDISP_COLORSYSTEM_PALETTE
 
-	/* Pixel readback */
-	#if GDISP_NEED_PIXELREAD
-	extern color_t gdisp_lld_get_pixel_color(coord_t x, coord_t y);
-	#endif
+	#error "GDISP: A palette color system for low level drivers is not currently supported"
 
-	/* Scrolling Function - clears the area scrolled out */
-	#if GDISP_NEED_SCROLL
-	extern void gdisp_lld_vertical_scroll(coord_t x, coord_t y, coord_t cx, coord_t cy, int lines, color_t bgcolor);
-	#endif
+//-------------------------
+//	Some other color system
+//-------------------------
+#else
+	#error "GDISP: Unsupported color system for low level drivers"
+#endif
 
-	/* Set driver specific control */
-	#if GDISP_NEED_CONTROL
-	extern void gdisp_lld_control(unsigned what, void *value);
-	#endif
+/* Which is the larger color type */
+#if COLOR_BITS > LLDCOLOR_BITS
+	#define LARGER_COLOR_BITS	COLOR_BITS
+	#define LARGER_COLOR_TYPE	COLOR_TYPE
+#else
+	#define LARGER_COLOR_BITS	LLDCOLOR_BITS
+	#define LARGER_COLOR_TYPE	LLDCOLOR_TYPE
+#endif
 
-	/* Query driver specific data */
-	#if GDISP_NEED_QUERY
-	extern void *gdisp_lld_query(unsigned what);
+/**
+ * @brief	Controls color conversion accuracy for a low level driver
+ * @details	Should higher precision be used when converting colors.
+ * @note	Color conversion is only necessary if GDISP_PIXELFORMAT != GDISP_LLD_PIXELFORMAT
+ * @note	It only makes sense to turn this on if you have a high bit depth display but
+ * 			are running the application in low bit depths.
+ * @note	To achieve higher color accuracy bit shifting is replaced with multiplies and divides.
+ */
+#ifndef GDISP_HARDWARE_USE_EXACT_COLOR
+	#if LLDCOLOR_BITS_R - COLOR_BITS_R >= LLDCOLOR_BITS_R/2 || LLDCOLOR_BITS_G - COLOR_BITS_G >= LLDCOLOR_BITS_G/2 || LLDCOLOR_BITS_B - COLOR_BITS_B >= LLDCOLOR_BITS_B/2
+		#define GDISP_HARDWARE_USE_EXACT_COLOR	TRUE
+	#else
+		#define GDISP_HARDWARE_USE_EXACT_COLOR	FALSE
 	#endif
+#endif
 
-	/* Clipping Functions */
-	#if GDISP_NEED_CLIP
-	extern void gdisp_lld_set_clip(coord_t x, coord_t y, coord_t cx, coord_t cy);
+/* Low level driver pixel format conversion functions */
+#if GDISP_PIXELFORMAT == GDISP_LLD_PIXELFORMAT || defined(__DOXYGEN__)
+	/**
+	 * @brief	Convert from a standard color format to the low level driver pixel format
+	 * @note	For use only by low level drivers
+	 */
+	#define COLOR2NATIVE(c)	(c)
+	/**
+	 * @brief	Convert from a low level driver pixel format to the standard color format
+	 * @note	For use only by low level drivers
+	 */
+	#define NATIVE2COLOR(c)	(c)
+
+#else
+	#if COLOR_SYSTEM == GDISP_COLORSYSTEM_GRAYSCALE || LLDCOLOR_SYSTEM == GDISP_COLORSYSTEM_GRAYSCALE
+		#if GDISP_HARDWARE_USE_EXACT_COLOR
+			#define COLOR2NATIVE(c)	LLDLUMA2COLOR(EXACT_LUMA_OF(c))
+			#define NATIVE2COLOR(c)	LUMA2COLOR(LLDEXACT_LUMA_OF(c))
+		#else
+			#define COLOR2NATIVE(c)	LLDLUMA2COLOR(LUMA_OF(c))
+			#define NATIVE2COLOR(c)	LUMA2COLOR(LLDLUMA_OF(c))
+		#endif
+	#elif COLOR_SYSTEM == GDISP_COLORSYSTEM_TRUECOLOR && LLDCOLOR_SYSTEM == GDISP_COLORSYSTEM_TRUECOLOR
+		#if GDISP_HARDWARE_USE_EXACT_COLOR
+			#define COLOR2NATIVE(c)	LLDRGB2COLOR(EXACT_RED_OF(c), EXACT_GREEN_OF(c), EXACT_BLUE_OF(c))
+			#define NATIVE2COLOR(c)	RGB2COLOR(LLDEXACT_RED_OF(c), LLDEXACT_GREEN_OF(c), LLDEXACT_BLUE_OF(c))
+		#else
+			#define COLOR2NATIVE(c)	LLDRGB2COLOR(RED_OF(c), GREEN_OF(c), BLUE_OF(c))
+			#define NATIVE2COLOR(c)	RGB2COLOR(LLDRED_OF(c), LLDGREEN_OF(c), LLDBLUE_OF(c))
+		#endif
+
+	/*
+	#elif GDISP_PIXELFORMAT == GDISP_PIXELFORMAT_RGB888 && GDISP_LLD_PIXELFORMAT == GDISP_PIXELFORMAT_BGR888
+		#define COLOR2NATIVE(c)	((LLDCOLOR_TYPE)(((c)&0xFF0000)>>16)|((c)&0x00FF00)|(((c)&0x0000FF)<<16))
+		#define NATIVE2COLOR(c)	((COLOR_TYPE)(((c)&0xFF0000)>>16)|((c)&0x00FF00)|(((c)&0x0000FF)<<16))
+	#elif GDISP_PIXELFORMAT == GDISP_PIXELFORMAT_RGB565 && GDISP_LLD_PIXELFORMAT == GDISP_PIXELFORMAT_BGR888
+		#define COLOR2NATIVE(c)	((LLDCOLOR_TYPE)( \
+								((LARGER_COLOR_TYPE)((c)&(((1<<COLOR_BITS_R)-1)<<COLOR_SHIFT_R))>>(COLOR_BITS_R+COLOR_SHIFT_R-8))| \
+								((LARGER_COLOR_TYPE)((c)&(((1<<COLOR_BITS_G)-1)<<COLOR_SHIFT_G))<<(16-(COLOR_BITS_G+COLOR_SHIFT_G)))| \
+								((LARGER_COLOR_TYPE)((c)&(((1<<COLOR_BITS_B)-1)<<COLOR_SHIFT_B))<<(24-(COLOR_BITS_B+COLOR_SHIFT_B)))))
+		#define NATIVE2COLOR(c)	((COLOR_TYPE)( \
+								((LARGER_COLOR_TYPE)((c)&0x0000F8)<<COLOR_SHIFT_R)| \
+								((LARGER_COLOR_TYPE)((c)&0x00FC00)>>(16-(COLOR_BITS_G+COLOR_SHIFT_G)))| \
+								((LARGER_COLOR_TYPE)((c)&0xF80000)>>(24-(COLOR_BITS_B+COLOR_SHIFT_B)))))
+	*/
+	#else
+		#error "GDISP: This pixel format conversion is not supported yet"
 	#endif
-
-	/* Messaging API */
-	#if GDISP_NEED_MSGAPI
-	#include "gdisp_lld_msgs.h"
-	extern void gdisp_lld_msg_dispatch(gdisp_lld_msg_t *msg);
-	#endif
-
-#ifdef __cplusplus
-}
 #endif
 
 #endif	/* GFX_USE_GDISP */

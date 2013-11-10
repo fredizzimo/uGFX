@@ -14,16 +14,16 @@
 /* Driver hardware support.                                                  */
 /*===========================================================================*/
 
-#define GDISP_DRIVER_NAME				"SSD1306"
-
-#define GDISP_HARDWARE_CLEARS			FALSE
-#define GDISP_HARDWARE_FILLS			TRUE
-#define GDISP_HARDWARE_BITFILLS			FALSE
-#define GDISP_HARDWARE_SCROLL			TRUE
-#define GDISP_HARDWARE_PIXELREAD		FALSE
+#define GDISP_HARDWARE_FLUSH			TRUE		// This controller requires flushing
+#define GDISP_HARDWARE_DRAWPIXEL		TRUE
+#define GDISP_HARDWARE_PIXELREAD		TRUE
 #define GDISP_HARDWARE_CONTROL			TRUE
 
-#define GDISP_PIXELFORMAT				GDISP_PIXELFORMAT_MONO
+#define GDISP_LLD_PIXELFORMAT			GDISP_PIXELFORMAT_MONO
+
+// This controller supports a special gdispControl() to inverse the display.
+// Pass a parameter of 1 for inverse and 0 for normal.
+#define GDISP_CONTROL_INVERSE			(GDISP_CONTROL_LLD+0)
 
 #endif	/* GFX_USE_GDISP */
 
