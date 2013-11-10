@@ -232,7 +232,7 @@ GDisplay *gdispGetDisplay(unsigned display);
  * 			value.
  * @note	If a NULL is passed for the dispay this call is ignored.
  *
- * @param[in] g	The display number (0..n)
+ * @param[in] g 	The display to use
  *
  * @api
  */
@@ -254,7 +254,7 @@ void gdispSetDisplay(GDisplay *g);
  * 			Calling it again won't hurt though.
  *
  *
- * @param[in] g	The display number (0..n)
+ * @param[in] g 	The display to use
  *
  * @api
  */
