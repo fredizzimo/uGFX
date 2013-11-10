@@ -145,7 +145,7 @@ extern GDisplay	*GDISP;
  */
 	/**
 	 * @brief   The pixel format.
-	 * @default	It generally defaults to the hardware pixel format.
+	 * @details	It generally defaults to the hardware pixel format.
 	 * @note	This doesn't need to match the hardware pixel format.
 	 * 			It is definitely more efficient when it does.
 	 * @note	When GDISP_TOTAL_CONTROLLERS > 1, this must
@@ -232,7 +232,7 @@ GDisplay *gdispGetDisplay(unsigned display);
  * 			value.
  * @note	If a NULL is passed for the dispay this call is ignored.
  *
- * @param[in] display	The display number (0..n)
+ * @param[in] g	The display number (0..n)
  *
  * @api
  */
@@ -254,7 +254,7 @@ void gdispSetDisplay(GDisplay *g);
  * 			Calling it again won't hurt though.
  *
  *
- * @param[in] display	The display number (0..n)
+ * @param[in] g	The display number (0..n)
  *
  * @api
  */

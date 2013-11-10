@@ -16,7 +16,7 @@
 #ifndef _GDISP_LLD_H
 #define _GDISP_LLD_H
 
-#if GFX_USE_GDISP || defined(__DOXYGEN__)
+#if GFX_USE_GDISP // || defined(__DOXYGEN__)
 
 /*===========================================================================*/
 /* Error checks.                                                             */
@@ -277,8 +277,9 @@ struct GDisplay {
 		 * @pre		GDISP_HARDWARE_STREAM_WRITE is TRUE
 		 *
 		 * @param[in]	g				The driver structure
-		 * @param[in]	g->p.x,g->p.y	The window position
-		 * @param[in]	g->p.cx,g->p.cy	The window size
+		 *
+		 * @note		g->p.x,g->p.y	The window position
+		 * @note		g->p.cx,g->p.cy	The window size
 		 *
 		 * @note		The parameter variables must not be altered by the driver.
 		 * @note		Streaming operations that wrap the defined window have
@@ -292,8 +293,8 @@ struct GDisplay {
 		 * @pre		GDISP_HARDWARE_STREAM_WRITE is TRUE
 		 *
 		 * @param[in]	g				The driver structure
-		 * @param[in]	g->p.color		The color to display at the curent position
 		 *
+		 * @note		g->p.color		The color to display at the curent position
 		 * @note		The parameter variables must not be altered by the driver.
 		 */
 		LLDSPEC	void gdisp_lld_write_color(GDisplay *g);

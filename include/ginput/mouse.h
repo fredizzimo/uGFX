@@ -112,7 +112,6 @@ extern "C" {
 	 * @return	A pointer to the display
 	 *
 	 * @param[in] instance		The ID of the mouse input instance
-	 * @param[in] g				The GDisplay to which this mouse belongs
 	 */
 	GDisplay *ginputGetMouseDisplay(uint16_t instance);
 
