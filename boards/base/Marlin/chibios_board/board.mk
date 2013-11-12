@@ -1,5 +1,3 @@
-# List of all the board related files.
-BOARDSRC = src/boards/MARLIN/board.c
+BOARDINC = $(GFXLIB)/boards/base/Marlin/chibios_board
+BOARDSRC = $(BOARDINC)/board.c \
 
-# Required include directories
-BOARDINC = src/boards/MARLIN
