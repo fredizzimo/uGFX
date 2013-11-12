@@ -107,18 +107,6 @@ GHandle gwinGListCreate(GDisplay *g, GListObject *widget, GWidgetInit *pInit, bo
 void gwinListSetScroll(GHandle gh, scroll_t flag);
 
 /**
- * @brief				Change the behaviour of the scroll bar
- *
- * @note				Current possible values: @p scrollAlways and @p scrollAuto
- *
- * @param[in] gh		The widget handle (must be a list handle)
- * @param[in] flag		The behaviour to be set
- *
- * @api
- */
-void gwinListSetScroll(GHandle gh, scroll_t flag);
-
-/**
  * @brief				Add an item to the list
  *
  * @note				The ID you get returned is not static. If items get removed from the list, the list items get

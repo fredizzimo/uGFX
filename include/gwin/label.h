@@ -63,16 +63,6 @@ GHandle gwinGLabelCreate(GDisplay *g, GLabelObject *widget, GWidgetInit *pInit);
  */
 void gwinLabelSetBorder(GHandle gh, bool_t border);
 
-/**
- * @brief				Border settings for the default rendering routine
- *
- * @param[in] gh		The widget handle (must be a list handle)
- * @param[in] border	Shall a border be rendered?
- *
- * @api
- */
-void gwinLabelSetBorder(GHandle gh, bool_t border);
-
 #ifdef __cplusplus
 }
 #endif
