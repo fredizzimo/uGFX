@@ -240,7 +240,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		acquire_bus(g);
 		set_viewport(g);
 		set_cursor(g);
-		dma_with_noinc(g, &c, g->p.cx*g->p.cy)
+		dma_with_noinc(g, &c, g->p.cx*g->p.cy);
 		release_bus(g);
 	}
 #endif
