@@ -1399,6 +1399,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 		} else if (sbit < 0x80) {
 			for(tbit=sbit<<1; tbit < ebit; tbit<<=1) full |= tbit;
 		}
+		tbit = start%45 == 0 ? sbit : 0;
 
 		MUTEX_ENTER(g);
 		g->p.color = color;
@@ -1433,7 +1434,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 			if (full & 0x30) { g->p.x = x-a; g->p.y = y+b; drawpixel_clip(g); }
 			if (full == 0xFF) {
 				autoflush(g);
-				MUTEX_EXIT;
+				MUTEX_EXIT();
 				return;
 			}
 		}
@@ -1457,10 +1458,10 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 			a = 1;
 			b = radius;
 			P = 4 - radius;
-			if ((sbit & 0x20) || (ebit & 0x40)) { g->p.x = x; g->p.y = y+b; drawpixel_clip(g); }
-			if ((sbit & 0x02) || (ebit & 0x04)) { g->p.x = x; g->p.y = y-b; drawpixel_clip(g); }
-			if ((sbit & 0x80) || (ebit & 0x01)) { g->p.x = x+b; g->p.y = y; drawpixel_clip(g); }
-			if ((sbit & 0x08) || (ebit & 0x10)) { g->p.x = x-b; g->p.y = y; drawpixel_clip(g); }
+			if ((sbit & 0x20) || (tbit & 0x40) || (ebit & 0x40)) { g->p.x = x; g->p.y = y+b; drawpixel_clip(g); }
+			if ((sbit & 0x02) || (tbit & 0x04) || (ebit & 0x04)) { g->p.x = x; g->p.y = y-b; drawpixel_clip(g); }
+			if ((sbit & 0x80) || (tbit & 0x01) || (ebit & 0x01)) { g->p.x = x+b; g->p.y = y; drawpixel_clip(g); }
+			if ((sbit & 0x08) || (tbit & 0x10) || (ebit & 0x10)) { g->p.x = x-b; g->p.y = y; drawpixel_clip(g); }
 			do {
 				if (((sbit & 0x01) && a >= sedge) || ((ebit & 0x01) && a <= eedge)) { g->p.x = x+b; g->p.y = y-a; drawpixel_clip(g); }
 				if (((sbit & 0x02) && a <= sedge) || ((ebit & 0x02) && a >= eedge)) { g->p.x = x+a; g->p.y = y-b; drawpixel_clip(g); }
@@ -1489,10 +1490,10 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 			a = 1;
 			b = radius;
 			P = 4 - radius;
-			if (sbit & 0x60) { g->p.x = x; g->p.y = y+b; drawpixel_clip(g); }
-			if (sbit & 0x06) { g->p.x = x; g->p.y = y-b; drawpixel_clip(g); }
-			if (sbit & 0x81) { g->p.x = x+b; g->p.y = y; drawpixel_clip(g); }
-			if (sbit & 0x18) { g->p.x = x-b; g->p.y = y; drawpixel_clip(g); }
+			if ((sbit & 0x60) || (tbit & 0xC0)) { g->p.x = x; g->p.y = y+b; drawpixel_clip(g); }
+			if ((sbit & 0x06) || (tbit & 0x0C)) { g->p.x = x; g->p.y = y-b; drawpixel_clip(g); }
+			if ((sbit & 0x81) || (tbit & 0x03)) { g->p.x = x+b; g->p.y = y; drawpixel_clip(g); }
+			if ((sbit & 0x18) || (tbit & 0x30)) { g->p.x = x-b; g->p.y = y; drawpixel_clip(g); }
 			do {
 				if ((sbit & 0x01) && (a >= sedge || a <= eedge)) { g->p.x = x+b; g->p.y = y-a; drawpixel_clip(g); }
 				if ((sbit & 0x02) && (a <= sedge || a >= eedge)) { g->p.x = x+a; g->p.y = y-b; drawpixel_clip(g); }
@@ -2056,17 +2057,17 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 #if GDISP_NEED_ARC
 	void gdispGDrawRoundedBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t radius, color_t color) {
 		if (2*radius > cx || 2*radius > cy) {
-			gdispDrawBox(x, y, cx, cy, color);
+			gdispGDrawBox(g, x, y, cx, cy, color);
 			return;
 		}
-		gdispDrawArc(x+radius, y+radius, radius, 90, 180, color);
-		gdispDrawLine(x+radius+1, y, x+cx-2-radius, y, color);
-		gdispDrawArc(x+cx-1-radius, y+radius, radius, 0, 90, color);
-		gdispDrawLine(x+cx-1, y+radius+1, x+cx-1, y+cy-2-radius, color);
-		gdispDrawArc(x+cx-1-radius, y+cy-1-radius, radius, 270, 360, color);
-		gdispDrawLine(x+radius+1, y+cy-1, x+cx-2-radius, y+cy-1, color);
-		gdispDrawArc(x+radius, y+cy-1-radius, radius, 180, 270, color);
-		gdispDrawLine(x, y+radius+1, x, y+cy-2-radius, color);
+		gdispGDrawArc(g, x+radius, y+radius, radius, 90, 180, color);
+		gdispGDrawLine(g, x+radius+1, y, x+cx-2-radius, y, color);
+		gdispGDrawArc(g, x+cx-1-radius, y+radius, radius, 0, 90, color);
+		gdispGDrawLine(g, x+cx-1, y+radius+1, x+cx-1, y+cy-2-radius, color);
+		gdispGDrawArc(g, x+cx-1-radius, y+cy-1-radius, radius, 270, 360, color);
+		gdispGDrawLine(g, x+radius+1, y+cy-1, x+cx-2-radius, y+cy-1, color);
+		gdispGDrawArc(g, x+radius, y+cy-1-radius, radius, 180, 270, color);
+		gdispGDrawLine(g, x, y+radius+1, x, y+cy-2-radius, color);
 	}
 #endif
 
@@ -2076,16 +2077,16 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 
 		radius2 = radius*2;
 		if (radius2 > cx || radius2 > cy) {
-			gdispFillArea(x, y, cx, cy, color);
+			gdispGFillArea(g, x, y, cx, cy, color);
 			return;
 		}
-		gdispFillArc(x+radius, y+radius, radius, 90, 180, color);
-		gdispFillArea(x+radius+1, y, cx-radius2, radius, color);
-		gdispFillArc(x+cx-1-radius, y+radius, radius, 0, 90, color);
-		gdispFillArc(x+cx-1-radius, y+cy-1-radius, radius, 270, 360, color);
-		gdispFillArea(x+radius+1, y+cy-radius, cx-radius2, radius, color);
-		gdispFillArc(x+radius, y+cy-1-radius, radius, 180, 270, color);
-		gdispFillArea(x, y+radius, cx, cy-radius2, color);
+		gdispGFillArc(g, x+radius, y+radius, radius, 90, 180, color);
+		gdispGFillArea(g, x+radius+1, y, cx-radius2, radius, color);
+		gdispGFillArc(g, x+cx-1-radius, y+radius, radius, 0, 90, color);
+		gdispGFillArc(g, x+cx-1-radius, y+cy-1-radius, radius, 270, 360, color);
+		gdispGFillArea(g, x+radius+1, y+cy-radius, cx-radius2, radius, color);
+		gdispGFillArc(g, x+radius, y+cy-1-radius, radius, 180, 270, color);
+		gdispGFillArea(g, x, y+radius, cx, cy-radius2, color);
 	}
 #endif
 
