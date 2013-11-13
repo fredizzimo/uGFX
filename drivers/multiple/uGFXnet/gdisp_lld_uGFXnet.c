@@ -33,6 +33,17 @@
 
 #if defined(WIN32) || GFX_USE_OS_WIN32
 	#include <winsock.h>
+
+	static void StopSockets(void) {
+		WSACleanup();
+	}
+	static void StartSockets(void) {
+		WSADATA wsaData;
+		if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0)
+			gfxHalt("GDISP: uGFXnet - WSAStartup failed");
+		atexit(StopSockets);
+	}
+
 #else
 	#include <sys/types.h>
 	#include <sys/socket.h>
@@ -42,6 +53,7 @@
 
 	#define closesocket(fd)			close(fd)
 	#define ioctlsocket(fd,cmd,arg)	ioctl(fd,cmd,arg)
+	#define StartSockets()
 	#ifndef SOCKET
 		#define SOCKET	int
 	#endif
@@ -72,6 +84,7 @@
 #define GNETCODE_MOUSE_X		0x0007		// This is only ever received - never sent. Response is 0x0007,x
 #define GNETCODE_MOUSE_Y		0x0008		// This is only ever received - never sent. Response is 0x0008,y
 #define GNETCODE_MOUSE_B		0x0009		// This is only ever received - never sent. Response is 0x0009,buttons
+#define GNETCODE_KILL			0xFFFE		// This is only ever received - never sent. Response is 0xFFFE,retcode
 
 #define GNETCODE_VERSION		0x0100		// V1.0
 
@@ -88,7 +101,7 @@ typedef struct netPriv {
 static gfxThreadHandle	hThread;
 static GDisplay *		mouseDisplay;
 
-static DECLARE_THREAD_STACK(waNetThread, 256);
+static DECLARE_THREAD_STACK(waNetThread, 512);
 static DECLARE_THREAD_FUNCTION(NetThread, param) {
 	SOCKET				listenfd, fdmax, i, clientfd;
 	int					len;
@@ -99,6 +112,9 @@ static DECLARE_THREAD_FUNCTION(NetThread, param) {
     GDisplay *			g;
     netPriv *			priv;
 	(void)param;
+
+	// Start the sockets layer
+	StartSockets();
 
 	/* clear the master and temp sets */
 	FD_ZERO(&master);
@@ -237,6 +253,10 @@ static DECLARE_THREAD_FUNCTION(NetThread, param) {
 				priv->databytes = 0;
 				g->flags |= GDISP_FLG_HAVEDATA;
 				break;
+			case GNETCODE_KILL:
+				gfxHalt("GDISP: uGFXnet - Display sent KILL command");
+				break;
+
 			default:
 				// Just ignore unrecognised data
 				break;
