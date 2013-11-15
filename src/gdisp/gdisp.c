@@ -509,7 +509,7 @@ static void line_clip(GDisplay *g) {
 }
 
 #if GDISP_STARTUP_LOGO_TIMEOUT > 0
-	static void StatupLogoDisplay(GDisplay *g) {
+	static void StartupLogoDisplay(GDisplay *g) {
 		coord_t			x, y, w;
 		const coord_t *	p;
 		static const coord_t blks[] = {
@@ -566,12 +566,11 @@ static void line_clip(GDisplay *g) {
 void _gdispInit(void) {
 	GDisplay		*g;
 	uint16_t		i;
+
+	/* Initialise all controllers */
 	#if GDISP_TOTAL_CONTROLLERS > 1
 		uint16_t	j;
-	#endif
 
-	/* Initialise driver */
-	#if GDISP_TOTAL_CONTROLLERS > 1
 		for(g = GDisplayArray, j=0; j < GDISP_TOTAL_CONTROLLERS; j++)
 			for(i = 0; i < DisplayCountList[j]; g++, i++) {
 				g->vmt = ControllerList[j];
@@ -586,65 +585,38 @@ void _gdispInit(void) {
 			MUTEX_ENTER(g);
 			g->flags = 0;
 			gdisp_lld_init(g);
-
-			#if defined(GDISP_DEFAULT_ORIENTATION) && GDISP_NEED_CONTROL && GDISP_HARDWARE_CONTROL
-				g->p.x = GDISP_CONTROL_ORIENTATION;
-				g->p.ptr = (void *)GDISP_DEFAULT_ORIENTATION;
-				#if GDISP_HARDWARE_CONTROL == HARDWARE_AUTODETECT
-					if (g->vmt->control)
-				#endif
-				gdisp_lld_control(g);
-			#endif
-
-			// Set the initial clipping region
-			#if GDISP_NEED_VALIDATION || GDISP_NEED_CLIP
-
-				// Best is hardware clipping
-				#if GDISP_HARDWARE_CLIP
-					#if GDISP_HARDWARE_CLIP == HARDWARE_AUTODETECT
-						if (g->vmt->setclip)
-					#endif
-					{
-						g->p.x = 0;
-						g->p.y = 0;
-						g->p.cx = g->g.Width;
-						g->p.cy = g->g.Height;
-						gdisp_lld_set_clip(g);
-					}
-					#if GDISP_HARDWARE_CLIP == HARDWARE_AUTODETECT
-						else
-					#endif
-				#endif
-
-				// Worst is software clipping
-				#if GDISP_HARDWARE_CLIP != TRUE
-					{
-						g->clipx0 = 0;
-						g->clipy0 = 0;
-						g->clipx1 = g->g.Width;
-						g->clipy1 = g->g.Height;
-					}
-				#endif
-			#endif
 			MUTEX_EXIT(g);
-			gdispGClear(g, GDISP_STARTUP_COLOR);
-			#if GDISP_STARTUP_LOGO_TIMEOUT > 0
-				StatupLogoDisplay(g);
-			#endif
-			#if !GDISP_NEED_AUTOFLUSH && GDISP_HARDWARE_FLUSH
-				gdispGFlush(g);
-			#endif
 	}
+
+	// Set the orientation, the clipping area, clear all the displays (and add the logo if required)
+	for(g = GDisplayArray, i = 0; i < GDISP_TOTAL_DISPLAYS; g++, i++) {
+		#if defined(GDISP_DEFAULT_ORIENTATION) && GDISP_NEED_CONTROL && GDISP_HARDWARE_CONTROL
+			gdispGControl(g, GDISP_CONTROL_ORIENTATION, (void *)GDISP_DEFAULT_ORIENTATION);
+		#endif
+		#if GDISP_NEED_VALIDATION || GDISP_NEED_CLIP
+			gdispGSetClip(g, 0, 0, g->g.Width, g->g.Height);
+		#endif
+		gdispGClear(g, GDISP_STARTUP_COLOR);
+		#if GDISP_STARTUP_LOGO_TIMEOUT > 0
+			StartupLogoDisplay(g);
+		#endif
+		#if GDISP_HARDWARE_FLUSH
+			gdispGFlush(g);
+		#endif
+	}
+
+	// Re-clear the display after the timeout if we added the logo
 	#if GDISP_STARTUP_LOGO_TIMEOUT > 0
 		gfxSleepMilliseconds(GDISP_STARTUP_LOGO_TIMEOUT);
 		for(g = GDisplayArray, i = 0; i < GDISP_TOTAL_DISPLAYS; g++, i++) {
 			gdispGClear(g, GDISP_STARTUP_COLOR);
-			#if !GDISP_NEED_AUTOFLUSH && GDISP_HARDWARE_FLUSH
+			#if GDISP_HARDWARE_FLUSH
 				gdispGFlush(g);
 			#endif
 		}
 	#endif
 
+	// Start the automatic timer flush (if required)
 	#if GDISP_NEED_TIMERFLUSH
 		gtimerInit(&FlushTimer);
 		gtimerStart(&FlushTimer, FlushTimerFn, 0, TRUE, GDISP_NEED_TIMERFLUSH);
@@ -1178,7 +1150,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 	#endif
 }
 	
-#if GDISP_NEED_CLIP
+#if GDISP_NEED_CLIP || GDISP_NEED_VALIDATION
 	void gdispGSetClip(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy) {
 		MUTEX_ENTER(g);
 
