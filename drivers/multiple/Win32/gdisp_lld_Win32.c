@@ -528,6 +528,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		#if GDISP_NEED_CONTROL
 			switch(g->g.Orientation) {
 			case GDISP_ROTATE_0:
+			default:
 				x = priv->x;
 				y = priv->y;
 				break;
@@ -636,6 +637,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		#if GDISP_NEED_CONTROL
 			switch(g->g.Orientation) {
 			case GDISP_ROTATE_0:
+			default:
 				color = GetPixel(priv->dcBuffer, priv->x, priv->y);
 				break;
 			case GDISP_ROTATE_90:
@@ -683,6 +685,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		#if GDISP_NEED_CONTROL
 			switch(g->g.Orientation) {
 			case GDISP_ROTATE_0:
+			default:
 				x = g->p.x;
 				y = g->p.y;
 				break;
@@ -743,6 +746,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		#if GDISP_NEED_CONTROL
 			switch(g->g.Orientation) {
 			case GDISP_ROTATE_0:
+			default:
 				rect.top = g->p.y;
 				rect.bottom = rect.top + g->p.cy;
 				rect.left = g->p.x;
@@ -810,6 +814,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		// Copy the bits we need
 		switch(g->g.Orientation) {
 		case GDISP_ROTATE_0:
+		default:
 			return 0;					// not handled as it doesn't need to be.
 		case GDISP_ROTATE_90:
 			for(src = buffer+g->p.x1, j = 0; j < g->p.cy; j++, src += g->p.x2 - g->p.cx) {
@@ -869,6 +874,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		#if GDISP_NEED_CONTROL
 			switch(g->g.Orientation) {
 			case GDISP_ROTATE_0:
+			default:
 				bmpInfo.bV4SizeImage = (g->p.cy*g->p.x2) * sizeof(pixel_t);
 				bmpInfo.bV4Width = g->p.x2;
 				bmpInfo.bV4Height = -g->p.cy; /* top-down image */
@@ -951,6 +957,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		#if GDISP_NEED_CONTROL
 			switch(g->g.Orientation) {
 			case GDISP_ROTATE_0:
+			default:
 				color = GetPixel(priv->dcBuffer, g->p.x, g->p.y);
 				break;
 			case GDISP_ROTATE_90:
@@ -983,6 +990,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		#if GDISP_NEED_CONTROL
 			switch(g->g.Orientation) {
 			case GDISP_ROTATE_0:
+			default:
 				rect.top = g->p.y;
 				rect.bottom = rect.top+g->p.cy;
 				rect.left = g->p.x;
