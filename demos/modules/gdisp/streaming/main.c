@@ -64,9 +64,6 @@ int main(void) {
 	float		ii, spin, dy, spinspeed, h, f, g;
 
 	gfxInit();
-	#if GDISP_NEED_CONTROL
-		gdispSetOrientation(GDISP_ROTATE_90);
-	#endif
 
 	width = gdispGetWidth();
 	height = gdispGetHeight();

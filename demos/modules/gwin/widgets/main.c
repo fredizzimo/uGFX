@@ -272,10 +272,6 @@ int main(void) {
 		gwinAttachMouse(0);
 	#endif
 
-	#if GDISP_NEED_CONTROL
-		gdispSetOrientation(GDISP_ROTATE_90);
-	#endif
-
 	// Create the gwin windows/widgets
 	createWidgets();
 
