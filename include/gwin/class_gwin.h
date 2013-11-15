@@ -104,6 +104,16 @@ typedef struct gwinVMT {
 	/* @} */
 #endif
 
+// These flags are needed whether or not we are running a window manager.
+/**
+ * @brief	Flags for redrawing after a visibility change
+ * @{
+ */
+#define GWIN_WMFLG_PRESERVE			0x0001						// @< Preserve whatever existing contents possible if a window can't redraw
+#define GWIN_WMFLG_NOBGCLEAR		0x0002						// @< Don't clear the area if the window is not visible
+#define GWIN_WMFLG_NOZORDER			0x0004						// @< Don't redraw higher z-order windows that overlap
+/* @} */
+
 #if GWIN_NEED_WINDOWMANAGER || defined(__DOXYGEN__)
 	#if 1				// When we know that wmq is the first element of the GWindowObject structure
 		#define QItem2GWindow(qi)		((GHandle)qi)
@@ -125,7 +135,7 @@ typedef struct gwinVMT {
 		void (*DeInit)		(void);									// @< The window manager has just been removed as the current window manager
 		bool_t (*Add)		(GHandle gh, const GWindowInit *pInit);	// @< A window has been added
 		void (*Delete)		(GHandle gh);							// @< A window has been deleted
-		void (*Visible)		(GHandle gh);							// @< A window has changed its visibility state
+		void (*Redraw)		(GHandle gh, int visflags);				// @< A window needs to be redraw (or undrawn)
 		void (*Redim)		(GHandle gh, coord_t x, coord_t y, coord_t w, coord_t h);	// @< A window wants to be moved or resized
 		void (*Raise)		(GHandle gh);							// @< A window wants to be on top
 		void (*MinMax)		(GHandle gh, GWindowMinMax minmax);		// @< A window wants to be minimized/maximised

@@ -37,15 +37,31 @@ static color_t	defaultBgColor = Black;
  * Helper Routines
  *-----------------------------------------------*/
 
-#if !GWIN_NEED_WINDOWMANAGER
-	static void _gwm_vis(GHandle gh) {
-		if (gh->vmt->Redraw) {
+#if GWIN_NEED_WINDOWMANAGER
+	#define _gwm_redraw(gh, flags)		_GWINwm->vmt->Redraw(gh, flags)
+	#define _gwm_redim(gh,x,y,w,h)		_GWINwm->vmt->Redim(gh,x,y,w,h);
+#else
+	static void _gwm_redraw(GHandle gh, int flags) {
+		if ((gh->flags & GWIN_FLG_VISIBLE)) {
+			if (gh->vmt->Redraw) {
+				#if GDISP_NEED_CLIP
+					gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
+				#endif
+				gh->vmt->Redraw(gh);
+			} else if (!(flags & GWIN_WMFLG_PRESERVE))
+				#if GDISP_NEED_CLIP
+					gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
+				#endif
+				gdispGFillArea(gh->display, gh->x, gh->y, gh->width, gh->height, gh->bgcolor);
+				if (gh->vmt->AfterClear)
+					gh->vmt->AfterClear(gh);
+			}
+		} else if (!(flags & GWIN_WMFLG_NOBGCLEAR)) {
 			#if GDISP_NEED_CLIP
-				gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+				gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 			#endif
-			gh->vmt->Redraw(gh);
-		} else
-			gwinClear(gh);
+			gdispGFillArea(gh->display, gh->x, gh->y, gh->width, gh->height, defaultBgColor);
+		}
 	}
 	static void _gwm_redim(GHandle gh, coord_t x, coord_t y, coord_t width, coord_t height) {
 		gh->x = x; gh->y = y;
@@ -60,14 +76,7 @@ static color_t	defaultBgColor = Black;
 		if (gh->y+gh->height > gdispGetHeight()) gh->height = gdispGetHeight() - gh->y;
 
 		// Redraw the window
-		if ((gh->flags & GWIN_FLG_VISIBLE)) {
-			if (gh->vmt->Redraw) {
-				#if GDISP_NEED_CLIP
-					gdispSetClip(gh->x, gh->y, gh->width, gh->height);
-				#endif
-				gh->vmt->Redraw(gh);
-			}
-		}
+		_gwm_redraw(gh, GWIN_WMFLG_PRESERVE|GWIN_WMFLG_NOBGCLEAR);
 	}
 #endif
 
@@ -108,15 +117,15 @@ GHandle _gwindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pInit
 		pgw->font = defaultFont;
 	#endif
 
-#if GWIN_NEED_WINDOWMANAGER
-	if (!_GWINwm->vmt->Add(pgw, pInit)) {
-		if ((pgw->flags & GWIN_FLG_DYNAMIC))
-			gfxFree(pgw);
-		return 0;
-	}
-#else
-	_gwm_redim(pgw, pInit->x, pInit->y, pInit->width, pInit->height);
-#endif
+	#if GWIN_NEED_WINDOWMANAGER
+		if (!_GWINwm->vmt->Add(pgw, pInit)) {
+			if ((pgw->flags & GWIN_FLG_DYNAMIC))
+				gfxFree(pgw);
+			return 0;
+		}
+	#else
+		_gwm_redim(pgw, pInit->x, pInit->y, pInit->width, pInit->height);
+	#endif
 
 	return (GHandle)pgw;
 }
@@ -163,6 +172,9 @@ GHandle gwinGWindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pI
 }
 
 void gwinDestroy(GHandle gh) {
+	// Make the window invisible
+	gwinSetVisible(gh, FALSE);
+
 	// Remove from the window manager
 	#if GWIN_NEED_WINDOWMANAGER
 		_GWINwm->vmt->Delete(gh);
@@ -188,18 +200,12 @@ void gwinSetVisible(GHandle gh, bool_t visible) {
 	if (visible) {
 		if (!(gh->flags & GWIN_FLG_VISIBLE)) {
 			gh->flags |= GWIN_FLG_VISIBLE;
-			#if GWIN_NEED_WINDOWMANAGER
-				_GWINwm->vmt->Visible(gh);
-			#else
-				_gwm_vis(gh);
-			#endif
+			_gwm_redraw(gh, 0);
 		}
 	} else {
 		if ((gh->flags & GWIN_FLG_VISIBLE)) {
 			gh->flags &= ~GWIN_FLG_VISIBLE;
-			#if GWIN_NEED_WINDOWMANAGER
-				_GWINwm->vmt->Visible(gh);
-			#endif
+			_gwm_redraw(gh, 0);
 		}
 	}
 }
@@ -212,22 +218,12 @@ void gwinSetEnabled(GHandle gh, bool_t enabled) {
 	if (enabled) {
 		if (!(gh->flags & GWIN_FLG_ENABLED)) {
 			gh->flags |= GWIN_FLG_ENABLED;
-			if ((gh->flags & GWIN_FLG_VISIBLE) && gh->vmt->Redraw) {
-				#if GDISP_NEED_CLIP
-					gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
-				#endif
-				gh->vmt->Redraw(gh);
-			}
+			_gwm_redraw(gh, GWIN_WMFLG_PRESERVE|GWIN_WMFLG_NOBGCLEAR);
 		}
 	} else {
 		if ((gh->flags & GWIN_FLG_ENABLED)) {
 			gh->flags &= ~GWIN_FLG_ENABLED;
-			if ((gh->flags & GWIN_FLG_VISIBLE) && gh->vmt->Redraw) {
-				#if GDISP_NEED_CLIP
-					gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
-				#endif
-				gh->vmt->Redraw(gh);
-			}
+			_gwm_redraw(gh, GWIN_WMFLG_PRESERVE|GWIN_WMFLG_NOBGCLEAR);
 		}
 	}
 }
@@ -237,28 +233,15 @@ bool_t gwinGetEnabled(GHandle gh) {
 }
 
 void gwinMove(GHandle gh, coord_t x, coord_t y) {
-	#if GWIN_NEED_WINDOWMANAGER
-		_GWINwm->vmt->Redim(gh, x, y, gh->width, gh->height);
-	#else
-		_gwm_redim(gh, x, y, gh->width, gh->height);
-	#endif
+	_gwm_redim(gh, x, y, gh->width, gh->height);
 }
 
 void gwinResize(GHandle gh, coord_t width, coord_t height) {
-	#if GWIN_NEED_WINDOWMANAGER
-		_GWINwm->vmt->Redim(gh, gh->x, gh->y, width, height);
-	#else
-		_gwm_redim(gh, gh->x, gh->y, width, height);
-	#endif
+	_gwm_redim(gh, gh->x, gh->y, width, height);
 }
 
 void gwinRedraw(GHandle gh) {
-	#if GWIN_NEED_WINDOWMANAGER
-		gwinRaise(gh);
-	#else
-		if ((gh->flags & GWIN_FLG_VISIBLE))
-			_gwm_vis(gh);
-	#endif
+	_gwm_redraw(gh, GWIN_WMFLG_PRESERVE|GWIN_WMFLG_NOBGCLEAR);
 }
 
 #if GDISP_NEED_TEXT

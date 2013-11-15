@@ -27,7 +27,7 @@ static void WM_Init(void);
 static void WM_DeInit(void);
 static bool_t WM_Add(GHandle gh, const GWindowInit *pInit);
 static void WM_Delete(GHandle gh);
-static void WM_Visible(GHandle gh);
+static void WM_Redraw(GHandle gh, int flags);
 static void WM_Redim(GHandle gh, coord_t x, coord_t y, coord_t w, coord_t h);
 static void WM_Raise(GHandle gh);
 static void WM_MinMax(GHandle gh, GWindowMinMax minmax);
@@ -37,7 +37,7 @@ static const gwmVMT GNullWindowManagerVMT = {
 	WM_DeInit,
 	WM_Add,
 	WM_Delete,
-	WM_Visible,
+	WM_Redraw,
 	WM_Redim,
 	WM_Raise,
 	WM_MinMax,
@@ -86,6 +86,19 @@ GWindowMinMax gwinGetMinMax(GHandle gh) {
 	return GWIN_NORMAL;
 }
 
+void gwinRedrawDisplay(GDisplay *g, bool_t preserve) {
+	const gfxQueueASyncItem *	qi;
+	GHandle						gh;
+
+	for(qi = gfxQueueASyncPeek(&_GWINList); qi; qi = gfxQueueASyncNext(qi)) {
+		gh = QItem2GWindow(qi);
+		if (!g || gh->display == g)
+			_GWINwm->vmt->Redraw(gh,
+					preserve ? (GWIN_WMFLG_PRESERVE|GWIN_WMFLG_NOBGCLEAR|GWIN_WMFLG_NOZORDER)
+							:  (GWIN_WMFLG_NOBGCLEAR|GWIN_WMFLG_NOZORDER));
+	}
+}
+
 /*-----------------------------------------------
  * Window Manager Routines
  *-----------------------------------------------*/
@@ -116,28 +129,38 @@ static bool_t WM_Add(GHandle gh, const GWindowInit *pInit) {
 }
 
 static void WM_Delete(GHandle gh) {
-	// Make the window invisible and clear the area underneath
-	if ((gh->flags & GWIN_FLG_VISIBLE)) {
-		gh->flags &= ~GWIN_FLG_VISIBLE;
-		gdispGFillArea(gh->display, gh->x, gh->y, gh->width, gh->height, gwinGetDefaultBgColor());
-	}
-
 	// Remove it from the queue
 	gfxQueueASyncRemove(&_GWINList, &gh->wmq);
 }
 
-static void WM_Visible(GHandle gh) {
-	#if GDISP_NEED_CLIP
-		gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
-	#endif
+static void WM_Redraw(GHandle gh, int flags) {
 	if ((gh->flags & GWIN_FLG_VISIBLE)) {
-		if (gh->vmt->Redraw)
+		if (gh->vmt->Redraw) {
+			#if GDISP_NEED_CLIP
+				gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
+			#endif
 			gh->vmt->Redraw(gh);
-		else
+		} else if (!(flags & GWIN_WMFLG_PRESERVE)) {
+			#if GDISP_NEED_CLIP
+				gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
+			#endif
 			gdispGFillArea(gh->display, gh->x, gh->y, gh->width, gh->height, gh->bgcolor);
+			if (gh->vmt->AfterClear)
+				gh->vmt->AfterClear(gh);
+		}
+
 		// A real window manager would also redraw the borders here
-	} else
+
+		// A real window manager would then redraw any higher z-order windows
+		// if (!(flags & GWIN_WMFLG_NOZORDER))
+		//		...
+
+	} else if (!(flags & GWIN_WMFLG_NOBGCLEAR)) {
+		#if GDISP_NEED_CLIP
+			gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
+		#endif
 		gdispGFillArea(gh->display, gh->x, gh->y, gh->width, gh->height, gwinGetDefaultBgColor());
+	}
 }
 
 static void WM_Redim(GHandle gh, coord_t x, coord_t y, coord_t w, coord_t h) {
@@ -157,22 +180,19 @@ static void WM_Redim(GHandle gh, coord_t x, coord_t y, coord_t w, coord_t h) {
 		return;
 
 	// Clear the old area
-	if ((gh->flags & GWIN_FLG_VISIBLE))
+	if ((gh->flags & GWIN_FLG_VISIBLE)) {
+		#if GDISP_NEED_CLIP
+			gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
+		#endif
 		gdispGFillArea(gh->display, gh->x, gh->y, gh->width, gh->height, gwinGetDefaultBgColor());
+	}
 
 	// Set the new size
 	gh->x = x; gh->y = y;
 	gh->width = w; gh->height = h;
 
 	// Redraw the window (if possible)
-	if ((gh->flags & GWIN_FLG_VISIBLE)) {
-		if (gh->vmt->Redraw) {
-			#if GDISP_NEED_CLIP
-				gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
-			#endif
-			gh->vmt->Redraw(gh);
-		}
-	}
+	WM_Redraw(gh, GWIN_WMFLG_PRESERVE|GWIN_WMFLG_NOBGCLEAR);
 }
 
 static void WM_MinMax(GHandle gh, GWindowMinMax minmax) {
@@ -187,14 +207,7 @@ static void WM_Raise(GHandle gh) {
 	gfxQueueASyncPut(&_GWINList, &gh->wmq);
 
 	// Redraw the window
-	if ((gh->flags & GWIN_FLG_VISIBLE)) {
-		if (gh->vmt->Redraw) {
-			#if GDISP_NEED_CLIP
-				gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
-			#endif
-			gh->vmt->Redraw(gh);
-		}
-	}
+	WM_Redraw(gh, GWIN_WMFLG_PRESERVE|GWIN_WMFLG_NOBGCLEAR);
 }
 
 #endif /* GFX_USE_GWIN && GWIN_NEED_WINDOWMANAGER */

@@ -379,6 +379,22 @@ extern "C" {
 
 	#if GWIN_NEED_WINDOWMANAGER
 		/**
+		 * @brief	Redraw a window
+		 *
+		 * @param[in] g				The display to redraw. Passing NULL will redraw all displays.
+		 * @param[in] preserve		Should the redraw try to preserve existing screen data for those
+		 * 							windows that can't redraw themselves?
+		 *
+		 * @note	This is normally never required as windows and widgets will redraw as required.
+		 * @note	Some windows are incapable of redrawing themselves as they don't save
+		 * 			their drawing state.
+		 * @note	This does not clear the background - just redraws the gwin windows (where possible)
+		 *
+		 * @api
+		 */
+		void gwinRedrawDisplay(GDisplay *g, bool_t preserve);
+
+		/**
 		 * @brief	Minimize, Maximize or Restore a window
 		 * @pre		GWIN_NEED_WINDOWMANAGER must be TRUE
 		 *
