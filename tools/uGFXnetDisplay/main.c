@@ -6,20 +6,47 @@
  */
 
 #include "gfx.h"
+#include "../drivers/multiple/uGFXnet/uGFXnetProtocol.h"
 
 #ifndef GDISP_GFXNET_PORT
-	#define GDISP_GFXNET_PORT	13001
+	#define GDISP_GFXNET_PORT	GNETCODE_DEFAULT_PORT
 #endif
+// This definition is only required for for O/S's that don't support a command line eg ChibiOS
+// It is ignored by those that do support a command line.
 #ifndef GDISP_GFXNET_HOST
-	#define GDISP_GFXNET_HOST	"127.0.0.1"
+	#define GDISP_GFXNET_HOST	"127.0.0.1"					// Change this to your uGFXnet host.
 #endif
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
+// Do we wish to use old style socket calls. Some socket libraries only support the old version.
+// It is better to use the new version where possible however as it also supports IPv6.
+#ifndef OLD_STYLE_SOCKETS
+	#define OLD_STYLE_SOCKETS		FALSE
+#endif
+
+// Which operating systems support a command line
+#if defined(WIN32) || GFX_USE_OS_WIN32 || GFX_USE_OS_OSX || GFX_USE_OS_LINUX
+	#define EMBEDED_OS	FALSE
+#else
+	#define EMBEDED_OS	TRUE
+#endif
+
+#if GNETCODE_VERSION != GNETCODE_VERSION_1_0
+	#error "This uGFXnet display only supports protocol V1.0"
+#endif
+#if GDISP_PIXELFORMAT != GNETCODE_PIXELFORMAT
+	#error "Oops - The uGFXnet protocol requires a different pixel format. Try defining GDISP_PIXELFORMAT in your gfxconf.h file."
+#endif
 
 #if defined(WIN32) || GFX_USE_OS_WIN32
-	#include <winsock.h>
+	#if OLD_STYLE_SOCKETS
+		#include <winsock.h>
+	#else
+		#include <ws2tcpip.h>
+		#include <winsock2.h>
+	#endif
+	#include <stdio.h>
+	#include <string.h>
+	#include <stdlib.h>
 
 	static void StopSockets(void) {
 		WSACleanup();
@@ -32,6 +59,9 @@
 	}
 
 #else
+	#include <stdio.h>
+	#include <string.h>
+	#include <stdlib.h>
 	#include <sys/types.h>
 	#include <sys/socket.h>
 	#include <netinet/in.h>
@@ -42,36 +72,89 @@
 	#define ioctlsocket(fd,cmd,arg)	ioctl(fd,cmd,arg)
 	#define StartSockets()
 	#ifndef SOCKET
-		#define SOCKET	int
+		#define SOCKET			int
 	#endif
 #endif
 
-#define GNETCODE_VERSION		0x0100		// V1.0
-
-// All commands are sent in 16 bit blocks (2 bytes) in network order (BigEndian)
-#define GNETCODE_INIT			0xFFFF		// Followed by version,width,height,pixelformat,hasmouse
-#define GNETCODE_FLUSH			0x0000		// No following data
-#define GNETCODE_PIXEL			0x0001		// Followed by x,y,color
-#define GNETCODE_FILL			0x0002		// Followed by x,y,cx,cy,color
-#define GNETCODE_BLIT			0x0003		// Followed by x,y,cx,cy,bits
-#define GNETCODE_READ			0x0004		// Followed by x,y - Response is 0x0004,color
-#define GNETCODE_SCROLL			0x0005		// Followed by x,y,cx,cy,lines
-#define GNETCODE_CONTROL		0x0006		// Followed by what,data - Response is 0x0006,0x0000 (fail) or 0x0006,0x0001 (success)
-#define GNETCODE_MOUSE_X		0x0007		// This is only ever received - never sent. Response is 0x0007,x
-#define GNETCODE_MOUSE_Y		0x0008		// This is only ever received - never sent. Response is 0x0008,y
-#define GNETCODE_MOUSE_B		0x0009		// This is only ever received - never sent. Response is 0x0009,buttons
-#define GNETCODE_KILL			0xFFFE		// This is only ever received - never sent. Response is 0xFFFE,retcode
-
-
 static GListener				gl;
 static SOCKET					netfd = (SOCKET)-1;
+static font_t					font;
 
+#define STRINGOF_RAW(s)		#s
+#define STRINGOF(s)			STRINGOF_RAW(s)
+
+#if EMBEDED_OS
+	#define cmd_args
+	#define proto_args	void
+	#define xhost		GDISP_GFXNET_HOST
+	#define xport		STRINGOF(GDISP_GFXNET_HOST)
+	#define xportnum	GDISP_GFXNET_HOST
+#else
+	#define cmd_args	argc, argv
+	#define proto_args	int argc, char **argv
+	static char *		xhost;
+	static char *		xport;
+	#if OLD_STYLE_SOCKETS
+		static int		xportnum = GDISP_GFXNET_PORT;
+	#endif
+#endif
+
+/**
+ * Get a whole packet of data.
+ * Len is specified in the number of uint16_t's we want as our protocol only talks uint16_t's.
+ * If the connection closes before we get all the data - the call returns FALSE.
+ */
+static bool_t getpkt(uint16_t *pkt, int len) {
+	int		got;
+	int		have;
+
+	// Get the packet of data
+	len *= sizeof(uint16_t);
+	have = 0;
+	while(len && (got = recv(netfd, ((char *)pkt)+have, len, 0)) > 0) {
+		have += got;
+		len -= got;
+	}
+	if (len)
+		return FALSE;
+
+	// Convert each uint16_t to host order
+	for(got = 0, have /= 2; got < have; got++)
+		pkt[got] = ntohs(pkt[got]);
+
+	return TRUE;
+}
+
+/**
+ * Send a whole packet of data.
+ * Len is specified in the number of uint16_t's we want to send as our protocol only talks uint16_t's.
+ * Note that contents of the packet are modified to ensure it will cross the wire in the correct format.
+ * If the connection closes before we send all the data - the call returns FALSE.
+ */
+static bool_t sendpkt(uint16_t *pkt, int len) {
+	int		i;
+
+	// Convert each uint16_t to network order
+	for(i = 0; i < len; i++)
+		pkt[i] = htons(pkt[i]);
+
+	// Send it
+	len *= sizeof(uint16_t);
+	return send(netfd, (const char *)pkt, len, 0) == len;
+}
+
+/**
+ * We use a separate thread to capture mouse events and send them down the pipe.
+ * We do the send in a single transaction to prevent it getting interspersed with
+ * any reply we need to send on the main thread.
+ */
 static DECLARE_THREAD_STACK(waNetThread, 512);
 static DECLARE_THREAD_FUNCTION(NetThread, param) {
 	GEventMouse				*pem;
 	uint16_t				cmd[2];
 	uint16_t				lbuttons;
 	coord_t					lx, ly;
+	(void)					param;
 
 	// Initialize the mouse and the listener.
 	geventListenerInit(&gl);
@@ -89,45 +172,223 @@ static DECLARE_THREAD_FUNCTION(NetThread, param) {
 		if (netfd == (SOCKET)-1)
 			continue;
 
+		// Nothing to do if the mouse data has not changed
+		if (lx == pem->x && ly == pem->y && lbuttons == pem->current_buttons)
+			continue;
+
 		// Transfer mouse data that has changed
 		if (lx != pem->x) {
 			lx = pem->x;
-			cmd[0] = htons(GNETCODE_MOUSE_X);
-			cmd[1] = htons(lx);
-			send(netfd, cmd, sizeof(cmd), 0);
+			cmd[0] = GNETCODE_MOUSE_X;
+			cmd[1] = lx;
+			sendpkt(cmd, 2);
 		}
 		if (ly != pem->y) {
 			ly = pem->y;
-			cmd[0] = htons(GNETCODE_MOUSE_Y);
-			cmd[1] = htons(ly);
-			send(netfd, cmd, sizeof(cmd), 0);
+			cmd[0] = GNETCODE_MOUSE_Y;
+			cmd[1] = ly;
+			sendpkt(cmd, 2);
 		}
-		if (lbuttons != pem->current_buttons) {
-			lbuttons = pem->current_buttons;
-			cmd[0] = htons(GNETCODE_MOUSE_B);
-			cmd[1] = htons(lbuttons);
-			send(netfd, cmd, sizeof(cmd), 0);
-		}
+		// We always send the buttons as it also acts as a mouse sync signal
+		lbuttons = pem->current_buttons;
+		cmd[0] = GNETCODE_MOUSE_B;
+		cmd[1] = lbuttons;
+		sendpkt(cmd, 2);
 	}
+	return 0;
 }
 
-int main(void) {
-	coord_t		width, height;
-	font_t		font;
-	uint16_t	cmd[2];
+/**
+ * Do the connection to the remote host.
+ * We have two prototypes here - one for embedded systems and one for systems with a command line.
+ * We have two methods of using the sockets library - one very old style and the other the more modern approach.
+ */
+static SOCKET doConnect(proto_args) {
+	SOCKET				fd;
 
-    // Initialize and clear the display
-    gfxInit();
+	#if !EMBEDED_OS
+		(void)			argc;
+
+		// Parse the command line arguments
+		xhost = 0;
+		xport = 0;
+		while (*++argv) {
+			if (!xhost)
+				xhost = argv[0];
+			else if (!xport) {
+				xport = argv[0];
+				#if OLD_STYLE_SOCKETS
+					if (sscanf(xport, "%i", &xportnum) != 1 || xportnum >= 65536 || xportnum <= 0) {
+						fprintf(stderr, "Error: Bad port specification '%s'\n\n", xport);
+						goto usage;
+					}
+				#endif
+			} else {
+				fprintf(stderr, "Error: Unknown argument '%s'\n\n", argv[0]);
+				goto usage;
+			}
+		}
+
+		// Check the command line arguments were valid.
+		if (!xport)
+			xport = STRINGOF(GDISP_GFXNET_PORT);
+		if (!xhost) {
+		usage:
+			fprintf(stderr, "Usage: uGFXnetDisplay host [port]\n");
+			exit(1);
+		}
+	#endif
+
+	#if OLD_STYLE_SOCKETS
+		struct sockaddr_in	serv_addr;
+		struct hostent *	h;
+
+		h = gethostbyname(xhost);
+		if (!h)
+			// Error: Unable to find an ip-address for the specified server
+			return (SOCKET)-1;
+		memset(&serv_addr, 0, sizeof(serv_addr));
+		serv_addr.sin_port = htons(xportnum);
+		serv_addr.sin_family = h->h_addrtype;
+		memcpy(&serv_addr.sin_addr, h->h_addr_list[0], h->h_length);
+		if ((fd = socket(serv_addr.sin_family, SOCK_STREAM, 0)) == (SOCKET)-1)
+			// Error: Socket failed
+			return (SOCKET)-1;
+		if (connect(fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) == -1) {
+			// Error: Could not connect to the specified server
+			closesocket(fd);
+			fd = (SOCKET)-1;
+		}
+
+	#else
+		struct addrinfo	hints, *servinfo, *p;
+
+		memset(&hints, 0, sizeof hints);
+		hints.ai_family = AF_UNSPEC;
+		hints.ai_socktype = SOCK_STREAM;
+		fd = (SOCKET)-1;
+
+		if (getaddrinfo(xhost, xport, &hints, &servinfo) != 0)
+			// Error: Unable to find an ip-address for the specified server
+			return (SOCKET)-1;
+		for(p = servinfo; p; p = p->ai_next) {
+			if ((fd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == (SOCKET)-1)
+				continue;
+			if (connect(fd, p->ai_addr, p->ai_addrlen) == -1) {
+				closesocket(fd);
+				fd = (SOCKET)-1;
+				continue;
+			}
+			break;
+		}
+		freeaddrinfo(servinfo);
+	#endif
+
+	return fd;
+}
+
+/**
+ * Our main function.
+ * There are two prototypes - one for systems with a command line and one for embedded systems without one.
+ */
+int main(proto_args) {
+	uint16_t			cmd[5];
+	unsigned			cnt;
+
+
+	// Initialize and clear the display
+	gfxInit();
 	font = gdispOpenFont("UI2");
 
 	// Open the connection
-	// TODO
+	gdispDrawStringBox(0, 0, gdispGetWidth(), gdispGetHeight(), "Connecting to host...", font, White, justifyCenter);
+	StartSockets();
+	netfd = doConnect(cmd_args);
+	if (netfd == (SOCKET)-1)
+		gfxHalt("Could not connect to the specified server");
+	gdispClear(Black);
 
-	// Start the mouse thread
-	// TODO
+	// Get the initial packet from the host
+	if (!getpkt(cmd, 2)) goto alldone;
+	if (cmd[0] != GNETCODE_INIT || cmd[1] != GNETCODE_VERSION)
+		gfxHalt("Oops - The protocol doesn't look like one we understand");
+
+	// Get the rest of the initial arguments
+	if (!getpkt(cmd, 4)) goto alldone;						// cmd[] = width, height, pixelformat, hasmouse
+
+	// We will ignore size mismatches but the pixel format must match
+	if (cmd[2] != GDISP_PIXELFORMAT)
+		gfxHalt("Oops - The remote display is using a different pixel format to us.\nTry defining GDISP_PIXELFORMAT in your gfxconf.h file.");
+
+	// Start the mouse thread if needed
+	if (cmd[3]) {
+		gfxThreadHandle	hThread;
+
+		hThread = gfxThreadCreate(waNetThread, sizeof(waNetThread), HIGH_PRIORITY, NetThread, 0);
+		gfxThreadClose(hThread);
+	}
 
 	// Process incoming instructions
-	// TODO
+	while(getpkt(cmd, 1)) {
+		switch(cmd[0]) {
+		case GNETCODE_FLUSH:
+			gdispFlush();
+			break;
+		case GNETCODE_PIXEL:
+			if (!getpkt(cmd, 3)) goto alldone;				// cmd[] = x, y, color
+			gdispDrawPixel(cmd[0], cmd[1], cmd[2]);
+			break;
+		case GNETCODE_FILL:
+			if (!getpkt(cmd, 5)) goto alldone;				// cmd[] = x, y, cx, cy, color
+			gdispFillArea(cmd[0], cmd[1], cmd[2], cmd[3], cmd[4]);
+			break;
+		case GNETCODE_BLIT:
+			if (!getpkt(cmd, 4)) goto alldone;				// cmd[] = x, y, cx, cy		- Followed by cx * cy pixels
+			gdispStreamStart(cmd[0],cmd[1],cmd[2],cmd[3]);
+			for(cnt = (unsigned)cmd[2] * cmd[3]; cnt; cnt--) {
+				if (!getpkt(cmd, 1)) goto alldone;
+				gdispStreamColor(cmd[0]);
+			}
+			gdispStreamStop();
+			break;
+		case GNETCODE_READ:
+			if (!getpkt(cmd, 2)) goto alldone;				// cmd[] = x, y				- Response is GNETCODE_READ,color
+			cmd[1] = gdispGetPixelColor(cmd[0], cmd[1]);
+			cmd[0] = GNETCODE_READ;
+			if (!sendpkt(cmd, 2)) goto alldone;
+			break;
+		case GNETCODE_SCROLL:
+			if (!getpkt(cmd, 5)) goto alldone;				// cmd[] = x, y, cx, cy, lines
+			gdispVerticalScroll(cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], Black);
+			break;
+		case GNETCODE_CONTROL:
+			if (!getpkt(cmd, 2)) goto alldone;				// cmd[] = what,data		- Response is GNETCODE_CONTROL, 0x0000 (fail) or GNETCODE_CONTROL, 0x0001 (success)
+			gdispControl(cmd[0], (void *)(unsigned)cmd[1]);
+			switch(cmd[0]) {
+			case GDISP_CONTROL_ORIENTATION:
+				cmd[1] = (uint16_t)gdispGetOrientation() == cmd[1] ? 1 : 0;
+				break;
+			case GDISP_CONTROL_POWER:
+				cmd[1] = (uint16_t)gdispGetPowerMode() == cmd[1] ? 1 : 0;
+				break;
+			case GDISP_CONTROL_BACKLIGHT:
+				cmd[1] = (uint16_t)gdispGetBacklight() == cmd[1] ? 1 : 0;
+				break;
+			default:
+				cmd[1] = 0;
+				break;
+			}
+			cmd[0] = GNETCODE_CONTROL;
+			if (!sendpkt(cmd, 2)) goto alldone;
+			break;
+		default:
+			gfxHalt("Oops - The host has sent invalid commands");
+			break;
+		}
+	}
 
+alldone:
+	closesocket(netfd);
+	gfxHalt("Connection closed");
+	return 0;
 }
-

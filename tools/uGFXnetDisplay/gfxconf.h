@@ -26,12 +26,16 @@
 #define GDISP_NEED_CONTROL			TRUE
 #define GDISP_NEED_SCROLL			TRUE
 #define GDISP_NEED_PIXELREAD		TRUE
+#define GDISP_NEED_STREAMING		TRUE
 
 /* Builtin Fonts */
 #define GDISP_INCLUDE_FONT_UI2		TRUE
 
 /* Features for the GINPUT sub-system. */
 #define GINPUT_NEED_MOUSE			TRUE
+
+/* We need to use this specific pixel format to match the network protocol */
+#define GDISP_PIXELFORMAT			GDISP_PIXELFORMAT_RGB565
 
 #endif /* _GFXCONF_H */
 
