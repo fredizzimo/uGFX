@@ -15,8 +15,15 @@
 
 #if GFX_USE_OS_WIN32
 
-//#define WIN32_LEAN_AND_MEAN
+#ifndef _WIN32_WINNT
+	#define _WIN32_WINNT 0x0501			// Windows XP and up
+#endif
+
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#undef WIN32_LEAN_AND_MEAN
+
+#include <malloc.h>
 
 /* Stop cygwin from defining these types */
 #define __int8_t_defined
