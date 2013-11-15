@@ -16,6 +16,7 @@
 #define GDISP_DRIVER_VMT			GDISPVMT_uGFXnet
 #include "../drivers/multiple/uGFXnet/gdisp_lld_config.h"
 #include "gdisp/lld/gdisp_lld.h"
+#include "../drivers/multiple/uGFXnet/uGFXnetProtocol.h"
 
 #ifndef GDISP_SCREEN_WIDTH
 	#define GDISP_SCREEN_WIDTH	640
@@ -24,7 +25,16 @@
 	#define GDISP_SCREEN_HEIGHT	480
 #endif
 #ifndef GDISP_GFXNET_PORT
-	#define GDISP_GFXNET_PORT	13001
+	#define GDISP_GFXNET_PORT	GNETCODE_DEFAULT_PORT
+#endif
+#ifndef GDISP_DONT_WAIT_FOR_NET_DISPLAY
+	#define GDISP_DONT_WAIT_FOR_NET_DISPLAY	FALSE
+#endif
+#if GNETCODE_VERSION != GNETCODE_VERSION_1_0
+	#error "GDISP: uGFXnet - This driver only support protocol V1.0"
+#endif
+#if GDISP_LLD_PIXELFORMAT != GNETCODE_PIXELFORMAT
+	#error "GDISP: uGFXnet - The driver pixel format must match the protocol"
 #endif
 
 #include <stdio.h>
@@ -72,22 +82,6 @@
 /* Driver local routines    .                                                */
 /*===========================================================================*/
 
-// All commands are sent in 16 bit blocks (2 bytes) in network order (BigEndian)
-#define GNETCODE_INIT			0xFFFF		// Followed by version,width,height,pixelformat,hasmouse
-#define GNETCODE_FLUSH			0x0000		// No following data
-#define GNETCODE_PIXEL			0x0001		// Followed by x,y,color
-#define GNETCODE_FILL			0x0002		// Followed by x,y,cx,cy,color
-#define GNETCODE_BLIT			0x0003		// Followed by x,y,cx,cy,bits
-#define GNETCODE_READ			0x0004		// Followed by x,y - Response is 0x0004,color
-#define GNETCODE_SCROLL			0x0005		// Followed by x,y,cx,cy,lines
-#define GNETCODE_CONTROL		0x0006		// Followed by what,data - Response is 0x0006,0x0000 (fail) or 0x0006,0x0001 (success)
-#define GNETCODE_MOUSE_X		0x0007		// This is only ever received - never sent. Response is 0x0007,x
-#define GNETCODE_MOUSE_Y		0x0008		// This is only ever received - never sent. Response is 0x0008,y
-#define GNETCODE_MOUSE_B		0x0009		// This is only ever received - never sent. Response is 0x0009,buttons
-#define GNETCODE_KILL			0xFFFE		// This is only ever received - never sent. Response is 0xFFFE,retcode
-
-#define GNETCODE_VERSION		0x0100		// V1.0
-
 typedef struct netPriv {
 	SOCKET			netfd;					// The current socket
 	unsigned		databytes;				// How many bytes have been read
@@ -101,14 +95,31 @@ typedef struct netPriv {
 static gfxThreadHandle	hThread;
 static GDisplay *		mouseDisplay;
 
+/**
+ * Send a whole packet of data.
+ * Len is specified in the number of uint16_t's we want to send as our protocol only talks uint16_t's.
+ * Note that contents of the packet are modified to ensure it will cross the wire in the correct format.
+ * If the connection closes before we send all the data - the call returns FALSE.
+ */
+static bool_t sendpkt(SOCKET netfd, uint16_t *pkt, int len) {
+	int		i;
+
+	// Convert each uint16_t to network order
+	for(i = 0; i < len; i++)
+		pkt[i] = htons(pkt[i]);
+
+	// Send it
+	len *= sizeof(uint16_t);
+	return send(netfd, (const char *)pkt, len, 0) == len;
+}
+
 static DECLARE_THREAD_STACK(waNetThread, 512);
 static DECLARE_THREAD_FUNCTION(NetThread, param) {
 	SOCKET				listenfd, fdmax, i, clientfd;
 	int					len;
 	unsigned			disp;
 	fd_set				master, read_fds;
-    struct sockaddr_in	serv_addr;
-    struct sockaddr_in	clientaddr;
+    struct sockaddr_in	addr;
     GDisplay *			g;
     netPriv *			priv;
 	(void)param;
@@ -123,12 +134,12 @@ static DECLARE_THREAD_FUNCTION(NetThread, param) {
 	if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) == (SOCKET)-1)
 		gfxHalt("GDISP: uGFXnet - Socket failed");
 
-	memset(&serv_addr, 0, sizeof(serv_addr));
-	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	serv_addr.sin_port = htons(GDISP_GFXNET_PORT);
+	memset(&addr, 0, sizeof(addr));
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	addr.sin_port = htons(GDISP_GFXNET_PORT);
 
-	if (bind(listenfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) == -1)
+	if (bind(listenfd, (struct sockaddr*)&addr, sizeof(addr)) == -1)
 		gfxHalt("GDISP: uGFXnet - Bind failed");
 
     if (listen(listenfd, 10) == -1)
@@ -155,8 +166,8 @@ static DECLARE_THREAD_FUNCTION(NetThread, param) {
 
 			// Handle new connections
 			if(i == listenfd) {
-				len = sizeof(clientaddr);
-				if((clientfd = accept(listenfd, (struct sockaddr *)&clientaddr, &len)) == (SOCKET)-1)
+				len = sizeof(addr);
+				if((clientfd = accept(listenfd, (struct sockaddr *)&addr, &len)) == (SOCKET)-1)
 					gfxHalt("GDISP: uGFXnet - Accept failed");
 
 				// Look for a display that isn't connected
@@ -176,7 +187,7 @@ static DECLARE_THREAD_FUNCTION(NetThread, param) {
 				if (disp >= GDISP_TOTAL_DISPLAYS) {
 					// No Just close the connection
 					closesocket(clientfd);
-					//printf(New connection from %s on socket %d rejected as all displays are already connected\n", inet_ntoa(clientaddr.sin_addr), clientfd);
+					//printf(New connection from %s on socket %d rejected as all displays are already connected\n", inet_ntoa(addr.sin_addr), clientfd);
 					continue;
 				}
 
@@ -186,19 +197,28 @@ static DECLARE_THREAD_FUNCTION(NetThread, param) {
 				priv = g->priv;
 				memset(priv, 0, sizeof(netPriv));
 				priv->netfd = clientfd;
-				g->flags |= GDISP_FLG_CONNECTED;
-				//printf(New connection from %s on socket %d allocated to display %u\n", inet_ntoa(clientaddr.sin_addr), clientfd, disp+1);
+				//printf(New connection from %s on socket %d allocated to display %u\n", inet_ntoa(addr.sin_addr), clientfd, disp+1);
 
 				// Send the initialisation data (2 words at a time)
-				priv->data[0] = htons(GNETCODE_INIT);
-				priv->data[1] = htons(GNETCODE_VERSION);
-				send(clientfd, (const char *)priv->data, 4, 0);
-				priv->data[0] = htons(GDISP_SCREEN_WIDTH);
-				priv->data[1] = htons(GDISP_SCREEN_HEIGHT);
-				send(clientfd, (const char *)priv->data, 4, 0);
-				priv->data[0] = htons(GDISP_LLD_PIXELFORMAT);
-				priv->data[1] = htons((g->flags & GDISP_FLG_HASMOUSE) ? 1 : 0);
-				send(clientfd, (const char *)priv->data, 4, 0);
+				priv->data[0] = GNETCODE_INIT;
+				priv->data[1] = GNETCODE_VERSION;
+				sendpkt(priv->netfd, priv->data, 2);
+				priv->data[0] = GDISP_SCREEN_WIDTH;
+				priv->data[1] = GDISP_SCREEN_HEIGHT;
+				sendpkt(priv->netfd, priv->data, 2);
+				priv->data[0] = GDISP_LLD_PIXELFORMAT;
+				priv->data[1] = (g->flags & GDISP_FLG_HASMOUSE) ? 1 : 0;
+				sendpkt(priv->netfd, priv->data, 2);
+
+				// The display is now working
+				g->flags |= GDISP_FLG_CONNECTED;
+
+				// Send a redraw all
+				#if GFX_USE_GWIN && GWIN_NEED_WINDOWMANAGER
+					gdispGClear(g, gwinGetDefaultBgColor());
+					gwinRedrawDisplay(g, FALSE);
+				#endif
+
 				continue;
 			}
 
@@ -238,19 +258,30 @@ static DECLARE_THREAD_FUNCTION(NetThread, param) {
 			}
 
 			// Do we have a full reply yet
+			priv->databytes += len;
 			if (priv->databytes < sizeof(priv->data))
 				continue;
+			priv->databytes = 0;
+
+			// Convert network byte or to host byte order
+			priv->data[0] = ntohs(priv->data[0]);
+			priv->data[1] = ntohs(priv->data[1]);
 
 			// Process the data received
 			switch(priv->data[0]) {
 			#if GINPUT_NEED_MOUSE
-				case GNETCODE_MOUSE_X:		priv->mousex = priv->data[1];			break;
-				case GNETCODE_MOUSE_Y:		priv->mousey = priv->data[1];			break;
-				case GNETCODE_MOUSE_B:		priv->mousebuttons = priv->data[1];		break;
+				case GNETCODE_MOUSE_X:		priv->mousex = priv->data[1];		break;
+				case GNETCODE_MOUSE_Y:		priv->mousey = priv->data[1];		break;
+				case GNETCODE_MOUSE_B:
+					priv->mousebuttons = priv->data[1];
+					// Treat the button event as the sync signal
+					#if GINPUT_MOUSE_POLL_PERIOD == TIME_INFINITE
+						ginputMouseWakeup();
+					#endif
+					break;
 			#endif
 			case GNETCODE_CONTROL:
 			case GNETCODE_READ:
-				priv->databytes = 0;
 				g->flags |= GDISP_FLG_HAVEDATA;
 				break;
 			case GNETCODE_KILL:
@@ -310,12 +341,17 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		netPriv	*	priv;
 		uint16_t	buf[1];
 
-		if (!(g->flags & GDISP_FLG_CONNECTED))
-			return;
+		#if GDISP_DONT_WAIT_FOR_NET_DISPLAY
+			if (!(g->flags & GDISP_FLG_CONNECTED))
+				return;
+		#else
+			while(!(g->flags & GDISP_FLG_CONNECTED))
+				gfxSleepMilliseconds(200);
+		#endif
 
 		priv = g->priv;
-		buf[0] = htons(GNETCODE_FLUSH);
-		send(priv->netfd, (const char *)buf, sizeof(buf), 0);
+		buf[0] = GNETCODE_FLUSH;
+		sendpkt(priv->netfd, buf, 1);
 	}
 #endif
 
@@ -324,15 +360,20 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		netPriv	*	priv;
 		uint16_t	buf[4];
 
-		if (!(g->flags & GDISP_FLG_CONNECTED))
-			return;
+		#if GDISP_DONT_WAIT_FOR_NET_DISPLAY
+			if (!(g->flags & GDISP_FLG_CONNECTED))
+				return;
+		#else
+			while(!(g->flags & GDISP_FLG_CONNECTED))
+				gfxSleepMilliseconds(200);
+		#endif
 
 		priv = g->priv;
-		buf[0] = htons(GNETCODE_PIXEL);
-		buf[1] = htons(g->p.x);
-		buf[2] = htons(g->p.y);
-		buf[3] = htons(COLOR2NATIVE(g->p.color));
-		send(priv->netfd, (const char *)buf, sizeof(buf), 0);
+		buf[0] = GNETCODE_PIXEL;
+		buf[1] = g->p.x;
+		buf[2] = g->p.y;
+		buf[3] = COLOR2NATIVE(g->p.color);
+		sendpkt(priv->netfd, buf, 4);
 	}
 #endif
 
@@ -343,17 +384,22 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		netPriv	*	priv;
 		uint16_t	buf[6];
 
-		if (!(g->flags & GDISP_FLG_CONNECTED))
-			return;
+		#if GDISP_DONT_WAIT_FOR_NET_DISPLAY
+			if (!(g->flags & GDISP_FLG_CONNECTED))
+				return;
+		#else
+			while(!(g->flags & GDISP_FLG_CONNECTED))
+				gfxSleepMilliseconds(200);
+		#endif
 
 		priv = g->priv;
-		buf[0] = htons(GNETCODE_FILL);
-		buf[1] = htons(g->p.x);
-		buf[2] = htons(g->p.y);
-		buf[3] = htons(g->p.cx);
-		buf[4] = htons(g->p.cy);
-		buf[5] = htons(COLOR2NATIVE(g->p.color));
-		send(priv->netfd, (const char *)buf, sizeof(buf), 0);
+		buf[0] = GNETCODE_FILL;
+		buf[1] = g->p.x;
+		buf[2] = g->p.y;
+		buf[3] = g->p.cx;
+		buf[4] = g->p.cy;
+		buf[5] = COLOR2NATIVE(g->p.color);
+		sendpkt(priv->netfd, buf, 6);
 	}
 #endif
 
@@ -364,25 +410,30 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		uint16_t	buf[5];
 		coord_t		x, y;
 
-		if (!(g->flags & GDISP_FLG_CONNECTED))
-			return;
+		#if GDISP_DONT_WAIT_FOR_NET_DISPLAY
+			if (!(g->flags & GDISP_FLG_CONNECTED))
+				return;
+		#else
+			while(!(g->flags & GDISP_FLG_CONNECTED))
+				gfxSleepMilliseconds(200);
+		#endif
 
 		// Make everything relative to the start of the line
 		buffer = g->p.ptr;
 		buffer += g->p.x2*g->p.y1;
 		
 		priv = g->priv;
-		buf[0] = htons(GNETCODE_BLIT);
-		buf[1] = htons(g->p.x);
-		buf[2] = htons(g->p.y);
-		buf[3] = htons(g->p.cx);
-		buf[4] = htons(g->p.cy);
-		send(priv->netfd, (const char *)buf, sizeof(buf), 0);
+		buf[0] = GNETCODE_BLIT;
+		buf[1] = g->p.x;
+		buf[2] = g->p.y;
+		buf[3] = g->p.cx;
+		buf[4] = g->p.cy;
+		sendpkt(priv->netfd, buf, 5);
 
 		for(y = 0; y < g->p.cy; y++, buffer += g->p.x2 - g->p.cx) {
 			for(x = 0; x < g->p.cx; x++, buffer++) {
 				buf[0] = COLOR2NATIVE(buffer[0]);
-				send(priv->netfd, (const char *)buf, sizeof(buf[0]), 0);
+				sendpkt(priv->netfd, buf, 1);
 			}
 		}
 	}
@@ -394,14 +445,19 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		uint16_t	buf[3];
 		color_t		data;
 
-		if (!(g->flags & GDISP_FLG_CONNECTED))
-			return 0;
+		#if GDISP_DONT_WAIT_FOR_NET_DISPLAY
+			if (!(g->flags & GDISP_FLG_CONNECTED))
+				return 0;
+		#else
+			while(!(g->flags & GDISP_FLG_CONNECTED))
+				gfxSleepMilliseconds(200);
+		#endif
 
 		priv = g->priv;
-		buf[0] = htons(GNETCODE_READ);
-		buf[1] = htons(g->p.x);
-		buf[2] = htons(g->p.y);
-		send(priv->netfd, (const char *)buf, sizeof(buf), 0);
+		buf[0] = GNETCODE_READ;
+		buf[1] = g->p.x;
+		buf[2] = g->p.y;
+		sendpkt(priv->netfd, buf, 3);
 
 		// Now wait for a reply
 		while(!(g->flags & GDISP_FLG_HAVEDATA) || priv->data[0] != GNETCODE_READ)
@@ -419,17 +475,22 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		netPriv	*	priv;
 		uint16_t	buf[6];
 
-		if (!(g->flags & GDISP_FLG_CONNECTED))
-			return;
+		#if GDISP_DONT_WAIT_FOR_NET_DISPLAY
+			if (!(g->flags & GDISP_FLG_CONNECTED))
+				return;
+		#else
+			while(!(g->flags & GDISP_FLG_CONNECTED))
+				gfxSleepMilliseconds(200);
+		#endif
 
 		priv = g->priv;
-		buf[0] = htons(GNETCODE_FILL);
-		buf[1] = htons(g->p.x);
-		buf[2] = htons(g->p.y);
-		buf[3] = htons(g->p.cx);
-		buf[4] = htons(g->p.cy);
-		buf[5] = htons(g->p.y1);
-		send(priv->netfd, (const char *)buf, sizeof(buf), 0);
+		buf[0] = GNETCODE_SCROLL;
+		buf[1] = g->p.x;
+		buf[2] = g->p.y;
+		buf[3] = g->p.cx;
+		buf[4] = g->p.cy;
+		buf[5] = g->p.y1;
+		sendpkt(priv->netfd, buf, 6);
 	}
 #endif
 
@@ -439,8 +500,13 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		uint16_t	buf[3];
 		bool_t		allgood;
 
-		if (!(g->flags & GDISP_FLG_CONNECTED))
-			return;
+		#if GDISP_DONT_WAIT_FOR_NET_DISPLAY
+			if (!(g->flags & GDISP_FLG_CONNECTED))
+				return;
+		#else
+			while(!(g->flags & GDISP_FLG_CONNECTED))
+				gfxSleepMilliseconds(200);
+		#endif
 
 		// Check if we might support the code
 		switch(g->p.x) {
@@ -464,10 +530,10 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 		// Send the command
 		priv = g->priv;
-		buf[0] = htons(GNETCODE_CONTROL);
-		buf[1] = htons(g->p.x);
-		buf[2] = htons((uint16_t)(int)g->p.ptr);
-		send(priv->netfd, (const char *)buf, sizeof(buf), 0);
+		buf[0] = GNETCODE_CONTROL;
+		buf[1] = g->p.x;
+		buf[2] = (uint16_t)(int)g->p.ptr;
+		sendpkt(priv->netfd, buf, 3);
 
 		// Now wait for a reply
 		while(!(g->flags & GDISP_FLG_HAVEDATA) || priv->data[0] != GNETCODE_CONTROL)
@@ -526,4 +592,3 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 #endif /* GINPUT_NEED_MOUSE */
 
 #endif /* GFX_USE_GDISP */
-

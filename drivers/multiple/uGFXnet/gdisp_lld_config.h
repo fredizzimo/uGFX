@@ -6,8 +6,8 @@
  */
 
 /**
- * @file    drivers/multiple/Win32/gdisp_lld_config.h
- * @brief   GDISP Graphic Driver subsystem low level driver header for Win32.
+ * @file    drivers/multiple/uGFXnet/gdisp_lld_config.h
+ * @brief   GDISP Graphic Driver subsystem low level driver header for uGFXnet.
  *
  * @addtogroup GDISP
  * @{
