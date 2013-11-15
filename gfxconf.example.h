@@ -188,10 +188,13 @@
 
 /* Optional Low Level Driver Definitions */
 /*
-	#define GDISP_SCREEN_WIDTH			320
-	#define GDISP_SCREEN_HEIGHT			240
-	#define TDISP_COLUMNS				16
-	#define TDISP_ROWS					2
+	#define GDISP_SCREEN_WIDTH				320
+	#define GDISP_SCREEN_HEIGHT				240
+	#define GDISP_GFXNET_PORT				13001
+	#define GDISP_DONT_WAIT_FOR_NET_DISPLAY	FALSE
+	#define GDISP_USE_DMA					FALSE
+	#define TDISP_COLUMNS					16
+	#define TDISP_ROWS						2
 */
 
 #endif /* _GFXCONF_H */
