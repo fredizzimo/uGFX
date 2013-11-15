@@ -66,6 +66,10 @@
 	#define GINPUT_MOUSE_CLICK_TIME					700
 #endif
 
+// true/false	- Whether the mouse driver internally handles screen rotation
+#ifndef GINPUT_MOUSE_NO_ROTATION
+	#define GINPUT_MOUSE_NO_ROTATION				FALSE
+#endif
 
 typedef struct MouseReading_t {
 	coord_t		x, y, z;

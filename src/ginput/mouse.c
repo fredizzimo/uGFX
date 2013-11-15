@@ -164,22 +164,22 @@ static struct MouseConfig_t {
 #endif
 
 static void get_calibrated_reading(MouseReading *pt) {
-	#if GINPUT_MOUSE_NEED_CALIBRATION || GDISP_NEED_CONTROL
+	#if GINPUT_MOUSE_NEED_CALIBRATION || (GDISP_NEED_CONTROL && !GINPUT_MOUSE_NO_ROTATION)
 		coord_t		w, h;
 	#endif
 
 	get_raw_reading(pt);
 
-	#if GINPUT_MOUSE_NEED_CALIBRATION || GDISP_NEED_CONTROL
-		w = gdispGGetWidth(MouseConfig.display);
-		h = gdispGGetHeight(MouseConfig.display);
-	#endif
-
 	#if GINPUT_MOUSE_NEED_CALIBRATION
 		_tsTransform(pt, &MouseConfig.caldata);
 	#endif
 
-	#if GDISP_NEED_CONTROL
+	#if GINPUT_MOUSE_NEED_CALIBRATION || (GDISP_NEED_CONTROL && !GINPUT_MOUSE_NO_ROTATION)
+		w = gdispGGetWidth(MouseConfig.display);
+		h = gdispGGetHeight(MouseConfig.display);
+	#endif
+
+	#if GDISP_NEED_CONTROL && !GINPUT_MOUSE_NO_ROTATION
 		switch(gdispGGetOrientation(MouseConfig.display)) {
 			case GDISP_ROTATE_0:
 				break;
@@ -207,12 +207,12 @@ static void get_calibrated_reading(MouseReading *pt) {
 	#endif
 
 	#if GINPUT_MOUSE_NEED_CALIBRATION
-	if (!(MouseConfig.flags & FLG_CAL_RAW)) {
-		if (pt->x < 0)	pt->x = 0;
-		else if (pt->x >= w) pt->x = w-1;
-		if (pt->y < 0)	pt->y = 0;
-		else if (pt->y >= h) pt->y = h-1;
-	}
+		if (!(MouseConfig.flags & FLG_CAL_RAW)) {
+			if (pt->x < 0)	pt->x = 0;
+			else if (pt->x >= w) pt->x = w-1;
+			if (pt->y < 0)	pt->y = 0;
+			else if (pt->y >= h) pt->y = h-1;
+		}
 	#endif
 }
 
