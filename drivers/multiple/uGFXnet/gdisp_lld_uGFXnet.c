@@ -43,6 +43,7 @@
 
 #if defined(WIN32) || GFX_USE_OS_WIN32
 	#include <winsock.h>
+	#define SOCKET_TYPE				SOCKET
 
 	static void StopSockets(void) {
 		WSACleanup();
@@ -64,12 +65,11 @@
 	#define closesocket(fd)			close(fd)
 	#define ioctlsocket(fd,cmd,arg)	ioctl(fd,cmd,arg)
 	#define StartSockets()
-	#ifndef SOCKET
-		#define SOCKET	int
-	#endif
+	#define SOCKET_TYPE				int
 
 #else
-	extern void StartSockets(void);				// Where the application does the lwip stack setup
+	extern void Start_LWIP(void);				// Where the application does the lwip stack setup
+	#define StartSockets()			Start_LWIP();
 
 	#define LWIP_COMPAT_SOCKETS		TRUE
 	#include <lwip/sockets.h>
@@ -79,9 +79,7 @@
 	#if !LWIP_COMPAT_SOCKETS
 		#error "GDISP: uGFXnet - LWIP_COMPAT_SOCKETS must be defined in your lwipopts.h file"
 	#endif
-	#ifndef SOCKET
-		#define SOCKET	int
-	#endif
+	#define SOCKET_TYPE				int
 #endif
 
 #define GDISP_FLG_HASMOUSE			(GDISP_FLG_DRIVER<<0)
@@ -98,7 +96,7 @@
 /*===========================================================================*/
 
 typedef struct netPriv {
-	SOCKET			netfd;					// The current socket
+	SOCKET_TYPE		netfd;					// The current socket
 	unsigned		databytes;				// How many bytes have been read
 	uint16_t		data[2];				// Buffer for storing data read.
 	#if GINPUT_NEED_MOUSE
@@ -119,7 +117,7 @@ static gfxThreadHandle	hThread;
  * Note that contents of the packet are modified to ensure it will cross the wire in the correct format.
  * If the connection closes before we send all the data - the call returns FALSE.
  */
-static bool_t sendpkt(SOCKET netfd, uint16_t *pkt, int len) {
+static bool_t sendpkt(SOCKET_TYPE netfd, uint16_t *pkt, int len) {
 	int		i;
 
 	// Convert each uint16_t to network order
@@ -133,7 +131,7 @@ static bool_t sendpkt(SOCKET netfd, uint16_t *pkt, int len) {
 
 static DECLARE_THREAD_STACK(waNetThread, 512);
 static DECLARE_THREAD_FUNCTION(NetThread, param) {
-	SOCKET				listenfd, fdmax, i, clientfd;
+	SOCKET_TYPE			listenfd, fdmax, i, clientfd;
 	socklen_t			len;
 	int					leni;
 	unsigned			disp;
@@ -145,12 +143,13 @@ static DECLARE_THREAD_FUNCTION(NetThread, param) {
 
 	// Start the sockets layer
 	StartSockets();
+	gfxSleepMilliseconds(100);					// Make sure the thread has time to start.
 
 	/* clear the master and temp sets */
 	FD_ZERO(&master);
 	FD_ZERO(&read_fds);
 
-	if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) == (SOCKET)-1)
+	if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) == (SOCKET_TYPE)-1)
 		gfxHalt("GDISP: uGFXnet - Socket failed");
 
 	memset(&addr, 0, sizeof(addr));
@@ -186,7 +185,7 @@ static DECLARE_THREAD_FUNCTION(NetThread, param) {
 			// Handle new connections
 			if(i == listenfd) {
 				len = sizeof(addr);
-				if((clientfd = accept(listenfd, (struct sockaddr *)&addr, &len)) == (SOCKET)-1)
+				if((clientfd = accept(listenfd, (struct sockaddr *)&addr, &len)) == (SOCKET_TYPE)-1)
 					gfxHalt("GDISP: uGFXnet - Accept failed");
 
 				// Look for a display that isn't connected
