@@ -54,7 +54,7 @@
 		atexit(StopSockets);
 	}
 
-#else
+#elif GFX_USE_OS_LINUX || GFX_USE_OS_OSX
 	#include <sys/types.h>
 	#include <sys/socket.h>
 	#include <netinet/in.h>
@@ -64,6 +64,21 @@
 	#define closesocket(fd)			close(fd)
 	#define ioctlsocket(fd,cmd,arg)	ioctl(fd,cmd,arg)
 	#define StartSockets()
+	#ifndef SOCKET
+		#define SOCKET	int
+	#endif
+
+#else
+	extern void StartSockets(void);				// Where the application does the lwip stack setup
+
+	#define LWIP_COMPAT_SOCKETS		TRUE
+	#include <lwip/sockets.h>
+	#if !LWIP_SOCKET
+		#error "GDISP: uGFXnet - LWIP_SOCKETS must be defined in your lwipopts.h file"
+	#endif
+	#if !LWIP_COMPAT_SOCKETS
+		#error "GDISP: uGFXnet - LWIP_COMPAT_SOCKETS must be defined in your lwipopts.h file"
+	#endif
 	#ifndef SOCKET
 		#define SOCKET	int
 	#endif
@@ -93,7 +108,10 @@ typedef struct netPriv {
 } netPriv;
 
 static gfxThreadHandle	hThread;
-static GDisplay *		mouseDisplay;
+
+#if GINPUT_NEED_MOUSE
+	static GDisplay *		mouseDisplay;
+#endif
 
 /**
  * Send a whole packet of data.
@@ -116,7 +134,8 @@ static bool_t sendpkt(SOCKET netfd, uint16_t *pkt, int len) {
 static DECLARE_THREAD_STACK(waNetThread, 512);
 static DECLARE_THREAD_FUNCTION(NetThread, param) {
 	SOCKET				listenfd, fdmax, i, clientfd;
-	int					len;
+	socklen_t			len;
+	int					leni;
 	unsigned			disp;
 	fd_set				master, read_fds;
     struct sockaddr_in	addr;
@@ -248,7 +267,7 @@ static DECLARE_THREAD_FUNCTION(NetThread, param) {
 			}
 
 			/* handle data from a client */
-			if ((len = recv(i, ((char *)priv->data)+priv->databytes, sizeof(priv->data)-priv->databytes, 0)) <= 0) {
+			if ((leni = recv(i, ((char *)priv->data)+priv->databytes, sizeof(priv->data)-priv->databytes, 0)) <= 0) {
 				// Socket closed or in error state
 				g->flags &= ~GDISP_FLG_CONNECTED;
 				memset(priv, 0, sizeof(netPriv));
@@ -258,7 +277,7 @@ static DECLARE_THREAD_FUNCTION(NetThread, param) {
 			}
 
 			// Do we have a full reply yet
-			priv->databytes += len;
+			priv->databytes += leni;
 			if (priv->databytes < sizeof(priv->data))
 				continue;
 			priv->databytes = 0;
