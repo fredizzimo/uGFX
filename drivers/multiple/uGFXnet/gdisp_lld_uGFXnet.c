@@ -68,11 +68,16 @@
 	#define SOCKET_TYPE				int
 
 #else
-	extern void Start_LWIP(void);				// Where the application does the lwip stack setup
-	#define StartSockets()			Start_LWIP();
-
-	#define LWIP_COMPAT_SOCKETS		TRUE
 	#include <lwip/sockets.h>
+
+	#if GDISP_GFXNET_CUSTOM_LWIP_STARTUP
+		extern void Start_LWIP(void);				// Where the application does the lwip stack setup
+		#define StartSockets()		Start_LWIP();
+	#else
+		#include "lwipthread.h"
+		#define StartSockets()		chThdCreateStatic(wa_lwip_thread, LWIP_THREAD_STACK_SIZE, NORMALPRIO + 1, lwip_thread, 0);
+	#endif
+
 	#if !LWIP_SOCKET
 		#error "GDISP: uGFXnet - LWIP_SOCKETS must be defined in your lwipopts.h file"
 	#endif
@@ -129,7 +134,7 @@ static bool_t sendpkt(SOCKET_TYPE netfd, uint16_t *pkt, int len) {
 	return send(netfd, (const char *)pkt, len, 0) == len;
 }
 
-static DECLARE_THREAD_STACK(waNetThread, 512);
+static DECLARE_THREAD_STACK(waNetThread, 1024);
 static DECLARE_THREAD_FUNCTION(NetThread, param) {
 	SOCKET_TYPE			listenfd, fdmax, i, clientfd;
 	socklen_t			len;
