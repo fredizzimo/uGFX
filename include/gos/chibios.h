@@ -63,7 +63,7 @@ typedef Thread *	gfxThreadHandle;
 extern "C" {
 #endif
 
-#define gfxHalt(msg)				chDbgPanic(msg)
+#define gfxHalt(msg)				{ chDbgPanic(msg); chSysHalt(); }
 #define gfxExit()					chSysHalt()
 #define gfxAlloc(sz)				chHeapAlloc(NULL, sz)
 #define gfxFree(ptr)				chHeapFree(ptr)
