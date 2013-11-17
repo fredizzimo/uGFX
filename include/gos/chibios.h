@@ -73,7 +73,7 @@ extern "C" {
 #define gfxSystemLock()				chSysLock()
 #define gfxSystemUnlock()			chSysUnlock()
 #define gfxMutexInit(pmutex)		chMtxInit(pmutex)
-#define gfxMutexDestroy(pmutex)		{}
+#define gfxMutexDestroy(pmutex)		(void)pmutex
 #define gfxMutexEnter(pmutex)		chMtxLock(pmutex)
 #define gfxMutexExit(pmutex)		chMtxUnlock()
 void *gfxRealloc(void *ptr, size_t oldsz, size_t newsz);
@@ -89,7 +89,7 @@ void gfxSemSignalI(gfxSem *psem);
 gfxThreadHandle gfxThreadCreate(void *stackarea, size_t stacksz, threadpriority_t prio, DECLARE_THREAD_FUNCTION((*fn),p), void *param);
 #define gfxThreadWait(thread)		chThdWait(thread)
 #define gfxThreadMe()				chThdSelf()
-#define gfxThreadClose(thread)		{}
+#define gfxThreadClose(thread)		(void)thread
 
 #ifdef __cplusplus
 }

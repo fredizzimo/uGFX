@@ -40,7 +40,7 @@ typedef pthread_mutex_t		gfxMutex;
 #define gfxMillisecondsToTicks(ms)		(ms)
 #define gfxYield()						sched_yield()
 #define gfxThreadMe()					pthread_self()
-#define gfxThreadClose(th)				{}
+#define gfxThreadClose(th)				(void)th
 #define gfxMutexInit(pmtx)				pthread_mutex_init(pmtx, 0)
 #define gfxMutexDestroy(pmtx)			pthread_mutex_destroy(pmtx)
 #define gfxMutexEnter(pmtx)				pthread_mutex_lock(pmtx)
