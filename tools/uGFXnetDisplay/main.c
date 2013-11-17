@@ -14,7 +14,7 @@
 // This definition is only required for for O/S's that don't support a command line eg ChibiOS
 // It is ignored by those that do support a command line.
 #ifndef GDISP_GFXNET_HOST
-	#define GDISP_GFXNET_HOST	"127.0.0.1"					// Change this to your uGFXnet host.
+	#define GDISP_GFXNET_HOST		"127.0.0.1"					// Change this to your uGFXnet host.
 #endif
 
 // Do we wish to use old style socket calls. Some socket libraries only support the old version.
@@ -37,6 +37,10 @@
 	#error "Oops - The uGFXnet protocol requires a different pixel format. Try defining GDISP_PIXELFORMAT in your gfxconf.h file."
 #endif
 
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
 #if defined(WIN32) || GFX_USE_OS_WIN32
 	#if OLD_STYLE_SOCKETS
 		#include <winsock.h>
@@ -44,9 +48,7 @@
 		#include <ws2tcpip.h>
 		#include <winsock2.h>
 	#endif
-	#include <stdio.h>
-	#include <string.h>
-	#include <stdlib.h>
+	#define SOCKET_TYPE				SOCKET
 
 	static void StopSockets(void) {
 		WSACleanup();
@@ -58,10 +60,7 @@
 		atexit(StopSockets);
 	}
 
-#else
-	#include <stdio.h>
-	#include <string.h>
-	#include <stdlib.h>
+#elif GFX_USE_OS_LINUX || GFX_USE_OS_OSX
 	#include <sys/types.h>
 	#include <sys/socket.h>
 	#include <netinet/in.h>
@@ -71,13 +70,43 @@
 	#define closesocket(fd)			close(fd)
 	#define ioctlsocket(fd,cmd,arg)	ioctl(fd,cmd,arg)
 	#define StartSockets()
-	#ifndef SOCKET
-		#define SOCKET			int
+	#define SOCKET_TYPE				int
+
+#else
+	#include <lwip/sockets.h>
+	#include <lwip/netdb.h>
+
+	#if GDISP_GFXNET_CUSTOM_LWIP_STARTUP
+		extern void Start_LWIP(void);				// Where the application does the lwip stack setup
+		#define StartSockets()		Start_LWIP();
+	#else
+		#include "lwipthread.h"
+		#define StartSockets()		gfxThreadClose(gfxThreadCreate(wa_lwip_thread, LWIP_THREAD_STACK_SIZE, NORMAL_PRIORITY, lwip_thread, 0))
+	#endif
+
+	#if !LWIP_SOCKET
+		#error "GDISP: uGFXnet - LWIP_SOCKETS must be defined in your lwipopts.h file"
+	#endif
+	#if !LWIP_COMPAT_SOCKETS
+		#error "GDISP: uGFXnet - LWIP_COMPAT_SOCKETS must be defined in your lwipopts.h file"
+	#endif
+	#if !LWIP_DNS
+		#error "GDISP: uGFXnet - LWIP_DNS must be defined in your lwipopts.h file"
+	#endif
+	#define SOCKET_TYPE				int
+
+	// Mutex protection is required for LWIP
+	#if !GDISP_GFXNET_UNSAFE_SOCKETS
+		#warning "GDISP: uGFXnet - LWIP sockets are not thread-safe. GDISP_GFXNET_UNSAFE_SOCKETS has been turned on for you."
+		#undef GDISP_GFXNET_UNSAFE_SOCKETS
+		#define GDISP_GFXNET_UNSAFE_SOCKETS	TRUE
 	#endif
 #endif
 
-static GListener				gl;
-static SOCKET					netfd = (SOCKET)-1;
+#if GFX_USE_GINPUT && GINPUT_NEED_MOUSE
+	static GListener				gl;
+#endif
+static SOCKET_TYPE				netfd = (SOCKET_TYPE)-1;
 static font_t					font;
 
 #define STRINGOF_RAW(s)		#s
@@ -143,68 +172,70 @@ static bool_t sendpkt(uint16_t *pkt, int len) {
 	return send(netfd, (const char *)pkt, len, 0) == len;
 }
 
-/**
- * We use a separate thread to capture mouse events and send them down the pipe.
- * We do the send in a single transaction to prevent it getting interspersed with
- * any reply we need to send on the main thread.
- */
-static DECLARE_THREAD_STACK(waNetThread, 512);
-static DECLARE_THREAD_FUNCTION(NetThread, param) {
-	GEventMouse				*pem;
-	uint16_t				cmd[2];
-	uint16_t				lbuttons;
-	coord_t					lx, ly;
-	(void)					param;
+#if GFX_USE_GINPUT && GINPUT_NEED_MOUSE
+	/**
+	 * We use a separate thread to capture mouse events and send them down the pipe.
+	 * We do the send in a single transaction to prevent it getting interspersed with
+	 * any reply we need to send on the main thread.
+	 */
+	static DECLARE_THREAD_STACK(waNetThread, 512);
+	static DECLARE_THREAD_FUNCTION(NetThread, param) {
+		GEventMouse				*pem;
+		uint16_t				cmd[2];
+		uint16_t				lbuttons;
+		coord_t					lx, ly;
+		(void)					param;
 
-	// Initialize the mouse and the listener.
-	geventListenerInit(&gl);
-	geventAttachSource(&gl, ginputGetMouse(0), GLISTEN_MOUSEDOWNMOVES|GLISTEN_MOUSEMETA);
-	lbuttons = 0;
-	lx = ly = -1;
+		// Initialize the mouse and the listener.
+		geventListenerInit(&gl);
+		geventAttachSource(&gl, ginputGetMouse(0), GLISTEN_MOUSEDOWNMOVES|GLISTEN_MOUSEMETA);
+		lbuttons = 0;
+		lx = ly = -1;
 
-	while(1) {
-		// Get a (mouse) event
-		pem = (GEventMouse *)geventEventWait(&gl, TIME_INFINITE);
-		if (pem->type != GEVENT_MOUSE && pem->type != GEVENT_TOUCH)
-			continue;
+		while(1) {
+			// Get a (mouse) event
+			pem = (GEventMouse *)geventEventWait(&gl, TIME_INFINITE);
+			if (pem->type != GEVENT_MOUSE && pem->type != GEVENT_TOUCH)
+				continue;
 
-		// Nothing to do if the socket is not open
-		if (netfd == (SOCKET)-1)
-			continue;
+			// Nothing to do if the socket is not open
+			if (netfd == (SOCKET)-1)
+				continue;
 
-		// Nothing to do if the mouse data has not changed
-		if (lx == pem->x && ly == pem->y && lbuttons == pem->current_buttons)
-			continue;
+			// Nothing to do if the mouse data has not changed
+			if (lx == pem->x && ly == pem->y && lbuttons == pem->current_buttons)
+				continue;
 
-		// Transfer mouse data that has changed
-		if (lx != pem->x) {
-			lx = pem->x;
-			cmd[0] = GNETCODE_MOUSE_X;
-			cmd[1] = lx;
+			// Transfer mouse data that has changed
+			if (lx != pem->x) {
+				lx = pem->x;
+				cmd[0] = GNETCODE_MOUSE_X;
+				cmd[1] = lx;
+				sendpkt(cmd, 2);
+			}
+			if (ly != pem->y) {
+				ly = pem->y;
+				cmd[0] = GNETCODE_MOUSE_Y;
+				cmd[1] = ly;
+				sendpkt(cmd, 2);
+			}
+			// We always send the buttons as it also acts as a mouse sync signal
+			lbuttons = pem->current_buttons;
+			cmd[0] = GNETCODE_MOUSE_B;
+			cmd[1] = lbuttons;
 			sendpkt(cmd, 2);
 		}
-		if (ly != pem->y) {
-			ly = pem->y;
-			cmd[0] = GNETCODE_MOUSE_Y;
-			cmd[1] = ly;
-			sendpkt(cmd, 2);
-		}
-		// We always send the buttons as it also acts as a mouse sync signal
-		lbuttons = pem->current_buttons;
-		cmd[0] = GNETCODE_MOUSE_B;
-		cmd[1] = lbuttons;
-		sendpkt(cmd, 2);
+		return 0;
 	}
-	return 0;
-}
+#endif
 
 /**
  * Do the connection to the remote host.
  * We have two prototypes here - one for embedded systems and one for systems with a command line.
  * We have two methods of using the sockets library - one very old style and the other the more modern approach.
  */
-static SOCKET doConnect(proto_args) {
-	SOCKET				fd;
+static SOCKET_TYPE doConnect(proto_args) {
+	SOCKET_TYPE			fd;
 
 	#if !EMBEDED_OS
 		(void)			argc;
@@ -246,18 +277,18 @@ static SOCKET doConnect(proto_args) {
 		h = gethostbyname(xhost);
 		if (!h)
 			// Error: Unable to find an ip-address for the specified server
-			return (SOCKET)-1;
+			return (SOCKET_TYPE)-1;
 		memset(&serv_addr, 0, sizeof(serv_addr));
 		serv_addr.sin_port = htons(xportnum);
 		serv_addr.sin_family = h->h_addrtype;
 		memcpy(&serv_addr.sin_addr, h->h_addr_list[0], h->h_length);
-		if ((fd = socket(serv_addr.sin_family, SOCK_STREAM, 0)) == (SOCKET)-1)
+		if ((fd = socket(serv_addr.sin_family, SOCK_STREAM, 0)) == (SOCKET_TYPE)-1)
 			// Error: Socket failed
-			return (SOCKET)-1;
+			return (SOCKET_TYPE)-1;
 		if (connect(fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) == -1) {
 			// Error: Could not connect to the specified server
 			closesocket(fd);
-			fd = (SOCKET)-1;
+			fd = (SOCKET_TYPE)-1;
 		}
 
 	#else
@@ -266,17 +297,17 @@ static SOCKET doConnect(proto_args) {
 		memset(&hints, 0, sizeof hints);
 		hints.ai_family = AF_UNSPEC;
 		hints.ai_socktype = SOCK_STREAM;
-		fd = (SOCKET)-1;
+		fd = (SOCKET_TYPE)-1;
 
 		if (getaddrinfo(xhost, xport, &hints, &servinfo) != 0)
 			// Error: Unable to find an ip-address for the specified server
-			return (SOCKET)-1;
+			return (SOCKET_TYPE)-1;
 		for(p = servinfo; p; p = p->ai_next) {
-			if ((fd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == (SOCKET)-1)
+			if ((fd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == (SOCKET_TYPE)-1)
 				continue;
 			if (connect(fd, p->ai_addr, p->ai_addrlen) == -1) {
 				closesocket(fd);
-				fd = (SOCKET)-1;
+				fd = (SOCKET_TYPE)-1;
 				continue;
 			}
 			break;
@@ -304,7 +335,7 @@ int main(proto_args) {
 	gdispDrawStringBox(0, 0, gdispGetWidth(), gdispGetHeight(), "Connecting to host...", font, White, justifyCenter);
 	StartSockets();
 	netfd = doConnect(cmd_args);
-	if (netfd == (SOCKET)-1)
+	if (netfd == (SOCKET_TYPE)-1)
 		gfxHalt("Could not connect to the specified server");
 	gdispClear(Black);
 
@@ -320,13 +351,11 @@ int main(proto_args) {
 	if (cmd[2] != GDISP_PIXELFORMAT)
 		gfxHalt("Oops - The remote display is using a different pixel format to us.\nTry defining GDISP_PIXELFORMAT in your gfxconf.h file.");
 
-	// Start the mouse thread if needed
-	if (cmd[3]) {
-		gfxThreadHandle	hThread;
-
-		hThread = gfxThreadCreate(waNetThread, sizeof(waNetThread), HIGH_PRIORITY, NetThread, 0);
-		gfxThreadClose(hThread);
-	}
+	#if GFX_USE_GINPUT && GINPUT_NEED_MOUSE
+		// Start the mouse thread if needed
+		if (cmd[3])
+			gfxThreadClose(gfxThreadCreate(waNetThread, sizeof(waNetThread), HIGH_PRIORITY, NetThread, 0));
+	#endif
 
 	// Process incoming instructions
 	while(getpkt(cmd, 1)) {
@@ -351,16 +380,20 @@ int main(proto_args) {
 			}
 			gdispStreamStop();
 			break;
-		case GNETCODE_READ:
-			if (!getpkt(cmd, 2)) goto alldone;				// cmd[] = x, y				- Response is GNETCODE_READ,color
-			cmd[1] = gdispGetPixelColor(cmd[0], cmd[1]);
-			cmd[0] = GNETCODE_READ;
-			if (!sendpkt(cmd, 2)) goto alldone;
-			break;
-		case GNETCODE_SCROLL:
-			if (!getpkt(cmd, 5)) goto alldone;				// cmd[] = x, y, cx, cy, lines
-			gdispVerticalScroll(cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], Black);
-			break;
+		#if GDISP_NEED_PIXELREAD
+			case GNETCODE_READ:
+				if (!getpkt(cmd, 2)) goto alldone;				// cmd[] = x, y				- Response is GNETCODE_READ,color
+				cmd[1] = gdispGetPixelColor(cmd[0], cmd[1]);
+				cmd[0] = GNETCODE_READ;
+				if (!sendpkt(cmd, 2)) goto alldone;
+				break;
+		#endif
+		#if GDISP_NEED_SCROLL
+			case GNETCODE_SCROLL:
+				if (!getpkt(cmd, 5)) goto alldone;				// cmd[] = x, y, cx, cy, lines
+				gdispVerticalScroll(cmd[0], cmd[1], cmd[2], cmd[3], cmd[4], Black);
+				break;
+		#endif
 		case GNETCODE_CONTROL:
 			if (!getpkt(cmd, 2)) goto alldone;				// cmd[] = what,data		- Response is GNETCODE_CONTROL, 0x0000 (fail) or GNETCODE_CONTROL, 0x0001 (success)
 			gdispControl(cmd[0], (void *)(unsigned)cmd[1]);
