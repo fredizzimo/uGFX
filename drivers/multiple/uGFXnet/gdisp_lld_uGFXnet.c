@@ -30,6 +30,10 @@
 #ifndef GDISP_DONT_WAIT_FOR_NET_DISPLAY
 	#define GDISP_DONT_WAIT_FOR_NET_DISPLAY	FALSE
 #endif
+#ifndef GDISP_GFXNET_UNSAFE_SOCKETS
+	#define GDISP_GFXNET_UNSAFE_SOCKETS	FALSE
+#endif
+
 #if GNETCODE_VERSION != GNETCODE_VERSION_1_0
 	#error "GDISP: uGFXnet - This driver only support protocol V1.0"
 #endif
@@ -75,7 +79,7 @@
 		#define StartSockets()		Start_LWIP();
 	#else
 		#include "lwipthread.h"
-		#define StartSockets()		chThdCreateStatic(wa_lwip_thread, LWIP_THREAD_STACK_SIZE, NORMALPRIO + 1, lwip_thread, 0);
+		#define StartSockets()		gfxThreadClose(gfxThreadCreate(wa_lwip_thread, LWIP_THREAD_STACK_SIZE, NORMAL_PRIORITY, lwip_thread, 0))
 	#endif
 
 	#if !LWIP_SOCKET
@@ -85,6 +89,13 @@
 		#error "GDISP: uGFXnet - LWIP_COMPAT_SOCKETS must be defined in your lwipopts.h file"
 	#endif
 	#define SOCKET_TYPE				int
+
+	// Mutex protection is required for LWIP
+	#if !GDISP_GFXNET_UNSAFE_SOCKETS
+		#warning "GDISP: uGFXnet - LWIP sockets are not thread-safe. GDISP_GFXNET_UNSAFE_SOCKETS has been turned on for you."
+		#undef GDISP_GFXNET_UNSAFE_SOCKETS
+		#define GDISP_GFXNET_UNSAFE_SOCKETS	TRUE
+	#endif
 #endif
 
 #define GDISP_FLG_HASMOUSE			(GDISP_FLG_DRIVER<<0)
@@ -116,6 +127,17 @@ static gfxThreadHandle	hThread;
 	static GDisplay *		mouseDisplay;
 #endif
 
+#if GDISP_GFXNET_UNSAFE_SOCKETS
+	static gfxMutex	uGFXnetMutex;
+	#define MUTEX_INIT		gfxMutexInit(&uGFXnetMutex)
+	#define MUTEX_ENTER		gfxMutexEnter(&uGFXnetMutex)
+	#define MUTEX_EXIT		gfxMutexExit(&uGFXnetMutex)
+#else
+	#define MUTEX_INIT
+	#define MUTEX_ENTER
+	#define MUTEX_EXIT
+#endif
+
 /**
  * Send a whole packet of data.
  * Len is specified in the number of uint16_t's we want to send as our protocol only talks uint16_t's.
@@ -134,7 +156,7 @@ static bool_t sendpkt(SOCKET_TYPE netfd, uint16_t *pkt, int len) {
 	return send(netfd, (const char *)pkt, len, 0) == len;
 }
 
-static DECLARE_THREAD_STACK(waNetThread, 1024);
+static DECLARE_THREAD_STACK(waNetThread, 512);
 static DECLARE_THREAD_FUNCTION(NetThread, param) {
 	SOCKET_TYPE			listenfd, fdmax, i, clientfd;
 	socklen_t			len;
@@ -231,7 +253,9 @@ static DECLARE_THREAD_FUNCTION(NetThread, param) {
 				sendpkt(priv->netfd, priv->data, 2);
 				priv->data[0] = GDISP_LLD_PIXELFORMAT;
 				priv->data[1] = (g->flags & GDISP_FLG_HASMOUSE) ? 1 : 0;
+				MUTEX_ENTER;
 				sendpkt(priv->netfd, priv->data, 2);
+				MUTEX_EXIT;
 
 				// The display is now working
 				g->flags |= GDISP_FLG_CONNECTED;
@@ -271,14 +295,17 @@ static DECLARE_THREAD_FUNCTION(NetThread, param) {
 			}
 
 			/* handle data from a client */
+			MUTEX_ENTER;
 			if ((leni = recv(i, ((char *)priv->data)+priv->databytes, sizeof(priv->data)-priv->databytes, 0)) <= 0) {
 				// Socket closed or in error state
+				MUTEX_EXIT;
 				g->flags &= ~GDISP_FLG_CONNECTED;
 				memset(priv, 0, sizeof(netPriv));
 				closesocket(i);
 				FD_CLR(i, &master);
 				continue;
 			}
+			MUTEX_EXIT;
 
 			// Do we have a full reply yet
 			priv->databytes += leni;
@@ -329,6 +356,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 	// Initialise the receiver thread (if it hasn't been done already)
 	if (!hThread) {
+		MUTEX_INIT;
 		hThread = gfxThreadCreate(waNetThread, sizeof(waNetThread), HIGH_PRIORITY, NetThread, 0);
 		gfxThreadClose(hThread);
 	}
@@ -374,7 +402,9 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 		priv = g->priv;
 		buf[0] = GNETCODE_FLUSH;
+		MUTEX_ENTER;
 		sendpkt(priv->netfd, buf, 1);
+		MUTEX_EXIT;
 	}
 #endif
 
@@ -396,7 +426,9 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		buf[1] = g->p.x;
 		buf[2] = g->p.y;
 		buf[3] = COLOR2NATIVE(g->p.color);
+		MUTEX_ENTER;
 		sendpkt(priv->netfd, buf, 4);
+		MUTEX_EXIT;
 	}
 #endif
 
@@ -422,7 +454,9 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		buf[3] = g->p.cx;
 		buf[4] = g->p.cy;
 		buf[5] = COLOR2NATIVE(g->p.color);
+		MUTEX_ENTER;
 		sendpkt(priv->netfd, buf, 6);
+		MUTEX_EXIT;
 	}
 #endif
 
@@ -451,6 +485,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		buf[2] = g->p.y;
 		buf[3] = g->p.cx;
 		buf[4] = g->p.cy;
+		MUTEX_ENTER;
 		sendpkt(priv->netfd, buf, 5);
 
 		for(y = 0; y < g->p.cy; y++, buffer += g->p.x2 - g->p.cx) {
@@ -459,6 +494,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 				sendpkt(priv->netfd, buf, 1);
 			}
 		}
+		MUTEX_EXIT;
 	}
 #endif
 
@@ -480,7 +516,9 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		buf[0] = GNETCODE_READ;
 		buf[1] = g->p.x;
 		buf[2] = g->p.y;
+		MUTEX_ENTER;
 		sendpkt(priv->netfd, buf, 3);
+		MUTEX_EXIT;
 
 		// Now wait for a reply
 		while(!(g->flags & GDISP_FLG_HAVEDATA) || priv->data[0] != GNETCODE_READ)
@@ -513,7 +551,9 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		buf[3] = g->p.cx;
 		buf[4] = g->p.cy;
 		buf[5] = g->p.y1;
+		MUTEX_ENTER;
 		sendpkt(priv->netfd, buf, 6);
+		MUTEX_EXIT;
 	}
 #endif
 
@@ -556,7 +596,9 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		buf[0] = GNETCODE_CONTROL;
 		buf[1] = g->p.x;
 		buf[2] = (uint16_t)(int)g->p.ptr;
+		MUTEX_ENTER;
 		sendpkt(priv->netfd, buf, 3);
+		MUTEX_EXIT;
 
 		// Now wait for a reply
 		while(!(g->flags & GDISP_FLG_HAVEDATA) || priv->data[0] != GNETCODE_CONTROL)
