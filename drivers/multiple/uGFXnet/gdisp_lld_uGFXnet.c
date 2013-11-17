@@ -425,7 +425,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		buf[0] = GNETCODE_PIXEL;
 		buf[1] = g->p.x;
 		buf[2] = g->p.y;
-		buf[3] = COLOR2NATIVE(g->p.color);
+		buf[3] = gdispColor2Native(g->p.color);
 		MUTEX_ENTER;
 		sendpkt(priv->netfd, buf, 4);
 		MUTEX_EXIT;
@@ -453,7 +453,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		buf[2] = g->p.y;
 		buf[3] = g->p.cx;
 		buf[4] = g->p.cy;
-		buf[5] = COLOR2NATIVE(g->p.color);
+		buf[5] = gdispColor2Native(g->p.color);
 		MUTEX_ENTER;
 		sendpkt(priv->netfd, buf, 6);
 		MUTEX_EXIT;
@@ -490,7 +490,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 		for(y = 0; y < g->p.cy; y++, buffer += g->p.x2 - g->p.cx) {
 			for(x = 0; x < g->p.cx; x++, buffer++) {
-				buf[0] = COLOR2NATIVE(buffer[0]);
+				buf[0] = gdispColor2Native(buffer[0]);
 				sendpkt(priv->netfd, buf, 1);
 			}
 		}
@@ -524,7 +524,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		while(!(g->flags & GDISP_FLG_HAVEDATA) || priv->data[0] != GNETCODE_READ)
 			gfxSleepMilliseconds(1);
 		
-		data = NATIVE2COLOR(priv->data[1]);
+		data = gdispNative2Color(priv->data[1]);
 		g->flags &= ~GDISP_FLG_HAVEDATA;
 
 		return data;

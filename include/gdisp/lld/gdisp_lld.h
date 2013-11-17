@@ -856,52 +856,18 @@ struct GDisplay {
 	 * @brief	Convert from a standard color format to the low level driver pixel format
 	 * @note	For use only by low level drivers
 	 */
-	#define COLOR2NATIVE(c)	(c)
+	#define gdispColor2Native(c)	(c)
 	/**
 	 * @brief	Convert from a low level driver pixel format to the standard color format
 	 * @note	For use only by low level drivers
 	 */
-	#define NATIVE2COLOR(c)	(c)
-
+	#define gdispNative2Color(c)	(c)
 #else
-	#if COLOR_SYSTEM == GDISP_COLORSYSTEM_GRAYSCALE || LLDCOLOR_SYSTEM == GDISP_COLORSYSTEM_GRAYSCALE
-		#if GDISP_HARDWARE_USE_EXACT_COLOR
-			#define COLOR2NATIVE(c)	LLDLUMA2COLOR(EXACT_LUMA_OF(c))
-			#define NATIVE2COLOR(c)	LUMA2COLOR(LLDEXACT_LUMA_OF(c))
-		#else
-			#define COLOR2NATIVE(c)	LLDLUMA2COLOR(LUMA_OF(c))
-			#define NATIVE2COLOR(c)	LUMA2COLOR(LLDLUMA_OF(c))
-		#endif
-	#elif COLOR_SYSTEM == GDISP_COLORSYSTEM_TRUECOLOR && LLDCOLOR_SYSTEM == GDISP_COLORSYSTEM_TRUECOLOR
-		#if GDISP_HARDWARE_USE_EXACT_COLOR
-			#define COLOR2NATIVE(c)	LLDRGB2COLOR(EXACT_RED_OF(c), EXACT_GREEN_OF(c), EXACT_BLUE_OF(c))
-			#define NATIVE2COLOR(c)	RGB2COLOR(LLDEXACT_RED_OF(c), LLDEXACT_GREEN_OF(c), LLDEXACT_BLUE_OF(c))
-		#else
-			#define COLOR2NATIVE(c)	LLDRGB2COLOR(RED_OF(c), GREEN_OF(c), BLUE_OF(c))
-			#define NATIVE2COLOR(c)	RGB2COLOR(LLDRED_OF(c), LLDGREEN_OF(c), LLDBLUE_OF(c))
-		#endif
-
-	/*
-	#elif GDISP_PIXELFORMAT == GDISP_PIXELFORMAT_RGB888 && GDISP_LLD_PIXELFORMAT == GDISP_PIXELFORMAT_BGR888
-		#define COLOR2NATIVE(c)	((LLDCOLOR_TYPE)(((c)&0xFF0000)>>16)|((c)&0x00FF00)|(((c)&0x0000FF)<<16))
-		#define NATIVE2COLOR(c)	((COLOR_TYPE)(((c)&0xFF0000)>>16)|((c)&0x00FF00)|(((c)&0x0000FF)<<16))
-	#elif GDISP_PIXELFORMAT == GDISP_PIXELFORMAT_RGB565 && GDISP_LLD_PIXELFORMAT == GDISP_PIXELFORMAT_BGR888
-		#define COLOR2NATIVE(c)	((LLDCOLOR_TYPE)( \
-								((LARGER_COLOR_TYPE)((c)&(((1<<COLOR_BITS_R)-1)<<COLOR_SHIFT_R))>>(COLOR_BITS_R+COLOR_SHIFT_R-8))| \
-								((LARGER_COLOR_TYPE)((c)&(((1<<COLOR_BITS_G)-1)<<COLOR_SHIFT_G))<<(16-(COLOR_BITS_G+COLOR_SHIFT_G)))| \
-								((LARGER_COLOR_TYPE)((c)&(((1<<COLOR_BITS_B)-1)<<COLOR_SHIFT_B))<<(24-(COLOR_BITS_B+COLOR_SHIFT_B)))))
-		#define NATIVE2COLOR(c)	((COLOR_TYPE)( \
-								((LARGER_COLOR_TYPE)((c)&0x0000F8)<<COLOR_SHIFT_R)| \
-								((LARGER_COLOR_TYPE)((c)&0x00FC00)>>(16-(COLOR_BITS_G+COLOR_SHIFT_G)))| \
-								((LARGER_COLOR_TYPE)((c)&0xF80000)>>(24-(COLOR_BITS_B+COLOR_SHIFT_B)))))
-	*/
-	#else
-		#error "GDISP: This pixel format conversion is not supported yet"
-	#endif
+	LLDCOLOR_TYPE gdispColor2Native(color_t c);
+	color_t gdispNative2Color(LLDCOLOR_TYPE c);
 #endif
 
 #endif	/* GFX_USE_GDISP */
 
 #endif	/* _GDISP_LLD_H */
 /** @} */
-

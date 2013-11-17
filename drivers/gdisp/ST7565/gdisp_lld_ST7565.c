@@ -150,6 +150,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		coord_t		x, y;
 
 		switch(g->g.Orientation) {
+		default:
 		case GDISP_ROTATE_0:
 			x = g->p.x;
 			y = g->p.y;
@@ -167,7 +168,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			y = g->p.x;
 			break;
 		}
-		if (COLOR2NATIVE(g->p.color) != Black)
+		if (gdispColor2Native(g->p.color) != Black)
 			RAM(g)[xyaddr(x, y)] |= xybit(y);
 		else
 			RAM(g)[xyaddr(x, y)] &= ~xybit(y);
@@ -180,6 +181,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		coord_t		x, y;
 
 		switch(g->g.Orientation) {
+		default:
 		case GDISP_ROTATE_0:
 			x = g->p.x;
 			y = g->p.y;

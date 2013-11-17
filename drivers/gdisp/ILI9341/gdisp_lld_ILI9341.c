@@ -246,7 +246,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		write_index(g, 0x2C);
 	}
 	LLDSPEC	void gdisp_lld_write_color(GDisplay *g) {
-		write_data16(g, COLOR2NATIVE(g->p.color));
+		write_data16(g, gdispColor2Native(g->p.color));
 	}
 	LLDSPEC	void gdisp_lld_write_stop(GDisplay *g) {
 		release_bus(g);
@@ -265,7 +265,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		uint16_t	data;
 
 		data = read_data(g);
-		return NATIVE2COLOR(data);
+		return gdispNative2Color(data);
 	}
 	LLDSPEC	void gdisp_lld_read_stop(GDisplay *g) {
 		setwritemode(g);

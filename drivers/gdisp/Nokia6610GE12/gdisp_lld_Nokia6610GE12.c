@@ -145,7 +145,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	LLDSPEC	void gdisp_lld_write_color(GDisplay *g) {
 		uint16_t	c;
 
-		c = COLOR2NATIVE(g->p.color);
+		c = gdispColor2Native(g->p.color);
 		if ((g->flags & GDISP_FLG_ODDBYTE)) {
 			// Write the pair of pixels to the display
 			write_data3(g, ((savecolor(g) >> 4) & 0xFF),

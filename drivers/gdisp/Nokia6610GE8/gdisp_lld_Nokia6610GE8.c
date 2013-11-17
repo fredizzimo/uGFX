@@ -139,22 +139,23 @@
 static inline void set_viewport(GDisplay* g) {
 	#if GDISP_NOKIA_ORIENTATION && GDISP_NEED_CONTROL
 		switch(g->g.Orientation) {
-			case GDISP_ROTATE_0:
-				write_cmd2(g, CASET, GDISP_RAM_X_OFFSET+g->p.x, GDISP_RAM_X_OFFSET+g->p.x);			// Column address set
-				write_cmd2(g, PASET, GDISP_RAM_Y_OFFSET+g->p.y, GDISP_RAM_Y_OFFSET+g->p.y);			// Page address set
-				break;
-			case GDISP_ROTATE_90:
-				write_cmd2(g, CASET, GDISP_RAM_X_OFFSET+g->p.y, GDISP_RAM_X_OFFSET+g->p.y);
-				write_cmd2(g, PASET, GDISP_RAM_Y_OFFSET-1+g->g.Width-g->p.x, GDISP_RAM_Y_OFFSET-1+g->g.Width-g->p.x);
-				break;
-			case GDISP_ROTATE_180:
-				write_cmd2(g, CASET, GDISP_RAM_X_OFFSET-1+g->g.Width-g->p.x, GDISP_RAM_X_OFFSET-1+g->g.Width-g->p.x);
-				write_cmd2(g, PASET, GDISP_RAM_Y_OFFSET-1+g->g.Height-g->p.y, GDISP_RAM_Y_OFFSET-1+g->g.Height-g->p.y);
-				break;
-			case GDISP_ROTATE_270:
-				write_cmd2(g, CASET, GDISP_RAM_X_OFFSET-1+g->g.Height-g->p.y, GDISP_RAM_X_OFFSET-1+g->g.Height-g->p.y);
-				write_cmd2(g, PASET, GDISP_RAM_Y_OFFSET+g->p.x, GDISP_RAM_Y_OFFSET+g->p.x);
-				break;
+		default:
+		case GDISP_ROTATE_0:
+			write_cmd2(g, CASET, GDISP_RAM_X_OFFSET+g->p.x, GDISP_RAM_X_OFFSET+g->p.x);			// Column address set
+			write_cmd2(g, PASET, GDISP_RAM_Y_OFFSET+g->p.y, GDISP_RAM_Y_OFFSET+g->p.y);			// Page address set
+			break;
+		case GDISP_ROTATE_90:
+			write_cmd2(g, CASET, GDISP_RAM_X_OFFSET+g->p.y, GDISP_RAM_X_OFFSET+g->p.y);
+			write_cmd2(g, PASET, GDISP_RAM_Y_OFFSET-1+g->g.Width-g->p.x, GDISP_RAM_Y_OFFSET-1+g->g.Width-g->p.x);
+			break;
+		case GDISP_ROTATE_180:
+			write_cmd2(g, CASET, GDISP_RAM_X_OFFSET-1+g->g.Width-g->p.x, GDISP_RAM_X_OFFSET-1+g->g.Width-g->p.x);
+			write_cmd2(g, PASET, GDISP_RAM_Y_OFFSET-1+g->g.Height-g->p.y, GDISP_RAM_Y_OFFSET-1+g->g.Height-g->p.y);
+			break;
+		case GDISP_ROTATE_270:
+			write_cmd2(g, CASET, GDISP_RAM_X_OFFSET-1+g->g.Height-g->p.y, GDISP_RAM_X_OFFSET-1+g->g.Height-g->p.y);
+			write_cmd2(g, PASET, GDISP_RAM_Y_OFFSET+g->p.x, GDISP_RAM_Y_OFFSET+g->p.x);
+			break;
 		}
 	#else
 		write_cmd2(g, CASET, GDISP_RAM_X_OFFSET+g->p.x, GDISP_RAM_X_OFFSET+g->p.x+g->p.cx-1);			// Column address set
@@ -233,7 +234,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	LLDSPEC	void gdisp_lld_write_color(GDisplay *g) {
 		uint16_t	c;
 
-		c = COLOR2NATIVE(g->p.color);
+		c = gdispColor2Native(g->p.color);
 		#if GDISP_GE8_BROKEN_CONTROLLER
 			if (!(g->flags & GDISP_FLG_RUNBYTE)) {
 				PRIV->firstcolor = c;
@@ -289,7 +290,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	LLDSPEC void gdisp_lld_draw_pixel(GDisplay *g) {
 		uint16_t	c;
 
-		c = COLOR2NATIVE(g->p.color);
+		c = gdispColor2Native(g->p.color);
 		acquire_bus(g);
 		set_viewport(g);
 		write_data3(g, 0, (c>>8) & 0x0F, c & 0xFF);
@@ -307,7 +308,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		tuples = (g->p.cx*g->p.cy+1)>>1;	// With an odd sized area we over-print by one pixel.
 											// This extra pixel overwrites the first pixel (harmless as it is the same colour)
 
-		c = COLOR2NATIVE(g->p.color);
+		c = gdispColor2Native(g->p.color);
 		acquire_bus(g);
 		set_viewport(g);
 		while(tuples--)
@@ -348,6 +349,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		 * to column cx-1, cx-2 etc. We therefore have to write-out the last bitmap line first.
 		 */
 		switch(g->g.Orientation) {
+		default:
 		case GDISP_ROTATE_0:		x = 0;			y = 0;			break;
 		case GDISP_ROTATE_90:		x = g->p.cx-1;	y = 0;			break;
 		case GDISP_ROTATE_180:		x = g->p.cx-1;	y = g->p.cy-1;	break;
@@ -364,7 +366,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 			while(tuples--) {
 				/* Get a pixel */
-				c1 = COLOR2NATIVE(*p++);
+				c1 = gdispColor2Native(*p++);
 
 				/* Check for line or buffer wrapping */
 				if (++x >= g->p.cx) {
@@ -377,7 +379,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 				}
 
 				/* Get the next pixel */
-				c2 = COLOR2NATIVE(*p++);
+				c2 = gdispColor2Native(*p++);
 
 				/* Check for line or buffer wrapping */
 				if (++x >= g->p.cx) {

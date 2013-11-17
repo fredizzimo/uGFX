@@ -53,6 +53,7 @@ static void set_cursor(GDisplay* g) {
 	 * Use a bit mask to make sure they are not set too high
 	 */
 	switch(g->g.Orientation) {
+		default:
 		case GDISP_ROTATE_0:
 			write_reg(g, SSD2119_REG_X_RAM_ADDR, g->p.x & 0x01FF);
 			write_reg(g, SSD2119_REG_Y_RAM_ADDR, g->p.y & 0x00FF);
@@ -83,6 +84,7 @@ static void set_viewport(GDisplay* g) {
 	 * 		0 <= HSA <= HEA <= 0x13F
 	 */
 	switch(g->g.Orientation) {
+		default:
 		case GDISP_ROTATE_0:
 			write_reg(g, SSD2119_REG_V_RAM_POS,   (((g->p.y + g->p.cy - 1) << 8) & 0xFF00 ) | (g->p.y & 0x00FF));
 			write_reg(g, SSD2119_REG_H_RAM_START, (g->p.x & 0x01FF));
@@ -238,7 +240,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay* g) {
 		set_viewport(g);
 	}
 	LLDSPEC void gdisp_lld_write_color(GDisplay* g) {
-		write_data(g, COLOR2NATIVE(g->p.color));
+		write_data(g, gdispColor2Native(g->p.color));
 	}
 	LLDSPEC void gdisp_lld_write_stop(GDisplay* g) {
 		release_bus(g);
@@ -260,7 +262,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay* g) {
 		uint16_t	data;
 
 		data = read_data(g);
-		return NATIVE2COLOR(data);
+		return gdispNative2Color(data);
 	}
 	LLDSPEC void gdisp_lld_read_stop(GDisplay* g) {
 		setwritemode(g);
@@ -272,7 +274,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay* g) {
 	LLDSPEC void gdisp_lld_fill_area(GDisplay* g) {
 		uint16_t	c;
 
-		c = COLOR2NATIVE(g->p.color);
+		c = gdispColor2Native(g->p.color);
 		acquire_bus(g);
 		set_viewport(g);
 		set_cursor(g);	

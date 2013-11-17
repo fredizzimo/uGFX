@@ -286,9 +286,9 @@ static LRESULT myWindowProc(HWND hWnd,	UINT Msg, WPARAM wParam, LPARAM lParam)
 		// Paint the toggle area
 		#if GINPUT_NEED_TOGGLE
 			if (ps.rcPaint.bottom >= GDISP_SCREEN_HEIGHT && (g->flags & GDISP_FLG_HASTOGGLE)) {
-				pen = CreatePen(PS_SOLID, 1, COLOR2NATIVE(Black));
-				hbrOn = CreateSolidBrush(COLOR2NATIVE(Blue));
-				hbrOff = CreateSolidBrush(COLOR2NATIVE(Gray));
+				pen = CreatePen(PS_SOLID, 1, gdispColor2Native(Black));
+				hbrOn = CreateSolidBrush(gdispColor2Native(Blue));
+				hbrOff = CreateSolidBrush(gdispColor2Native(Gray));
 				old = SelectObject(dc, pen);
 				MoveToEx(dc, 0, GDISP_SCREEN_HEIGHT, &p);
 				LineTo(dc, GDISP_SCREEN_WIDTH, GDISP_SCREEN_HEIGHT);
@@ -514,7 +514,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		COLORREF	color;
 
 		priv = g->priv;
-		color = COLOR2NATIVE(g->p.color);
+		color = gdispColor2Native(g->p.color);
 
 		if (!(g->flags & GDISP_FLG_WSTREAM))
 			BAD_PARAMETER("write_color: not in streaming mode");
@@ -664,7 +664,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			}
 		}
 
-		return NATIVE2COLOR(color);
+		return gdispNative2Color(color);
 	}
 	LLDSPEC	void gdisp_lld_read_stop(GDisplay *g) {
 		if (!(g->flags & GDISP_FLG_WSTREAM))
@@ -680,7 +680,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		COLORREF	color;
 	
 		priv = g->priv;
-		color = COLOR2NATIVE(g->p.color);
+		color = gdispColor2Native(g->p.color);
 	
 		#if GDISP_NEED_CONTROL
 			switch(g->g.Orientation) {
@@ -740,7 +740,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		COLORREF	color;
 
 		priv = g->priv;
-		color = COLOR2NATIVE(g->p.color);
+		color = gdispColor2Native(g->p.color);
 		hbr = CreateSolidBrush(color);
 
 		#if GDISP_NEED_CONTROL
@@ -975,7 +975,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		#endif
 		ReleaseMutex(drawMutex);
 		
-		return NATIVE2COLOR(color);
+		return gdispNative2Color(color);
 	}
 #endif
 

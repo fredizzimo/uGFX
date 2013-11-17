@@ -167,7 +167,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		busmode16(g);
 	}
 	LLDSPEC	void gdisp_lld_write_color(GDisplay *g) {
-		write_ram16(g, COLOR2NATIVE(g->p.color));
+		write_ram16(g, gdispColor2Native(g->p.color));
 	}
 	LLDSPEC	void gdisp_lld_write_stop(GDisplay *g) {
 		busmode8(g);

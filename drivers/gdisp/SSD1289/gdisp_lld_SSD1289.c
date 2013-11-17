@@ -52,6 +52,7 @@ static void set_cursor(GDisplay *g) {
 	 * Use a bit mask to make sure they are not set too high
 	 */
 	switch(g->g.Orientation) {
+		default:
 		case GDISP_ROTATE_0:
 			write_reg(g, 0x4e, g->p.x & 0x00FF);
 			write_reg(g, 0x4f, g->p.y & 0x01FF);
@@ -83,6 +84,7 @@ static void set_viewport(GDisplay* g) {
 	 * Use a bit mask to make sure they are not set too high
 	 */
 	switch(g->g.Orientation) {
+		default:
 		case GDISP_ROTATE_0:
 			write_reg(g, 0x44, (((g->p.x+g->p.cx-1) << 8) & 0xFF00 ) | (g->p.x & 0x00FF));
 			write_reg(g, 0x45, g->p.y & 0x01FF);
@@ -200,7 +202,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		#endif
 	}
 	LLDSPEC	void gdisp_lld_write_color(GDisplay *g) {
-		write_data(g, COLOR2NATIVE(g->p.color));
+		write_data(g, gdispColor2Native(g->p.color));
 	}
 	LLDSPEC	void gdisp_lld_write_stop(GDisplay *g) {
 		release_bus(g);
@@ -224,7 +226,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		uint16_t	data;
 
 		data = read_data(g);
-		return NATIVE2COLOR(data);
+		return gdispNative2Color(data);
 	}
 	LLDSPEC	void gdisp_lld_read_stop(GDisplay *g) {
 		setwritemode(g);
@@ -236,7 +238,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	LLDSPEC void gdisp_lld_fill_area(GDisplay *g) {
 		uint16_t	c;
 
-		c = COLOR2NATIVE(g->p.color);
+		c = gdispColor2Native(g->p.color);
 		acquire_bus(g);
 		set_viewport(g);
 		set_cursor(g);

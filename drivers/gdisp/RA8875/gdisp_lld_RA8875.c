@@ -184,7 +184,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		set_viewport(g);
 	}
 	LLDSPEC	void gdisp_lld_write_color(GDisplay *g) {
-		write_data(g, COLOR2NATIVE(g->p.color));
+		write_data(g, gdispColor2Native(g->p.color));
 	}
 	LLDSPEC	void gdisp_lld_write_stop(GDisplay *g) {
 		release_bus(g);

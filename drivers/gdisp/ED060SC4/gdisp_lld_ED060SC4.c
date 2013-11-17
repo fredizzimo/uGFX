@@ -493,6 +493,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		uint8_t bitpos;
 
 		switch(g->g.Orientation) {
+		default:
 		case GDISP_ROTATE_0:
 			bx = g->p.x / EINK_BLOCKWIDTH;
 			dx = g->p.x % EINK_BLOCKWIDTH;
@@ -524,7 +525,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		bitpos = (6 - 2 * (dx % EINK_PPB));
 		byte = block->data[dy][dx / EINK_PPB];
 		byte &= ~(PIXELMASK << bitpos);
-		if (COLOR2NATIVE(g->p.color) != Black)
+		if (gdispColor2Native(g->p.color) != Black)
 			byte |= PIXEL_WHITE << bitpos;
 		else
 			byte |= PIXEL_BLACK << bitpos;
