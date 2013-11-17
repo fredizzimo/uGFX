@@ -49,6 +49,12 @@ static const GWindowManager	GNullWindowManager = {
 
 gfxQueueASync			_GWINList;
 GWindowManager *		_GWINwm;
+#if GFX_USE_GTIMER
+	static GTimer		RedrawTimer;
+	static GDisplay *	RedrawDisplay;
+	static bool_t		RedrawPreserve;
+	static void			_gwinRedrawDisplay(void * param);
+#endif
 
 /*-----------------------------------------------
  * Window Routines
@@ -58,6 +64,10 @@ void _gwmInit(void) {
 	gfxQueueASyncInit(&_GWINList);
 	_GWINwm = (GWindowManager *)&GNullWindowManager;
 	_GWINwm->vmt->Init();
+	#if GFX_USE_GTIMER
+		gtimerInit(&RedrawTimer);
+		gtimerStart(&RedrawTimer, _gwinRedrawDisplay, 0, TRUE, TIME_INFINITE);
+	#endif
 }
 
 void gwinSetWindowManager(struct GWindowManager *gwm) {
@@ -87,6 +97,17 @@ GWindowMinMax gwinGetMinMax(GHandle gh) {
 }
 
 void gwinRedrawDisplay(GDisplay *g, bool_t preserve) {
+	#if GFX_USE_GTIMER
+			RedrawDisplay = g;
+			RedrawPreserve = preserve;
+			gtimerJab(&RedrawTimer);
+		}
+		static void	_gwinRedrawDisplay(void * param) {
+			GDisplay *g			= RedrawDisplay;
+			bool_t	preserve	= RedrawPreserve;
+			(void) param;
+	#endif
+
 	const gfxQueueASyncItem *	qi;
 	GHandle						gh;
 
