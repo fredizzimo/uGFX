@@ -221,7 +221,7 @@ static void MousePoll(void *param) {
 	GSourceListener	*psl;
 	GEventMouse		*pe;
 	unsigned 		meta;
-	uint16_t		tbtns;
+	uint16_t		upbtns, dnbtns;
 	uint32_t		cdiff;
 	uint32_t		mdiff;
 
@@ -232,7 +232,16 @@ static void MousePoll(void *param) {
 	get_calibrated_reading(&MouseConfig.t);
 
 	// Calculate out new event meta value and handle CLICK and CXTCLICK
+	dnbtns = MouseConfig.t.buttons & ~MouseConfig.last_buttons;
+	upbtns = ~MouseConfig.t.buttons & MouseConfig.last_buttons;
 	meta = GMETA_NONE;
+
+	// As the touch moves up we need to return a point at the old position because some
+	//	controllers return garbage with the mouse up
+	if ((upbtns & GINPUT_MOUSE_BTN_LEFT)) {
+		MouseConfig.t.x = MouseConfig.movepos.x;
+		MouseConfig.t.y = MouseConfig.movepos.y;
+	}
 
 	// Calculate the position difference from our movement reference (update the reference if out of range)
 	mdiff = (MouseConfig.t.x - MouseConfig.movepos.x) * (MouseConfig.t.x - MouseConfig.movepos.x) +
@@ -251,23 +260,21 @@ static void MousePoll(void *param) {
 	}
 
 	// Mouse down
-	tbtns = MouseConfig.t.buttons & ~MouseConfig.last_buttons;
-	if ((tbtns & GINPUT_MOUSE_BTN_LEFT))
-		meta |= GMETA_MOUSE_DOWN;
-	if ((tbtns & (GINPUT_MOUSE_BTN_LEFT|GINPUT_MOUSE_BTN_RIGHT))) {
+	if ((dnbtns & (GINPUT_MOUSE_BTN_LEFT|GINPUT_MOUSE_BTN_RIGHT))) {
 		MouseConfig.clickpos.x = MouseConfig.t.x;
 		MouseConfig.clickpos.y = MouseConfig.t.y;
 		MouseConfig.clicktime = gfxSystemTicks();
 		MouseConfig.flags |= FLG_CLICK_TIMER;
+		if ((dnbtns & GINPUT_MOUSE_BTN_LEFT))
+			meta |= GMETA_MOUSE_DOWN;
 	}
 
 	// Mouse up
-	tbtns = ~MouseConfig.t.buttons & MouseConfig.last_buttons;
-	if ((tbtns & GINPUT_MOUSE_BTN_LEFT))
-		meta |= GMETA_MOUSE_UP;
-	if ((tbtns & (GINPUT_MOUSE_BTN_LEFT|GINPUT_MOUSE_BTN_RIGHT))) {
+	if ((upbtns & (GINPUT_MOUSE_BTN_LEFT|GINPUT_MOUSE_BTN_RIGHT))) {
+		if ((upbtns & GINPUT_MOUSE_BTN_LEFT))
+			meta |= GMETA_MOUSE_UP;
 		if ((MouseConfig.flags & FLG_CLICK_TIMER)) {
-			if ((tbtns & GINPUT_MOUSE_BTN_LEFT)
+			if ((upbtns & GINPUT_MOUSE_BTN_LEFT)
 					#if GINPUT_MOUSE_CLICK_TIME != TIME_INFINITE
 						&& gfxSystemTicks() - MouseConfig.clicktime < gfxMillisecondsToTicks(GINPUT_MOUSE_CLICK_TIME)
 					#endif
@@ -289,7 +296,8 @@ static void MousePoll(void *param) {
 		}
 
 		// If we haven't really moved (and there are no meta events) don't bother sending the event
-		if (mdiff <= GINPUT_MOUSE_MAX_MOVE_JITTER * GINPUT_MOUSE_MAX_MOVE_JITTER && !psl->srcflags && !meta && !(psl->listenflags & GLISTEN_MOUSENOFILTER))
+		if (mdiff <= GINPUT_MOUSE_MAX_MOVE_JITTER * GINPUT_MOUSE_MAX_MOVE_JITTER && !psl->srcflags
+				&& !meta && MouseConfig.last_buttons == MouseConfig.t.buttons && !(psl->listenflags & GLISTEN_MOUSENOFILTER))
 			continue;
 
 		// Send the event if we are listening for it
@@ -420,10 +428,17 @@ bool_t ginputCalibrateMouse(uint16_t instance) {
 
 		const coord_t height  =  gdispGGetHeight(MouseConfig.display);
 		const coord_t width  =  gdispGGetWidth(MouseConfig.display);
-		const MousePoint cross[]  =  {{(width / 4), (height / 4)},
+		#if 1
+			const MousePoint cross[]  =  {{(width / 4), (height / 4)},
 										{(width - (width / 4)) , (height / 4)},
 										{(width - (width / 4)) , (height - (height / 4))},
 										{(width / 2), (height / 2)}}; /* Check point */
+		#else
+			const MousePoint cross[]  =  {{0, 0},
+										{(width - 1) , 0},
+										{(width - 1) , (height - 1)},
+										{(width / 2), (height / 2)}}; /* Check point */
+		#endif
 		MousePoint points[GINPUT_MOUSE_CALIBRATION_POINTS];
 		const MousePoint	*pc;
 		MousePoint *pt;
