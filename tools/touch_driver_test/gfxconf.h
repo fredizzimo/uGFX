@@ -53,7 +53,6 @@
 #define GDISP_INCLUDE_FONT_UI2			TRUE
 
 /* Features for the GWIN sub-system. */
-#define GWIN_NEED_BUTTON		TRUE
 #define GWIN_NEED_CONSOLE		TRUE
 
 /* Features for the GINPUT sub-system. */

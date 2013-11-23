@@ -30,39 +30,45 @@
 #include "gfx.h"
 
 static GConsoleObject			gc;
-static GButtonObject			gNext;
-static GButtonObject			gPrev;
 static GListener				gl;
+static font_t					font;
 
 /*------------------------------------------------------------------------*
  * GINPUT Touch Driver Calibrator.                                        *
  *------------------------------------------------------------------------*/
 int main(void) {
 	GSourceHandle			gs;
-	GEvent					*pe;
 	GEventMouse				*pem;
-	GEventGWinButton		*peb;
 	coord_t					swidth, sheight;
-	GHandle					ghc, ghNext, ghPrev;
+	GHandle					ghc;
 	GEventType				deviceType;
-	font_t					font;
-	GWidgetInit				wi;
+	bool_t					calibrated;
+	coord_t					bWidth, bHeight;
 
 	gfxInit();		// Initialize the display
 
 	// Get the display dimensions
 	swidth = gdispGetWidth();
 	sheight = gdispGetHeight();
-	ghNext = ghPrev = 0;
+	calibrated = FALSE;
 
 	// Create our title
 	font = gdispOpenFont("UI2");
 	gwinSetDefaultFont(font);
-	gdispFillStringBox(0, 0, swidth, 20, "Touch Calibration", font, Red, White, justifyLeft);
+	bWidth = gdispGetStringWidth("Next", font);
+	bHeight = gdispGetStringWidth("Prev", font);
+	if (bHeight > bWidth) bWidth = bHeight;
+	bWidth += 4;
+	bHeight = gdispGetFontMetric(font, fontHeight)+2;
+	gdispFillStringBox(0, 0, swidth, bHeight, "Touch Calibration", font, Red, White, justifyLeft);
 
 	// Create our main display window
-	wi.g.show = TRUE; wi.g.x = 0; wi.g.y = 20; wi.g.width = swidth; wi.g.height = sheight-20;
-	ghc = gwinConsoleCreate(&gc, &wi.g);
+	{
+		GWindowInit				wi;
+
+		wi.show = TRUE; wi.x = 0; wi.y = bHeight; wi.width = swidth; wi.height = sheight-bHeight;
+		ghc = gwinConsoleCreate(&gc, &wi);
+	}
 	gwinClear(ghc);
 
 	// Initialize the mouse in our special no calibration mode.
@@ -87,7 +93,7 @@ StepDeviceType:
 	gwinPrintf(ghc, "This is detected as a %s device\n\n",
 		deviceType == GEVENT_MOUSE ? "MOUSE" : (pem->type == GEVENT_TOUCH ? "TOUCH" : "UNKNOWN"));
 
-	if (ghNext)
+	if (calibrated)
 		gwinPrintf(ghc, "Press Next or Back to continue.\n");
 	else if (deviceType == GEVENT_MOUSE)
 		gwinPrintf(ghc, "Click the mouse button to move on to the next test.\n");
@@ -95,19 +101,17 @@ StepDeviceType:
 		gwinPrintf(ghc, "Press and release your finger to move on to the next test.\n");
 
 	while(1) {
-		pe = geventEventWait(&gl, TIME_INFINITE);
-		if (pe->type == GEVENT_GWIN_BUTTON) {
-			peb = (GEventGWinButton *)pe;
-			if (peb->button == ghPrev)
-				goto StepClickJitter;
-			if (peb->button == ghNext)
-				break;
-		}
-		if (pe->type == GEVENT_MOUSE || pe->type == GEVENT_TOUCH) {
-			pem = (GEventMouse *)pe;
-			if (!ghNext && (pem->meta & GMETA_MOUSE_UP))
-				break;
-		}
+		pem = (GEventMouse *)geventEventWait(&gl, TIME_INFINITE);
+		if (calibrated) {
+			if (pem->y < bHeight && pem->x >= swidth-2*bWidth) {
+				if ((pem->meta & GMETA_MOUSE_UP)) {
+					if (pem->x >= swidth-bWidth)
+						break;
+					goto StepClickJitter;
+				}
+			}
+		} else if ((pem->meta & GMETA_MOUSE_UP))
+			break;
 	}
 
 	/*
@@ -128,7 +132,7 @@ StepRawJitter:
 			"Ensure that values don't jump around very much when your finger is stationary.\n\n"
 			"Increasing GINPUT_MOUSE_READ_CYCLES helps reduce jitter but increases CPU usage.\n\n");
 
-	if (ghNext)
+	if (calibrated)
 		gwinPrintf(ghc, "Press Next or Back to continue.\n");
 	else if (deviceType == GEVENT_MOUSE)
 		gwinPrintf(ghc, "Release the mouse button to move on to the next test.\n");
@@ -139,21 +143,22 @@ StepRawJitter:
 	geventAttachSource(&gl, gs, GLISTEN_MOUSEDOWNMOVES|GLISTEN_MOUSEMETA|GLISTEN_MOUSENOFILTER);
 
 	while(1) {
-		pe = geventEventWait(&gl, TIME_INFINITE);
-		if (pe->type == GEVENT_GWIN_BUTTON) {
-			peb = (GEventGWinButton *)pe;
-			if (peb->button == ghPrev)
-				goto StepDeviceType;
-			if (peb->button == ghNext)
-				break;
-		}
-		if (pe->type == GEVENT_MOUSE || pe->type == GEVENT_TOUCH) {
-			pem = (GEventMouse *)pe;
-			if ((pem->current_buttons & GINPUT_MOUSE_BTN_LEFT))
-				gwinPrintf(ghc, "%u:%u\n", pem->x, pem->y);
-			if (!ghNext && (pem->meta & GMETA_MOUSE_UP))
-				break;
-		}
+		// Always sleep a bit first to enable other events. We actually don't
+		// mind missing events for this test.
+		gfxSleepMilliseconds(100);
+		pem = (GEventMouse *)geventEventWait(&gl, TIME_INFINITE);
+		if (calibrated) {
+			if (pem->y < bHeight && pem->x >= swidth-2*bWidth) {
+				if ((pem->meta & GMETA_MOUSE_UP)) {
+					if (pem->x >= swidth-bWidth)
+						break;
+					goto StepDeviceType;
+				}
+			}
+		} else if ((pem->meta & GMETA_MOUSE_UP))
+			break;
+		if ((pem->current_buttons & GINPUT_MOUSE_BTN_LEFT))
+			gwinPrintf(ghc, "%u:%u\n", pem->x, pem->y);
 	}
 
 	// Reset to just changed movements.
@@ -173,7 +178,7 @@ StepCalibrate:
 	gwinPrintf(ghc, "You will be presented with a number of points to touch.\nPress them in turn.\n\n"
 			"If the calibration repeatedly fails, increase GINPUT_MOUSE_CALIBRATION_ERROR and try again.\n\n");
 
-	if (ghNext)
+	if (calibrated)
 		gwinPrintf(ghc, "Press Next to start the calibration.\n");
 	else if (deviceType == GEVENT_MOUSE)
 		gwinPrintf(ghc, "Click the mouse button to start the calibration.\n");
@@ -181,41 +186,68 @@ StepCalibrate:
 		gwinPrintf(ghc, "Press and release your finger to start the calibration.\n");
 
 	while(1) {
-		pe = geventEventWait(&gl, TIME_INFINITE);
-		if (pe->type == GEVENT_GWIN_BUTTON) {
-			peb = (GEventGWinButton *)pe;
-			if (peb->button == ghPrev)
-				goto StepRawJitter;
-			if (peb->button == ghNext)
-				break;
-		}
-		if (pe->type == GEVENT_MOUSE || pe->type == GEVENT_TOUCH) {
-			pem = (GEventMouse *)pe;
-			if (!ghNext && (pem->meta & GMETA_MOUSE_UP))
-				break;
-		}
+		pem = (GEventMouse *)geventEventWait(&gl, TIME_INFINITE);
+		if (calibrated) {
+			if (pem->y < bHeight && pem->x >= swidth-2*bWidth) {
+				if ((pem->meta & GMETA_MOUSE_UP)) {
+					if (pem->x >= swidth-bWidth)
+						break;
+					goto StepRawJitter;
+				}
+			}
+		} else if ((pem->meta & GMETA_MOUSE_UP))
+			break;
 	}
 
 	// Calibrate
 	ginputCalibrateMouse(0);
+	calibrated = TRUE;
 
-	/* From now on we can use Next and Previous Buttons */
-	if (!ghNext) {
-		gwinAttachMouse(0);
-		gwinAttachListener(&gl);
+	// Calibration used the whole screen - re-establish our title and Next and Previous Buttons
+	gdispFillStringBox(0, 0, swidth, bHeight, "Touch Calibration", font, Green, White, justifyLeft);
+	gdispFillStringBox(swidth-2*bWidth, 0, bWidth-1, bHeight, "Prev", font, Black, Gray, justifyCenter);
+	gdispFillStringBox(swidth-1*bWidth, 0, bWidth  , bHeight, "Next", font, Black, Gray, justifyCenter);
 
-		wi.customDraw = 0; wi.customParam = 0; wi.customStyle = 0;
-		wi.g.show = TRUE; wi.g.x = swidth-50; wi.g.y = 0; wi.g.width = 50; wi.g.height = 20;
-		wi.text = "Next"; ghNext = gwinButtonCreate(&gNext, &wi);
+	/*
+	 * Test: Mouse coords
+	 */
 
-		wi.g.show = TRUE; wi.g.x = swidth-100;
-		wi.text = "Back"; ghPrev = gwinButtonCreate(&gPrev, &wi);
+StepMouseCoords:
+	gwinClear(ghc);
+	gwinSetColor(ghc, Yellow);
+	gwinPrintf(ghc, "\n4. Show Mouse Coordinates\n\n");
+
+	gwinSetColor(ghc, White);
+	if (deviceType == GEVENT_MOUSE)
+		gwinPrintf(ghc, "Press and hold the mouse button.\n\n");
+	else
+		gwinPrintf(ghc, "Press and hold on the surface.\n\n");
+	gwinPrintf(ghc, "Numbers will display in this window.\n"
+			"Check the coordinates against where it should be on the screen.\n\n");
+
+	gwinPrintf(ghc, "Press Next or Back to continue.\n");
+
+	// For this test normal mouse movement events
+	geventAttachSource(&gl, gs, GLISTEN_MOUSEDOWNMOVES|GLISTEN_MOUSEMETA);
+
+	while(1) {
+		// Always sleep a bit first to enable other events. We actually don't
+		// mind missing events for this test.
+		gfxSleepMilliseconds(100);
+		pem = (GEventMouse *)geventEventWait(&gl, TIME_INFINITE);
+		if (pem->y < bHeight && pem->x >= swidth-2*bWidth) {
+			if ((pem->meta & GMETA_MOUSE_UP)) {
+				if (pem->x >= swidth-bWidth)
+					break;
+				goto StepCalibrate;
+			}
+		}
+		if ((pem->current_buttons & GINPUT_MOUSE_BTN_LEFT))
+			gwinPrintf(ghc, "%u:%u\n", pem->x, pem->y);
 	}
 
-	// Calibration used the whole screen - re-establish our title
-	gdispFillStringBox(0, 0, swidth, 20, "Touch Calibration", font, Green, White, justifyLeft);
-	gwinRedraw(ghNext);
-	gwinRedraw(ghPrev);
+	// Reset to just changed movements.
+	geventAttachSource(&gl, gs, GLISTEN_MOUSEDOWNMOVES|GLISTEN_MOUSEMETA);
 
 	/*
 	 * Test: Mouse movement jitter
@@ -238,19 +270,16 @@ StepJitter:
 	gwinPrintf(ghc, "Press Next or Back to continue.\n\n");
 
 	while(1) {
-		pe = geventEventWait(&gl, TIME_INFINITE);
-		if (pe->type == GEVENT_GWIN_BUTTON) {
-			peb = (GEventGWinButton *)pe;
-			if (peb->button == ghPrev)
-				goto StepCalibrate;
-			if (peb->button == ghNext)
-				break;
+		pem = (GEventMouse *)geventEventWait(&gl, TIME_INFINITE);
+		if (pem->y < bHeight && pem->x >= swidth-2*bWidth) {
+			if ((pem->meta & GMETA_MOUSE_UP)) {
+				if (pem->x >= swidth-bWidth)
+					break;
+				goto StepMouseCoords;
+			}
 		}
-		if (pe->type == GEVENT_MOUSE || pe->type == GEVENT_TOUCH) {
-			pem = (GEventMouse *)pe;
-			if ((pem->current_buttons & GINPUT_MOUSE_BTN_LEFT))
-				gwinPrintf(ghc, ".");
-		}
+		if ((pem->current_buttons & GINPUT_MOUSE_BTN_LEFT))
+			gwinPrintf(ghc, ".");
 	}
 
 	/*
@@ -272,19 +301,16 @@ StepPolling:
 	gwinPrintf(ghc, "Press Next or Back to continue.\n\n");
 
 	while(1) {
-		pe = geventEventWait(&gl, TIME_INFINITE);
-		if (pe->type == GEVENT_GWIN_BUTTON) {
-			peb = (GEventGWinButton *)pe;
-			if (peb->button == ghPrev)
+		pem = (GEventMouse *)geventEventWait(&gl, TIME_INFINITE);
+		if (pem->y < bHeight && pem->x >= swidth-2*bWidth) {
+			if ((pem->meta & GMETA_MOUSE_UP)) {
+				if (pem->x >= swidth-bWidth)
+					break;
 				goto StepJitter;
-			if (peb->button == ghNext)
-				break;
+			}
 		}
-		if (pe->type == GEVENT_MOUSE || pe->type == GEVENT_TOUCH) {
-			pem = (GEventMouse *)pe;
-			if ((pem->current_buttons & GINPUT_MOUSE_BTN_LEFT))
-				gdispDrawPixel(pem->x, pem->y, Green);
-		}
+		if ((pem->current_buttons & GINPUT_MOUSE_BTN_LEFT))
+			gdispDrawPixel(pem->x, pem->y, Green);
 	}
 	
 	/*
@@ -308,24 +334,21 @@ StepClickJitter:
 	gwinPrintf(ghc, "This is the last test but you can press Next or Back to continue.\n\n");
 
 	while(1) {
-		pe = geventEventWait(&gl, TIME_INFINITE);
-		if (pe->type == GEVENT_GWIN_BUTTON) {
-			peb = (GEventGWinButton *)pe;
-			if (peb->button == ghPrev)
+		pem = (GEventMouse *)geventEventWait(&gl, TIME_INFINITE);
+		if (pem->y < bHeight && pem->x >= swidth-2*bWidth) {
+			if ((pem->meta & GMETA_MOUSE_UP)) {
+				if (pem->x >= swidth-bWidth)
+					break;
 				goto StepPolling;
-			if (peb->button == ghNext)
-				break;
+			}
 		}
-		if (pe->type == GEVENT_MOUSE || pe->type == GEVENT_TOUCH) {
-			pem = (GEventMouse *)pe;
-			if ((pem->meta & GMETA_MOUSE_CLICK)) {
-				gwinSetColor(ghc, Yellow);
-				gwinPrintf(ghc, "-");
-			}
-			if ((pem->meta & GMETA_MOUSE_CXTCLICK)) {
-				gwinSetColor(ghc, Red);
-				gwinPrintf(ghc, "x");
-			}
+		if ((pem->meta & GMETA_MOUSE_CLICK)) {
+			gwinSetColor(ghc, Yellow);
+			gwinPrintf(ghc, "-");
+		}
+		if ((pem->meta & GMETA_MOUSE_CXTCLICK)) {
+			gwinSetColor(ghc, Red);
+			gwinPrintf(ghc, "x");
 		}
 	}
 
