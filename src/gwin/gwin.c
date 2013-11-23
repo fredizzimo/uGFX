@@ -48,7 +48,7 @@ static color_t	defaultBgColor = Black;
 					gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 				#endif
 				gh->vmt->Redraw(gh);
-			} else if (!(flags & GWIN_WMFLG_PRESERVE))
+			} else if (!(flags & GWIN_WMFLG_PRESERVE)) {
 				#if GDISP_NEED_CLIP
 					gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 				#endif
