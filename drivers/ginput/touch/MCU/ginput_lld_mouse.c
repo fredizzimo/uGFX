@@ -24,7 +24,6 @@
 #include "ginput_lld_mouse_board.h"
 
 static uint16_t sampleBuf[7];
-static coord_t	lastx, lasty;
 
 /**
  * @brief   7-point median filtering code for touchscreen samples
@@ -63,56 +62,57 @@ void ginput_lld_mouse_init(void) {
  *
  * @param[in] pt	A pointer to the structure to fill
  *
- * @note			For drivers that don't support returning a position
- *					when the touch is up (most touch devices), it should
- *					return the previous position with the new Z value.
- *					The z value is the pressure for those touch devices
- *					that support it (-100 to 100 where > 0 is touched)
- *					or, 0 or 100 for those drivers that don't.
+ * @note			We use a 7 sample medium filter on each coordinate to remove analogue noise.
+ * @note			During touch transition the ADC can return some very strange
+ * 					results. To fix this behaviour we don't return until
+ * 					we have tested the touch is in the same state at both the beginning
+ * 					and the end of the reading.
+ * @note			Whilst x and y can return readings in any range so long as it fits in 16 bits,
+ * 					the z value must be ranged by the board file to be a rough percentage. Anything
+ * 					greater than 80% pressure is a touch.
  *
  * @notapi
  */
 void ginput_lld_mouse_get_reading(MouseReading *pt) {
 	uint16_t i;
 
-	// If touch-off return the previous results
-	if (!getpin_pressed()) {
-		pt->x = lastx;
-		pt->y = lasty;
-		pt->z = 0;
-		pt->buttons = 0;
-		return;
-	}
-	
-	// Read the port to get the touch settings
+	// Obtain access to the bus
 	aquire_bus();
 
-	/* Get the X value
-	 * Discard the first conversion - very noisy and keep the ADC on hereafter
-	 * till we are done with the sampling.
-	 * Once we have the readings, find the medium using our filter function
- 	 */
-	read_x_value();
-	for(i = 0; i < 7; i++)
-		sampleBuf[i] = read_x_value();
-	filter();
-	lastx = (coord_t)sampleBuf[3];
+	// Read the ADC for z, x, y and then z again
+	while(1) {
+		setup_z();
+		for(i = 0; i < 7; i++)
+			sampleBuf[i] = read_z();
+		filter();
+		pt->z = (coord_t)sampleBuf[3];
 
-	/* Get the Y value using the same process as above */
-	read_y_value();
-	for(i = 0; i < 7; i++)
-		sampleBuf[i] = read_y_value();
-	filter();
-	lasty = (coord_t)sampleBuf[3];
+		setup_x();
+		for(i = 0; i < 7; i++)
+			sampleBuf[i] = read_x();
+		filter();
+		pt->x = (coord_t)sampleBuf[3];
+
+		setup_y();
+		for(i = 0; i < 7; i++)
+			sampleBuf[i] = read_y();
+		filter();
+		pt->y = (coord_t)sampleBuf[3];
+
+		pt->buttons = pt->z >= 80 ? GINPUT_TOUCH_PRESSED : 0;
+
+		setup_z();
+		for(i = 0; i < 7; i++)
+			sampleBuf[i] = read_z();
+		filter();
+		i = (coord_t)sampleBuf[3] >= 80 ? GINPUT_TOUCH_PRESSED : 0;
+
+		if (pt->buttons == i)
+			break;
+	}
 
 	// Release the bus
 	release_bus();
-	
-	// Return the results
-	pt->x = lastx;
-	pt->y = lasty;
-	pt->z = 100;
-	pt->buttons = GINPUT_TOUCH_PRESSED;
 }
 
 #endif /* GFX_USE_GINPUT && GINPUT_NEED_MOUSE */
