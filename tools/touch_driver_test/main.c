@@ -140,7 +140,7 @@ StepRawJitter:
 		gwinPrintf(ghc, "Release your finger to move on to the next test.\n");
 
 	// For this test turn on ALL mouse movement events
-	geventAttachSource(&gl, gs, GLISTEN_MOUSEDOWNMOVES|GLISTEN_MOUSEMETA|GLISTEN_MOUSENOFILTER);
+	geventAttachSource(&gl, gs, GLISTEN_MOUSEDOWNMOVES|GLISTEN_MOUSEUPMOVES|GLISTEN_MOUSEMETA|GLISTEN_MOUSENOFILTER);
 
 	while(1) {
 		// Always sleep a bit first to enable other events. We actually don't
@@ -157,8 +157,7 @@ StepRawJitter:
 			}
 		} else if ((pem->meta & GMETA_MOUSE_UP))
 			break;
-		if ((pem->current_buttons & GINPUT_MOUSE_BTN_LEFT))
-			gwinPrintf(ghc, "%u:%u\n", pem->x, pem->y);
+		gwinPrintf(ghc, "%u:%u z=%u b=0x%04x m=%04x\n", pem->x, pem->y, pem->z, pem->current_buttons, pem->meta);
 	}
 
 	// Reset to just changed movements.
@@ -243,7 +242,7 @@ StepMouseCoords:
 			}
 		}
 		if ((pem->current_buttons & GINPUT_MOUSE_BTN_LEFT))
-			gwinPrintf(ghc, "%u:%u\n", pem->x, pem->y);
+			gwinPrintf(ghc, "%u:%u z=%u\n", pem->x, pem->y, pem->z);
 	}
 
 	// Reset to just changed movements.
