@@ -34,7 +34,7 @@
 /*
  * This demo demonstrates two ways to talk to multiple displays.
  *
- * Method 1 is the preferred way however Method 1 would be useful
+ * Method 1 is the preferred way however Method 2 would be useful
  * when quickly converting existing single display applications.
  *
  * Note you can combine the methods using method 2 for the first display
