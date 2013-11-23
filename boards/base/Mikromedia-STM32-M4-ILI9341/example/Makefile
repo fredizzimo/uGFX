@@ -77,9 +77,9 @@ LDSCRIPT= $(PORTLD)/STM32F407xG.ld
 
 # Imported source files and paths for uGFX
 GFXLIB = ../uGFX
-include $(GFXLIB)/gfx.mk
 include $(GFXLIB)/boards/base/Mikromedia-STM32-M4-ILI9341/board.mk
 include $(GFXLIB)/boards/base/Mikromedia-STM32-M4-ILI9341/ChibiOS_Board/board.mk		# The replacement ChibiOS board files
+include $(GFXLIB)/gfx.mk
 
 # Where is our source code - alter these for your project.
 MYFILES = $(GFXLIB)/demos/modules/gdisp/basics
