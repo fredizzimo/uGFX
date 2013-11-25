@@ -39,16 +39,6 @@ static inline void init_board(void) {
 	adcStart(&ADCD1, NULL);
 }
 
-static inline bool_t getpin_pressed(void) {
-    palSetPadMode(GPIOC, 0, PAL_MODE_INPUT_PULLDOWN);
-    palSetPadMode(GPIOC, 1, PAL_MODE_INPUT);
-    palSetPadMode(GPIOC, 2, PAL_MODE_INPUT);
-    palSetPadMode(GPIOC, 3, PAL_MODE_OUTPUT_PUSHPULL);
-    palSetPad(GPIOC, 3);
-	
-	return palReadPad(GPIOC, 0);
-}
-
 static inline void aquire_bus(void) {
 
 }
@@ -57,7 +47,37 @@ static inline void release_bus(void) {
 
 }
 
-static inline uint16_t read_x_value(void) {
+static inline void setup_x(void) {
+	palSetPadMode(GPIOC, 0, PAL_MODE_INPUT_ANALOG);
+	palSetPadMode(GPIOC, 1, PAL_MODE_INPUT_ANALOG);
+	palSetPadMode(GPIOC, 2, PAL_MODE_OUTPUT_PUSHPULL);
+	palSetPadMode(GPIOC, 3, PAL_MODE_OUTPUT_PUSHPULL);
+
+	palSetPad(GPIOC, 2);
+	palClearPad(GPIOC, 3); 
+	gfxSleepMilliseconds(1);
+}
+
+static inline void setup_y(void) {
+	palSetPadMode(GPIOC, 2, PAL_MODE_INPUT_ANALOG);
+	palSetPadMode(GPIOC, 3, PAL_MODE_INPUT_ANALOG);
+	palSetPadMode(GPIOC, 0, PAL_MODE_OUTPUT_PUSHPULL);
+	palSetPadMode(GPIOC, 1, PAL_MODE_OUTPUT_PUSHPULL);
+
+	palSetPad(GPIOC, 1);
+	palClearPad(GPIOC, 0);
+	gfxSleepMilliseconds(1);
+}
+
+static inline void setup_z(void) {
+	palSetPadMode(GPIOC, 0, PAL_MODE_INPUT_PULLDOWN);
+	palSetPadMode(GPIOC, 1, PAL_MODE_INPUT);
+	palSetPadMode(GPIOC, 2, PAL_MODE_INPUT);
+	palSetPadMode(GPIOC, 3, PAL_MODE_OUTPUT_PUSHPULL);
+	palSetPad(GPIOC, 3);
+}
+
+static inline uint16_t read_x(void) {
 	uint16_t val1, val2;
     adcsample_t samples[ADC_NUM_CHANNELS * ADC_BUF_DEPTH];
 
@@ -81,7 +101,7 @@ static inline uint16_t read_x_value(void) {
 	return ((val1+((1<<12)-val2))/4);
 }
 
-static inline uint16_t read_y_value(void) {
+static inline uint16_t read_y(void) {
 	uint16_t val1, val2;
     adcsample_t samples[ADC_NUM_CHANNELS * ADC_BUF_DEPTH];
 
@@ -103,6 +123,13 @@ static inline uint16_t read_y_value(void) {
     val2 = ((samples[0] + samples[1])/2);
     
 	return ((val1+((1<<12)-val2))/4);
+}
+
+static inline uint16_t read_z(void) {
+	if (palReadPad(GPIOC, 0))
+		return 100;
+	else
+		return 0;
 }
 
 #endif /* _GINPUT_LLD_MOUSE_BOARD_H */
