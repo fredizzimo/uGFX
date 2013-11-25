@@ -81,11 +81,6 @@ static inline uint16_t read_x(void) {
 	uint16_t val1, val2;
     adcsample_t samples[ADC_NUM_CHANNELS * ADC_BUF_DEPTH];
 
-    palSetPadMode(GPIOC, 0, PAL_MODE_INPUT_ANALOG);
-    palSetPadMode(GPIOC, 1, PAL_MODE_INPUT_ANALOG);
-    palSetPadMode(GPIOC, 2, PAL_MODE_OUTPUT_PUSHPULL);
-    palSetPadMode(GPIOC, 3, PAL_MODE_OUTPUT_PUSHPULL);
-    
 	palSetPad(GPIOC, 2);
     palClearPad(GPIOC, 3); 
     gfxSleepMilliseconds(1);
@@ -104,11 +99,6 @@ static inline uint16_t read_x(void) {
 static inline uint16_t read_y(void) {
 	uint16_t val1, val2;
     adcsample_t samples[ADC_NUM_CHANNELS * ADC_BUF_DEPTH];
-
-    palSetPadMode(GPIOC, 2, PAL_MODE_INPUT_ANALOG);
-    palSetPadMode(GPIOC, 3, PAL_MODE_INPUT_ANALOG);
-    palSetPadMode(GPIOC, 0, PAL_MODE_OUTPUT_PUSHPULL);
-    palSetPadMode(GPIOC, 1, PAL_MODE_OUTPUT_PUSHPULL);
 
     palSetPad(GPIOC, 1);
     palClearPad(GPIOC, 0);
