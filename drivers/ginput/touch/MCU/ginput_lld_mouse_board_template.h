@@ -24,26 +24,14 @@
  * @notapi
  */
 static inline void init_board(void) {
-
 }
 
 /**
- * @brief   Check whether the surface is currently touched
- * @return	TRUE if the surface is currently touched
- *
- * @notapi
- */
-static inline bool_t getpin_pressed(void) {
-
-}
-
-/**
- * @brief   Aquire the bus ready for readings
+ * @brief   Acquire the bus ready for readings
  *
  * @notapi
  */
 static inline void aquire_bus(void) {
-
 }
 
 /**
@@ -52,7 +40,39 @@ static inline void aquire_bus(void) {
  * @notapi
  */
 static inline void release_bus(void) {
+}
 
+/**
+ * @brief   Set up the device for a x coordinate read
+ * @note	This is performed once followed by multiple
+ * 			x coordinate read's (which are then median filtered)
+ *
+ * @notapi
+ */
+static inline void setup_x(void) {
+}
+
+/**
+ * @brief   Set up the device for a y coordinate read
+ * @note	This is performed once followed by multiple
+ * 			y coordinate read's (which are then median filtered)
+ *
+ * @notapi
+ */
+static inline void setup_y(void) {
+}
+
+/**
+ * @brief   Set up the device for a z coordinate (pressure) read
+ * @note	This is performed once followed by multiple
+ * 			z coordinate read's (which are then median filtered)
+ *
+ * @notapi
+ */
+static inline void setup_z(void) {
+	palClearPad(GPIOB, GPIOB_DRIVEA);
+	palClearPad(GPIOB, GPIOB_DRIVEB);
+    chThdSleepMilliseconds(2);
 }
 
 /**
@@ -61,18 +81,27 @@ static inline void release_bus(void) {
  *
  * @notapi
  */
-static inline uint16_t read_x_value(void) {
-
+static inline uint16_t read_x(void) {
 }
 
 /**
- * @brief   Read an y value from touch controller
+ * @brief   Read a y value from touch controller
  * @return	The value read from the controller
  *
  * @notapi
  */
-static inline uint16_t read_y_value(void) {
+static inline uint16_t read_y(void) {
+}
 
+/**
+ * @brief   Read a z value from touch controller
+ * @return	The value read from the controller.
+ * @note	The return value must be scaled between 0 and 100.
+ * 			Values over 80 are considered as "touch" down.
+ *
+ * @notapi
+ */
+static inline uint16_t read_z(void) {
 }
 
 #endif /* _GINPUT_LLD_MOUSE_BOARD_H */
