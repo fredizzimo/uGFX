@@ -48,7 +48,7 @@
 
 typedef struct MousePoint_t {
 	coord_t		x, y;
-	} MousePoint;
+} MousePoint;
 
 static GTIMER_DECL(MouseTimer);
 
@@ -72,7 +72,7 @@ static struct MouseConfig_t {
 		Calibration						caldata;
 	#endif
 	GDisplay *							display;
-	} MouseConfig;
+} MouseConfig;
 
 #if GINPUT_MOUSE_NEED_CALIBRATION
 	static inline void _tsDrawCross(const MousePoint *pp) {
