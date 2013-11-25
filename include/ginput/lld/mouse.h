@@ -31,6 +31,11 @@
 	#define GINPUT_MOUSE_NEED_CALIBRATION			FALSE
 #endif
 
+// TRUE/FALSE - Should the calibration happen at the extremes of the panel?
+#ifndef GINPUT_MOUSE_CALIBRATE_EXTREMES
+	#define GINPUT_MOUSE_CALIBRATE_EXTREMES			FALSE
+#endif
+
 // TRUE/FALSE	- Can the mouse/touch driver itself save calibration data?
 #ifndef GINPUT_MOUSE_LLD_CALIBRATION_LOADSAVE
 	#define GINPUT_MOUSE_LLD_CALIBRATION_LOADSAVE	FALSE

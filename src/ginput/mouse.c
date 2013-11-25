@@ -428,16 +428,16 @@ bool_t ginputCalibrateMouse(uint16_t instance) {
 
 		const coord_t height  =  gdispGGetHeight(MouseConfig.display);
 		const coord_t width  =  gdispGGetWidth(MouseConfig.display);
-		#if 1
-			const MousePoint cross[]  =  {{(width / 4), (height / 4)},
-										{(width - (width / 4)) , (height / 4)},
-										{(width - (width / 4)) , (height - (height / 4))},
-										{(width / 2), (height / 2)}}; /* Check point */
-		#else
+		#if GINPUT_MOUSE_CALIBRATE_EXTREMES
 			const MousePoint cross[]  =  {{0, 0},
-										{(width - 1) , 0},
-										{(width - 1) , (height - 1)},
-										{(width / 2), (height / 2)}}; /* Check point */
+									{(width - 1) , 0},
+									{(width - 1) , (height - 1)},
+									{(width / 2), (height / 2)}}; /* Check point */
+		#else
+			const MousePoint cross[]  =  {{(width / 4), (height / 4)},
+									{(width - (width / 4)) , (height / 4)},
+									{(width - (width / 4)) , (height - (height / 4))},
+									{(width / 2), (height / 2)}}; /* Check point */
 		#endif
 		MousePoint points[GINPUT_MOUSE_CALIBRATION_POINTS];
 		const MousePoint	*pc;
