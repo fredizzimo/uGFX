@@ -33,6 +33,9 @@
 #ifndef GDISP_GFXNET_UNSAFE_SOCKETS
 	#define GDISP_GFXNET_UNSAFE_SOCKETS	FALSE
 #endif
+#ifndef GDISP_GFXNET_BROKEN_LWIP_ACCEPT
+	#define GDISP_GFXNET_BROKEN_LWIP_ACCEPT		FALSE
+#endif
 
 #if GNETCODE_VERSION != GNETCODE_VERSION_1_0
 	#error "GDISP: uGFXnet - This driver only support protocol V1.0"
@@ -196,6 +199,66 @@ static DECLARE_THREAD_FUNCTION(NetThread, param) {
 
     /* keep track of the biggest file descriptor */
     fdmax = listenfd; /* so far, it's this one*/
+
+	#if GDISP_GFXNET_BROKEN_LWIP_ACCEPT
+    {
+		#warning "Using GDISP_GFXNET_BROKEN_LWIP_ACCEPT limits the number of displays and the use of GFXNET. Avoid if possible!"
+		len = sizeof(addr);
+		if((clientfd = accept(listenfd, (struct sockaddr *)&addr, &len)) == (SOCKET_TYPE)-1)
+			gfxHalt("GDISP: uGFXnet - Accept failed");
+
+		// Look for a display that isn't connected
+		for(disp = 0; disp < GDISP_TOTAL_DISPLAYS; disp++) {
+			if (!(g = gdispGetDisplay(disp)))
+				continue;
+			#if GDISP_TOTAL_CONTROLLERS > 1
+				// Ignore displays for other controllers
+				if (g->vmt != &GDISPVMT_uGFXnet)
+					continue;
+			#endif
+			if (!(g->flags & GDISP_FLG_CONNECTED))
+				break;
+		}
+
+		// Was anything found?
+		if (disp >= GDISP_TOTAL_DISPLAYS) {
+			// No Just close the connection
+			closesocket(clientfd);
+			gfxHalt("GDISP: uGFXnet - Can't find display for connection");
+			return 0;
+		}
+
+		// Save the descriptor
+		FD_SET(clientfd, &master);
+		if (clientfd > fdmax) fdmax = clientfd;
+		priv = g->priv;
+		memset(priv, 0, sizeof(netPriv));
+		priv->netfd = clientfd;
+		//printf(New connection from %s on socket %d allocated to display %u\n", inet_ntoa(addr.sin_addr), clientfd, disp+1);
+
+		// Send the initialisation data (2 words at a time)
+		priv->data[0] = GNETCODE_INIT;
+		priv->data[1] = GNETCODE_VERSION;
+		sendpkt(priv->netfd, priv->data, 2);
+		priv->data[0] = GDISP_SCREEN_WIDTH;
+		priv->data[1] = GDISP_SCREEN_HEIGHT;
+		sendpkt(priv->netfd, priv->data, 2);
+		priv->data[0] = GDISP_LLD_PIXELFORMAT;
+		priv->data[1] = (g->flags & GDISP_FLG_HASMOUSE) ? 1 : 0;
+		MUTEX_ENTER;
+		sendpkt(priv->netfd, priv->data, 2);
+		MUTEX_EXIT;
+
+		// The display is now working
+		g->flags |= GDISP_FLG_CONNECTED;
+
+		// Send a redraw all
+		#if GFX_USE_GWIN && GWIN_NEED_WINDOWMANAGER
+			gdispGClear(g, gwinGetDefaultBgColor());
+			gwinRedrawDisplay(g, FALSE);
+		#endif
+    }
+	#endif
 
     /* loop */
     for(;;) {
