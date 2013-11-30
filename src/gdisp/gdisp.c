@@ -20,11 +20,11 @@
 #include "gdisp/lld/gdisp_lld.h"
 
 #if 1
-	#undef inline
-	#define inline	inline
+	#undef INLINE
+	#define INLINE	inline
 #else
-	#undef inline
-	#define inline
+	#undef INLINE
+	#define INLINE
 #endif
 
 // Number of milliseconds for the startup logo - 0 means disabled.
@@ -89,7 +89,7 @@ GDisplay	*GDISP = GDisplayArray;
 /*==========================================================================*/
 
 #if GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
-	static inline void setglobalwindow(GDisplay *g) {
+	static INLINE void setglobalwindow(GDisplay *g) {
 		coord_t	x, y;
 		x = g->p.x; y = g->p.y;
 		g->p.x = g->p.y = 0;
@@ -125,7 +125,7 @@ GDisplay	*GDISP = GDisplayArray;
 // Parameters:	x,y
 // Alters:		cx, cy (if using streaming)
 // Does not clip
-static inline void drawpixel(GDisplay *g) {
+static INLINE void drawpixel(GDisplay *g) {
 
 	// Best is hardware accelerated pixel draw
 	#if GDISP_HARDWARE_DRAWPIXEL
@@ -172,7 +172,7 @@ static inline void drawpixel(GDisplay *g) {
 // Parameters:	x,y
 // Alters:		cx, cy (if using streaming)
 #if NEED_CLIPPING
-	static inline void drawpixel_clip(GDisplay *g) {
+	static INLINE void drawpixel_clip(GDisplay *g) {
 		#if GDISP_HARDWARE_CLIP == HARDWARE_AUTODETECT
 			if (!g->vmt->setclip)
 		#endif
@@ -191,7 +191,7 @@ static inline void drawpixel(GDisplay *g) {
 // Alters:		nothing
 // Note:		This is not clipped
 // Resets the streaming area if GDISP_HARDWARE_STREAM_WRITE and GDISP_HARDWARE_STREAM_POS is set.
-static inline void fillarea(GDisplay *g) {
+static INLINE void fillarea(GDisplay *g) {
 
 	// Best is hardware accelerated area fill
 	#if GDISP_HARDWARE_FILLS
