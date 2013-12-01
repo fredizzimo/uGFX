@@ -144,7 +144,9 @@ void gwinProgressbarDecrement(GHandle gh);
  * @note	The delay is generated using the GTIMER module which is based on software/virtual timer.
  *			Therefore, the delay is totally unprecise.
  *
- * @note	An even is generated once the maximum value has been reached (ToDo)
+ * @note	The progressbar incrementation starts at the current level. It is not reset to the minimum value.
+ *
+ * @note	An event is generated once the maximum value has been reached (ToDo)
  *
  * @param[in] gh		The window handle (must be a progressbar window)
  * @param[in] delay		The incrementation delay (in milliseconds)
