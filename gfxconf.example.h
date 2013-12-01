@@ -111,6 +111,7 @@
 #define GWIN_NEED_IMAGE			FALSE
 #define GWIN_NEED_RADIO			FALSE
 #define GWIN_NEED_LIST			FALSE
+#define GWIN_NEED_PROGRESSBAR	FALSE
 
 /* Features for the GEVENT subsystem. */
 #define GEVENT_ASSERT_NO_RESOURCE	FALSE
