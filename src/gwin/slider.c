@@ -272,7 +272,7 @@ void gwinSliderSetPosition(GHandle gh, int pos) {
 		else gsw->pos = pos;
 	}
 	ResetDisplayPos(gsw);
-	gwinRedraw(gh);
+	_gwidgetRedraw(gh);
 
 	#undef gsw
 }
