@@ -171,8 +171,9 @@ void gwinProgressbarDecrement(GHandle gh) {
 }
 
 // used by gwinProgressbarStart();
-static void _progressbarCallback(GHandle gh) {
+void _progressbarCallback(void *param) {
 	#define gsw		((GProgressbarObject *)gh)
+	GHandle gh = (GHandle)param;
 
 	if (gh->vmt != (gwinVMT *)&progressbarVMT)
 		return;
