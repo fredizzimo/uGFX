@@ -15,7 +15,7 @@
  * MISO:            GPIOB, 14
  * MOSI:            GPIOB, 15
  * CS:              GPIOC, 4
- * IRC:				GPIOC, 5
+ * IRC:             GPIOC, 5
  *
  * Note that you can tweak the SPI bus speed
  */
@@ -41,7 +41,7 @@ static inline bool_t getpin_pressed(void) {
 
 static inline void aquire_bus(void) {
 	spiAcquireBus(&SPID2);
-    palClearPad(GPIOC, 4);
+	palClearPad(GPIOC, 4);
 }
 
 static inline void release_bus(void) {
@@ -50,16 +50,16 @@ static inline void release_bus(void) {
 }
 
 static inline uint16_t read_value(uint16_t port) {
-    static uint8_t txbuf[3] = {0};
-    static uint8_t rxbuf[3] = {0};
-    uint16_t ret;
+	static uint8_t txbuf[3] = {0};
+	static uint8_t rxbuf[3] = {0};
+	uint16_t ret;
 
-    txbuf[0] = port;
+	txbuf[0] = port;
 
-    spiExchange(&SPID2, 3, txbuf, rxbuf);
+	spiExchange(&SPID2, 3, txbuf, rxbuf);
 
-    ret = (rxbuf[1] << 5) | (rxbuf[2] >> 3); 
-    
+	ret = (rxbuf[1] << 5) | (rxbuf[2] >> 3); 
+
 	return ret;
 }
 
