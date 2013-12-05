@@ -10,7 +10,10 @@
 
 /*
  * uGFX port used:  ChibiOS/RT
- * SPI port:        SPI2
+ *
+ * SCK:             GPIOB, 13
+ * MISO:            GPIOB, 14
+ * MOSI:            GPIOB, 15
  * CS:              GPIOC, 4
  * IRC:				GPIOC, 5
  *
