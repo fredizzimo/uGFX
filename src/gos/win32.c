@@ -18,11 +18,13 @@
 static HANDLE	SystemMutex;
 
 void _gosInit(void) {
+
 }
 
 void gfxHalt(const char *msg) {
 	if (msg)
 		fprintf(stderr, "%s\n", msg);
+
 	ExitProcess(1);
 }
 
@@ -32,8 +34,13 @@ void gfxSleepMicroseconds(delaytime_t ms) {
     LARGE_INTEGER t1, t2, tdiff;
 
     switch(ms) {
-	case TIME_IMMEDIATE:	return;
-	case TIME_INFINITE:		while(1) Sleep(1000);	return;
+		case TIME_IMMEDIATE:
+			return;
+
+		case TIME_INFINITE:
+			while(1)
+				Sleep(1000);
+			return;
 	}
 
     if (!initflag) {
@@ -81,6 +88,7 @@ semcount_t gfxSemCounter(gfxSem *pSem) {
     	NtQuerySemaphore = (_NtQuerySemaphore)GetProcAddress(GetModuleHandle("ntdll.dll"), "NtQuerySemaphore");
 
     NtQuerySemaphore(*pSem, 0, &BasicInfo, sizeof(BasicInfo), NULL);
+
     return BasicInfo.CurrentCount;
 }
 
@@ -90,8 +98,10 @@ gfxThreadHandle gfxThreadCreate(void *stackarea, size_t stacksz, threadpriority_
 
 	if (!(thd = CreateThread(NULL, stacksz, fn, param, CREATE_SUSPENDED, NULL)))
 		return FALSE;
+
 	SetThreadPriority(thd, prio);
 	ResumeThread(thd);
+
 	return thd;
 }
 
@@ -101,8 +111,10 @@ threadreturn_t gfxThreadWait(gfxThreadHandle thread) {
 	WaitForSingleObject(thread, INFINITE);
 	GetExitCodeThread(thread, &ret);
 	CloseHandle(thread);
+
 	return ret;
 }
 
 #endif /* GFX_USE_OS_WIN32 */
 /** @} */
+

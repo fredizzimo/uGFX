@@ -101,8 +101,6 @@ threadreturn_t gfxThreadWait(gfxThreadHandle thread);
 }
 #endif
 
-
-
 #endif /* GFX_USE_OS_WIN32 */
-
 #endif /* _GOS_WIN32_H */
+

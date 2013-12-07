@@ -49,39 +49,47 @@ void *gfxRealloc(void *ptr, size_t oldsz, size_t newsz) {
 
 void gfxSleepMilliseconds(delaytime_t ms) {
 	switch(ms) {
-	case TIME_IMMEDIATE:	chThdYield();				return;
-	case TIME_INFINITE:		chThdSleep(TIME_INFINITE);	return;
-	default:				chThdSleepMilliseconds(ms);	return;
+		case TIME_IMMEDIATE:	chThdYield();				return;
+		case TIME_INFINITE:		chThdSleep(TIME_INFINITE);	return;
+		default:				chThdSleepMilliseconds(ms);	return;
 	}
 }
 
 void gfxSleepMicroseconds(delaytime_t ms) {
 	switch(ms) {
-	case TIME_IMMEDIATE:								return;
-	case TIME_INFINITE:		chThdSleep(TIME_INFINITE);	return;
-	default:				chThdSleepMicroseconds(ms);	return;
+		case TIME_IMMEDIATE:								return;
+		case TIME_INFINITE:		chThdSleep(TIME_INFINITE);	return;
+		default:				chThdSleepMicroseconds(ms);	return;
 	}
 }
+
 void gfxSemInit(gfxSem *psem, semcount_t val, semcount_t limit) {
-	if (val > limit) val = limit;
+	if (val > limit)
+		val = limit;
+
 	psem->limit = limit;
 	chSemInit(&psem->sem, val);
 }
+
 void gfxSemDestroy(gfxSem *psem) {
 	chSemReset(&psem->sem, 1);
 }
+
 bool_t gfxSemWait(gfxSem *psem, delaytime_t ms) {
 	if (ms == TIME_INFINITE) {
 		chSemWait(&psem->sem);
 		return TRUE;
 	}
+
 	return chSemWaitTimeout(&psem->sem, MS2ST(ms)) != RDY_TIMEOUT;
 }
 
 void gfxSemSignal(gfxSem *psem) {
 	chSysLock();
+
 	if (gfxSemCounterI(psem) < psem->limit)
 		chSemSignalI(&psem->sem);
+
 	chSchRescheduleS();
 	chSysUnlock();
 }
@@ -97,9 +105,12 @@ gfxThreadHandle gfxThreadCreate(void *stackarea, size_t stacksz, threadpriority_
 		return chThdCreateFromHeap(0, stacksz, prio, fn, param);
 	}
 
-	if (!stacksz) return NULL;
+	if (!stacksz)
+		return NULL;
+
 	return chThdCreateStatic(stackarea, stacksz, prio, fn, param);
 }
 
 #endif /* GFX_USE_OS_CHIBIOS */
 /** @} */
+

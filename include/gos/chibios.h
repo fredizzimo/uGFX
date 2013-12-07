@@ -97,3 +97,4 @@ gfxThreadHandle gfxThreadCreate(void *stackarea, size_t stacksz, threadpriority_
 
 #endif /* GFX_USE_OS_CHIBIOS */
 #endif /* _GOS_CHIBIOS_H */
+
