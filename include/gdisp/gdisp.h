@@ -624,6 +624,24 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 	 */
 	void gdispGFillConvexPoly(GDisplay *g, coord_t tx, coord_t ty, const point *pntarray, unsigned cnt, color_t color);
 	#define gdispFillConvexPoly(x,y,p,i,c)					gdispGFillConvexPoly(GDISP,x,y,p,i,c)
+	
+	/**
+	 * @brief   Draw a line with a specified thickness
+	 * @details The line thickness is specified in pixels. The line ends can
+	 *          be selected to be either flat or round.
+	 * @note	Uses gdispGFillConvexPoly() internally to perform the drawing.
+	 * 
+	 * @param[in] g			The display to use
+	 * @param[in] x0,y0		The start position
+	 * @param[in] x1,y1		The end position
+	 * @param[in] color		The color to use
+	 * @param[in] width		The width of the line
+	 * @param[in] round		Use round ends for the line
+	 * 
+	 * @api
+	 */
+	void gdispGDrawThickLine(GDisplay *g, coord_t x0, coord_t y0, coord_t x1, coord_t y1, color_t color, coord_t width, bool_t round);
+	#define gdispDrawThickLine(x0,y0,x1,y1,c,w,r)			gdispGDrawThickLine(GDISP,x0,y0,x1,y1,c,w,r)
 #endif
 
 /* Text Functions */

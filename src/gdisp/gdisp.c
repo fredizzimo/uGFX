@@ -2565,6 +2565,131 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 			}
 		}
 	}
+	
+	static int32_t rounding_div(const int32_t n, const int32_t d)
+	{
+		if ((n < 0) != (d < 0))
+			return (n - d/2) / d;
+		else
+			return (n + d/2) / d;
+	}
+	
+	void gdispGDrawThickLine(GDisplay *g, coord_t x0, coord_t y0, coord_t x1, coord_t y1, color_t color, coord_t width, bool_t round) {
+		coord_t dx, dy, nx, ny;
+		
+		/* Compute the direction vector for the line */
+		dx = x1 - x0;
+		dy = y1 - y0;
+		
+		/* Compute vector for the normal of the line */
+		nx = dy;
+		ny = -dx;
+		
+		/* Normalize the normal vector to length width.
+		 * This uses Newton-Rhapson to avoid the need for floating point sqrt.
+		 * We try to solve f(div) = div^2 - len/width^2.
+		 */
+		{
+			int32_t div, len, tmp;
+			uint8_t i;
+			
+			len = nx*nx + ny*ny;
+			div = 100; /* Initial guess for divider; not critical */
+			
+			for (i = 0; i < 5; i++) {
+				tmp = width * width * div;
+				div -= (tmp * div - len) / (2 * tmp);
+			}
+			
+			nx = rounding_div(nx, div);
+			ny = rounding_div(ny, div);
+		}
+		
+		/* Offset the x0,y0 by half the width of the line. This way we
+		 * can keep the width of the line accurate even if it is not evenly
+		 * divisible by 2.
+		 */
+		{
+			x0 -= rounding_div(nx, 2);
+			y0 -= rounding_div(ny, 2);
+		}
+		
+		/* Fill in the point array */
+		if (!round) {
+			/* We use 4 points for the basic line shape:
+			 * 
+			 *  pt1                                      pt2
+			 * (+n) ------------------------------------ (d+n)
+			 *   |                                       |
+			 * (0,0) ----------------------------------- (d)
+			 *  pt0                                      pt3
+			 */
+			point pntarray[4];
+			
+			pntarray[0].x = 0;
+			pntarray[0].y = 0;
+			pntarray[1].x = nx;
+			pntarray[1].y = ny;
+			pntarray[2].x = dx + nx;
+			pntarray[2].y = dy + ny;
+			pntarray[3].x = dx;
+			pntarray[3].y = dy;
+			
+			gdispGFillConvexPoly(g, x0, y0, pntarray, 4, color);
+		} else {
+			/* We use 4 points for basic shape, plus 4 extra points for ends:
+			 *
+			 *           pt3 ------------------ pt4
+			 *          /                         \
+			 *        pt2                        pt5
+			 *         |                          |
+			 *        pt1                        pt6
+			 *         \                         /
+			 *          pt0 -------------------pt7
+			 */
+			point pntarray[8];
+			coord_t nx2, ny2;
+			
+			/* Magic numbers:
+			 * 75/256  = sin(45) / (1 + sqrt(2))		diagonal octagon segments
+			 * 106/256 = 1 / (1 + sqrt(2))				octagon side
+			 * 53/256  = 0.5 / (1 + sqrt(2))			half of octagon side
+			 * 150/256 = 1 - 1 / (1 + sqrt(2))	  		octagon height minus one side
+			 */
+			
+			/* Rotate the normal vector 45 deg counter-clockwise and reduce
+			 * to 1 / (1 + sqrt(2)) length, for forming octagonal ends. */
+			nx2 = rounding_div((nx * 75 + ny * 75), 256);
+			ny2 = rounding_div((-nx * 75 + ny * 75), 256);
+			
+			/* Offset and extend the line so that the center of the octagon
+			 * is at the specified points. */
+			x0 += ny * 53 / 256;
+			y0 -= nx * 53 / 256;
+			dx -= ny * 106 / 256;
+			dy += nx * 106 / 256;
+			
+			/* Now fill in the points by summing the calculated vectors. */
+			pntarray[0].x = 0;
+			pntarray[0].y = 0;
+			pntarray[1].x = nx2;
+			pntarray[1].y = ny2;
+			pntarray[2].x = nx2 + nx * 106/256;
+			pntarray[2].y = ny2 + ny * 106/256;
+			pntarray[3].x = nx;
+			pntarray[3].y = ny;
+			pntarray[4].x = dx + nx;
+			pntarray[4].y = dy + ny;
+			pntarray[5].x = dx + nx - nx2;
+			pntarray[5].y = dy + ny - ny2;
+			pntarray[6].x = dx + nx * 150/256 - nx2;
+			pntarray[6].y = dy + ny * 150/256 - ny2;
+			pntarray[7].x = dx;
+			pntarray[7].y = dy;
+			
+			gdispGFillConvexPoly(g, x0, y0, pntarray, 8, color);
+		}
+	}
 #endif
 
 #if GDISP_NEED_TEXT
