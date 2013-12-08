@@ -2586,7 +2586,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 		ny = -dx;
 		
 		/* Normalize the normal vector to length width.
-		 * This uses Newton-Rhapson to avoid the need for floating point sqrt.
+		 * This uses Newton-Raphson to avoid the need for floating point sqrt.
 		 * We try to solve f(div) = div^2 - len/width^2.
 		 */
 		{
