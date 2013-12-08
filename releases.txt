@@ -5,6 +5,7 @@
 current release: 2.0
 FIX:		Significant improvements to the way the MCU touch driver works.
 FEATURE:	Add support for edge to edge touch calibration. 
+FEATURE:	Added progressbar widget
 
 
 *** changes after 1.9 ***
