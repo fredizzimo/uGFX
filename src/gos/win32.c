@@ -6,8 +6,8 @@
  */
 
 /**
- * @file    src/gos/chibios.c
- * @brief   GOS ChibiOS Operating System support.
+ * @file    src/gos/win32.c
+ * @brief   GOS Win32 Operating System support.
  */
 #include "gfx.h"
 
