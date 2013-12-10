@@ -42,6 +42,11 @@
 #define DISPLAY_X_OFFSET		50
 #define DISPLAY_Y_OFFSET		50
 
+#undef Red
+#undef Green
+#undef Blue
+
+#define WIN32_LEAN_AND_MEAN
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -420,7 +425,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 		// Wait for our thread to be ready
 		while (!QReady)
-			Sleep(1);
+			gfxSleepMilliseconds(1);
 	}
 
 	// Initialise the GDISP structure
@@ -461,7 +466,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 	// Wait for the window creation to complete (for safety)
 	while(!(((volatile GDisplay *)g)->flags & GDISP_FLG_READY))
-		Sleep(1);
+		gfxSleepMilliseconds(1);
 
 	sprintf(buf, APP_NAME " - %u", g->systemdisplay+1);
 	SetWindowText(priv->hwnd, buf);
