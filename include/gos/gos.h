@@ -435,6 +435,8 @@
 	#include "gos/linux.h"
 #elif GFX_USE_OS_OSX
 	#include "gos/osx.h"
+#elif GFX_USE_OS_RAW32
+	#include "gos/raw32.h"
 #else
 	#error "Your operating system is not supported yet"
 #endif
