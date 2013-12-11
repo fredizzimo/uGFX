@@ -7,6 +7,7 @@ FIX:		Significant improvements to the way the MCU touch driver works.
 FEATURE:	Add support for edge to edge touch calibration. 
 FEATURE:	Added progressbar widget
 FEATURE:	Added gdispGDrawThickLine() by user jpa-
+DEPRECATE:	TDISP module removed
 
 
 *** changes after 1.9 ***

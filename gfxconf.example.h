@@ -22,7 +22,6 @@
 
 /* GFX subsystems to turn on */
 #define GFX_USE_GDISP			FALSE
-#define GFX_USE_TDISP			FALSE
 #define GFX_USE_GWIN			FALSE
 #define GFX_USE_GEVENT			FALSE
 #define GFX_USE_GTIMER			FALSE
@@ -95,9 +94,6 @@
 	#define GDISP_NEED_IMAGE_BMP_24		TRUE
 	#define GDISP_NEED_IMAGE_BMP_32		TRUE
 */
-
-/* Features for the TDISP subsystem. */
-#define TDISP_NEED_MULTITHREAD	FALSE
 
 /* Features for the GWIN subsystem. */
 #define GWIN_NEED_WINDOWMANAGER	FALSE
@@ -196,8 +192,7 @@
 	#define GDISP_DONT_WAIT_FOR_NET_DISPLAY	FALSE
 	#define GDISP_GFXNET_UNSAFE_SOCKETS		FALSE
 	#define GDISP_USE_DMA					FALSE
-	#define TDISP_COLUMNS					16
-	#define TDISP_ROWS						2
 */
 
 #endif /* _GFXCONF_H */
+

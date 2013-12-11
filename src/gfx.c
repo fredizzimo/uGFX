@@ -22,9 +22,6 @@ extern void _gosInit(void);
 #if GFX_USE_GDISP
 	extern void _gdispInit(void);
 #endif
-#if GFX_USE_TDISP
-	extern void _tdispInit(void);
-#endif
 #if GFX_USE_GWIN
 	extern void _gwinInit(void);
 #endif
@@ -77,11 +74,6 @@ void gfxInit(void) {
 	#endif
 	#if GFX_USE_GINPUT
 		_ginputInit();
-	#endif
-	#if GFX_USE_TDISP
-		_tdispInit();
-		tdispHome();
-		tdispClear();
 	#endif
 	#if GFX_USE_GADC
 		_gadcInit();

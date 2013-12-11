@@ -188,9 +188,6 @@
 	#endif
 #endif
 
-#if GFX_USE_TDISP
-#endif
-
 #if GFX_USE_GAUDIN
 	#if GFX_USE_GEVENT && !GFX_USE_GTIMER
 		#if GFX_DISPLAY_RULE_WARNINGS
