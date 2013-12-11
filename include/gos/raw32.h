@@ -74,7 +74,7 @@ typedef int				threadpriority_t;
 typedef struct {
 	semcount_t		cnt;
 	semcount_t		limit;
-	} gfxSem;
+} gfxSem;
 
 typedef uint32_t		gfxMutex;
 typedef void *			gfxThreadHandle;
@@ -122,3 +122,4 @@ extern "C" {
 
 #endif /* GFX_USE_OS_RAW32 */
 #endif /* _GOS_RAW32_H */
+

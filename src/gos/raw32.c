@@ -15,7 +15,6 @@
 
 #include <string.h>				// Prototype for memcpy()
 
-
 #if GOS_RAW_HEAP_SIZE != 0
 	static void _gosHeapInit(void);
 #else
@@ -138,6 +137,7 @@ void gfxExit(void) {
 		lastSlot->sz = sz;
 		NextFree(lastSlot) = 0;
 	}
+
 	void *gfxAlloc(size_t sz) {
 		register memslot *prev, *p, *new;
 
@@ -270,6 +270,7 @@ void gfxExit(void) {
 void gfxSystemLock(void) {
 	INTERRUPTS_OFF();
 }
+
 void gfxSystemUnlock(void) {
 	INTERRUPTS_ON();
 }
@@ -454,12 +455,12 @@ typedef struct thread {
 	void *			param;					// Parameter for the thread function
 	jmp_buf			cxt;					// The current thread context.
 	// size - sizeof(thread) bytes of stack follow here
-	} thread;
+} thread;
 
 typedef struct threadQ {
 	thread *head;
 	thread *tail;
-	} threadQ;
+} threadQ;
 
 static threadQ		readyQ;					// The list of ready threads
 static threadQ		deadQ;					// Where we put threads waiting to be deallocated
@@ -740,3 +741,4 @@ threadreturn_t gfxThreadWait(gfxThreadHandle th) {
 }
 
 #endif /* GFX_USE_OS_RAW32 */
+
