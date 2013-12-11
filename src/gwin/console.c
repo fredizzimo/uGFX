@@ -90,6 +90,9 @@ void gwinPutChar(GHandle gh, char c) {
 	#define gcw		((GConsoleObject *)gh)
 	uint8_t			width, fy, fp;
 
+	if (!gwinGetVisible(gh))
+		return;
+
 	if (gh->vmt != &consoleVMT || !gh->font)
 		return;
 
@@ -147,11 +150,17 @@ void gwinPutChar(GHandle gh, char c) {
 }
 
 void gwinPutString(GHandle gh, const char *str) {
+	if (!gwinGetVisible(gh))
+		return;
+
 	while(*str)
 		gwinPutChar(gh, *str++);
 }
 
 void gwinPutCharArray(GHandle gh, const char *str, size_t n) {
+	if (!gwinGetVisible(gh))
+		return;
+
 	while(n--)
 		gwinPutChar(gh, *str++);
 }
@@ -210,6 +219,9 @@ void gwinPrintf(GHandle gh, const char *fmt, ...) {
 	#else
 		char tmpbuf[MAX_FILLER + 1];
 	#endif
+
+	if (!gwinGetVisible(gh))
+		return;
 
 	if (gh->vmt != &consoleVMT || !gh->font)
 		return;
