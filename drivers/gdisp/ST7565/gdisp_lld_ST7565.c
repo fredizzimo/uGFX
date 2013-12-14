@@ -42,6 +42,22 @@
 #include "st7565.h"
 
 /*===========================================================================*/
+/* Driver config defaults for backward compatibility.               	     */
+/*===========================================================================*/
+#ifndef ST7565_LCD_BIAS
+  #define ST7565_LCD_BIAS         ST7565_LCD_BIAS_7
+#endif
+#ifndef ST7565_ADC
+  #define ST7565_ADC              ST7565_ADC_NORMAL
+#endif
+#ifndef ST7565_COM_SCAN
+  #define ST7565_COM_SCAN         ST7565_COM_SCAN_INC
+#endif
+#ifndef ST7565_PAGE_ORDER
+  #define ST7565_PAGE_ORDER       0,1,2,3,4,5,6,7
+#endif
+
+/*===========================================================================*/
 /* Driver local functions.                                                   */
 /*===========================================================================*/
 
@@ -83,9 +99,10 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 	acquire_bus(g);
 
-	write_cmd(g, ST7565_LCD_BIAS_7);
-	write_cmd(g, ST7565_ADC_NORMAL);
-	write_cmd(g, ST7565_COM_SCAN_INC);
+    write_cmd(g, ST7565_LCD_BIAS);
+    write_cmd(g, ST7565_ADC);
+    write_cmd(g, ST7565_COM_SCAN);
+
 	write_cmd(g, ST7565_START_LINE | 0);
 
 	write_cmd2(g, ST7565_CONTRAST, GDISP_INITIAL_CONTRAST*64/101);
@@ -134,8 +151,9 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			return;
 
 		acquire_bus(g);
+		uint8_t pagemap[8]={ST7565_PAGE_ORDER};
 		for (p = 0; p < 8; p++) {
-			write_cmd(g, ST7565_PAGE | p);
+			write_cmd(g, ST7565_PAGE | pagemap[p]);
 			write_cmd(g, ST7565_COLUMN_MSB | 0);
 			write_cmd(g, ST7565_COLUMN_LSB | 0);
 			write_cmd(g, ST7565_RMW);
