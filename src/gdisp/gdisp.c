@@ -2587,18 +2587,39 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 		
 		/* Normalize the normal vector to length width.
 		 * This uses Newton-Raphson to avoid the need for floating point sqrt.
-		 * We try to solve f(div) = div^2 - len/width^2.
+		 * We try to solve f(div) = div^2 - len/width^2 = 0.
+		 * The closed-form solution is div = sqrt(len) / width.
 		 */
 		{
 			int32_t div, len, tmp;
 			uint8_t i;
 			
-			len = nx*nx + ny*ny;
+			len = (int32_t)nx*nx + (int32_t)ny*ny;
 			div = 100; /* Initial guess for divider; not critical */
 			
+			/* If the line length is quite short, premultiply the vector
+			 * in order to get better accuracy in width. */
+			if (len < 1024)
+			{
+				nx <<= 8;
+				ny <<= 8;
+				len <<= 16;
+			}
+			else if (len < 65536)
+			{
+				nx <<= 4;
+				ny <<= 4;
+				len <<= 8;
+			}
+			
+			int prev = div;
 			for (i = 0; i < 5; i++) {
 				tmp = width * width * div;
 				div -= (tmp * div - len) / (2 * tmp);
+				
+				if (div == prev)
+					break; // No change, iteration complete
+				prev = div;
 			}
 			
 			nx = rounding_div(nx, div);
