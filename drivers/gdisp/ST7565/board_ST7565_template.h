@@ -17,6 +17,18 @@
 #define _GDISP_LLD_BOARD_H
 
 /**
+ * Driver configuration
+ */
+#define ST7565_LCD_BIAS         ST7565_LCD_BIAS_7
+#define ST7565_ADC              ST7565_ADC_NORMAL
+#define ST7565_COM_SCAN         ST7565_COM_SCAN_INC
+#define ST7565_PAGE_ORDER       0,1,2,3,4,5,6,7
+/*
+ * Custom page order for several LCD boards, e.g. HEM12864-99
+ * #define ST7565_PAGE_ORDER       4,5,6,7,0,1,2,3
+ */
+
+/**
  * @brief   Initialise the board for the display.
  *
  * @param[in] g			The GDisplay structure
