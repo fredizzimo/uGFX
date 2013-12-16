@@ -21,6 +21,14 @@
  * @{
  */
 	/**
+	 * @brief	Should the startup logo be displayed
+	 *
+	 * @details Defaults to TRUE
+	 */
+	#ifndef GDISP_NEED_STARTUP_LOGO
+		#define GDISP_NEED_STARTUP_LOGO TRUE
+	#endif
+	/**
 	 * @brief   Should drawing operations be automatically flushed.
 	 * @details	Defaults to FALSE
 	 * @note	If set to FALSE and the controller requires flushing
