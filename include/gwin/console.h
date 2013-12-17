@@ -35,10 +35,10 @@ typedef struct GConsoleObject {
 		struct GConsoleWindowStream_t {
 			const struct GConsoleWindowVMT_t *vmt;
 			_base_asynchronous_channel_data
-			} stream;
+		} stream;
 	#endif
 	
-	} GConsoleObject;
+} GConsoleObject;
 
 #ifdef __cplusplus
 extern "C" {
