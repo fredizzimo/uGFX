@@ -2578,57 +2578,94 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 			return (n + d/2) / d;
 	}
 	
+	/* Find a vector (nx, ny) that is perpendicular to (dx, dy) and has length
+	 * equal to 'norm'. */
+	static void get_normal_vector(coord_t dx, coord_t dy, coord_t norm, coord_t *nx, coord_t *ny)
+	{
+		int32_t dx2, dy2, len_sq, norm_sq, norm_sq2;
+		int div, step, best, delta, abs_delta;
+		
+		dx2 = dx; dy2 = dy;
+		norm_sq = (int32_t)norm * norm;
+		norm_sq2 = norm_sq * 512;
+		
+		/* Scale dx2 and dy2 so that
+		 *     len_sq / 2 <= norm_sq * 512 <= len_sq * 2.
+		 * The scaling by 512 is to yield higher accuracy in division later. */
+		len_sq = dx2 * dx2 + dy2 * dy2;
+		
+		if (len_sq < norm_sq2)
+		{
+			while (len_sq < norm_sq2)
+			{
+				len_sq <<= 2; dx2 <<= 1; dy2 <<= 1;
+			}
+		}
+		else if (len_sq > norm_sq2)
+		{
+			while (len_sq > norm_sq2)
+			{
+				len_sq >>= 2; dx2 >>= 1; dy2 >>= 1;
+			}
+		}
+		
+		/* Now find the divider div so that
+		 *     len_sq / div^2 == norm_sq   i.e.  div = sqrt(len_sq / norm_sq)
+		 *
+		 * This is done using bisection search to avoid the need for floating
+		 * point sqrt.
+		 * 
+		 * Based on previous scaling, we know that
+		 *     len_sq / 2 <= norm_sq * 512   <=>   div <= sqrt(1024) = 32
+		 *     len_sq * 2 >= norm_sq * 512   <=>   div >= sqrt(256) = 16
+		 */
+		div = 24; step = 8;
+		best = 256;
+		
+		for (;;)
+		{
+			dx = dx2 / div;
+			dy = dy2 / div;
+			len_sq = dx*dx + dy*dy;
+			
+			delta = len_sq - norm_sq;
+			
+			abs_delta = (delta >= 0) ? delta : -delta;
+			
+			if (abs_delta < best)
+			{
+				*nx = dy;
+				*ny = -dx;
+				best = abs_delta;
+			}
+			
+			if (delta > 0)
+				div += step;
+			else if (delta < 0)
+				div -= step;
+			else if (delta == 0)
+				break;
+			
+			if (step == 0)
+				break;
+			else
+				step >>= 1; /* Do one round with step = 0 to calculate final result. */
+		}
+	}
+	
 	void gdispGDrawThickLine(GDisplay *g, coord_t x0, coord_t y0, coord_t x1, coord_t y1, color_t color, coord_t width, bool_t round) {
-		coord_t dx, dy, nx, ny;
+		coord_t dx, dy, nx = 0, ny = 0;
 		
 		/* Compute the direction vector for the line */
 		dx = x1 - x0;
 		dy = y1 - y0;
 		
-		/* Compute vector for the normal of the line */
-		nx = dy;
-		ny = -dx;
+		/* Compute a normal vector with length 'width'. */
+		get_normal_vector(dx, dy, width, &nx, &ny);
 		
-		/* Normalize the normal vector to length width.
-		 * This uses Newton-Raphson to avoid the need for floating point sqrt.
-		 * We try to solve f(div) = div^2 - len/width^2 = 0.
-		 * The closed-form solution is div = sqrt(len) / width.
-		 */
-		{
-			int32_t div, len, tmp;
-			uint8_t i;
-			
-			len = (int32_t)nx*nx + (int32_t)ny*ny;
-			div = 100; /* Initial guess for divider; not critical */
-			
-			/* If the line length is quite short, premultiply the vector
-			 * in order to get better accuracy in width. */
-			if (len < 1024)
-			{
-				nx <<= 8;
-				ny <<= 8;
-				len <<= 16;
-			}
-			else if (len < 65536)
-			{
-				nx <<= 4;
-				ny <<= 4;
-				len <<= 8;
-			}
-			
-			int prev = div;
-			for (i = 0; i < 5; i++) {
-				tmp = width * width * div;
-				div -= (tmp * div - len) / (2 * tmp);
-				
-				if (div == prev)
-					break; // No change, iteration complete
-				prev = div;
-			}
-			
-			nx = rounding_div(nx, div);
-			ny = rounding_div(ny, div);
-		}
+		/* Handle 1px wide lines gracefully */
+		if (nx == 0 && ny == 0)
+			nx = 1;
 		
 		/* Offset the x0,y0 by half the width of the line. This way we
 		 * can keep the width of the line accurate even if it is not evenly
