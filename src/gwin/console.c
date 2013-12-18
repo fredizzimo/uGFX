@@ -53,28 +53,68 @@
 	};
 #endif
 
+#if GWIN_CONSOLE_NEED_HISTORY
+	static void CustomRedraw(GWindowObject *gh) {
+		#define gcw		((GConsoleObject *)gh)
+
+		uint16_t i;
+
+		// loop through buffer and don't add it again	
+		gcw->store = FALSE;
+		for (i = 0; i < gcw->last_char; i++) {
+			gwinPutChar(gh, gcw->buffer[i]);
+		}
+		gcw->store = TRUE;
+	
+		#undef gcw
+	}
+#endif
+
 static void AfterClear(GWindowObject *gh) {
-	((GConsoleObject *)gh)->cx = 0;
-	((GConsoleObject *)gh)->cy = 0;
+	#define gcw		((GConsoleObject *)gh)
+	gcw->cx = 0;
+	gcw->cy = 0;
+
+	#if GWIN_CONSOLE_NEED_HISTORY
+		// issue an overflow, this is some kind
+		// of emptying the buffer
+		gcw->last_char = gcw->size;
+	#endif
+
+	#undef gcw		
 }
 
 static const gwinVMT consoleVMT = {
-		"Console",				// The classname
-		sizeof(GConsoleObject),	// The object size
-		0,						// The destroy routine
-		0,						// The redraw routine
-		AfterClear,				// The after-clear routine
+	"Console",				// The classname
+	sizeof(GConsoleObject),	// The object size
+	0,						// The destroy routine
+	#if GWIN_CONSOLE_NEED_HISTORY
+		CustomRedraw,		// The redraw routine (custom)
+	#else
+		0,					// The redraw routine (default)
+	#endif
+	AfterClear,				// The after-clear routine
 };
 
 GHandle gwinGConsoleCreate(GDisplay *g, GConsoleObject *gc, const GWindowInit *pInit) {
 	if (!(gc = (GConsoleObject *)_gwindowCreate(g, &gc->g, pInit, &consoleVMT, 0)))
 		return 0;
+
 	#if GFX_USE_OS_CHIBIOS && GWIN_CONSOLE_USE_BASESTREAM
 		gc->stream.vmt = &GWindowConsoleVMT;
 	#endif
+
+	#if GWIN_CONSOLE_NEED_HISTORY
+		gc->buffer = 0;
+		gc->size = 0;
+		gc->last_char = 0;
+	#endif
+
 	gc->cx = 0;
 	gc->cy = 0;
+
 	gwinSetVisible((GHandle)gc, pInit->show);
+
 	return (GHandle)gc;
 }
 
@@ -82,7 +122,48 @@ GHandle gwinGConsoleCreate(GDisplay *g, GConsoleObject *gc, const GWindowInit *p
 	BaseSequentialStream *gwinConsoleGetStream(GHandle gh) {
 		if (gh->vmt != &consoleVMT)
 			return 0;
+
 		return (BaseSequentialStream *)&(((GConsoleObject *)(gh))->stream);
+	}
+#endif
+
+#if GWIN_CONSOLE_NEED_HISTORY
+	bool_t gwinConsoleSetBuffer(GHandle gh, void* buffer, size_t size) {
+		#define gcw		((GConsoleObject *)gh)
+
+		uint8_t buf_width, buf_height, fp, fy;
+
+		if (gh->vmt != &consoleVMT)
+			return FALSE;
+
+		// assign buffer or allocate new one
+		if (buffer == 0) {
+			(void)size;
+
+			// calculate buffer size
+			fy = gdispGetFontMetric(gh->font, fontHeight);
+			fp = gdispGetFontMetric(gh->font, fontMinWidth);
+			buf_height = (gh->height / fy);
+			buf_width = (gh->width / fp);
+			
+			if ((gcw->buffer = (char*)gfxAlloc(buf_width * buf_height)) == 0)
+				return FALSE;
+			gcw->size = buf_width * buf_height;
+
+		} else {
+
+			if (size <= 0)
+				return FALSE;
+			gcw->buffer = (char*)buffer;
+			gcw->size = size;
+
+		}
+
+		gcw->last_char = 0;
+
+		return TRUE;
+		
+		#undef gcw
 	}
 #endif
 
@@ -90,11 +171,22 @@ void gwinPutChar(GHandle gh, char c) {
 	#define gcw		((GConsoleObject *)gh)
 	uint8_t			width, fy, fp;
 
-	if (!gwinGetVisible(gh))
-		return;
-
 	if (gh->vmt != &consoleVMT || !gh->font)
 		return;
+
+	#if GWIN_CONSOLE_NEED_HISTORY
+		// buffer overflow check
+		if (gcw->last_char >= gcw->size)
+			gcw->last_char = 0;
+
+		// store new character in buffer
+		if (gcw->store && gcw->buffer != 0)
+			gcw->buffer[gcw->last_char++] = c;
+
+		// only render new character and don't issue a complete redraw (performance...)
+		if (!gwinGetVisible(gh))
+			return;
+	#endif
 
 	fy = gdispGetFontMetric(gh->font, fontHeight);
 	fp = gdispGetFontMetric(gh->font, fontCharPadding);
@@ -150,17 +242,11 @@ void gwinPutChar(GHandle gh, char c) {
 }
 
 void gwinPutString(GHandle gh, const char *str) {
-	if (!gwinGetVisible(gh))
-		return;
-
 	while(*str)
 		gwinPutChar(gh, *str++);
 }
 
 void gwinPutCharArray(GHandle gh, const char *str, size_t n) {
-	if (!gwinGetVisible(gh))
-		return;
-
 	while(n--)
 		gwinPutChar(gh, *str++);
 }
@@ -219,9 +305,6 @@ void gwinPrintf(GHandle gh, const char *fmt, ...) {
 	#else
 		char tmpbuf[MAX_FILLER + 1];
 	#endif
-
-	if (!gwinGetVisible(gh))
-		return;
 
 	if (gh->vmt != &consoleVMT || !gh->font)
 		return;

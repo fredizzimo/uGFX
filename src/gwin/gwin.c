@@ -251,15 +251,24 @@ void gwinRedraw(GHandle gh) {
 #endif
 
 void gwinClear(GHandle gh) {
-	if (!((gh->flags & GWIN_FLG_VISIBLE)))
-		return;
+	/*
+	 * Don't render anything when the window is not visible but 
+	 * still call the AfterClear() routine as some widgets will
+	 * need this to clear internal buffers or similar
+	 */
+	if (!((gh->flags & GWIN_FLG_VISIBLE))) {
+		if (gh->vmt->AfterClear)
+			gh->vmt->AfterClear(gh);
+	} else {
 
 	#if GDISP_NEED_CLIP
 		gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 	#endif
+
 	gdispGFillArea(gh->display, gh->x, gh->y, gh->width, gh->height, gh->bgcolor);
 	if (gh->vmt->AfterClear)
 		gh->vmt->AfterClear(gh);
+	}
 }
 
 void gwinDrawPixel(GHandle gh, coord_t x, coord_t y) {

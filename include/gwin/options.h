@@ -106,6 +106,17 @@
 		#define GWIN_BUTTON_LAZY_RELEASE		FALSE
 	#endif
 	/**
+	 * @brief	Should the content of the console be logged or not
+	 * @details	If this feature is enable, the content of the console will be stored.
+	 *			Every content that gets printed to the console while being invisible
+	 *			will be rendered once the console is visible again. All previous written
+	 *			content will be restored too.
+	 * @details	Defaults to FALSE
+	 */
+	#ifndef GWIN_NEED_CONSOLE_HISTORY
+		#define GWIN_NEED_CONSOLE_HISTORY		FALSE
+	#endif
+	/**
 	 * @brief   Console Windows need floating point support in @p gwinPrintf
 	 * @details	Defaults to FALSE
 	 */
