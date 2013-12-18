@@ -77,13 +77,13 @@ typedef enum powermode { powerOff, powerSleep, powerDeepSleep, powerOn } powermo
  * below to access it in case the implementation ever changed.
  */
 typedef struct GDISPControl {
-		coord_t				Width;
-		coord_t				Height;
-		orientation_t		Orientation;
-		powermode_t			Powermode;
-		uint8_t				Backlight;
-		uint8_t				Contrast;
-	} GDISPControl;
+	coord_t				Width;
+	coord_t				Height;
+	orientation_t		Orientation;
+	powermode_t			Powermode;
+	uint8_t				Backlight;
+	uint8_t				Contrast;
+} GDISPControl;
 
 /*
  * Our black box display structure. We know only one thing about it...
