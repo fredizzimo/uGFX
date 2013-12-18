@@ -38,17 +38,19 @@
 typedef struct gfxQueueASync {
 	struct gfxQueueASyncItem	*head;
 	struct gfxQueueASyncItem	*tail;
-	} gfxQueueASync;
+} gfxQueueASync;
+
 typedef struct gfxQueueGSync {
 	struct gfxQueueGSyncItem	*head;
 	struct gfxQueueGSyncItem	*tail;
 	gfxSem						sem;
-	} gfxQueueGSync;
+} gfxQueueGSync;
+
 typedef struct gfxQueueFSync {
 	struct gfxQueueFSyncItem	*head;
 	struct gfxQueueFSyncItem	*tail;
 	gfxSem						sem;
-	} gfxQueueFSync;
+} gfxQueueFSync;
 /* @} */
 
 /**
@@ -57,14 +59,16 @@ typedef struct gfxQueueFSync {
  */
 typedef struct gfxQueueASyncItem {
 	struct gfxQueueASyncItem	*next;
-	} gfxQueueASyncItem;
+} gfxQueueASyncItem;
+
 typedef struct gfxQueueGSyncItem {
 	struct gfxQueueGSyncItem	*next;
-	} gfxQueueGSyncItem;
+} gfxQueueGSyncItem;
+
 typedef struct gfxQueueFSyncItem {
 	struct gfxQueueFSyncItem	*next;
 	gfxSem						sem;
-	} gfxQueueFSyncItem;
+} gfxQueueFSyncItem;
 /* @} */
 
 
