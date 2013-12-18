@@ -21,6 +21,11 @@
 #define GWIN_CONSOLE_USE_CLEAR_LINES			TRUE
 #define GWIN_CONSOLE_USE_FILLED_CHARS			FALSE
 
+// some temporary warning
+#if GWIN_CONSOLE_NEED_HISTORY
+	#warning "This feature is work in progress and does currently contain a lot of bugs."
+#endif
+
 /*
  * Stream interface implementation. The interface is write only
  */
