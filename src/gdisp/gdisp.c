@@ -2596,14 +2596,14 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 		
 		if (len_sq < norm_sq2)
 		{
-			while (len_sq < norm_sq2)
+			while (len_sq && len_sq < norm_sq2)
 			{
 				len_sq <<= 2; dx2 <<= 1; dy2 <<= 1;
 			}
 		}
 		else if (len_sq > norm_sq2)
 		{
-			while (len_sq > norm_sq2)
+			while (len_sq && len_sq > norm_sq2)
 			{
 				len_sq >>= 2; dx2 >>= 1; dy2 >>= 1;
 			}
@@ -2659,6 +2659,10 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 		/* Compute the direction vector for the line */
 		dx = x1 - x0;
 		dy = y1 - y0;
+		
+		/* Draw a small dot if the line length is zero. */
+		if (dx == 0 && dy == 0)
+			dx += 1;
 		
 		/* Compute a normal vector with length 'width'. */
 		get_normal_vector(dx, dy, width, &nx, &ny);
