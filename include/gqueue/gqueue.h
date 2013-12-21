@@ -29,7 +29,7 @@
 #ifndef _GQUEUE_H
 #define _GQUEUE_H
 
-#if GFX_USE_GQUEUE //|| defined(__DOXYGEN__)
+#if GFX_USE_GQUEUE || defined(__DOXYGEN__)
 
 /**
  * @brief	A queue
