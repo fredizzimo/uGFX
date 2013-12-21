@@ -403,24 +403,32 @@ void gfxSleepMicroseconds(delaytime_t ms) {
 
 /**
  * There are some compilers we know how they store the jmpbuf. For those
- * we can use the constant MASK1 and MASK2. For others we have to "auto-detect".
+ * we can use the constant macro definitions. For others we have to "auto-detect".
  * Auto-detection is hairy and there is no guarantee it will work on all architectures.
  * For those it doesn't - read the compiler manuals and the library source code to
- * work out the correct MASK values.
- * Using the debugger to work out the values for your compiler and putting them here
- * also saves a nice block of RAM.
+ * work out the correct macro values.
+ * You can use the debugger to work out the values for your compiler and put them here.
+ * Defining these macros as constant values makes the system behaviour guaranteed but also
+ * makes your code compiler and cpu architecture dependant.
  */
 #if 0
-	#define STACK_DIR_UP	FALSE			// usually false as most stacks grow down
-	#define MASK1			somevalue1
-	#define MASK2			somevalue2		// optional
-	#define STACK_BASE		someindex
+	// Define your compiler constant values here.
+	//	These example values are for mingw32 compiler (x86).
+	#define AUTO_DETECT_MASK	FALSE
+	#define STACK_DIR_UP		FALSE
+	#define MASK1				0x00000011
+	#define MASK2				0x00000000
+	#define STACK_BASE			9
 #else
 	#define AUTO_DETECT_MASK	TRUE
-	#define STACK_DIR_UP		stackdirup
-	#define MASK1				jmpmask1
-	#define MASK2				jmpmask2
-	#define STACK_BASE			stackbase
+	#define STACK_DIR_UP		stackdirup			// TRUE if the stack grow up instead of down
+	#define MASK1				jmpmask1			// The 1st mask of jmp_buf elements that need relocation
+	#define MASK2				jmpmask2			// The 2nd mask of jmp_buf elements that need relocation
+	#define STACK_BASE			stackbase			// The base of the stack frame relative to the local variables
+	static bool_t		stackdirup;
+	static uint32_t		jmpmask1;
+	static uint32_t		jmpmask2;
+	static size_t		stackbase;
 #endif
 
 #include <setjmp.h> /* jmp_buf, setjmp(), longjmp() */
@@ -473,7 +481,7 @@ static void Qinit(threadQ * q) {
 
 static void Qadd(threadQ * q, thread *t) {
 	t->next = 0;
-	if (q->tail) {
+	if (q->head) {
 		q->tail->next = t;
 		q->tail = t;
 	} else
@@ -491,47 +499,27 @@ static thread *Qpop(threadQ * q) {
 }
 
 #if AUTO_DETECT_MASK
-	static char *	lowptr;			// A pointer to somewhere low in the stack frame
-	static char *	highptr;		// A pointer to somewhere high in the stack frame
-
-	// The saved information on a stack frame
+	// The structure for the saved stack frame information
 	typedef struct saveloc {
 		char *		localptr;
 		jmp_buf		cxt;
 	} saveloc;
 
-	static saveloc	infn;			// The saved stack frame info inside a function
-	static saveloc	outfn;			// The saved stack frame info outside a function
-	static saveloc	*saveptr;		// Which saved stack frame variable we are currently using
-
-	// Where we save all the information
-	static bool_t	stackdirup;		// TRUE if the stack grow up instead of down
-	static uint32_t	jmpmask1;		// The 1st mask of jmp_buf elements that need relocation
-	static uint32_t	jmpmask2;		// The 2nd mask of jmp_buf elements that need relocation
-	static size_t	stackbase;		// The base of the stack frame relative to the local variables
+	// A pointer to our auto-detection buffer.
+	static saveloc	*pframeinfo;
 
 	/* These functions are not static to prevent the compiler removing them as functions */
 
-	void get_highptr(void) {
-		char c;
-		highptr = &c;
-	}
-
-	void test_stack(void) {
-		char c;
-		saveptr->localptr = (char *)&c;
-		_setjmp(saveptr->cxt);
-		get_highptr();
-	}
-
 	void get_stack_state(void) {
 		char c;
-		lowptr = &c;
-		test_stack();
+		pframeinfo->localptr = (char *)&c;
+		_setjmp(pframeinfo->cxt);
 	}
 
 	void get_stack_state_in_fn(void) {
+		pframeinfo++;
 		get_stack_state();
+		pframeinfo--;
 	}
 #endif
 
@@ -545,28 +533,32 @@ static void _gosThreadsInit(void) {
 	current->param = 0;
 
 	#if AUTO_DETECT_MASK
-		// Get details of the stack frame from within a function
-		saveptr = &infn;
-		get_stack_state_in_fn();
-
-		// Get details of the stack frame outside the function
-		saveptr = &outfn;
-		get_stack_state();
-
-		/* stack direction */
-		stackdirup =  highptr > lowptr;		// Can we also test infn.localptr > outfn.localptr?
-
-		/* study the jump buffer */
 		{
 			uint32_t	i;
 			char **		pout;
 			char **		pin;
-			size_t		diff = outfn.localptr - infn.localptr;
-			char *		min_frame = outfn.localptr;
+			size_t		diff;
+			char *		framebase;
+
+			// Allocate a buffer to store our test data
+			pframeinfo = (saveloc *)gfxAlloc(sizeof(saveloc)*2);
+
+			// Get details of the stack frame from within a function
+			get_stack_state_in_fn();
+
+			// Get details of the stack frame outside the function
+			get_stack_state();
+
+			/* stack direction */
+			stackdirup =  pframeinfo[1].localptr > pframeinfo[0].localptr;
+
+			/* study the jump buffer */
+			diff = pframeinfo[0].localptr - pframeinfo[1].localptr;
+			framebase = pframeinfo[0].localptr;
 
 			/* following line views jump buffer as array of long int */
-			pout = (char **)outfn.cxt;
-			pin = (char **)infn.cxt;
+			pout = (char **)pframeinfo[0].cxt;
+			pin =  (char **)pframeinfo[1].cxt;
 
 			jmpmask1 = jmpmask2 = 0;
 			if (diff) {
@@ -579,12 +571,12 @@ static void _gosThreadsInit(void) {
 							jmpmask2 |= 1 << (i-32);
 
 						if (stackdirup) {
-							if (min_frame > *pout) {
-								min_frame = *pout;
+							if (framebase > *pout) {
+								framebase = *pout;
 							}
 						} else {
-							if (min_frame < *pout) {
-								min_frame = *pout;
+							if (framebase < *pout) {
+								framebase = *pout;
 							}
 						}
 					}
@@ -592,10 +584,11 @@ static void _gosThreadsInit(void) {
 			}
 
 			if (stackdirup) {
-				stackbase = outfn.localptr - min_frame;
+				stackbase = pframeinfo[0].localptr - framebase;
 			} else {
-				stackbase = min_frame - outfn.localptr;
+				stackbase = framebase - pframeinfo[0].localptr;
 			}
+			gfxFree(pframeinfo);
 		}
 	#endif
 }
