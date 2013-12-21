@@ -149,7 +149,7 @@ bool_t gfxSemWait(gfxSem *pSem, delaytime_t ms) {
 			struct timeval now;
 			struct timespec	tm;
 
-			gettimeofday(&now, NULL);
+			gettimeofday(&now, 0);
 			tm.tv_sec = now.tv_sec + ms / 1000;
 			tm.tv_nsec = (now.tv_usec + ms % 1000) * 1000;
 			while (!pSem->cnt) {

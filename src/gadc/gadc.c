@@ -344,7 +344,7 @@ void gadcHighSpeedInit(uint32_t physdev, uint32_t frequency, adcsample_t *buffer
 #if GFX_USE_GEVENT
 	GSourceHandle gadcHighSpeedGetSource(void) {
 		if (!gtimerIsActive(&HighSpeedGTimer))
-			gtimerStart(&HighSpeedGTimer, HighSpeedGTimerCallback, NULL, TRUE, TIME_INFINITE);
+			gtimerStart(&HighSpeedGTimer, HighSpeedGTimerCallback, 0, TRUE, TIME_INFINITE);
 		hs.flags |= GADC_FLG_GTIMER;
 		return (GSourceHandle)&HighSpeedGTimer;
 	}
@@ -393,7 +393,7 @@ void gadcLowSpeedGet(uint32_t physdev, adcsample_t *buffer) {
 	gfxSemInit(&mysem, 1, 1);
 	gfxMutexEnter(&gadcmutex);
 	if (!gtimerIsActive(&LowSpeedGTimer))
-		gtimerStart(&LowSpeedGTimer, LowSpeedGTimerCallback, NULL, TRUE, TIME_INFINITE);
+		gtimerStart(&LowSpeedGTimer, LowSpeedGTimerCallback, 0, TRUE, TIME_INFINITE);
 	gfxMutexExit(&gadcmutex);
 
 	while(1) {
@@ -430,7 +430,7 @@ bool_t gadcLowSpeedStart(uint32_t physdev, adcsample_t *buffer, GADCCallbackFunc
 	/* Start the Low Speed Timer */
 	gfxMutexEnter(&gadcmutex);
 	if (!gtimerIsActive(&LowSpeedGTimer))
-		gtimerStart(&LowSpeedGTimer, LowSpeedGTimerCallback, NULL, TRUE, TIME_INFINITE);
+		gtimerStart(&LowSpeedGTimer, LowSpeedGTimerCallback, 0, TRUE, TIME_INFINITE);
 
 	/* Find a slot */
 	for(p = ls; p < &ls[GADC_MAX_LOWSPEED_DEVICES]; p++) {

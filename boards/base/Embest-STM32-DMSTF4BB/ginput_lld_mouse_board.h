@@ -38,11 +38,11 @@ static void write_reg(uint8_t reg, uint8_t n, uint16_t val)
 
 	if (n == 1) {
 		txbuf[1] = val;
-		i2cMasterTransmitTimeout(&I2CD1, STMPE811_ADDR, txbuf, 2, NULL, 0, MS2ST(STMPE811_TIMEOUT));
+		i2cMasterTransmitTimeout(&I2CD1, STMPE811_ADDR, txbuf, 2, 0, 0, MS2ST(STMPE811_TIMEOUT));
 	} else if (n == 2) {
 		txbuf[1] = ((val & 0xFF00) >> 8);
 		txbuf[2] = (val & 0x00FF);
-		i2cMasterTransmitTimeout(&I2CD1, STMPE811_ADDR, txbuf, 3, NULL, 0, MS2ST(STMPE811_TIMEOUT));
+		i2cMasterTransmitTimeout(&I2CD1, STMPE811_ADDR, txbuf, 3, 0, 0, MS2ST(STMPE811_TIMEOUT));
 	}
 	
 	i2cReleaseBus(&I2CD1);

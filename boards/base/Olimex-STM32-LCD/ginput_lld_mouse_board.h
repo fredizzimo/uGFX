@@ -14,8 +14,8 @@
 static const ADCConversionGroup adc_y_config = { 
     FALSE,
     ADC_NUM_CHANNELS,
-    NULL,
-    NULL,
+    0,
+    0,
     0, 0,    
     0, 0,    
     ADC_SQR1_NUM_CH(ADC_NUM_CHANNELS),
@@ -26,8 +26,8 @@ static const ADCConversionGroup adc_y_config = {
 static const ADCConversionGroup adc_x_config = { 
     FALSE,
     ADC_NUM_CHANNELS,
-    NULL,
-    NULL,
+    0,
+    0,
     0, 0,
     0, 0,
     ADC_SQR1_NUM_CH(ADC_NUM_CHANNELS),
@@ -36,7 +36,7 @@ static const ADCConversionGroup adc_x_config = {
 };
 
 static inline void init_board(void) {
-	adcStart(&ADCD1, NULL);
+	adcStart(&ADCD1, 0);
 }
 
 static inline void aquire_bus(void) {

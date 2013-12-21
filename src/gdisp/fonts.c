@@ -74,7 +74,7 @@ void gdispCloseFont(font_t font) {
 		struct mf_font_s *dfont = (struct mf_font_s *)font;
 		
 		/* Make sure that no-one can successfully use font after closing */
-		dfont->render_character = NULL;
+		dfont->render_character = 0;
 		
 		/* Release the allocated memory */
 		gfxFree(dfont);

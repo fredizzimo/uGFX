@@ -119,7 +119,7 @@ bool_t gaudinInit(uint16_t channel, uint32_t frequency, audin_sample_t *buffer, 
 #if GFX_USE_GEVENT
 	GSourceHandle gaudinGetSource(void) {
 		if (!gtimerIsActive(&AudGTimer))
-			gtimerStart(&AudGTimer, AudGTimerCallback, NULL, TRUE, TIME_INFINITE);
+			gtimerStart(&AudGTimer, AudGTimerCallback, 0, TRUE, TIME_INFINITE);
 		audFlags |= AUDFLG_USE_EVENTS;
 		return (GSourceHandle)&aud;
 	}

@@ -112,7 +112,7 @@ static inline void write_cmd(GDisplay *g, uint8_t cmd) {
 	command[1] = cmd;
 
 	i2cStart(&I2CD1, &i2cconfig);
-	i2cMasterTransmitTimeout(&I2CD1, SSD1306_I2C_ADDRESS, command, 2, NULL, 0, MS2ST(10));
+	i2cMasterTransmitTimeout(&I2CD1, SSD1306_I2C_ADDRESS, command, 2, 0, 0, MS2ST(10));
 	i2cStop(&I2CD1);
 }
 
@@ -120,7 +120,7 @@ static inline void write_data(GDisplay *g, uint8_t* data, uint16_t length) {
 	(void) g;
 
 	i2cStart(&I2CD1, &i2cconfig);
-	i2cMasterTransmitTimeout(&I2CD1, SSD1306_I2C_ADDRESS, data, length, NULL, 0, MS2ST(10));
+	i2cMasterTransmitTimeout(&I2CD1, SSD1306_I2C_ADDRESS, data, length, 0, 0, MS2ST(10));
 	i2cStop(&I2CD1);
 }
 

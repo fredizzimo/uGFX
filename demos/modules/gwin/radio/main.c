@@ -47,27 +47,27 @@ static void createWidgets(void) {
 
 	// create Radio11
 	wi.g.y = 10; wi.g.x = 10; wi.g.width = 80; wi.g.height = 20; wi.text = "Radio 1";
-	ghRadio11 = gwinRadioCreate(NULL, &wi, GROUP1);
+	ghRadio11 = gwinRadioCreate(0, &wi, GROUP1);
 
 	// create Radio12
 	wi.g.y = 50; wi.g.x = 10; wi.g.width = 80; wi.g.height = 20; wi.text = "Radio 2";
-	ghRadio12 = gwinRadioCreate(NULL, &wi, GROUP1);
+	ghRadio12 = gwinRadioCreate(0, &wi, GROUP1);
 
 	// create Radio13
 	wi.g.y = 90; wi.g.x = 10; wi.g.width = 80; wi.g.height = 20; wi.text = "Radio 3";
-	ghRadio13 = gwinRadioCreate(NULL, &wi, GROUP1);
+	ghRadio13 = gwinRadioCreate(0, &wi, GROUP1);
 
 	// create Radio21
 	wi.g.y = 10; wi.g.x = 120; wi.g.width = 80; wi.g.height = 20; wi.text = "Radio 1";
-	ghRadio21 = gwinRadioCreate(NULL, &wi, GROUP2);
+	ghRadio21 = gwinRadioCreate(0, &wi, GROUP2);
 
 	// create Radio22
 	wi.g.y = 50; wi.g.x = 120; wi.g.width = 80; wi.g.height = 20; wi.text = "Radio 2";
-	ghRadio22 = gwinRadioCreate(NULL, &wi, GROUP2);
+	ghRadio22 = gwinRadioCreate(0, &wi, GROUP2);
 
 	// create Radio23
 	wi.g.y = 90; wi.g.x = 120; wi.g.width = 80; wi.g.height = 20; wi.text = "Radio 3";
-	ghRadio23 = gwinRadioCreate(NULL, &wi, GROUP2);
+	ghRadio23 = gwinRadioCreate(0, &wi, GROUP2);
 
 	// Check the first radio buttons
 	gwinRadioPress(ghRadio11);

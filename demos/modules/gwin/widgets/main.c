@@ -114,58 +114,58 @@ static void createWidgets(void) {
 	// Create the Tabs
 	wi.g.show = TRUE; wi.customDraw = gwinRadioDraw_Tab;
 	wi.g.width = ScrWidth/7; wi.g.height = TAB_HEIGHT; wi.g.y = 0;
-	wi.g.x = 0*wi.g.width; wi.text = "Buttons";		ghTabButtons	= gwinRadioCreate(NULL, &wi, GROUP_TABS);
-	wi.g.x = 1*wi.g.width; wi.text = "Sliders";		ghTabSliders	= gwinRadioCreate(NULL, &wi, GROUP_TABS);
-	wi.g.x = 2*wi.g.width; wi.text = "Checkbox";	ghTabCheckboxes	= gwinRadioCreate(NULL, &wi, GROUP_TABS);
-	wi.g.x = 3*wi.g.width; wi.text = "Radios";		ghTabRadios		= gwinRadioCreate(NULL, &wi, GROUP_TABS);
-	wi.g.x = 4*wi.g.width; wi.text = "Lists";		ghTabLists		= gwinRadioCreate(NULL, &wi, GROUP_TABS);
-	wi.g.x = 5*wi.g.width; wi.text = "Labels";		ghTabLabels		= gwinRadioCreate(NULL, &wi, GROUP_TABS);
-	wi.g.x = 6*wi.g.width; wi.text = "Images";		ghTabImages		= gwinRadioCreate(NULL, &wi, GROUP_TABS);
+	wi.g.x = 0*wi.g.width; wi.text = "Buttons";		ghTabButtons	= gwinRadioCreate(0, &wi, GROUP_TABS);
+	wi.g.x = 1*wi.g.width; wi.text = "Sliders";		ghTabSliders	= gwinRadioCreate(0, &wi, GROUP_TABS);
+	wi.g.x = 2*wi.g.width; wi.text = "Checkbox";	ghTabCheckboxes	= gwinRadioCreate(0, &wi, GROUP_TABS);
+	wi.g.x = 3*wi.g.width; wi.text = "Radios";		ghTabRadios		= gwinRadioCreate(0, &wi, GROUP_TABS);
+	wi.g.x = 4*wi.g.width; wi.text = "Lists";		ghTabLists		= gwinRadioCreate(0, &wi, GROUP_TABS);
+	wi.g.x = 5*wi.g.width; wi.text = "Labels";		ghTabLabels		= gwinRadioCreate(0, &wi, GROUP_TABS);
+	wi.g.x = 6*wi.g.width; wi.text = "Images";		ghTabImages		= gwinRadioCreate(0, &wi, GROUP_TABS);
 
 	// Buttons
 	wi.g.show = FALSE; wi.customDraw = 0;
 	wi.g.width = BUTTON_WIDTH; wi.g.height = BUTTON_HEIGHT; wi.g.y = TAB_HEIGHT+5;
-	wi.g.x = 0+0*(BUTTON_WIDTH+1); wi.text = "B1"; ghButton1 = gwinButtonCreate(NULL, &wi);
-	wi.g.x = 0+1*(BUTTON_WIDTH+1); wi.text = "B2"; ghButton2 = gwinButtonCreate(NULL, &wi);
-	wi.g.x = 0+2*(BUTTON_WIDTH+1); wi.text = "B3"; ghButton3 = gwinButtonCreate(NULL, &wi);
-	wi.g.x = 0+3*(BUTTON_WIDTH+1); wi.text = "B4"; ghButton4 = gwinButtonCreate(NULL, &wi);
+	wi.g.x = 0+0*(BUTTON_WIDTH+1); wi.text = "B1"; ghButton1 = gwinButtonCreate(0, &wi);
+	wi.g.x = 0+1*(BUTTON_WIDTH+1); wi.text = "B2"; ghButton2 = gwinButtonCreate(0, &wi);
+	wi.g.x = 0+2*(BUTTON_WIDTH+1); wi.text = "B3"; ghButton3 = gwinButtonCreate(0, &wi);
+	wi.g.x = 0+3*(BUTTON_WIDTH+1); wi.text = "B4"; ghButton4 = gwinButtonCreate(0, &wi);
 
 	// Horizontal Sliders
 	wi.g.width = ScrWidth/2-2; wi.g.height = SLIDER_WIDTH; wi.g.x = ScrWidth/2+1;
-	wi.g.y = ScrHeight/2-2*(SLIDER_WIDTH+1); wi.text = "S1"; ghSlider1 = gwinSliderCreate(NULL, &wi);
-	wi.g.y = ScrHeight/2-1*(SLIDER_WIDTH+1); wi.text = "S2"; ghSlider2 = gwinSliderCreate(NULL, &wi);
+	wi.g.y = ScrHeight/2-2*(SLIDER_WIDTH+1); wi.text = "S1"; ghSlider1 = gwinSliderCreate(0, &wi);
+	wi.g.y = ScrHeight/2-1*(SLIDER_WIDTH+1); wi.text = "S2"; ghSlider2 = gwinSliderCreate(0, &wi);
 
 	// Vertical Sliders
 	wi.g.width = SLIDER_WIDTH; wi.g.height = ScrHeight/2-2; wi.g.y = ScrHeight/2+1;
-	wi.g.x = 0+0*(SLIDER_WIDTH+1); wi.text = "S3"; ghSlider3 = gwinSliderCreate(NULL, &wi);
-	wi.g.x = 0+1*(SLIDER_WIDTH+1); wi.text = "S4"; ghSlider4 = gwinSliderCreate(NULL, &wi);
+	wi.g.x = 0+0*(SLIDER_WIDTH+1); wi.text = "S3"; ghSlider3 = gwinSliderCreate(0, &wi);
+	wi.g.x = 0+1*(SLIDER_WIDTH+1); wi.text = "S4"; ghSlider4 = gwinSliderCreate(0, &wi);
 
 	// Checkboxes - for the 2nd checkbox we apply special drawing before making it visible
 	wi.g.width = CHECKBOX_WIDTH; wi.g.height = CHECKBOX_HEIGHT; wi.g.x = 0;
-	wi.g.y = TAB_HEIGHT+5+0*(CHECKBOX_HEIGHT+1); wi.text = "C1"; ghCheckbox1 = gwinCheckboxCreate(NULL, &wi);
+	wi.g.y = TAB_HEIGHT+5+0*(CHECKBOX_HEIGHT+1); wi.text = "C1"; ghCheckbox1 = gwinCheckboxCreate(0, &wi);
 	wi.customDraw = gwinCheckboxDraw_CheckOnRight;
-	wi.g.y = TAB_HEIGHT+5+1*(CHECKBOX_HEIGHT+1); wi.text = "C2"; ghCheckbox2 = gwinCheckboxCreate(NULL, &wi);
+	wi.g.y = TAB_HEIGHT+5+1*(CHECKBOX_HEIGHT+1); wi.text = "C2"; ghCheckbox2 = gwinCheckboxCreate(0, &wi);
 	wi.customDraw = 0; wi.g.width = DISABLEALL_WIDTH;
-	wi.g.y = TAB_HEIGHT+5+2*(CHECKBOX_HEIGHT+1); wi.text = "Disable All"; ghCheckDisableAll = gwinCheckboxCreate(NULL, &wi);
+	wi.g.y = TAB_HEIGHT+5+2*(CHECKBOX_HEIGHT+1); wi.text = "Disable All"; ghCheckDisableAll = gwinCheckboxCreate(0, &wi);
 
     // Labels
 	wi.g.width = 0;	wi.g.height = LABEL_HEIGHT;	// dynamic width, fixed height
-	wi.g.y = TAB_HEIGHT+5+2*(CHECKBOX_HEIGHT+1); wi.text = "Label"; ghLabel1 = gwinLabelCreate(NULL, &wi);
+	wi.g.y = TAB_HEIGHT+5+2*(CHECKBOX_HEIGHT+1); wi.text = "Label"; ghLabel1 = gwinLabelCreate(0, &wi);
 
 	// Radio Buttons
 	wi.g.width = RADIO_WIDTH; wi.g.height = RADIO_HEIGHT; wi.g.y = TAB_HEIGHT+5;
-	wi.g.x = 0*wi.g.width; wi.text = "Yes";		ghRadio1	= gwinRadioCreate(NULL, &wi, GROUP_YESNO);
-	wi.g.x = 1*wi.g.width; wi.text = "No";		ghRadio2	= gwinRadioCreate(NULL, &wi, GROUP_YESNO);
+	wi.g.x = 0*wi.g.width; wi.text = "Yes";		ghRadio1	= gwinRadioCreate(0, &wi, GROUP_YESNO);
+	wi.g.x = 1*wi.g.width; wi.text = "No";		ghRadio2	= gwinRadioCreate(0, &wi, GROUP_YESNO);
 	wi.g.width = COLOR_WIDTH; wi.g.y += RADIO_HEIGHT+5;
-	wi.g.x = 0*wi.g.width; wi.text = "Black";	ghRadioBlack	= gwinRadioCreate(NULL, &wi, GROUP_COLORS);
-	wi.g.x = 1*wi.g.width; wi.text = "White";	ghRadioWhite	= gwinRadioCreate(NULL, &wi, GROUP_COLORS);
-	wi.g.x = 2*wi.g.width; wi.text = "Yellow";	ghRadioYellow	= gwinRadioCreate(NULL, &wi, GROUP_COLORS);
+	wi.g.x = 0*wi.g.width; wi.text = "Black";	ghRadioBlack	= gwinRadioCreate(0, &wi, GROUP_COLORS);
+	wi.g.x = 1*wi.g.width; wi.text = "White";	ghRadioWhite	= gwinRadioCreate(0, &wi, GROUP_COLORS);
+	wi.g.x = 2*wi.g.width; wi.text = "Yellow";	ghRadioYellow	= gwinRadioCreate(0, &wi, GROUP_COLORS);
 	gwinRadioPress(ghRadioWhite);
 
 	// Lists
 	wi.g.show = FALSE; wi.customDraw = 0;
 	wi.g.width = LIST_WIDTH; wi.g.height = LIST_HEIGHT; wi.g.y = TAB_HEIGHT+5;
-	wi.g.x = 0+0*(LIST_WIDTH+1); wi.text = "L1"; ghList1 = gwinListCreate(NULL, &wi, FALSE);
+	wi.g.x = 0+0*(LIST_WIDTH+1); wi.text = "L1"; ghList1 = gwinListCreate(0, &wi, FALSE);
 	gwinListAddItem(ghList1, "Item 0", FALSE);	gwinListAddItem(ghList1, "Item 1", FALSE);
 	gwinListAddItem(ghList1, "Item 2", FALSE);	gwinListAddItem(ghList1, "Item 3", FALSE);
 	gwinListAddItem(ghList1, "Item 4", FALSE);	gwinListAddItem(ghList1, "Item 5", FALSE);
@@ -173,7 +173,7 @@ static void createWidgets(void) {
 	gwinListAddItem(ghList1, "Item 8", FALSE);	gwinListAddItem(ghList1, "Item 9", FALSE);
 	gwinListAddItem(ghList1, "Item 10", FALSE);	gwinListAddItem(ghList1, "Item 11", FALSE);
 	gwinListAddItem(ghList1, "Item 12", FALSE);	gwinListAddItem(ghList1, "Item 13", FALSE);
-	wi.g.x = 0+1*(LIST_WIDTH+1); wi.text = "L2"; ghList2 = gwinListCreate(NULL, &wi, TRUE);
+	wi.g.x = 0+1*(LIST_WIDTH+1); wi.text = "L2"; ghList2 = gwinListCreate(0, &wi, TRUE);
 	gwinListAddItem(ghList2, "Item 0", FALSE);	gwinListAddItem(ghList2, "Item 1", FALSE);
 	gwinListAddItem(ghList2, "Item 2", FALSE);	gwinListAddItem(ghList2, "Item 3", FALSE);
 	gwinListAddItem(ghList2, "Item 4", FALSE);	gwinListAddItem(ghList2, "Item 5", FALSE);
@@ -181,7 +181,7 @@ static void createWidgets(void) {
 	gwinListAddItem(ghList2, "Item 8", FALSE);	gwinListAddItem(ghList2, "Item 9", FALSE);
 	gwinListAddItem(ghList2, "Item 10", FALSE);	gwinListAddItem(ghList2, "Item 11", FALSE);
 	gwinListAddItem(ghList2, "Item 12", FALSE);	gwinListAddItem(ghList2, "Item 13", FALSE);
-	wi.g.x = 0+2*(LIST_WIDTH+1); wi.text = "L3"; ghList3 = gwinListCreate(NULL, &wi, TRUE);
+	wi.g.x = 0+2*(LIST_WIDTH+1); wi.text = "L3"; ghList3 = gwinListCreate(0, &wi, TRUE);
 	gwinListAddItem(ghList3, "Item 0", FALSE);	gwinListAddItem(ghList3, "Item 1", FALSE);
 	gwinListAddItem(ghList3, "Item 2", FALSE);	gwinListAddItem(ghList3, "Item 3", FALSE);
 	gdispImageSetMemoryReader(&imgYesNo, image_yesno);
@@ -191,14 +191,14 @@ static void createWidgets(void) {
 
 	// Image
 	wi.g.x = ScrWidth-210; wi.g.y = TAB_HEIGHT + 10; wi.g.width = 200; wi.g.height = 200;
-	ghImage1 = gwinImageCreate(NULL, &wi.g);
+	ghImage1 = gwinImageCreate(0, &wi.g);
 	gwinImageOpenMemory(ghImage1, image_chibios);
 	gwinImageCache(ghImage1);
 
 	// Console - we apply some special colors before making it visible
 	wi.g.width = ScrWidth/2-1; wi.g.height = ScrHeight/2-1;
 	wi.g.x = ScrWidth/2+1; wi.g.y = ScrHeight/2+1;
-	ghConsole = gwinConsoleCreate(NULL, &wi.g);
+	ghConsole = gwinConsoleCreate(0, &wi.g);
     gwinSetColor(ghConsole, Yellow);
     gwinSetBgColor(ghConsole, Black);
 }

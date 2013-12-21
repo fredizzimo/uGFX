@@ -24,12 +24,12 @@
 static const PWMConfig pwmcfg = {
   100000,       /* 100 kHz PWM clock frequency. */
   100,          /* PWM period is 100 cycles. */
-  NULL,
+  0,
   {
-   {PWM_OUTPUT_DISABLED, NULL},
-   {PWM_OUTPUT_DISABLED, NULL},
-   {PWM_OUTPUT_ACTIVE_HIGH, NULL},
-   {PWM_OUTPUT_DISABLED, NULL}
+   {PWM_OUTPUT_DISABLED, 0},
+   {PWM_OUTPUT_DISABLED, 0},
+   {PWM_OUTPUT_ACTIVE_HIGH, 0},
+   {PWM_OUTPUT_DISABLED, 0}
   },
   0
 };
@@ -61,7 +61,7 @@ static inline void init_board(GDisplay *g) {
 			rccEnableAHB3(RCC_AHB3ENR_FSMCEN, 0);
 
 			#if defined(GDISP_USE_DMA)
-				if (dmaStreamAllocate(GDISP_DMA_STREAM, 0, NULL, NULL)) gfxExit();
+				if (dmaStreamAllocate(GDISP_DMA_STREAM, 0, 0, 0)) gfxExit();
 				dmaStreamSetMemory0(GDISP_DMA_STREAM, &GDISP_RAM);
 				dmaStreamSetMode(GDISP_DMA_STREAM, STM32_DMA_CR_PL(0) | STM32_DMA_CR_PSIZE_HWORD | STM32_DMA_CR_MSIZE_HWORD | STM32_DMA_CR_DIR_M2M);
 			#else

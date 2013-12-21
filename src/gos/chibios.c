@@ -106,7 +106,7 @@ gfxThreadHandle gfxThreadCreate(void *stackarea, size_t stacksz, threadpriority_
 	}
 
 	if (!stacksz)
-		return NULL;
+		return 0;
 
 	return chThdCreateStatic(stackarea, stacksz, prio, fn, param);
 }

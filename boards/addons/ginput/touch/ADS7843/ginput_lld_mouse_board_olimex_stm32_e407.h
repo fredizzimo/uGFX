@@ -18,7 +18,7 @@
 #define _GINPUT_LLD_MOUSE_BOARD_H
 
 static const SPIConfig spicfg = { 
-    NULL,
+    0,
 	GPIOG, 
     10,
     /* SPI_CR1_BR_2 |*/ SPI_CR1_BR_1 | SPI_CR1_BR_0,

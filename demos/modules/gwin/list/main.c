@@ -49,7 +49,7 @@ static void createWidgets(void) {
 	wi.text = "List Name";
 
 	// Create the actual list
-	ghList1 = gwinListCreate(NULL, &wi, FALSE);
+	ghList1 = gwinListCreate(0, &wi, FALSE);
 }
 
 int main(void) {

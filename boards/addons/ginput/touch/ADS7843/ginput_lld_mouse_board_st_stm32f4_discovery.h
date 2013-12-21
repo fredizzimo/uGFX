@@ -20,7 +20,7 @@
  * Note that you can tweak the SPI bus speed
  */
 static const SPIConfig spicfg = { 
-    NULL,
+    0,
 	GPIOC,
     4,
     /* SPI_CR1_BR_2 |*/ SPI_CR1_BR_1 | SPI_CR1_BR_0,

@@ -44,9 +44,9 @@ int main(void) {
     	GWindowInit	wi;
 
     	wi.show = TRUE; wi.x = 20; wi.y = 10; wi.width = 200; wi.height = 150;
-        GW1 = gwinWindowCreate(NULL, &wi);
+        GW1 = gwinWindowCreate(0, &wi);
     	wi.show = TRUE; wi.x = 50; wi.y = 190; wi.width = 150; wi.height = 100;
-        GW2 = gwinWindowCreate(NULL, &wi);
+        GW2 = gwinWindowCreate(0, &wi);
     }
 
     /* Set fore- and background colors for both windows */

@@ -19,8 +19,8 @@
 static const ADCConversionGroup adcgrpcfg = {
   FALSE,
   ADC_NUM_CHANNELS,
-  NULL,
-  NULL,
+  0,
+  0,
   /* HW dependent part.*/
   0,
   ADC_CR2_SWSTART,
@@ -37,7 +37,7 @@ static const ADCConversionGroup adcgrpcfg = {
  * @notapi
  */
 static inline void init_board(void) {
-	adcStart(&ADCD1, NULL);
+	adcStart(&ADCD1, 0);
 }
 
 /**

@@ -65,7 +65,7 @@ extern "C" {
 
 #define gfxHalt(msg)				{ chDbgPanic(msg); chSysHalt(); }
 #define gfxExit()					chSysHalt()
-#define gfxAlloc(sz)				chHeapAlloc(NULL, sz)
+#define gfxAlloc(sz)				chHeapAlloc(0, sz)
 #define gfxFree(ptr)				chHeapFree(ptr)
 #define gfxYield()					chThdYield()
 #define gfxSystemTicks()			chTimeNow()

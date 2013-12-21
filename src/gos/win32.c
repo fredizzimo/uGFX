@@ -57,7 +57,7 @@ void gfxSleepMicroseconds(delaytime_t ms) {
 
 void gfxSystemLock(void) {
 	if (!SystemMutex)
-		SystemMutex = CreateMutex(NULL, FALSE, NULL);
+		SystemMutex = CreateMutex(0, FALSE, 0);
 	WaitForSingleObject(SystemMutex, INFINITE);
 }
 
@@ -87,7 +87,7 @@ semcount_t gfxSemCounter(gfxSem *pSem) {
     if (!NtQuerySemaphore)
     	NtQuerySemaphore = (_NtQuerySemaphore)GetProcAddress(GetModuleHandle("ntdll.dll"), "NtQuerySemaphore");
 
-    NtQuerySemaphore(*pSem, 0, &BasicInfo, sizeof(BasicInfo), NULL);
+    NtQuerySemaphore(*pSem, 0, &BasicInfo, sizeof(BasicInfo), 0);
 
     return BasicInfo.CurrentCount;
 }
@@ -96,7 +96,7 @@ gfxThreadHandle gfxThreadCreate(void *stackarea, size_t stacksz, threadpriority_
 	(void)	stackarea;
 	HANDLE	thd;
 
-	if (!(thd = CreateThread(NULL, stacksz, fn, param, CREATE_SUSPENDED, NULL)))
+	if (!(thd = CreateThread(0, stacksz, fn, param, CREATE_SUSPENDED, 0)))
 		return FALSE;
 
 	SetThreadPriority(thd, prio);

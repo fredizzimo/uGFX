@@ -49,7 +49,7 @@ static void createWidgets(void) {
 	wi.text = "Checkbox";
 
 	// Create the actual checkbox 
-	ghCheckbox1 = gwinCheckboxCreate(NULL, &wi);
+	ghCheckbox1 = gwinCheckboxCreate(0, &wi);
 }
 
 int main(void) {

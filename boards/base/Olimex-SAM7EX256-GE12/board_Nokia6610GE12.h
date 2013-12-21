@@ -51,9 +51,9 @@ static volatile AT91PS_PDC pPDC = AT91C_BASE_PDC_SPI0;
 static const PWMConfig pwmcfg = {
   1000000,		/* 1 MHz PWM clock frequency. Ignored as we are using PWM_MCK_DIV_n */
   1000,			/* PWM period is 1000 cycles. */
-  NULL,
+  0,
   {
-   {PWM_MCK_DIV_1 | PWM_OUTPUT_ACTIVE_HIGH | PWM_OUTPUT_PIN1 | PWM_DISABLEPULLUP_PIN1, NULL},
+   {PWM_MCK_DIV_1 | PWM_OUTPUT_ACTIVE_HIGH | PWM_OUTPUT_PIN1 | PWM_DISABLEPULLUP_PIN1, 0},
   },
 };
 

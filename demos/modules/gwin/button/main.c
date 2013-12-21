@@ -49,7 +49,7 @@ static void createWidgets(void) {
 	wi.text = "Push Button";
 
 	// Create the actual button
-	ghButton1 = gwinButtonCreate(NULL, &wi);
+	ghButton1 = gwinButtonCreate(0, &wi);
 }
 
 int main(void) {

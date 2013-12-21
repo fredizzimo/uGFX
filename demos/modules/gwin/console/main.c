@@ -50,11 +50,11 @@ int main(void) {
 
 		wi.show = TRUE;
 		wi.x = 0; wi.y = 0; wi.width = gdispGetWidth(); wi.height = gdispGetHeight()/2;
-		GW1 = gwinConsoleCreate(NULL, &wi);
+		GW1 = gwinConsoleCreate(0, &wi);
 		wi.y = gdispGetHeight()/2; wi.width = gdispGetWidth()/2; wi.height = gdispGetHeight();
-		GW2 = gwinConsoleCreate(NULL, &wi);
+		GW2 = gwinConsoleCreate(0, &wi);
 		wi.x = gdispGetWidth()/2; wi.height = gdispGetHeight();
-		GW3 = gwinConsoleCreate(NULL, &wi);
+		GW3 = gwinConsoleCreate(0, &wi);
 	}
 
 	/* Use a special font for GW1 */

@@ -43,11 +43,11 @@ static void createWidgets(void) {
 
 	// create Slider1
 	wi.g.y = 10; wi.g.x = 10; wi.g.width = 200; wi.g.height = 20; wi.text = "S1";
-	ghSlider1 = gwinSliderCreate(NULL, &wi);
+	ghSlider1 = gwinSliderCreate(0, &wi);
 
 	// create Slider2
 	wi.g.y = 40; wi.g.x = 10; wi.g.width = 20; wi.g.height = 200; wi.text = "S2";
-	ghSlider2 = gwinSliderCreate(NULL, &wi);
+	ghSlider2 = gwinSliderCreate(0, &wi);
 }
 
 int main(void) {

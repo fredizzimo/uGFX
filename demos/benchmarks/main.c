@@ -41,7 +41,7 @@ static int uitoa(unsigned int value, char * buf, int max) {
     int i = 0;
     unsigned int tmp = 0;
 
-    if (NULL == buf)
+    if (!buf)
         return -3;
 
     if (2 > max)

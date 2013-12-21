@@ -37,7 +37,7 @@
  * The slave select line is the pin 4 on the port GPIOA.
  */
 static const SPIConfig spi1config = {
-	NULL,
+	0,
 	/* HW dependent part.*/
 	SSD1306_MISO_PORT,
 	SSD1306_MISO_PIN,

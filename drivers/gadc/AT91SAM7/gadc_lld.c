@@ -31,7 +31,7 @@ static ADCConversionGroup acg = {
 		};
 
 void gadc_lld_init(void) {
-	adcStart(&ADCD1, NULL);
+	adcStart(&ADCD1, 0);
 }
 
 size_t gadc_lld_samples_per_conversion(uint32_t physdev) {

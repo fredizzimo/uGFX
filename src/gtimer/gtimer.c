@@ -132,8 +132,8 @@ void gtimerStart(GTimer *pt, GTimerFunction fn, void *param, bool_t periodic, de
 	
 	// Start our thread if not already going
 	if (!hThread) {
-		hThread = gfxThreadCreate(waTimerThread, sizeof(waTimerThread), GTIMER_THREAD_PRIORITY, GTimerThreadHandler, NULL);
-		if (hThread) gfxThreadClose(hThread);		// We never really need the handle again
+		hThread = gfxThreadCreate(waTimerThread, sizeof(waTimerThread), GTIMER_THREAD_PRIORITY, GTimerThreadHandler, 0);
+		if (hThread) {gfxThreadClose(hThread);}		// We never really need the handle again
 	}
 
 	// Is this already scheduled?

@@ -28,12 +28,12 @@
 static const PWMConfig pwmcfg = {
 	1000000,		/* 1 MHz PWM clock frequency. */
 	100,			/* PWM period is 100 cycles. */
-	NULL,
+	0,
 	{
-		{PWM_OUTPUT_ACTIVE_HIGH, NULL},
-		{PWM_OUTPUT_ACTIVE_HIGH, NULL},
-		{PWM_OUTPUT_ACTIVE_HIGH, NULL},
-		{PWM_OUTPUT_ACTIVE_HIGH, NULL}
+		{PWM_OUTPUT_ACTIVE_HIGH, 0},
+		{PWM_OUTPUT_ACTIVE_HIGH, 0},
+		{PWM_OUTPUT_ACTIVE_HIGH, 0},
+		{PWM_OUTPUT_ACTIVE_HIGH, 0}
 	},
 	0
 };
@@ -44,7 +44,7 @@ static const PWMConfig pwmcfg = {
  * The slave select line is the pin 4 on the port GPIOA.
  */
 static const SPIConfig spi1cfg_8bit = {
-	NULL,
+	0,
 	/* HW dependent part.*/
 	GPIOA,
 	4,
@@ -57,7 +57,7 @@ static const SPIConfig spi1cfg_8bit = {
  * The slave select line is the pin 4 on the port GPIOA.
  */
 static const SPIConfig spi1cfg_16bit = {
-	NULL,
+	0,
 	/* HW dependent part.*/
 	GPIOA,
 	4,

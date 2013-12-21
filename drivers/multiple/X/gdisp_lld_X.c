@@ -160,7 +160,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			XInitThreads();
 		#endif
 
-		dis = XOpenDisplay(NULL);
+		dis = XOpenDisplay(0);
 		scr = DefaultScreen(dis);
 		cxt = XUniqueContext();
 		XSetIOErrorHandler(FatalXIOError);

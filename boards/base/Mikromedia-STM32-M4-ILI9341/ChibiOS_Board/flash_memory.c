@@ -12,7 +12,7 @@ static const unsigned short _SERIAL_FLASH_CMD_WRSR  = 0x01;
 static const unsigned short _SERIAL_FLASH_CMD_SER   = 0xD8;    //25P80
 
 static const SPIConfig flash_spicfg = {
-  NULL,
+  0,
   GPIOD,
   GPIOD_FLASH_CS,
   0
