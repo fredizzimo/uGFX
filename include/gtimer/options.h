@@ -35,7 +35,7 @@
 	#endif
 	/**
 	 * @brief   Defines the size of the timer threads work area (stack+structures).
-	 * @details	Defaults to 512 bytes
+	 * @details	Defaults to 2048 bytes
 	 */
 	#ifndef GTIMER_THREAD_WORKAREA_SIZE
 		#define GTIMER_THREAD_WORKAREA_SIZE		2048
