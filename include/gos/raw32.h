@@ -66,7 +66,7 @@ typedef int				threadpriority_t;
 
 #define TIME_IMMEDIATE				0
 #define TIME_INFINITE				((delaytime_t)-1)
-#define MAX_SEMAPHORE_COUNT			((semcount_t)(((unsigned long)((semcount_t)(-1))) >> 1))
+#define MAX_SEMAPHORE_COUNT			0x7FFF
 #define LOW_PRIORITY				0
 #define NORMAL_PRIORITY				1
 #define HIGH_PRIORITY				2
