@@ -109,14 +109,16 @@ void gfxExit(void) {
 	// Free Slot - immediately follows the memslot structure
 	typedef struct freeslot {
 		memslot *nextfree;			// The next free slot
-	}
+	} freeslot;
 
 	#define GetSlotSize(sz)		((((sz) + (sizeof(freeslot) - 1)) & ~(sizeof(freeslot) - 1)) + sizeof(memslot))
 	#define NextFree(pslot)		((freeslot *)Slot2Ptr(pslot))->nextfree
 	#define Ptr2Slot(p)			((memslot *)(p) - 1)
 	#define Slot2Ptr(pslot)		((pslot)+1)
 
-	static memslot *			firstSlot, *lastSlot, *freeSlots;
+	static memslot *			firstSlot;
+	static memslot *			lastSlot;
+	static memslot *			freeSlots;
 	static char					heap[GOS_RAW_HEAP_SIZE];
 
 	static void _gosHeapInit(void) {
@@ -131,7 +133,7 @@ void gfxExit(void) {
 		if (lastSlot)
 			lastSlot->next = (memslot *)ptr;
 		else
-			firstSlot = lastSlot = freeSlot = (memslot *)ptr;
+			firstSlot = lastSlot = freeSlots = (memslot *)ptr;
 
 		lastSlot->next = 0;
 		lastSlot->sz = sz;
@@ -156,8 +158,8 @@ void gfxExit(void) {
 				p->sz = sz;
 				if (lastSlot == p)
 					lastSlot = new;
-				NextFree(new) = freeSlots;
-				freeSlots = new;
+				NextFree(new) = NextFree(p);
+				NextFree(p) = new;
 			}
 			// Remove it from the free list
 			if (prev)
@@ -223,7 +225,7 @@ void gfxExit(void) {
 		if ((new = gfxAlloc(sz)))
 			return 0;
 		memcpy(new, ptr, p->sz - sizeof(memslot));
-		free(ptr);
+		gfxFree(ptr);
 		return new;
 	}
 
