@@ -73,7 +73,6 @@
 #endif
 
 static DWORD			winThreadId;
-static ATOM				winClass;
 static volatile bool_t	QReady;
 static HANDLE			drawMutex;
 #if GINPUT_NEED_MOUSE
@@ -349,12 +348,33 @@ static DWORD WINAPI WindowThread(void *param) {
 
 	// Establish this thread as a message queue thread
 	winThreadId = GetCurrentThreadId();
-	PeekMessage(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
+	PeekMessage(&msg, 0, WM_USER, WM_USER, PM_NOREMOVE);
 	QReady = TRUE;
 
+	// Create the window class
+	{
+		WNDCLASS		wc;
+		ATOM			winClass;
+
+		wc.style           = CS_HREDRAW | CS_VREDRAW; // | CS_OWNDC;
+		wc.lpfnWndProc     = (WNDPROC)myWindowProc;
+		wc.cbClsExtra      = 0;
+		wc.cbWndExtra      = 0;
+		wc.hInstance       = GetModuleHandle(0);
+		wc.hIcon           = LoadIcon(0, IDI_APPLICATION);
+		wc.hCursor         = LoadCursor(0, IDC_ARROW);
+		wc.hbrBackground   = GetStockObject(WHITE_BRUSH);
+		wc.lpszMenuName    = 0;
+		wc.lpszClassName   = APP_NAME;
+		winClass = RegisterClass(&wc);
+		assert(winClass != 0);
+	}
+
 	do {
-		gfxSleepMilliseconds(1);
-		while(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+		// This is a high priority task - make sure other tasks get a go.
+		Sleep(1);
+
+		while(PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) {
 			// Is this our special thread message to create a new window?
 			if (!msg.hwnd && msg.message == WM_USER) {
 				RECT		rect;
@@ -374,8 +394,8 @@ static DWORD WINAPI WindowThread(void *param) {
 				// Create the window
 				msg.hwnd = CreateWindow(APP_NAME, "", WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_BORDER, msg.wParam*DISPLAY_X_OFFSET, msg.wParam*DISPLAY_Y_OFFSET,
 								rect.right-rect.left, rect.bottom-rect.top, 0, 0,
-								GetModuleHandle(NULL), g);
-				assert(msg.hwnd != NULL);
+								GetModuleHandle(0), g);
+				assert(msg.hwnd != 0);
 
 			// Or just a normal window message
 			} else {
@@ -399,31 +419,16 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	// Initialise the window thread and the window class (if it hasn't been done already)
 	if (!QReady) {
 		HANDLE			hth;
-		WNDCLASS		wc;
 
 		// Create the draw mutex
-		drawMutex = CreateMutex(NULL, FALSE, NULL);
+		drawMutex = CreateMutex(0, FALSE, 0);
 
 		// Create the thread
-		if (!(hth = CreateThread(NULL, 0, WindowThread, 0, CREATE_SUSPENDED, NULL)))
+		if (!(hth = CreateThread(0, 0, WindowThread, 0, CREATE_SUSPENDED, 0)))
 			return FALSE;
-
 		SetThreadPriority(hth, THREAD_PRIORITY_ABOVE_NORMAL);
 		ResumeThread(hth);
 		CloseHandle(hth);
-
-		wc.style           = CS_HREDRAW | CS_VREDRAW; // | CS_OWNDC;
-		wc.lpfnWndProc     = (WNDPROC)myWindowProc;
-		wc.cbClsExtra      = 0;
-		wc.cbWndExtra      = 0;
-		wc.hInstance       = GetModuleHandle(NULL);
-		wc.hIcon           = LoadIcon(NULL, IDI_APPLICATION);
-		wc.hCursor         = LoadCursor(NULL, IDC_ARROW);
-		wc.hbrBackground   = GetStockObject(WHITE_BRUSH);
-		wc.lpszMenuName    = NULL;
-		wc.lpszClassName   = APP_NAME;
-		winClass = RegisterClass(&wc);
-		assert(winClass != 0);
 
 		// Wait for our thread to be ready
 		while (!QReady)
@@ -454,7 +459,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 	// Create a private area for this window
 	priv = (winPriv *)gfxAlloc(sizeof(winPriv));
-	assert(priv != NULL);
+	assert(priv != 0);
 	memset(priv, 0, sizeof(winPriv));
 	g->priv = priv;
 	#if GDISP_HARDWARE_STREAM_WRITE || GDISP_HARDWARE_STREAM_READ
