@@ -24,6 +24,8 @@
 		#error "GINPUT: GFX_USE_GDISP must be defined when mouse or touch calibration is required"
 	#endif
 
+	#include <string.h>							// Required for memcpy
+
 	#define GINPUT_MOUSE_CALIBRATION_FONT		"* Double"
 	#define GINPUT_MOUSE_CALIBRATION_FONT2		"* Narrow"
 	#define GINPUT_MOUSE_CALIBRATION_TEXT		"Calibration"
@@ -352,7 +354,7 @@ GSourceHandle ginputGetMouse(uint16_t instance) {
 					MouseConfig.fnsavecal = ginput_lld_mouse_calibration_save;
 			#endif
 			if (MouseConfig.fnloadcal && (pc = (Calibration *)MouseConfig.fnloadcal(instance))) {
-				MouseConfig.caldata = pc[0];
+				memcpy(&MouseConfig.caldata, pc, sizeof(MouseConfig.caldata))
 				MouseConfig.flags |= (FLG_CAL_OK|FLG_CAL_SAVED);
 				if ((MouseConfig.flags & FLG_CAL_FREE))
 					gfxFree((void *)pc);
