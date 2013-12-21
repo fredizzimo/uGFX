@@ -462,7 +462,6 @@ typedef struct thread {
 	threadreturn_t	(*fn)(void *param);		// Thread function
 	void *			param;					// Parameter for the thread function
 	jmp_buf			cxt;					// The current thread context.
-	// size - sizeof(thread) bytes of stack follow here
 } thread;
 
 typedef struct threadQ {
@@ -549,45 +548,32 @@ static void _gosThreadsInit(void) {
 			// Get details of the stack frame outside the function
 			get_stack_state();
 
-			/* stack direction */
+			/* Work out the frame entries to relocate by treating the jump buffer as an array of pointers */
 			stackdirup =  pframeinfo[1].localptr > pframeinfo[0].localptr;
-
-			/* study the jump buffer */
-			diff = pframeinfo[0].localptr - pframeinfo[1].localptr;
-			framebase = pframeinfo[0].localptr;
-
-			/* following line views jump buffer as array of long int */
 			pout = (char **)pframeinfo[0].cxt;
 			pin =  (char **)pframeinfo[1].cxt;
-
+			diff = pframeinfo[0].localptr - pframeinfo[1].localptr;
+			framebase = pframeinfo[0].localptr;
 			jmpmask1 = jmpmask2 = 0;
-			if (diff) {
-				for (i = 0; i < sizeof(jmp_buf)/sizeof(char *); i++, pout++, pin++) {
-					if ((size_t)(*pout - *pin) == diff) {
-						/* record frame dependency */
-						if (i < 32)
-							jmpmask1 |= 1 << i;
-						else
-							jmpmask2 |= 1 << (i-32);
+			for (i = 0; i < sizeof(jmp_buf)/sizeof(char *); i++, pout++, pin++) {
+				if ((size_t)(*pout - *pin) == diff) {
+					if (i < 32)
+						jmpmask1 |= 1 << i;
+					else
+						jmpmask2 |= 1 << (i-32);
 
-						if (stackdirup) {
-							if (framebase > *pout) {
-								framebase = *pout;
-							}
-						} else {
-							if (framebase < *pout) {
-								framebase = *pout;
-							}
-						}
+					if (stackdirup) {
+						if (framebase > *pout)
+							framebase = *pout;
+					} else {
+						if (framebase < *pout)
+							framebase = *pout;
 					}
 				}
 			}
+			stackbase = stackdirup ? (pframeinfo[0].localptr - framebase) : (framebase - pframeinfo[0].localptr);
 
-			if (stackdirup) {
-				stackbase = pframeinfo[0].localptr - framebase;
-			} else {
-				stackbase = framebase - pframeinfo[0].localptr;
-			}
+			// Clean up
 			gfxFree(pframeinfo);
 		}
 	#endif
