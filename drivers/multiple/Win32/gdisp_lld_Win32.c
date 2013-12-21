@@ -343,8 +343,7 @@ static LRESULT myWindowProc(HWND hWnd,	UINT Msg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-static DECLARE_THREAD_STACK(waWindowThread, 1024);
-static DECLARE_THREAD_FUNCTION(WindowThread, param) {
+static DWORD WINAPI WindowThread(void *param) {
 	(void)param;
 	MSG msg;
 
@@ -399,16 +398,19 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 	// Initialise the window thread and the window class (if it hasn't been done already)
 	if (!QReady) {
-		gfxThreadHandle	hth;
+		HANDLE			hth;
 		WNDCLASS		wc;
 
 		// Create the draw mutex
 		drawMutex = CreateMutex(NULL, FALSE, NULL);
 
 		// Create the thread
-		hth = gfxThreadCreate(waWindowThread, sizeof(waWindowThread), HIGH_PRIORITY, WindowThread, 0);
-		assert(hth != NULL);
-		gfxThreadClose(hth);
+		if (!(hth = CreateThread(NULL, 0, WindowThread, 0, CREATE_SUSPENDED, NULL)))
+			return FALSE;
+
+		SetThreadPriority(hth, THREAD_PRIORITY_ABOVE_NORMAL);
+		ResumeThread(hth);
+		CloseHandle(hth);
 
 		wc.style           = CS_HREDRAW | CS_VREDRAW; // | CS_OWNDC;
 		wc.lpfnWndProc     = (WNDPROC)myWindowProc;
@@ -425,7 +427,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 		// Wait for our thread to be ready
 		while (!QReady)
-			gfxSleepMilliseconds(1);
+			Sleep(1);
 	}
 
 	// Initialise the GDISP structure
@@ -466,7 +468,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 	// Wait for the window creation to complete (for safety)
 	while(!(((volatile GDisplay *)g)->flags & GDISP_FLG_READY))
-		gfxSleepMilliseconds(1);
+		Sleep(1);
 
 	sprintf(buf, APP_NAME " - %u", g->systemdisplay+1);
 	SetWindowText(priv->hwnd, buf);
