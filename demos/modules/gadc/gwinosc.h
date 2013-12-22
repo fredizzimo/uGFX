@@ -34,6 +34,11 @@
  * --------------------------- Our Custom GWIN Oscilloscope ---------------
  *
  * This GWIN superset implements a simple audio oscilloscope using the GADC high speed device.
+ *
+ * It makes many assumptions.
+ *
+ * The GMISC module with GMISC_NEED_ARRAYOPS could be used to process the samples more
+ * correctly if we were really building something generic.
  */
 
 /* The extent of scaling for our audio data - fixed scale at the moment */
@@ -78,7 +83,8 @@ extern "C" {
 	/**
 	 * Create a scope window.
 	 */
-	GHandle gwinScopeCreate(GScopeObject *gs, GWindowInit *pInit, uint32_t physdev, uint32_t frequency);
+	GHandle gwinGScopeCreate(GDisplay *g, GScopeObject *gs, GWindowInit *pInit, uint32_t physdev, uint32_t frequency);
+	#define gwinScopeCreate(gs,pI,pd,f)		gwinGScopeCreate(GDISP,gs,pI,pd,f)
 
 	/**
 	 * Wait for a scope trace to be ready and then draw it.

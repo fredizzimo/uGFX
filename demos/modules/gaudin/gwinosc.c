@@ -71,9 +71,9 @@ static const gwinVMT scopeVMT = {
 		0,						// The after-clear routine
 };
 
-GHandle gwinScopeCreate(GScopeObject *gs, GWindowInit *pInit, uint16_t channel, uint32_t frequency) {
+GHandle gwinGScopeCreate(GDisplay *g, GScopeObject *gs, GWindowInit *pInit, uint16_t channel, uint32_t frequency) {
 	/* Initialise the base class GWIN */
-	if (!(gs = (GScopeObject *)_gwindowCreate(&gs->g, pInit, &scopeVMT, 0)))
+	if (!(gs = (GScopeObject *)_gwindowCreate(g, &gs->g, pInit, &scopeVMT, 0)))
 		return 0;
 
 	/* Initialise the scope object members and allocate memory for buffers */
@@ -81,7 +81,7 @@ GHandle gwinScopeCreate(GScopeObject *gs, GWindowInit *pInit, uint16_t channel, 
 	gs->nextx = 0;
 	if (!(gs->lastscopetrace = (coord_t *)gfxAlloc(gs->g.width * sizeof(coord_t))))
 		return 0;
-	if (!(gs->audiobuf = (adcsample_t *)gfxAlloc(AUDIOBUFSZ * sizeof(adcsample_t))))
+	if (!(gs->audiobuf = (audin_sample_t *)gfxAlloc(AUDIOBUFSZ * sizeof(audin_sample_t))))
 		return 0;
 #if TRIGGER_METHOD == TRIGGER_POSITIVERAMP
 	gs->lasty = gs->g.height/2;
@@ -123,10 +123,12 @@ void gwinScopeWaitForTrace(GHandle gh) {
 
 	/* Ensure we are drawing in the right area */
 	#if GDISP_NEED_CLIP
-		gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+		gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 	#endif
 
-	yoffset = gh->height/2 + (1<<SCOPE_Y_BITS)/2;
+	yoffset = gh->height/2;
+	if (!(GAUDIN_SAMPLE_FORMAT & 1))
+		yoffset += (1<<SCOPE_Y_BITS)/2;
 	x = gs->nextx;
 	pc = gs->lastscopetrace+x;
 	pa = gs->myEvent.buffer;
@@ -197,8 +199,8 @@ void gwinScopeWaitForTrace(GHandle gh) {
 		}
 
 		/* Clear the old scope pixel and then draw the new scope value */
-		gdispDrawPixel(gh->x+x, gh->y+pc[0], gh->bgcolor);
-		gdispDrawPixel(gh->x+x, gh->y+y, gh->color);
+		gdispGDrawPixel(gh->display, gh->x+x, gh->y+pc[0], gh->bgcolor);
+		gdispGDrawPixel(gh->display, gh->x+x, gh->y+y, gh->color);
 
 		/* Save the value */
 		*pc++ = y;

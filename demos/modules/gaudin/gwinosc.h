@@ -33,10 +33,9 @@
 /**
  * --------------------------- Our Custom GWIN Oscilloscope ---------------
  *
- * This GWIN superset implements a simple audio oscilloscope using the GADC high speed device.
+ * This GWIN superset implements a simple audio oscilloscope using the GAUDIN device.
  *
- * It makes many assumptions, the most fundamental of which is that the audio device
- * produces unsigned integer samples.
+ * It makes many assumptions.
  *
  * The GMISC module with GMISC_NEED_ARRAYOPS could be used to process the samples more
  * correctly if we were really building something generic.
@@ -84,7 +83,8 @@ extern "C" {
 	/**
 	 * Create a scope window.
 	 */
-	GHandle gwinScopeCreate(GScopeObject *gs, GWindowInit *pInit, uint16_t channel, uint32_t frequency);
+	GHandle gwinGScopeCreate(GDisplay *g, GScopeObject *gs, GWindowInit *pInit, uint16_t channel, uint32_t frequency);
+	#define gwinScopeCreate(gs,pI,ch,f)		gwinGScopeCreate(GDISP,gs,pI,ch,f)
 
 	/**
 	 * Wait for a scope trace to be ready and then draw it.

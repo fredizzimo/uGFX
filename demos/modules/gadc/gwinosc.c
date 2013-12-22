@@ -64,9 +64,9 @@ static const gwinVMT scopeVMT = {
 		0,						// The after-clear routine
 };
 
-GHandle gwinScopeCreate(GScopeObject *gs, GWindowInit *pInit, uint32_t physdev, uint32_t frequency) {
+GHandle gwinGScopeCreate(GDisplay *g, GScopeObject *gs, GWindowInit *pInit, uint32_t physdev, uint32_t frequency) {
 	/* Initialise the base class GWIN */
-	if (!(gs = (GScopeObject *)_gwindowCreate(&gs->g, pInit, &scopeVMT, 0)))
+	if (!(gs = (GScopeObject *)_gwindowCreate(g, &gs->g, pInit, &scopeVMT, 0)))
 		return 0;
 	gfxSemInit(&gs->bsem, 0, 1);
 	gs->nextx = 0;
@@ -114,10 +114,12 @@ void gwinScopeWaitForTrace(GHandle gh) {
 
 	/* Ensure we are drawing in the right area */
 	#if GDISP_NEED_CLIP
-		gdispSetClip(gh->x, gh->y, gh->width, gh->height);
+		gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 	#endif
 
-	yoffset = gh->height/2 + (1<<SCOPE_Y_BITS)/2;
+	yoffset = gh->height/2;
+	if (!(GADC_SAMPLE_FORMAT & 1))
+		yoffset += (1<<SCOPE_Y_BITS)/2;
 	x = gs->nextx;
 	pc = gs->lastscopetrace+x;
 	pa = gs->myEvent.buffer;
@@ -188,8 +190,8 @@ void gwinScopeWaitForTrace(GHandle gh) {
 		}
 
 		/* Clear the old scope pixel and then draw the new scope value */
-		gdispDrawPixel(gh->x+x, gh->y+pc[0], gh->bgcolor);
-		gdispDrawPixel(gh->x+x, gh->y+y, gh->color);
+		gdispGDrawPixel(gh->display, gh->x+x, gh->y+pc[0], gh->bgcolor);
+		gdispGDrawPixel(gh->display, gh->x+x, gh->y+y, gh->color);
 
 		/* Save the value */
 		*pc++ = y;
