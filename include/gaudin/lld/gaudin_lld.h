@@ -19,7 +19,7 @@
 
 #include "gfx.h"
 
-#if GFX_USE_GADC || defined(__DOXYGEN__)
+#if GFX_USE_GAUDIN || defined(__DOXYGEN__)
 
 /*===========================================================================*/
 /* Type definitions                                                          */
