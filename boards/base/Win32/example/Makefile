@@ -31,7 +31,7 @@ DINCDIR =
 DLIBDIR =
 
 # List all default libraries here
-DLIBS = -lws2_32 -lgdi32
+DLIBS = -lws2_32 -lgdi32 -lwinmm
 
 # Make sure this empty for now
 SRC = 
