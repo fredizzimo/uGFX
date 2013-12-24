@@ -354,7 +354,7 @@ GSourceHandle ginputGetMouse(uint16_t instance) {
 					MouseConfig.fnsavecal = ginput_lld_mouse_calibration_save;
 			#endif
 			if (MouseConfig.fnloadcal && (pc = (Calibration *)MouseConfig.fnloadcal(instance))) {
-				memcpy(&MouseConfig.caldata, pc, sizeof(MouseConfig.caldata))
+				memcpy(&MouseConfig.caldata, pc, sizeof(MouseConfig.caldata));
 				MouseConfig.flags |= (FLG_CAL_OK|FLG_CAL_SAVED);
 				if ((MouseConfig.flags & FLG_CAL_FREE))
 					gfxFree((void *)pc);
