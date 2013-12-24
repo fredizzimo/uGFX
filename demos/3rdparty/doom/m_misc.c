@@ -27,12 +27,6 @@
 static const char
 rcsid[] = "$Id: m_misc.c,v 1.6 1997/02/03 22:45:10 b1 Exp $";
 
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <fcntl.h>
-#include <stdlib.h>
-#include <unistd.h>
-
 #include <ctype.h>
 
 
@@ -118,13 +112,13 @@ M_WriteFile
     int		handle;
     int		count;
 	
-    handle = open ( name, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
+    handle = I_FileCreate(name);
 
     if (handle == -1)
 	return false;
 
-    count = write (handle, source, length);
-    close (handle);
+    count = I_FileWrite (handle, source, length);
+    I_FileClose(handle);
 	
     if (count < length)
 	return false;
@@ -142,18 +136,15 @@ M_ReadFile
   byte**	buffer )
 {
     int	handle, count, length;
-    struct stat	fileinfo;
     byte		*buf;
 	
-    handle = open (name, O_RDONLY | O_BINARY, 0666);
+    handle = I_FileOpenRead (name);
     if (handle == -1)
 	I_Error ("Couldn't read file %s", name);
-    if (fstat (handle,&fileinfo) == -1)
-	I_Error ("Couldn't read file %s", name);
-    length = fileinfo.st_size;
+    length = I_FileSize(handle);
     buf = Z_Malloc (length, PU_STATIC, NULL);
-    count = read (handle, buf, length);
-    close (handle);
+    count = I_FileRead (handle, buf, length);
+    I_FileClose (handle);
 	
     if (count < length)
 	I_Error ("Couldn't read file %s", name);
@@ -307,6 +298,7 @@ char*	defaultfile;
 //
 void M_SaveDefaults (void)
 {
+#if 0		// AJH uGFX HACK
     int		i;
     int		v;
     FILE*	f;
@@ -329,6 +321,7 @@ void M_SaveDefaults (void)
     }
 	
     fclose (f);
+#endif
 }
 
 
@@ -358,11 +351,12 @@ void M_LoadDefaults (void)
     if (i && i<myargc-1)
     {
 	defaultfile = myargv[i+1];
-	printf ("	default file: %s\n",defaultfile);
+	I_printf ("	default file: %s\n",defaultfile);
     }
     else
 	defaultfile = basedefault;
-    
+
+#if 0	// AJH uGFX HACK
     // read the file in, overriding any set defaults
     f = fopen (defaultfile, "r");
     if (f)
@@ -377,7 +371,7 @@ void M_LoadDefaults (void)
 		    // get a string default
 		    isstring = true;
 		    len = strlen(strparm);
-		    newstring = (char *) malloc(len);
+		    newstring = (char *) I_malloc(len);
 		    strparm[len-1] = 0;
 		    strcpy(newstring, strparm+1);
 		}
@@ -400,6 +394,7 @@ void M_LoadDefaults (void)
 		
 	fclose (f);
     }
+#endif
 }
 
 
@@ -517,7 +512,7 @@ void M_ScreenShot (void)
     {
 	lbmname[4] = i/10 + '0';
 	lbmname[5] = i%10 + '0';
-	if (access(lbmname,0) == -1)
+	if (!I_HaveFile(lbmname))
 	    break;	// file doesn't exist
     }
     if (i==100)

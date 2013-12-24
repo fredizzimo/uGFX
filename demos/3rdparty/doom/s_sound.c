@@ -164,7 +164,7 @@ void S_Init
 {  
   int		i;
 
-  fprintf( stderr, "S_Init: default sfx volume %d\n", sfxVolume);
+  I_DBGprintf("S_Init: default sfx volume %d\n", sfxVolume);
 
   // Whatever these did with DMX, these are rather dummies now.
   I_SetChannels();
@@ -269,8 +269,7 @@ S_StartSoundAtVolume
   
   
   // Debug.
-  /*fprintf( stderr,
-  	   "S_StartSoundAtVolume: playing sound %d (%s)\n",
+  /*I_DBGprintf("S_StartSoundAtVolume: playing sound %d (%s)\n",
   	   sfx_id, S_sfx[sfx_id].name );*/
   
   // check for bogus sound #
@@ -368,13 +367,11 @@ S_StartSoundAtVolume
   // cache data if necessary
   if (!sfx->data)
   {
-    fprintf( stderr,
-	     "S_StartSoundAtVolume: 16bit and not pre-cached - wtf?\n");
+	  I_DBGprintf("S_StartSoundAtVolume: 16bit and not pre-cached - wtf?\n");
 
     // DOS remains, 8bit handling
     //sfx->data = (void *) W_CacheLumpNum(sfx->lumpnum, PU_MUSIC);
-    // fprintf( stderr,
-    //	     "S_StartSoundAtVolume: loading %d (lump %d) : 0x%x\n",
+    // I_DBGprintf("S_StartSoundAtVolume: loading %d (lump %d) : 0x%x\n",
     //       sfx_id, sfx->lumpnum, (int)sfx->data );
     
   }
@@ -423,7 +420,7 @@ S_StartSound
     {
 	for (i=first_saw;i!=next_saw;i=(i+1)%10)
 	    if (last_saw_origins[i] != origin)
-		fprintf(stderr, "old origin 0x%lx != "
+	    	I_DBGprintf("old origin 0x%lx != "
 			"origin 0x%lx for sfx %d\n",
 			last_saw_origins[i],
 			origin,
@@ -449,15 +446,14 @@ S_StartSound
 		    || channels[i].sfxinfo == &S_sfx[sfx_sawful]
 		    || channels[i].sfxinfo == &S_sfx[sfx_sawhit])
 		{
-		    fprintf(stderr,
-			    "chn: sfxinfo=0x%lx, origin=0x%lx, "
+			I_DBGprintf("chn: sfxinfo=0x%lx, origin=0x%lx, "
 			    "handle=%d\n",
 			    channels[i].sfxinfo,
 			    channels[i].origin,
 			    channels[i].handle);
 		}
 	    }
-	    fprintf(stderr, "\n");
+	    I_DBGprintf("\n");
 	}
     }
 }
@@ -671,7 +667,7 @@ S_ChangeMusic
     // get lumpnum if neccessary
     if (!music->lumpnum)
     {
-	sprintf(namebuf, "d_%s", music->name);
+    	I_sprintf(namebuf, "d_%s", music->name);
 	music->lumpnum = W_GetNumForName(namebuf);
     }
 
@@ -718,7 +714,7 @@ void S_StopChannel(int cnum)
 	{
 #ifdef SAWDEBUG
 	    if (c->sfxinfo == &S_sfx[sfx_sawful])
-		fprintf(stderr, "stopped\n");
+	    	I_DBGprintf("stopped\n");
 #endif
 	    I_StopSound(c->handle);
 	}

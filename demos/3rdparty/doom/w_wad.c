@@ -26,18 +26,6 @@ static const char
 rcsid[] = "$Id: w_wad.c,v 1.5 1997/02/03 16:47:57 b1 Exp $";
 
 
-#ifdef NORMALUNIX
-#include <ctype.h>
-#include <sys/types.h>
-#include <string.h>
-#include <unistd.h>
-#include <malloc.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <alloca.h>
-#define O_BINARY		0
-#endif
-
 #include "doomtype.h"
 #include "m_swap.h"
 #include "i_system.h"
@@ -73,11 +61,6 @@ void strupr (char* s)
 
 int filelength (int handle) 
 { 
-//    struct stat	fileinfo;
-//
-//    if (fstat (handle,&fileinfo) == -1)
-//	I_Error ("Error fstating");
-
     return I_FileSize(handle);
 }
 
@@ -162,11 +145,11 @@ void W_AddFile (char *filename)
 		
     if ( (handle = I_FileOpenRead(filename)) == -1)
     {
-	printf (" couldn't open %s\n",filename);
+	I_printf (" couldn't open %s\n",filename);
 	return;
     }
 
-    printf (" adding %s\n",filename);
+    I_printf (" adding %s\n",filename);
     startlump = numlumps;
 	
     if (strcmp (filename+strlen(filename)-3 , "wad" ) && strcmp (filename+strlen(filename)-3 , "WAD" ) )
@@ -297,7 +280,7 @@ void W_InitMultipleFiles (char** filenames)
     numlumps = 0;
 
     // will be realloced as lumps are added
-    lumpinfo = malloc(1);	
+    lumpinfo = I_Malloc(1);
 
     for ( ; *filenames ; filenames++)
 	W_AddFile (*filenames);
@@ -307,7 +290,7 @@ void W_InitMultipleFiles (char** filenames)
     
     // set up caching
     size = numlumps * sizeof(*lumpcache);
-    lumpcache = malloc (size);
+    lumpcache = I_Malloc (size);
     
     if (!lumpcache)
 	I_Error ("Couldn't allocate lumpcache");
@@ -486,13 +469,13 @@ W_CacheLumpNum
     {
 	// read the lump in
 	
-	//printf ("cache miss on lump %i\n",lump);
+	//I_printf ("cache miss on lump %i\n",lump);
 	ptr = Z_Malloc (W_LumpLength (lump), tag, &lumpcache[lump]);
 	W_ReadLump (lump, lumpcache[lump]);
     }
     else
     {
-	//printf ("cache hit on lump %i\n",lump);
+	//I_printf ("cache hit on lump %i\n",lump);
 	Z_ChangeTag (lumpcache[lump],tag);
     }
 	
@@ -550,7 +533,7 @@ void W_Profile (void)
     }
     profilecount++;
 
-#if 0
+#if 0	// AJH uGFX HACK
     f = fopen ("waddump.txt","w");
     name[8] = 0;
 

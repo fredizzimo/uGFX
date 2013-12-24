@@ -354,8 +354,7 @@ P_FindNextHighestFloor
 	// Check for overflow. Exit.
 	if ( h >= MAX_ADJOINING_SECTORS )
 	{
-	    fprintf( stderr,
-		     "Sector with more than 20 adjoining sectors\n" );
+		I_DBGprintf("Sector with more than 20 adjoining sectors\n" );
 	    break;
 	}
     }

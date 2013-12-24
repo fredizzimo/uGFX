@@ -279,12 +279,12 @@ void G_BuildTiccmd (ticcmd_t* cmd)
     { 
 	if (gamekeydown[key_right]) 
 	{
-	    // fprintf(stderr, "strafe right\n");
+	    // I_DBGprintf("strafe right\n");
 	    side += sidemove[speed]; 
 	}
 	if (gamekeydown[key_left]) 
 	{
-	    //	fprintf(stderr, "strafe left\n");
+	    //	I_DBGprintf("strafe left\n");
 	    side -= sidemove[speed]; 
 	}
 	if (joyxmove > 0) 
@@ -307,12 +307,12 @@ void G_BuildTiccmd (ticcmd_t* cmd)
  
     if (gamekeydown[key_up]) 
     {
-	// fprintf(stderr, "up\n");
+	// I_DBGprintf("up\n");
 	forward += forwardmove[speed]; 
     }
     if (gamekeydown[key_down]) 
     {
-	// fprintf(stderr, "down\n");
+	// I_DBGprintf("down\n");
 	forward -= forwardmove[speed]; 
     }
     if (joyymove < 0) 
@@ -674,7 +674,7 @@ void G_Ticker (void)
 	    {
 		static char turbomessage[80];
 		extern char *player_names[4];
-		sprintf (turbomessage, "%s is turbo!",player_names[i]);
+		I_sprintf (turbomessage, "%s is turbo!",player_names[i]);
 		players[consoleplayer].message = turbomessage;
 	    }
 			
@@ -1212,7 +1212,7 @@ void G_DoLoadGame (void)
     
     // skip the description field 
     memset (vcheck,0,sizeof(vcheck)); 
-    sprintf (vcheck,"version %i",VERSION); 
+    I_sprintf (vcheck,"version %i",VERSION);
     if (strcmp (save_p, vcheck)) 
 	return;				// bad version 
     save_p += VERSIONSIZE; 
@@ -1276,9 +1276,9 @@ void G_DoSaveGame (void)
     int		i; 
 	
     if (M_CheckParm("-cdrom"))
-	sprintf(name,"c:\\doomdata\\"SAVEGAMENAME"%d.dsg",savegameslot);
+    	I_sprintf(name,"c:\\doomdata\\"SAVEGAMENAME"%d.dsg",savegameslot);
     else
-	sprintf (name,SAVEGAMENAME"%d.dsg",savegameslot); 
+    	I_sprintf (name,SAVEGAMENAME"%d.dsg",savegameslot);
     description = savedescription; 
 	 
     save_p = savebuffer = screens[1]+0x4000; 
@@ -1286,7 +1286,7 @@ void G_DoSaveGame (void)
     memcpy (save_p, description, SAVESTRINGSIZE); 
     save_p += SAVESTRINGSIZE; 
     memset (name2,0,sizeof(name2)); 
-    sprintf (name2,"version %i",VERSION); 
+    I_sprintf (name2,"version %i",VERSION);
     memcpy (save_p, name2, VERSIONSIZE); 
     save_p += VERSIONSIZE; 
 	 
@@ -1588,7 +1588,7 @@ void G_DoPlayDemo (void)
     demobuffer = demo_p = W_CacheLumpName (defdemoname, PU_STATIC); 
     if ( *demo_p++ != VERSION)
     {
-      fprintf( stderr, "Demo is from a different game version!\n");
+    	I_DBGprintf("Demo is from a different game version!\n");
       gameaction = ga_nothing;
       return;
     }

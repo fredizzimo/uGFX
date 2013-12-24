@@ -126,7 +126,7 @@ getsfx
     
     // Get the sound data from the WAD, allocate lump
     //  in zone memory.
-    sprintf(name, "ds%s", sfxname);
+    I_sprintf(name, "ds%s", sfxname);
 
     // Now, there is a severe problem with the
     //  sound handling, in it is not (yet/anymore)
@@ -146,10 +146,9 @@ getsfx
     size = W_LumpLength( sfxlump );
 
     // Debug.
-    // fprintf( stderr, "." );
-    //fprintf( stderr, " -loading  %s (lump %d, %d bytes)\n",
+    // I_DBGprintf( "." );
+    //I_DBGprintf( " -loading  %s (lump %d, %d bytes)\n",
     //	     sfxname, sfxlump, size );
-    //fflush( stderr );
     
     sfx = (unsigned char*)W_CacheLumpNum( sfxlump, PU_STATIC );
 
@@ -159,7 +158,7 @@ getsfx
 
     // Allocate from zone memory.
     paddedsfx = (unsigned char*)Z_Malloc( paddedsize+8, PU_STATIC, 0 );
-    // ddt: (unsigned char *) realloc(sfx, paddedsize+8);
+    // ddt: (unsigned char *) I_Realloc(sfx, paddedsize+8);
     // This should interfere with zone memory handling,
     //  which does not kick in in the soundserver.
 
@@ -381,7 +380,7 @@ void I_SetMusicVolume(int volume)
 int I_GetSfxLumpNum(sfxinfo_t* sfx)
 {
     char namebuf[9];
-    sprintf(namebuf, "ds%s", sfx->name);
+    I_sprintf(namebuf, "ds%s", sfx->name);
     return W_GetNumForName(namebuf);
 }
 
@@ -419,12 +418,12 @@ I_StartSound
     return id;
 #else
     // Debug.
-    //fprintf( stderr, "starting sound %d", id );
+    //I_DBGprintf("starting sound %d", id );
     
     // Returns a handle (not used).
     id = addsfx( id, vol, steptable[pitch], sep );
 
-    // fprintf( stderr, "/handle is %d\n", id );
+    // I_DBGprintf("/handle is %d\n", id );
     
     return id;
 #endif
@@ -581,7 +580,7 @@ void I_UpdateSound( void )
     
     if ( misses > 10 )
     {
-      fprintf( stderr, "I_SoundUpdate: missed 10 buffer writes\n");
+    	I_DBGprintf("I_SoundUpdate: missed 10 buffer writes\n");
       misses = 0;
     }
     
@@ -645,11 +644,11 @@ void I_InitSound()
   char buffer[256];
   
   if (getenv("DOOMWADDIR"))
-    sprintf(buffer, "%s/%s",
+	  I_sprintf(buffer, "%s/%s",
 	    getenv("DOOMWADDIR"),
 	    sndserver_filename);
   else
-    sprintf(buffer, "%s", sndserver_filename);
+	  I_sprintf(buffer, "%s", sndserver_filename);
   
   // start sound process
   if ( !access(buffer, X_OK) )
@@ -658,22 +657,22 @@ void I_InitSound()
     sndserver = popen(buffer, "w");
   }
   else
-    fprintf(stderr, "Could not start sound server [%s]\n", buffer);
+	  I_DBGprintf("Could not start sound server [%s]\n", buffer);
 #else
     
   int i;
   
 #ifdef SNDINTR
-  fprintf( stderr, "I_SoundSetTimer: %d microsecs\n", SOUND_INTERVAL );
+  I_DBGprintf("I_SoundSetTimer: %d microsecs\n", SOUND_INTERVAL );
   I_SoundSetTimer( SOUND_INTERVAL );
 #endif
     
   // Secure and configure sound device first.
-  fprintf( stderr, "I_InitSound: ");
+  I_DBGprintf( "I_InitSound: ");
   
   audio_fd = open("/dev/dsp", O_WRONLY);
   if (audio_fd<0)
-    fprintf(stderr, "Could not open /dev/dsp\n");
+	  I_DBGprintf( "Could not open /dev/dsp\n");
   
                      
   i = 11 | (2<<16);                                           
@@ -692,13 +691,13 @@ void I_InitSound()
   if (i&=AFMT_S16_LE)    
     myioctl(audio_fd, SNDCTL_DSP_SETFMT, &i);
   else
-    fprintf(stderr, "Could not play signed 16 data\n");
+	  I_DBGprintf("Could not play signed 16 data\n");
 
-  fprintf(stderr, " configured audio device\n" );
+  I_DBGprintf(" configured audio device\n" );
 
     
   // Initialize external data (all sounds) at start, keep static.
-  fprintf( stderr, "I_InitSound: ");
+  I_DBGprintf("I_InitSound: ");
   
   for (i=1 ; i<NUMSFX ; i++)
   { 
@@ -716,14 +715,14 @@ void I_InitSound()
     }
   }
 
-  fprintf( stderr, " pre-cached all sound data\n");
+  I_DBGprintf(" pre-cached all sound data\n");
   
   // Now initialize mixbuffer with zero.
   for ( i = 0; i< MIXBUFFERSIZE; i++ )
     mixbuffer[i] = 0;
   
   // Finished initialization.
-  fprintf(stderr, "I_InitSound: sound module ready\n");
+  I_DBGprintf("I_InitSound: sound module ready\n");
     
 #endif
 
@@ -799,7 +798,7 @@ void I_HandleSoundTimer( int ignore )
 {
 #if 0
   // Debug.
-  //fprintf( stderr, "%c", '+' ); fflush( stderr );
+  //I_DBGprintf("%c", '+' ); fflush( stderr );
   
   // Feed sound device if necesary.
   if ( flag )

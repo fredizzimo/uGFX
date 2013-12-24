@@ -6,13 +6,12 @@
 #include "d_main.h"
 
 // Emulate a command line
-static int argc = 1;
-static const char * const *argv = { "doom", };
+static const char const *argv[] = { "doom" };
 
 int main(void) {
 	gfxInit();
 
-    myargc = argc; 
+    myargc = sizeof(argv)/sizeof(argv[0]);
     myargv = argv; 
     D_DoomMain();
 } 

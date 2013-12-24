@@ -163,7 +163,7 @@ void PacketSend (void)
 	sw.cmds[c].buttons = netbuffer->cmds[c].buttons;
     }
 		
-    //printf ("sending %i\n",gametic);		
+    //I_DBGprintf("sending %i\n",gametic);
     c = sendto (sendsocket , &sw, doomcom->datalength
 		,0,(void *)&sendaddress[doomcom->remotenode]
 		,sizeof(sendaddress[doomcom->remotenode]));
@@ -200,7 +200,7 @@ void PacketGet (void)
     {
 	static int first=1;
 	if (first)
-	    printf("len=%d:p=[0x%x 0x%x] \n", c, *(int*)&sw, *((int*)&sw+1));
+	    I_printf("len=%d:p=[0x%x 0x%x] \n", c, *(int*)&sw, *((int*)&sw+1));
 	first = 0;
     }
 
@@ -276,7 +276,7 @@ void I_InitNetwork (void)
     int			p;
     struct hostent*	hostentry;	// host information entry
 	
-    doomcom = malloc (sizeof (*doomcom) );
+    doomcom = I_malloc (sizeof (*doomcom) );
     memset (doomcom, 0, sizeof(*doomcom) );
     
     // set up for network
@@ -301,7 +301,7 @@ void I_InitNetwork (void)
     if (p && p<myargc-1)
     {
 	DOOMPORT = atoi (myargv[p+1]);
-	printf ("using alternate port %i\n",DOOMPORT);
+	I_printf ("using alternate port %i\n",DOOMPORT);
     }
     
     // parse network game options,
@@ -358,7 +358,7 @@ void I_InitNetwork (void)
 
     sendsocket = UDPsocket ();
 #else
-    doomcom = malloc (sizeof (*doomcom) );
+    doomcom = gfxAlloc (sizeof (*doomcom) );
     memset (doomcom, 0, sizeof(*doomcom) );
 
 	// single player game

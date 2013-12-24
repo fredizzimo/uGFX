@@ -1,16 +1,17 @@
 MYFILES = $(GFXLIB)/demos/3rdparty/doom
-MYCSRC = $(MYFILES)/doomdef.c		\
-		$(MYFILES)/doomstat.c		\
-		$(MYFILES)/dstrings.c		\
+MYCSRC = \
+		$(MYFILES)/d_main.c			\
 		$(MYFILES)/i_main.c			\
 		$(MYFILES)/i_system.c		\
 		$(MYFILES)/i_sound.c		\
 		$(MYFILES)/i_video.c		\
 		$(MYFILES)/i_net.c			\
+		$(MYFILES)/doomdef.c		\
+		$(MYFILES)/doomstat.c		\
+		$(MYFILES)/dstrings.c		\
 		$(MYFILES)/tables.c			\
 		$(MYFILES)/f_finale.c		\
 		$(MYFILES)/f_wipe.c 		\
-		$(MYFILES)/d_main.c			\
 		$(MYFILES)/d_net.c			\
 		$(MYFILES)/d_items.c		\
 		$(MYFILES)/g_game.c			\

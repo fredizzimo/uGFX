@@ -29,6 +29,9 @@
 #define GDISP_NEED_VALIDATION		TRUE
 #define GDISP_NEED_CONTROL			TRUE
 #define GDISP_NEED_STREAMING		TRUE
+#define GDISP_NEED_TEXT				TRUE
+
+#define GDISP_INCLUDE_FONT_UI2		TRUE
 
 /* Features for the GINPUT subsystem. */
 #define GINPUT_NEED_MOUSE		TRUE

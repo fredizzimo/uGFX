@@ -5,8 +5,9 @@ See DOOMLIC.TXT for the real license.
 This port display a fix sized window of 320 x 200 on your display (it tries to put the display in landscape mode first).
 
 There is no sound currently until the GAUDOUT module is written.
-There is no user input currently until the hooks are added into i_video.c (very soon).
 There is no network support currently.
+
+User input is not the best for actually playing yet. Requires Touch or Mouse.
 
 The supplied DOOM1.WAD is the shareware version.
 Currently this has been converted into doom1_wad.h for inclusion into the source code (rather than using file IO).

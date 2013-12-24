@@ -405,7 +405,7 @@ void HU_Init(void)
     j = HU_FONTSTART;
     for (i=0;i<HU_FONTSIZE;i++)
     {
-	sprintf(buffer, "STCFN%.3d", j++);
+    	I_sprintf(buffer, "STCFN%.3d", j++);
 	hu_font[i] = (patch_t *) W_CacheLumpName(buffer, PU_STATIC);
     }
 
@@ -708,7 +708,7 @@ boolean HU_Responder(event_t *ev)
 	    c = c - '0';
 	    if (c > 9)
 		return false;
-	    // fprintf(stderr, "got here\n");
+	    // I_DBGprintf("got here\n");
 	    macromessage = chat_macros[c];
 	    
 	    // kill last message with a '\n'
@@ -737,7 +737,7 @@ boolean HU_Responder(event_t *ev)
 		// static unsigned char buf[20]; // DEBUG
 		HU_queueChatChar(c);
 		
-		// sprintf(buf, "KEY: %d => %d", ev->data1, c);
+		// I_sprintf(buf, "KEY: %d => %d", ev->data1, c);
 		//      plr->message = buf;
 	    }
 	    if (c == KEY_ENTER)

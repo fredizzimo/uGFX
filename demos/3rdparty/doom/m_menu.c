@@ -25,13 +25,7 @@
 static const char
 rcsid[] = "$Id: m_menu.c,v 1.7 1997/02/03 22:45:10 b1 Exp $";
 
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <stdlib.h>
 #include <ctype.h>
-
 
 #include "doomdef.h"
 #include "dstrings.h"
@@ -517,20 +511,17 @@ void M_ReadSaveStrings(void)
 	
     for (i = 0;i < load_end;i++)
     {
-	if (M_CheckParm("-cdrom"))
-	    sprintf(name,"c:\\doomdata\\"SAVEGAMENAME"%d.dsg",i);
-	else
-	    sprintf(name,SAVEGAMENAME"%d.dsg",i);
+    	I_sprintf(name,SAVEGAMENAME"%d.dsg",i);
 
-	handle = open (name, O_RDONLY | 0, 0666);
+	handle = I_FileOpenRead (name);
 	if (handle == -1)
 	{
 	    strcpy(&savegamestrings[i][0],EMPTYSTRING);
 	    LoadMenu[i].status = 0;
 	    continue;
 	}
-	count = read (handle, &savegamestrings[i], SAVESTRINGSIZE);
-	close (handle);
+	count = I_FileRead(handle, &savegamestrings[i], SAVESTRINGSIZE);
+	I_FileClose(handle);
 	LoadMenu[i].status = 1;
     }
 }
@@ -581,9 +572,9 @@ void M_LoadSelect(int choice)
     char    name[256];
 	
     if (M_CheckParm("-cdrom"))
-	sprintf(name,"c:\\doomdata\\"SAVEGAMENAME"%d.dsg",choice);
+    	I_sprintf(name,"c:\\doomdata\\"SAVEGAMENAME"%d.dsg",choice);
     else
-	sprintf(name,SAVEGAMENAME"%d.dsg",choice);
+    	I_sprintf(name,SAVEGAMENAME"%d.dsg",choice);
     G_LoadGame (name);
     M_ClearMenus ();
 }
@@ -706,7 +697,7 @@ void M_QuickSave(void)
 	quickSaveSlot = -2;	// means to pick a slot now
 	return;
     }
-    sprintf(tempstring,QSPROMPT,savegamestrings[quickSaveSlot]);
+    I_sprintf(tempstring,QSPROMPT,savegamestrings[quickSaveSlot]);
     M_StartMessage(tempstring,M_QuickSaveResponse,true);
 }
 
@@ -738,7 +729,7 @@ void M_QuickLoad(void)
 	M_StartMessage(QSAVESPOT,NULL,false);
 	return;
     }
-    sprintf(tempstring,QLPROMPT,savegamestrings[quickSaveSlot]);
+    I_sprintf(tempstring,QLPROMPT,savegamestrings[quickSaveSlot]);
     M_StartMessage(tempstring,M_QuickLoadResponse,true);
 }
 
@@ -930,8 +921,7 @@ void M_Episode(int choice)
     if ( (gamemode == registered)
 	 && (choice > 2))
     {
-      fprintf( stderr,
-	       "M_Episode: 4th episode requires UltimateDOOM\n");
+    	I_DBGprintf("M_Episode: 4th episode requires UltimateDOOM\n");
       choice = 0;
     }
 	 
@@ -1100,9 +1090,9 @@ void M_QuitDOOM(int choice)
   // We pick index 0 which is language sensitive,
   //  or one at random, between 1 and maximum number.
   if (language != english )
-    sprintf(endstring,"%s\n\n"DOSY, endmsg[0] );
+	  I_sprintf(endstring,"%s\n\n"DOSY, endmsg[0] );
   else
-    sprintf(endstring,"%s\n\n"DOSY, endmsg[ (gametic%(NUM_QUITMESSAGES-2))+1 ]);
+	  I_sprintf(endstring,"%s\n\n"DOSY, endmsg[ (gametic%(NUM_QUITMESSAGES-2))+1 ]);
   
   M_StartMessage(endstring,M_QuitResponse,true);
 }
@@ -1134,7 +1124,7 @@ void M_ChangeDetail(int choice)
     detailLevel = 1 - detailLevel;
 
     // FIXME - does not work. Remove anyway?
-    fprintf( stderr, "M_ChangeDetail: low detail mode n.a.\n");
+    I_DBGprintf("M_ChangeDetail: low detail mode n.a.\n");
 
     return;
     

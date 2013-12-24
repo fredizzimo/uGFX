@@ -494,7 +494,7 @@ WI_drawOnLnode
     else
     {
 	// DEBUG
-	printf("Could not place patch on level %d", n+1); 
+	I_printf("Could not place patch on level %d", n+1);
     }
 }
 
@@ -1545,7 +1545,7 @@ void WI_loadData(void)
     if (gamemode == commercial)
 	strcpy(name, "INTERPIC");
     else 
-	sprintf(name, "WIMAP%d", wbs->epsd);
+    	I_sprintf(name, "WIMAP%d", wbs->epsd);
     
     if ( gamemode == retail )
     {
@@ -1576,7 +1576,7 @@ void WI_loadData(void)
 				       PU_STATIC, 0);
 	for (i=0 ; i<NUMCMAPS ; i++)
 	{								
-	    sprintf(name, "CWILV%2.2d", i);
+		I_sprintf(name, "CWILV%2.2d", i);
 	    lnames[i] = W_CacheLumpName(name, PU_STATIC);
 	}					
     }
@@ -1586,7 +1586,7 @@ void WI_loadData(void)
 				       PU_STATIC, 0);
 	for (i=0 ; i<NUMMAPS ; i++)
 	{
-	    sprintf(name, "WILV%d%d", wbs->epsd, i);
+		I_sprintf(name, "WILV%d%d", wbs->epsd, i);
 	    lnames[i] = W_CacheLumpName(name, PU_STATIC);
 	}
 
@@ -1610,7 +1610,7 @@ void WI_loadData(void)
 		    if (wbs->epsd != 1 || j != 8) 
 		    {
 			// animations
-			sprintf(name, "WIA%d%.2d%.2d", wbs->epsd, j, i);  
+		    	I_sprintf(name, "WIA%d%.2d%.2d", wbs->epsd, j, i);
 			a->p[i] = W_CacheLumpName(name, PU_STATIC);
 		    }
 		    else
@@ -1629,7 +1629,7 @@ void WI_loadData(void)
     for (i=0;i<10;i++)
     {
 	 // numbers 0-9
-	sprintf(name, "WINUM%d", i);     
+    	I_sprintf(name, "WINUM%d", i);
 	num[i] = W_CacheLumpName(name, PU_STATIC);
     }
 
@@ -1695,11 +1695,11 @@ void WI_loadData(void)
     for (i=0 ; i<MAXPLAYERS ; i++)
     {
 	// "1,2,3,4"
-	sprintf(name, "STPB%d", i);      
+    	I_sprintf(name, "STPB%d", i);
 	p[i] = W_CacheLumpName(name, PU_STATIC);
 
 	// "1,2,3,4"
-	sprintf(name, "WIBP%d", i+1);     
+	I_sprintf(name, "WIBP%d", i+1);
 	bp[i] = W_CacheLumpName(name, PU_STATIC);
     }
 

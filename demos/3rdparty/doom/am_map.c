@@ -506,7 +506,7 @@ void AM_loadPics(void)
   
     for (i=0;i<10;i++)
     {
-	sprintf(namebuf, "AMMNUM%d", i);
+	I_sprintf(namebuf, "AMMNUM%d", i);
 	marknums[i] = W_CacheLumpName(namebuf, PU_STATIC);
     }
 
@@ -686,7 +686,7 @@ AM_Responder
 	    plr->message = grid ? AMSTR_GRIDON : AMSTR_GRIDOFF;
 	    break;
 	  case AM_MARKKEY:
-	    sprintf(buffer, "%s %d", AMSTR_MARKEDSPOT, markpointnum);
+		  I_sprintf(buffer, "%s %d", AMSTR_MARKEDSPOT, markpointnum);
 	    plr->message = buffer;
 	    AM_addMark();
 	    break;
@@ -997,7 +997,7 @@ AM_drawFline
 	   || fl->b.x < 0 || fl->b.x >= f_w
 	   || fl->b.y < 0 || fl->b.y >= f_h)
     {
-	fprintf(stderr, "fuck %d \r", fuck++);
+	I_printf("fuck %d \r", fuck++);
 	return;
     }
 

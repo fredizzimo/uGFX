@@ -80,8 +80,8 @@ void I_Quit (void);
 
 
 // Allocates from low memory under dos,
-// just mallocs under unix
-byte* I_AllocLow (int length);
+byte* I_Malloc(int length);
+#define I_AllocLow(l)		I_Malloc(l)
 
 void I_Tactile (int on, int off, int total);
 
@@ -91,11 +91,16 @@ void I_Error (char *error, ...);
 int I_HaveFile(char *fname);
 int I_FileSize(int handle);
 int I_FileRead (int handle, char *buf, int len);
+int I_FileWrite(int handle, char *source, int length);
 void I_FilePos(int handle, int pos);
 int I_FileOpenRead(char *fname);
+int I_FileCreate(char *fname);
 void I_FileClose(int handle);
 void *I_Realloc(void *p, int nsize);
-
+void I_Exit(int code);
+void I_printf(const char *fmt, ...);
+void I_DBGprintf(const char *fmt, ...);
+void I_sprintf(char *buf, const char *fmt, ...);
 #endif
 //-----------------------------------------------------------------------------
 //
