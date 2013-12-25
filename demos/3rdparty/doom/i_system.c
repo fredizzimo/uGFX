@@ -270,6 +270,7 @@ void I_sprintf(char *buf, const char *fmt, ...) {
 		c = *fmt++;
 		if (c == 0) {
 			va_end(ap);
+			*buf = 0;
 			return;
 		}
 		if (c != '%') {
