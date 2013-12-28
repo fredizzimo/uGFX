@@ -77,7 +77,7 @@ extern "C" {
  * Window Manager functions
  *-------------------------------------------------*/
 
-#if GWIN_NEED_WINDOWMANAGER
+#if GWIN_NEED_WINDOWMANAGER || defined(__DOXYGEN__)
 	// Forward definition
 	struct GWindowManager;
 
@@ -377,7 +377,7 @@ extern "C" {
 	 */
 	void gwinRedraw(GHandle gh);
 
-	#if GWIN_NEED_WINDOWMANAGER
+	#if GWIN_NEED_WINDOWMANAGER || defined (__DOXYGEN__)
 		/**
 		 * @brief	Redraw a window
 		 *
