@@ -56,8 +56,8 @@ static Colormap			cmap;
 static XVisualInfo		vis;
 static XContext			cxt;
 #if GINPUT_NEED_MOUSE
-	coord_t			mousex, mousey;
-	uint16_t		mousebuttons;
+	static coord_t		mousex, mousey;
+	static uint16_t		mousebuttons;
 #endif
 
 typedef struct xPriv {
