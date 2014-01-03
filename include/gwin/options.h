@@ -113,8 +113,8 @@
 	 *			content will be restored too.
 	 * @details	Defaults to FALSE
 	 */
-	#ifndef GWIN_CONSOLE_NEED_HISTORY
-		#define GWIN_CONSOLE_NEED_HISTORY		FALSE
+	#ifndef GWIN_CONSOLE_USE_HISTORY
+		#define GWIN_CONSOLE_USE_HISTORY		FALSE
 	#endif
 	/**
 	 * @brief   Console Windows need floating point support in @p gwinPrintf

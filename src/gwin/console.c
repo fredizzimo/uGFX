@@ -22,7 +22,7 @@
 #define GWIN_CONSOLE_USE_FILLED_CHARS			FALSE
 
 // some temporary warning
-#if GWIN_CONSOLE_NEED_HISTORY
+#if GWIN_CONSOLE_USE_HISTORY
 	#warning "This feature is work in progress and does currently contain a lot of bugs."
 #endif
 
@@ -58,7 +58,7 @@
 	};
 #endif
 
-#if GWIN_CONSOLE_NEED_HISTORY
+#if GWIN_CONSOLE_USE_HISTORY
 	static void CustomRedraw(GWindowObject *gh) {
 		#define gcw		((GConsoleObject *)gh)
 
@@ -80,7 +80,7 @@ static void AfterClear(GWindowObject *gh) {
 	gcw->cx = 0;
 	gcw->cy = 0;
 
-	#if GWIN_CONSOLE_NEED_HISTORY
+	#if GWIN_CONSOLE_USE_HISTORY
 		// issue an overflow, this is some kind
 		// of emptying the buffer
 		gcw->last_char = gcw->size;
@@ -93,7 +93,7 @@ static const gwinVMT consoleVMT = {
 	"Console",				// The classname
 	sizeof(GConsoleObject),	// The object size
 	0,						// The destroy routine
-	#if GWIN_CONSOLE_NEED_HISTORY
+	#if GWIN_CONSOLE_USE_HISTORY
 		CustomRedraw,		// The redraw routine (custom)
 	#else
 		0,					// The redraw routine (default)
@@ -109,7 +109,7 @@ GHandle gwinGConsoleCreate(GDisplay *g, GConsoleObject *gc, const GWindowInit *p
 		gc->stream.vmt = &GWindowConsoleVMT;
 	#endif
 
-	#if GWIN_CONSOLE_NEED_HISTORY
+	#if GWIN_CONSOLE_USE_HISTORY
 		gc->buffer = 0;
 		gc->size = 0;
 		gc->last_char = 0;
@@ -132,7 +132,7 @@ GHandle gwinGConsoleCreate(GDisplay *g, GConsoleObject *gc, const GWindowInit *p
 	}
 #endif
 
-#if GWIN_CONSOLE_NEED_HISTORY
+#if GWIN_CONSOLE_USE_HISTORY
 	bool_t gwinConsoleSetBuffer(GHandle gh, void* buffer, size_t size) {
 		#define gcw		((GConsoleObject *)gh)
 
@@ -179,7 +179,7 @@ void gwinPutChar(GHandle gh, char c) {
 	if (gh->vmt != &consoleVMT || !gh->font)
 		return;
 
-	#if GWIN_CONSOLE_NEED_HISTORY
+	#if GWIN_CONSOLE_USE_HISTORY
 		// buffer overflow check
 		if (gcw->last_char >= gcw->size)
 			gcw->last_char = 0;

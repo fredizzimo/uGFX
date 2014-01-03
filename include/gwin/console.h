@@ -31,7 +31,7 @@ typedef struct GConsoleObject {
 	GWindowObject	g;
 	coord_t			cx, cy;			// Cursor position
 
-	#if GWIN_CONSOLE_NEED_HISTORY
+	#if GWIN_CONSOLE_USE_HISTORY
 		char*		buffer;			// buffer to store console content
 		uint16_t	last_char;		// the last rendered character
 		size_t		size;			// size of buffer
@@ -89,10 +89,10 @@ GHandle gwinGConsoleCreate(GDisplay *g, GConsoleObject *gc, const GWindowInit *p
 	BaseSequentialStream *gwinConsoleGetStream(GHandle gh);
 #endif
 
-#if GWIN_CONSOLE_NEED_HISTORY
+#if GWIN_CONSOLE_USE_HISTORY
 	/**
 	 * @brief	Assing a buffer to keep track of the content while the widget is invisible.
-	 * @pre		GWIN_CONSOLE_NEED_HISTORY must be set to TRUE in your gfxconf.h
+	 * @pre		GWIN_CONSOLE_USE_HISTORY must be set to TRUE in your gfxconf.h
 	 *
 	 * @param[in] gh		The window handle (must be a console window)
 	 * @param[in] buffer	The pointer of the buffer that shall be used. Buffer will be

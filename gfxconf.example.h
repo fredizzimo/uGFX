@@ -124,7 +124,7 @@
 #define GWIN_NEED_WINDOWMANAGER                      FALSE
 
 #define GWIN_NEED_CONSOLE                            FALSE
-    #define GWIN_CONSOLE_NEED_HISTORY                TRUE
+    #define GWIN_CONSOLE_USE_HISTORY                 TRUE
     #define GWIN_CONSOLE_USE_BASESTREAM              FALSE
     #define GWIN_CONSOLE_USE_FLOAT                   FALSE
 #define GWIN_NEED_GRAPH                              FALSE
