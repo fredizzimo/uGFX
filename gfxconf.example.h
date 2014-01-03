@@ -1,5 +1,5 @@
 /**
- * This file has a different license to the rest of the GFX system.
+ * This file has a different license to the rest of the uGFX system.
  * You can copy, modify and distribute this file as you see fit.
  * You do not need to publish your source modifications to this file.
  * The only thing you are not permitted to do is to relicense it
@@ -8,7 +8,7 @@
 
 /**
  * Copy this file into your project directory and rename it as gfxconf.h
- * Edit your copy to turn on the GFX features you want to use.
+ * Edit your copy to turn on the uGFX features you want to use.
  *
  * Please use spaces instead of tabs in this file.
  */
@@ -87,27 +87,29 @@
 #define GDISP_LINEBUF_SIZE                           128
 
 #define GDISP_TOTAL_DISPLAYS                         1
+    #if GDISP_TOTAL_DISPLAYS > 1
+        #define GDISP_HARDWARE_STREAM_WRITE          FALSE
+        #define GDISP_HARDWARE_STREAM_READ           FALSE
+        #define GDISP_HARDWARE_STREAM_POS            FALSE
+        #define GDISP_HARDWARE_DRAWPIXEL             FALSE
+        #define GDISP_HARDWARE_CLEARS                FALSE
+        #define GDISP_HARDWARE_FILLS                 FALSE
+        #define GDISP_HARDWARE_BITFILLS              FALSE
+        #define GDISP_HARDWARE_SCROLL                FALSE
+        #define GDISP_HARDWARE_PIXELREAD             FALSE
+        #define GDISP_HARDWARE_CONTROL               FALSE
+        #define GDISP_HARDWARE_QUERY                 FALSE
+        #define GDISP_HARDWARE_CLIP                  FALSE
+    #endif
+
 #define GDISP_TOTAL_CONTROLLERS                      1
-    // Extra stuff required when GDISP_TOTAL_CONTROLLERS > 1
-    #define GDISP_CONTROLLER_LIST                    GDISPVMT_Win32, GDISPVMT_Win32
-    #define GDISP_CONTROLLER_DISPLAYS                1, 1
-    #define GDISP_PIXELFORMAT                        GDISP_PIXELFORMAT_RGB888
+    #if GDISP_TOTAL_CONTROLLERS > 1
+        #define GDISP_CONTROLLER_LIST                GDISPVMT_Win32, GDISPVMT_Win32
+        #define GDISP_CONTROLLER_DISPLAYS            1, 1
+        #define GDISP_PIXELFORMAT                    GDISP_PIXELFORMAT_RGB888
+    #endif
 
-    // Optional extra stuff when GDISP_TOTAL_CONTROLLERS > 1
-    #define GDISP_HARDWARE_STREAM_WRITE              FALSE
-    #define GDISP_HARDWARE_STREAM_READ               FALSE
-    #define GDISP_HARDWARE_STREAM_POS                FALSE
-    #define GDISP_HARDWARE_DRAWPIXEL                 FALSE
-    #define GDISP_HARDWARE_CLEARS                    FALSE
-    #define GDISP_HARDWARE_FILLS                     FALSE
-    #define GDISP_HARDWARE_BITFILLS                  FALSE
-    #define GDISP_HARDWARE_SCROLL                    FALSE
-    #define GDISP_HARDWARE_PIXELREAD                 FALSE
-    #define GDISP_HARDWARE_CONTROL                   FALSE
-    #define GDISP_HARDWARE_QUERY                     FALSE
-    #define GDISP_HARDWARE_CLIP                      FALSE
-
-#define GDISP_USE_GFXNET
+#define GDISP_USE_GFXNET                             FALSE
     #define GDISP_GFXNET_PORT                        13001
     #define GDISP_GFXNET_CUSTOM_LWIP_STARTUP         FALSE
     #define GDISP_DONT_WAIT_FOR_NET_DISPLAY          FALSE
