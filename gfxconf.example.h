@@ -38,11 +38,11 @@
 #define GDISP_NEED_CONVEX_POLYGON                    FALSE
 #define GDISP_NEED_SCROLL                            FALSE
 #define GDISP_NEED_PIXELREAD                         FALSE
-#define GDISP_NEED_CONTROL						     FALSE
-#define GDISP_NEED_QUERY						     FALSE
-#define GDISP_NEED_MULTITHREAD					     FALSE
-#define GDISP_NEED_STREAMING					     FALSE
-#define GDISP_NEED_TEXT							     FALSE
+#define GDISP_NEED_CONTROL                           FALSE
+#define GDISP_NEED_QUERY                             FALSE
+#define GDISP_NEED_MULTITHREAD                       FALSE
+#define GDISP_NEED_STREAMING                         FALSE
+#define GDISP_NEED_TEXT                              FALSE
     #define GDISP_NEED_ANTIALIAS                     FALSE
     #define GDISP_NEED_UTF8                          FALSE
     #define GDISP_NEED_TEXT_KERNING                  FALSE
