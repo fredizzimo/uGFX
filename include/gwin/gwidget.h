@@ -27,7 +27,7 @@
  * @{
  */
 
-// Forward definition
+/* Forward definition */
 struct GWidgetObject;
 
 /**

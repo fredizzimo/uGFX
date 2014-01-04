@@ -167,7 +167,15 @@ color_t gwinGetDefaultBgColor(void) {
 GHandle gwinGWindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pInit) {
 	if (!(pgw = _gwindowCreate(g, pgw, pInit, &basegwinVMT, 0)))
 		return 0;
+
+	#if GWIN_NEED_HIERARCHY
+		pgw->parent = NULL;
+		pgw->sibling = NULL;
+		pgw->child = NULL;
+	#endif
+
 	gwinSetVisible(pgw, pInit->show);
+
 	return pgw;
 }
 
@@ -247,6 +255,27 @@ void gwinRedraw(GHandle gh) {
 #if GDISP_NEED_TEXT
 	void gwinSetFont(GHandle gh, font_t font) {
 		gh->font = font;
+	}
+#endif
+
+#if GWIN_NEED_HIERARCHY
+	void gwinAddChild(GHandle parent, GHandle child, bool_t last)
+	{
+		child->parent  = parent;
+		child->sibling = NULL;
+		child->child   = NULL;
+
+		if(!parent)
+			return;
+
+		if(last && parent->child) {
+			GHandle s = parent->child;
+			while(s->sibling) s = s->sibling;
+			s->sibling = child;
+		} else {
+			child->sibling = parent->child;
+			parent->child  = child;
+		}
 	}
 #endif
 

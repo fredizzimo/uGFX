@@ -58,11 +58,20 @@
 			#endif
 		#endif
 	#endif
+	#if GWIN_NEED_HIERARCHY
+		#if !GQUEUE_NEED_ASYNC
+			#if GFX_DISPLAY_RULE_WARNINGS
+				#warning "GWIN: GQUEUE_NEED_ASYNC is required when a GWIN_NEED_HIERARCHY is enabled. It has been turned on for you."
+			#endif
+			#undef GQUEUE_NEED_ASYNC
+			#define GQUEUE_NEED_ASYNC	TRUE
+		#endif
+	#endif
 	#if GWIN_NEED_BUTTON || GWIN_NEED_SLIDER || GWIN_NEED_CHECKBOX || GWIN_NEED_LABEL || GWIN_NEED_RADIO || GWIN_NEED_LIST || \
 		GWIN_NEED_IMAGE || GWIN_NEED_CHECKBOX || GWIN_NEED_PROGRESSBAR 
 		#if !GWIN_NEED_WIDGET
 			#if GFX_DISPLAY_RULE_WARNINGS
-				#warning "GWIN: GWIN_NEED_WIDGET is required when a Widget is used. It has been turned on for you."
+				#warning "GWIN: GWIN_NEED_WIDGET is required when a widget is used. It has been turned on for you."
 			#endif
 			#undef GWIN_NEED_WIDGET
 			#define GWIN_NEED_WIDGET	TRUE

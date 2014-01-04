@@ -128,8 +128,8 @@
     #define GWIN_CONSOLE_USE_BASESTREAM              FALSE
     #define GWIN_CONSOLE_USE_FLOAT                   FALSE
 #define GWIN_NEED_GRAPH                              FALSE
-
 #define GWIN_NEED_WIDGET                             FALSE
+    #define GWIN_NEED_HIERARCHY                      FALSE
     #define GWIN_NEED_LABEL                          FALSE
     #define GWIN_NEED_BUTTON                         FALSE
         #define GWIN_BUTTON_LAZY_RELEASE             FALSE

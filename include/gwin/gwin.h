@@ -27,6 +27,9 @@
 
 #if GFX_USE_GWIN || defined(__DOXYGEN__)
 
+/* Forward declaration */
+typedef struct GWindowObject *GHandle;
+
 /**
  * @brief	A window object structure
  * @note	Do not access the members directly. Treat it as a black-box and use the method functions.
@@ -45,6 +48,11 @@ typedef struct GWindowObject {
 	uint16_t				flags;				// @< Window flags (the meaning is private to the GWIN class)
 	#if GDISP_NEED_TEXT
 		font_t				font;				// @< The current font
+	#endif
+	#if GWIN_NEED_HIERARCHY
+		GHandle					*parent;			// @< The pointer to the parent (or NULL)
+		GHandle					*sibling;			// @< The pointer to a widgets brother
+		GHandle					*child;				// @< The pointer to a widgets child	
 	#endif
 } GWindowObject, * GHandle;
 /* @} */
@@ -376,6 +384,19 @@ extern "C" {
 	 * @api
 	 */
 	void gwinRedraw(GHandle gh);
+
+	#if GWIN_NEED_HIERARCHY
+		/**
+		 * @brief	Add a child widget to a parent one
+		 *
+		 * @param[in] parent	The parent widget (does not need to be parent yet)
+		 * @param[in] child		The child widget
+		 * @param[in] last		Should the child widget be added to the front or the back of the list? 
+		 *
+		 * @api
+		 */
+		void gwinAddChild(GHandle parent, GHandle child, bool_t last);
+	#endif
 
 	#if GWIN_NEED_WINDOWMANAGER || defined (__DOXYGEN__)
 		/**
