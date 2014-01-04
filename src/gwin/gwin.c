@@ -222,11 +222,10 @@ bool_t gwinGetVisible(GHandle gh) {
 	#if GWIN_NEED_HIERARCHY
 		// return TRUE if all widgets (itself + parents) are visble, false otherwise
 		GHandle e = gh;
-		while (e) {
+		for(e = gh; e; e = e->parent) {
 			if (!(e->flags & GWIN_FLG_VISIBLE))
 				return FALSE;
-			e = e->parent;
-		};
+		}
 		return TRUE;
 	#else 
 		return (gh->flags & GWIN_FLG_VISIBLE) ? TRUE : FALSE;
@@ -251,11 +250,10 @@ bool_t gwinGetEnabled(GHandle gh) {
 	#if GWIN_NEED_HIERARCHY
 		// return TRUE if all widgets (itself + parents) are enabled, false otherwise
 		GHandle e = gh;
-		while (e) {
+		for(e = gh; e; e = e->parent) {
 			if (!(e->flags & GWIN_FLG_ENABLED))
 				return FALSE;
-			e = e->parent;
-		};
+		}
 		return TRUE;
 	#else 
 		return (gh->flags & GWIN_FLG_ENABLED) ? TRUE : FALSE;
