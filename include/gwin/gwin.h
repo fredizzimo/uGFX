@@ -50,9 +50,9 @@ typedef struct GWindowObject {
 		font_t				font;				// @< The current font
 	#endif
 	#if GWIN_NEED_HIERARCHY
-		GHandle					*parent;			// @< The pointer to the parent (or NULL)
-		GHandle					*sibling;			// @< The pointer to a widgets brother
-		GHandle					*child;				// @< The pointer to a widgets child	
+		GHandle				parent;				// @< The parent widget
+		GHandle				sibling;			// @< The widget to its left (add right later as well)
+		GHandle				child;				// @< The child widget
 	#endif
 } GWindowObject, * GHandle;
 /* @} */
