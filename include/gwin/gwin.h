@@ -337,6 +337,17 @@ extern "C" {
 	bool_t gwinGetEnabled(GHandle gh);
 
 	/**
+	 * @brief	Get absolute coordinates of a window
+	 *
+	 * @param[in] gh		The window
+	 * @param[out] x		The absolut x coordinate
+	 * @param[out] y		The absolut y coordinate
+	 *
+	 * @api
+	 */
+	void gwinGetAbsoluteCoordinates(GHandle gh, coord_t *x, coord_t *y);
+
+	/**
 	 * @brief	Move a window
 	 *
 	 * @param[in] gh		The window

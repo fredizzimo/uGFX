@@ -181,11 +181,16 @@ GHandle gwinGWindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pI
 
 void gwinDestroy(GHandle gh) {
 	#if GWIN_NEED_HIERARCHY
-		// kill your children as long as you have any
-		while (gh->child) {
-			GHandle tmp = gh->child;
-			gh->child = gh->child->sibling;
-			gwinDestroy(tmp);
+		// fix hierarchy structure
+		if (gh->parent->child == gh) {
+			// we are the first child
+			gh->parent->child = gh->sibling;
+		} else {
+			// find our predecessor
+			GHandle tmp = gh->parent->child;
+			while (tmp->sibling != gh)
+				tmp = tmp->sibling;
+			tmp->sibling = gh->sibling;
 		}
 	#endif
 	
@@ -266,6 +271,22 @@ bool_t gwinGetEnabled(GHandle gh) {
 		return TRUE;
 	#else 
 		return (gh->flags & GWIN_FLG_ENABLED) ? TRUE : FALSE;
+	#endif
+}
+
+void gwinGetAbsoluteCoordinates(GHandle gh, coord_t *x, coord_t *y) {
+	#if GWIN_NEED_HIERARCHY
+		GHandle tmp;
+
+		// sum up all relative coordinates up to the root parent
+		for (*x = 0, *y = 0, tmp = gh; tmp; tmp = tmp->parent) {
+			*x += tmp->x;
+			*y += tmp->y;
+		}
+
+	#else
+		*x = gh->x;
+		*y = gh->y;
 	#endif
 }
 
