@@ -180,6 +180,15 @@ GHandle gwinGWindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pI
 }
 
 void gwinDestroy(GHandle gh) {
+	#if GWIN_NEED_HIERARCHY
+		// kill your children as long as you have any
+		while (gh->child) {
+			GHandle tmp = gh->child;
+			gh->child = gh->child->sibling;
+			gwinDestroy(tmp);
+		}
+	#endif
+	
 	// Make the window invisible
 	gwinSetVisible(gh, FALSE);
 
@@ -285,12 +294,12 @@ void gwinRedraw(GHandle gh) {
 		child->sibling = NULL;
 		child->child   = NULL;
 
-		if(!parent)
+		if (!parent)
 			return;
 
-		if(last && parent->child) {
+		if (last && parent->child) {
 			GHandle s = parent->child;
-			while(s->sibling)
+			while (s->sibling)
 				s = s->sibling;
 			s->sibling = child;
 		} else {
@@ -298,12 +307,20 @@ void gwinRedraw(GHandle gh) {
 			parent->child  = child;
 		}
 	}
+
+	GHandle gwinGetFirstChild(GHandle gh) {
+		return gh->child;
+	}
+
+	GHandle gwinGetNextChild(GHandle gh) {
+		return gh->sibling;
+	}
 #endif
 
 void gwinClear(GHandle gh) {
 	/*
 	 * Don't render anything when the window is not visible but 
-	 * still call the AfterClear() routine as some widgets will
+	 * still call return gh->child->sibling;the AfterClear() routine as some widgets will
 	 * need this to clear internal buffers or similar
 	 */
 	if (!((gh->flags & GWIN_FLG_VISIBLE))) {

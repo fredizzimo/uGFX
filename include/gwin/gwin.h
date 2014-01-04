@@ -396,6 +396,28 @@ extern "C" {
 		 * @api
 		 */
 		void gwinAddChild(GHandle parent, GHandle child, bool_t last);
+
+		/**
+		 * @brief	Get first child of a widget
+		 *
+		 * @return	The first child or NULL if the widget has no children
+		 *
+		 * @param[in] gh		The parent widget
+		 *
+		 * @api
+		 */
+		GHandle gwinGetFirstChild(GHandle gh);
+
+		/**
+		 * @brief	Get the next child of a widget
+		 *
+		 * @return	The next child or NULL if no more childs
+		 *
+		 * @param[in] gh		The parent widget
+		 *
+		 * @api
+		 */
+		GHandle gwinGetNextChild(GHandle gh);
 	#endif
 
 	#if GWIN_NEED_WINDOWMANAGER || defined (__DOXYGEN__)
