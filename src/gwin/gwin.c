@@ -290,7 +290,8 @@ void gwinRedraw(GHandle gh) {
 
 		if(last && parent->child) {
 			GHandle s = parent->child;
-			while(s->sibling) s = s->sibling;
+			while(s->sibling)
+				s = s->sibling;
 			s->sibling = child;
 		} else {
 			child->sibling = parent->child;
