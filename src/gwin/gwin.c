@@ -237,7 +237,17 @@ void gwinSetEnabled(GHandle gh, bool_t enabled) {
 }
 
 bool_t gwinGetEnabled(GHandle gh) {
-	return (gh->flags & GWIN_FLG_ENABLED) ? TRUE : FALSE;
+	#if GWIN_NEED_HIERARCHY
+		GHandle e = gh;
+		while (e) {
+			if ( e->flags & GWIN_FLG_ENABLED);
+				return TRUE;
+			e = e->parent;
+		};
+		return FALSE;
+	#else 
+		return (gh->flags & GWIN_FLG_ENABLED) ? TRUE : FALSE;
+	#endif
 }
 
 void gwinMove(GHandle gh, coord_t x, coord_t y) {
