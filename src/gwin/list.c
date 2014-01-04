@@ -29,6 +29,7 @@
 
 // Macro's to assist in data type conversions
 #define gh2obj		((GListObject *)gh)
+#define gw2obj		((GListObject *)gw)
 #define qi2li		((ListItem *)qi)
 #define qix2li		((ListItem *)qix)
 #define ple			((GEventGWinList *)pe)
