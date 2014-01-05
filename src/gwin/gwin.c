@@ -327,6 +327,7 @@ void gwinRedraw(GHandle gh) {
 		child->y += parent->y;
 
 		// redraw the window
+		gwinClear(child);
 		gwinClear(parent);
 		gwinRedraw(parent);
 	}
