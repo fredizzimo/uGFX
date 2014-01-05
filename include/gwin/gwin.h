@@ -389,13 +389,25 @@ extern "C" {
 		/**
 		 * @brief	Add a child widget to a parent one
 		 *
-		 * @param[in] parent	The parent widget (does not need to be parent yet)
-		 * @param[in] child		The child widget
-		 * @param[in] last		Should the child widget be added to the front or the back of the list? 
+		 * @param[in] parent	The parent window (does not need to be parent yet)
+		 * @param[in] child		The child window
+		 * @param[in] last		Should the child window be added to the front or the back of the list? 
 		 *
 		 * @api
 		 */
 		void gwinAddChild(GHandle parent, GHandle child, bool_t last);
+
+		/**
+		 * @brief	Remove a child from a parent
+		 *
+		 * @note	Other children of the same parent stay
+		 * @note	Children of the child are lost, they have to be reassigned manually if necessary.
+		 * 
+		 * @param[in] child		The child window
+		 *
+		 * @api
+		 */
+		void gwinRemoveChild(GHandle child);
 
 		/**
 		 * @brief	Get first child of a widget
@@ -880,6 +892,10 @@ extern "C" {
 
 	#if GWIN_NEED_IMAGE || defined(__DOXYGEN__)
 		#include "gwin/image.h"
+	#endif
+
+	#if GWIN_NEED_LAYOUT || defined(__DOXYGEN__)
+		#include "gwin/layout.h"
 	#endif
 
 #endif /* GFX_USE_GWIN */

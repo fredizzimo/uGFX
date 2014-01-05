@@ -180,18 +180,20 @@ GHandle gwinGWindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pI
 }
 
 void gwinDestroy(GHandle gh) {
+	if (!gh) {
+		// should log a runtime error here
+		return;
+	}
+
 	#if GWIN_NEED_HIERARCHY
-		// fix hierarchy structure
-		if (gh->parent->child == gh) {
-			// we are the first child
-			gh->parent->child = gh->sibling;
-		} else {
-			// find our predecessor
-			GHandle tmp = gh->parent->child;
-			while (tmp->sibling != gh)
-				tmp = tmp->sibling;
-			tmp->sibling = gh->sibling;
-		}
+		GHandle tmp;
+
+		// recursively destroy our children first
+		for(tmp = gh->child; tmp; tmp = tmp->sibling)
+			gwinDestroy(tmp);
+
+		// remove myself from the hierarchy
+		gwinRemoveChild(gh);	
 	#endif
 	
 	// Make the window invisible
@@ -330,6 +332,32 @@ void gwinRedraw(GHandle gh) {
 		gwinClear(child);
 		gwinClear(parent);
 		gwinRedraw(parent);
+	}
+
+	void gwinRemoveChild(GHandle gh) {
+		if(!gh || !gh->parent) {
+			// without a parent, removing is impossible
+			// should log a runtime error here
+			return;
+		}
+
+		if (gh->parent->child == gh) {
+			// we are the first child, update parent
+			gh->parent->child = gh->sibling;
+		} else {
+			// otherwise find our predecessor
+			GHandle tmp = gh->parent->child;
+			while (tmp && tmp->sibling != gh)
+				tmp = tmp->sibling;
+
+			if(!tmp) {
+				// our parent's children list is corrupted
+				// should log a runtime error here
+				return;
+			}
+
+			tmp->sibling = gh->sibling;
+		}
 	}
 
 	GHandle gwinGetFirstChild(GHandle gh) {
