@@ -274,22 +274,6 @@ bool_t gwinGetEnabled(GHandle gh) {
 	#endif
 }
 
-void gwinGetAbsoluteCoordinates(GHandle gh, coord_t *x, coord_t *y) {
-	#if GWIN_NEED_HIERARCHY
-		GHandle tmp;
-
-		// sum up all relative coordinates up to the root parent
-		for (*x = 0, *y = 0, tmp = gh; tmp; tmp = tmp->parent) {
-			*x += tmp->x;
-			*y += tmp->y;
-		}
-
-	#else
-		*x = gh->x;
-		*y = gh->y;
-	#endif
-}
-
 void gwinMove(GHandle gh, coord_t x, coord_t y) {
 	_gwm_redim(gh, x, y, gh->width, gh->height);
 }
@@ -335,14 +319,14 @@ void gwinRedraw(GHandle gh) {
 			parent->child = child;
 		}
 
-		#if GDISP_NEED_CLIP
-			gdispGSetClip(child->display, child->x, child->y, child->width, child->height);
-		#endif	
-		gdispGFillArea(child->display, child->x, child->y, child->width, child->height, child->bgcolor);
-		#if GDISP_NEED_CLIP
-			gdispGUnsetClip(child->display);
-		#endif
+		// clear the area of the current child position as it will be moved
+		gwinClear(child);
 
+		// window coordinates until now are relative, make them absolute now.
+		child->x += parent->x;
+		child->y += parent->y;
+
+		// redraw the window
 		gwinClear(parent);
 		gwinRedraw(parent);
 	}

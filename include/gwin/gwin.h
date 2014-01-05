@@ -42,7 +42,7 @@ typedef struct GWindowObject {
 	#endif
 	const struct gwinVMT	*vmt;				// @< The VMT for this GWIN
 	GDisplay *				display;			// @< The display this window is on.
-	coord_t					x, y;				// @< Screen relative position
+	coord_t					x, y;				// @< Position relative to parent
 	coord_t					width, height;		// @< Dimensions of this window
 	color_t					color, bgcolor;		// @< The current drawing colors
 	uint16_t				flags;				// @< Window flags (the meaning is private to the GWIN class)
@@ -335,17 +335,6 @@ extern "C" {
 	 * @api
 	 */
 	bool_t gwinGetEnabled(GHandle gh);
-
-	/**
-	 * @brief	Get absolute coordinates of a window
-	 *
-	 * @param[in] gh		The window
-	 * @param[out] x		The absolut x coordinate
-	 * @param[out] y		The absolut y coordinate
-	 *
-	 * @api
-	 */
-	void gwinGetAbsoluteCoordinates(GHandle gh, coord_t *x, coord_t *y);
 
 	/**
 	 * @brief	Move a window
