@@ -193,7 +193,12 @@ void gwinDestroy(GHandle gh) {
 			gwinDestroy(tmp);
 
 		// remove myself from the hierarchy
-		gwinRemoveChild(gh);	
+		gwinRemoveChild(gh);
+
+		// issue a redraw of my parent if any
+		if (gh->parent) {
+			gwinRedraw(gh->parent);
+		}
 	#endif
 	
 	// Make the window invisible
@@ -289,10 +294,8 @@ void gwinRedraw(GHandle gh) {
 
 	#if GWIN_NEED_HIERARCHY
 		GHandle tmp;
-		if (gh->child) {
-			for (tmp = gh->child; tmp; tmp = tmp->sibling)
-				gwinRedraw(tmp);
-		}
+		for (tmp = gh->child; tmp; tmp = tmp->sibling)
+			gwinRedraw(tmp);
 	#endif
 }
 
@@ -372,7 +375,7 @@ void gwinRedraw(GHandle gh) {
 void gwinClear(GHandle gh) {
 	/*
 	 * Don't render anything when the window is not visible but 
-	 * still call return gh->child->sibling;the AfterClear() routine as some widgets will
+	 * still call tthe AfterClear() routine as some widgets will
 	 * need this to clear internal buffers or similar
 	 */
 	if (!((gh->flags & GWIN_FLG_VISIBLE))) {
