@@ -299,7 +299,15 @@ void gwinResize(GHandle gh, coord_t width, coord_t height) {
 }
 
 void gwinRedraw(GHandle gh) {
-	_gwm_redraw(gh, GWIN_WMFLG_PRESERVE|GWIN_WMFLG_NOBGCLEAR);
+	_gwm_redraw(gh, GWIN_WMFLG_PRESERVE | GWIN_WMFLG_NOBGCLEAR);
+
+	#if GWIN_NEED_HIERARCHY
+		GHandle tmp;
+		if (gh->child) {
+			for (tmp = gh->child; tmp; tmp = tmp->sibling)
+				gwinRedraw(tmp);
+		}
+	#endif
 }
 
 #if GDISP_NEED_TEXT
@@ -309,8 +317,7 @@ void gwinRedraw(GHandle gh) {
 #endif
 
 #if GWIN_NEED_HIERARCHY
-	void gwinAddChild(GHandle parent, GHandle child, bool_t last)
-	{
+	void gwinAddChild(GHandle parent, GHandle child, bool_t last) {
 		child->parent  = parent;
 		child->sibling = NULL;
 		child->child   = NULL;
@@ -325,8 +332,19 @@ void gwinRedraw(GHandle gh) {
 			s->sibling = child;
 		} else {
 			child->sibling = parent->child;
-			parent->child  = child;
+			parent->child = child;
 		}
+
+		#if GDISP_NEED_CLIP
+			gdispGSetClip(child->display, child->x, child->y, child->width, child->height);
+		#endif	
+		gdispGFillArea(child->display, child->x, child->y, child->width, child->height, child->bgcolor);
+		#if GDISP_NEED_CLIP
+			gdispGUnsetClip(child->display);
+		#endif
+
+		gwinClear(parent);
+		gwinRedraw(parent);
 	}
 
 	GHandle gwinGetFirstChild(GHandle gh) {
