@@ -332,8 +332,6 @@ void gwinRedraw(GHandle gh) {
 		child->y += parent->y;
 
 		// redraw the window
-		gwinClear(child);
-		gwinClear(parent);
 		gwinRedraw(parent);
 	}
 
@@ -389,14 +387,20 @@ void gwinClear(GHandle gh) {
 			gh->vmt->AfterClear(gh);
 	} else {
 
-	#if GDISP_NEED_CLIP
-		gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
-	#endif
+		#if GDISP_NEED_CLIP
+			gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
+		#endif
 
-	gdispGFillArea(gh->display, gh->x, gh->y, gh->width, gh->height, gh->bgcolor);
-	if (gh->vmt->AfterClear)
-		gh->vmt->AfterClear(gh);
+		gdispGFillArea(gh->display, gh->x, gh->y, gh->width, gh->height, gh->bgcolor);
+		if (gh->vmt->AfterClear)
+			gh->vmt->AfterClear(gh);
 	}
+
+	#if GWIN_NEED_HIERARCHY
+		GHandle tmp;
+		for (tmp = gh->child; tmp; tmp = tmp->sibling)
+			gwinClear(tmp);
+	#endif
 }
 
 void gwinDrawPixel(GHandle gh, coord_t x, coord_t y) {
