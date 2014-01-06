@@ -44,6 +44,13 @@
 		#define GWIN_NEED_WIDGET	FALSE
 	#endif
 	/**
+	 * @brief	Should the frame widget be included.
+	 * @details	Defaults to FALSE
+	 */
+	#ifndef GWIN_NEED_FRAME
+		#define GWIN_NEED_FRAME		FALSE
+	#endif
+	/**
 	 * @brief   Should console functions be included.
 	 * @details	Defaults to FALSE
 	 */
