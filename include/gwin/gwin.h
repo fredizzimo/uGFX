@@ -284,6 +284,24 @@ extern "C" {
 	#define gwinSetBgColor(gh, bgclr)	(gh)->bgcolor = (bgclr)
 
 	/**
+	 * @brief	Get the foreground color of a window
+	 *
+	 * @param[in] gh	The window
+	 *
+	 * @api
+	 */
+	#define gwinGetColor(gh)			(gh)->color
+
+	/**
+	 * @brief	Get the background color of a window
+	 *
+	 * @param[in] gh	The window
+	 *
+	 * @api
+	 */
+	#define gwinGetBgColor(gh)			(gh)->bgcolor
+
+	/**
 	 * @brief	Sets whether a window is visible or not
 	 *
 	 * @param[in] gh		The window
