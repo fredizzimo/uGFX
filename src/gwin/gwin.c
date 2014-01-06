@@ -363,6 +363,12 @@ void gwinRedraw(GHandle gh) {
 		}
 	}
 
+	void gwinRedrawChildren(GHandle gh) {
+		GHandle tmp;
+		for (tmp = gh->child; tmp; tmp = tmp->sibling)
+			gwinRedraw(tmp);
+	}
+
 	GHandle gwinGetFirstChild(GHandle gh) {
 		return gh->child;
 	}

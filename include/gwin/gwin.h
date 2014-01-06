@@ -410,6 +410,18 @@ extern "C" {
 		void gwinRemoveChild(GHandle child);
 
 		/**
+		 * @brief	Redraw only the children of a parent but not the parent itself
+		 *
+	 	 * @details	This routine does exactly the same as @p gwinRedraw() but does not
+		 * 			issue a redraw of the passed widget but only of it's children.
+		 *
+		 * @param[in] gh		The widget
+		 *
+		 * @api
+		 */
+		void gwinRedrawChildren(GHandle gh);
+
+		/**
 		 * @brief	Get first child of a widget
 		 *
 		 * @return	The first child or NULL if the widget has no children
