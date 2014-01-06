@@ -148,27 +148,6 @@ GHandle gwinGFrameCreate(GDisplay *g, GFrameObject *fo, GWidgetInit *pInit, uint
 	return (GHandle)fo;
 }
 
-GHandle gwinFrameGetClose(GHandle gh) {
-	if (gh->vmt != (gwinVMT *)&frameVMT)
-		return;
-
-	return gh2obj->btnClose;
-}
-
-GHandle gwinFrameGetMin(GHandle gh) {
-	if (gh->vmt != (gwinVMT *)&frameVMT)
-		return;
-
-	return gh2obj->btnMin;
-}
-
-GHandle gwinFrameGetMax(GHandle gh) {
-	if (gh->vmt != (gwinVMT *)&frameVMT)
-		return;
-
-	return gh2obj->btnMax;
-}
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Default render routines                                                                       //
 ///////////////////////////////////////////////////////////////////////////////////////////////////

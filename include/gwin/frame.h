@@ -39,14 +39,24 @@ typedef struct GFrameObject {
 	GHandle				btnMax;
 } GFrameObject;
 
+/**
+ * @brief				Create a frame widget
+ *
+ * @details				This widget provides a window like we know it from desktop systems. You usually use this together with
+ *						gwinAddChild().
+ *
+ * @param[in] g			The GDisplay to display this window on
+ * @param[in] fo		The GFrameObject structure to initialize. If this is NULL the structure is dynamically allocated.
+ * @param[in] pInit		The initialization parameters
+ * @param[in] flags		Some flags, see notes.
+ *
+ * @note				Possible flags are: GWIN_FRAME_BORDER, GWIN_FRAME_CLOSE_BTN, GWIN_FRAME_MINMAX_BTN.
+ *						Whether the close or the minimize maximize buttons are used, the boarder is automatically invoked.
+ *
+ * @api
+ */
 GHandle gwinGFrameCreate(GDisplay *g, GFrameObject *fo, GWidgetInit *pInit, uint16_t flags);
 #define gwinFrameCreate(fo, pInit, flags)	gwinGFrameCreate(GDISP, fo, pInit, flags);
-
-GHandle gwinFrameGetClose(GHandle gh);
-
-GHandle gwinFrameGetMin(GHandle gh);
-
-GHandle gwinFrameGetMax(GHandle gh);
 
 #endif /* _GWIN_FRAME_H */
 /** @} */
