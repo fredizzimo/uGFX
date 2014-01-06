@@ -140,6 +140,7 @@
     #define GWIN_NEED_RADIO                          FALSE
     #define GWIN_NEED_LIST                           FALSE
     #define GWIN_NEED_PROGRESSBAR                    FALSE
+    #define GWIN_NEED_FRAME                          FALSE
 
 
 ///////////////////////////////////////////////////////////////////////////

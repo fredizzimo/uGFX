@@ -304,5 +304,9 @@ bool_t gwinAttachListener(GListener *pl);
 	#include "gwin/progressbar.h"
 #endif
 
+#if GWIN_NEED_FRAME || defined(__DOXYGEN__)
+	#include "gwin/frame.h"
+#endif
+
 #endif /* _GWIDGET_H */
 /** @} */

@@ -894,10 +894,6 @@ extern "C" {
 		#include "gwin/image.h"
 	#endif
 
-	#if GWIN_NEED_LAYOUT || defined(__DOXYGEN__)
-		#include "gwin/layout.h"
-	#endif
-
 #endif /* GFX_USE_GWIN */
 
 #endif /* _GWIN_H */
