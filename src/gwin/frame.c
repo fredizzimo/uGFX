@@ -141,7 +141,6 @@ GHandle gwinGFrameCreate(GDisplay *g, GFrameObject *fo, GWidgetInit *pInit, uint
 		wi.text = "_";
 		fo->btnMax = gwinButtonCreate(NULL, &wi);
 		gwinAddChild((GHandle)fo, fo->btnMax, FALSE);
-
 	}
 
 	gwinSetVisible(&fo->w.g, pInit->g.show);
@@ -202,6 +201,7 @@ void gwinFrameDraw_Std(GWidgetObject *gw, void *param) {
 		gdispGSetClip(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height);
 	#endif 
 
+	// Render the actual frame (with border, if any)
 	if (gw->g.flags & GWIN_FRAME_BORDER) {
 		gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, border);
 		gdispGFillArea(gw->g.display, gw->g.x + BORDER_X, gw->g.y + BORDER_Y, gw->g.width - 2*BORDER_X, gw->g.width - BORDER_Y - BORDER_X, background);
@@ -210,21 +210,20 @@ void gwinFrameDraw_Std(GWidgetObject *gw, void *param) {
 		gdispGFillArea(gw->g.display, gw->g.x + BORDER_X, gw->g.y + BORDER_Y, gw->g.width, gw->g.height, background);
 	}
 
+	// Render frame title - if any
+	if (gw->text != NULL) {
+		coord_t text_y;
+
+		text_y = ((BORDER_Y - gdispGetFontMetric(gw->g.font, fontHeight))/2);
+
+		gdispGDrawString(gw->g.display, gw->g.x + BORDER_X, gw->g.y + text_y, gw->text, gw->g.font, pcol->text);
+	}
+
 	#if GDISP_NEED_CLIP
 		gdispGUnsetClip(gw->g.display);
 	#endif
 
-	// redraw buttons if necessary - this should be done due the parent-child relationship but that is buggy...
-	if (gw->g.flags & GWIN_FRAME_CLOSE_BTN) {
-		gwinRedraw(((GFrameObject*)gw)->btnClose);
-	}
-	if (gw->g.flags & GWIN_FRAME_MINMAX_BTN) {
-		gwinRedraw(((GFrameObject*)gw)->btnMin);
-		gwinRedraw(((GFrameObject*)gw)->btnMax);
-	}
-
-	// FixMe...
-	//gwinRedraw(gw);
+	gwinRedrawChildren((GHandle)gw);
 }
 
 #endif  /* (GFX_USE_GWIN && GWIN_NEED_FRAME) || defined(__DOXYGEN__) */

@@ -33,6 +33,7 @@
 typedef struct GFrameObject {
 	GWidgetObject		w;
 
+	// These could probably be removed... I have to think harder later
 	GHandle				btnClose;
 	GHandle				btnMin;
 	GHandle				btnMax;
