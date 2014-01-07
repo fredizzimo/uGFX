@@ -56,6 +56,8 @@ typedef struct GFrameObject {
  * @note				These frame buttons are processed internally. The close button will invoke a gwinDestroy() which will
  *						destroy the window itself and EVERY child it contains (also children of children).
  *
+ * @return				NULL if there is no resulting widget. A valid GHandle otherwise.
+ *
  * @api
  */
 GHandle gwinGFrameCreate(GDisplay *g, GFrameObject *fo, GWidgetInit *pInit, uint16_t flags);
