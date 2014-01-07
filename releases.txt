@@ -11,6 +11,8 @@ DEPRECATE:	TDISP module removed
 FIX:		Console does not execute gwinPrintf() anymore if not visible
 FEATURE:	Added gwinGetColor() and gwinGetBgColor()
 FEATURE:	Console does now have an optional buffer (GWIN_CONSOLE_USE_HISTORY)
+FEATURE:	Gwin does now provide parent-child relations (gwinAddChild(), gwinRemoveChild(), ...)
+FEATURE:	Added frame widget
 
 
 *** changes after 1.9 ***
