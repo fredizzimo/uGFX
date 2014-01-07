@@ -35,6 +35,7 @@ static void _callbackBtn(void *param, GEvent *pe);
 static void _frameDestroy(GHandle gh) {
 	/* Deregister the button callback */
 	geventRegisterCallback(&gh2obj->gl, NULL, NULL);
+	geventDetachSource(&gh2obj->gl, NULL);
 
 	/* call the gwidget standard destroy routine */
 	_gwidgetDestroy(gh);
