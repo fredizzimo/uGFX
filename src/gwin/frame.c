@@ -33,9 +33,8 @@ void gwinFrameDraw_Std(GWidgetObject *gw, void *param);
 static void _callbackBtn(void *param, GEvent *pe);
 
 static void _frameDestroy(GHandle gh) {
-	/* Detach all button sources */
-	// ToDo
-	//geventDetachSource(&gh2obj->gl, NULL);
+	/* Deregister the button callback */
+	geventRegisterCallback(&gh2obj->gl, NULL, NULL);
 
 	/* call the gwidget standard destroy routine */
 	_gwidgetDestroy(gh);
