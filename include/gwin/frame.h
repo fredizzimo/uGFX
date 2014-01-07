@@ -33,6 +33,7 @@
 typedef struct GFrameObject {
 	GWidgetObject		w;
 
+	GListener			gl;			// internal listener for the buttons
 	// These could probably be removed... I have to think harder later
 	GHandle				btnClose;
 	GHandle				btnMin;
@@ -52,6 +53,8 @@ typedef struct GFrameObject {
  *
  * @note				Possible flags are: GWIN_FRAME_BORDER, GWIN_FRAME_CLOSE_BTN, GWIN_FRAME_MINMAX_BTN.
  *						Whether the close or the minimize maximize buttons are used, the boarder is automatically invoked.
+ * @note				These frame buttons are processed internally. The close button will invoke a gwinDestroy() which will
+ *						destroy the window itself and EVERY child it contains (also children of children).
  *
  * @api
  */

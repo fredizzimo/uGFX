@@ -30,6 +30,16 @@
 
 /* Forware declarations */
 void gwinFrameDraw_Std(GWidgetObject *gw, void *param);
+static void _callbackBtn(void *param, GEvent *pe);
+
+static void _frameDestroy(GHandle gh) {
+	/* Detach all button sources */
+	// ToDo
+	//geventDetachSource(&gh2obj->gl, NULL);
+
+	/* call the gwidget standard destroy routine */
+	_gwidgetDestroy(gh);
+}
 
 #if GINPUT_NEED_MOUSE
 	static void _mouseDown(GWidgetObject *gw, coord_t x, coord_t y) {
@@ -49,7 +59,7 @@ static const gwidgetVMT frameVMT = {
 	{
 		"Frame",					// The classname
 		sizeof(GFrameObject),		// The object size
-		_gwidgetDestroy,			// The destroy routine
+		_frameDestroy,				// The destroy routie
 		_gwidgetRedraw,				// The redraw routine
 		0,							// The after-clear routine
 	},
@@ -99,6 +109,13 @@ GHandle gwinGFrameCreate(GDisplay *g, GFrameObject *fo, GWidgetInit *pInit, uint
 	/* apply flags */
 	fo->w.g.flags |= tmp;
 
+	/* create and initialize the listener if any button is present. */
+	if ((fo->w.g.flags & GWIN_FRAME_CLOSE_BTN) || (fo->w.g.flags & GWIN_FRAME_MINMAX_BTN)) {
+		geventListenerInit(&fo->gl);
+		gwinAttachListener(&fo->gl);
+		geventRegisterCallback(&fo->gl, _callbackBtn, (GHandle)fo);
+	}
+
 	/* create close button if necessary */
 	if (fo->w.g.flags & GWIN_FRAME_CLOSE_BTN) {
 		GWidgetInit wi;
@@ -146,6 +163,26 @@ GHandle gwinGFrameCreate(GDisplay *g, GFrameObject *fo, GWidgetInit *pInit, uint
 	gwinSetVisible(&fo->w.g, pInit->g.show);
 
 	return (GHandle)fo;
+}
+
+/* Process a button event */
+static void _callbackBtn(void *param, GEvent *pe) {
+	switch (pe->type) {
+		case GEVENT_GWIN_BUTTON:
+			if (((GEventGWinButton *)pe)->button == ((GFrameObject*)(GHandle)param)->btnClose)
+				gwinDestroy((GHandle)param);
+
+			else if (((GEventGWinButton *)pe)->button == ((GFrameObject*)(GHandle)param)->btnMin)
+				;/* ToDo */
+
+			else if (((GEventGWinButton *)pe)->button == ((GFrameObject*)(GHandle)param)->btnMax)
+				;/* ToDo */
+
+			break;
+
+		default:
+			break;
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
