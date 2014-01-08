@@ -42,7 +42,7 @@ typedef struct GWindowObject {
 	coord_t					x, y;				// @< Screen relative position
 	coord_t					width, height;		// @< Dimensions of this window
 	color_t					color, bgcolor;		// @< The current drawing colors
-	uint16_t				flags;				// @< Window flags (the meaning is private to the GWIN class)
+	uint32_t				flags;				// @< Window flags (the meaning is private to the GWIN class)
 	#if GDISP_NEED_TEXT
 		font_t				font;				// @< The current font
 	#endif
