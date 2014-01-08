@@ -681,8 +681,8 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 	 *
 	 * @param[in] g 		The display to use
 	 * @param[in] x,y		The position for the text
-	 * @param[in] font		The font to use
 	 * @param[in] str		The string to draw
+	 * @param[in] font		The font to use
 	 * @param[in] color		The color to use
 	 *
 	 * @api
