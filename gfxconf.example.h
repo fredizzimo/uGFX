@@ -124,8 +124,10 @@
 #define GWIN_NEED_WINDOWMANAGER                      FALSE
 
 #define GWIN_NEED_CONSOLE                            FALSE
-    #define GWIN_CONSOLE_USE_HISTORY                 TRUE
-    #define GWIN_CONSOLE_USE_BASESTREAM              FALSE
+    #define GWIN_CONSOLE_USE_HISTORY                 FALSE
+		#define GWIN_CONSOLE_HISTORY_AVERAGING       FALSE
+		#define GWIN_CONSOLE_HISTORY_ATCREATE        FALSE
+	#define GWIN_CONSOLE_USE_BASESTREAM              FALSE
     #define GWIN_CONSOLE_USE_FLOAT                   FALSE
 #define GWIN_NEED_GRAPH                              FALSE
 
@@ -158,7 +160,7 @@
 #define GFX_USE_GTIMER                               FALSE
 
 #define GTIMER_THREAD_PRIORITY                       HIGH_PRIORITY
-#define GTIMER_THREAD_WORKAREA_SIZE                  1024
+#define GTIMER_THREAD_WORKAREA_SIZE                  2048
 
 
 ///////////////////////////////////////////////////////////////////////////

@@ -32,10 +32,9 @@ typedef struct GConsoleObject {
 	coord_t			cx, cy;			// Cursor position
 
 	#if GWIN_CONSOLE_USE_HISTORY
-		char*		buffer;			// buffer to store console content
-		uint16_t	last_char;		// the last rendered character
-		size_t		size;			// size of buffer
-		bool_t		store;			// shall PutChar() store into buffer
+		char *		buffer;			// buffer to store console content
+		size_t		bufsize;		// size of buffer
+		size_t		bufpos;			// the position of the next char
 	#endif
 
 	#if GFX_USE_OS_CHIBIOS && GWIN_CONSOLE_USE_BASESTREAM
@@ -91,18 +90,19 @@ GHandle gwinGConsoleCreate(GDisplay *g, GConsoleObject *gc, const GWindowInit *p
 
 #if GWIN_CONSOLE_USE_HISTORY
 	/**
-	 * @brief	Assing a buffer to keep track of the content while the widget is invisible.
+	 * @brief	Assign a buffer to keep track of the content while the widget is invisible.
 	 * @pre		GWIN_CONSOLE_USE_HISTORY must be set to TRUE in your gfxconf.h
 	 *
 	 * @param[in] gh		The window handle (must be a console window)
-	 * @param[in] buffer	The pointer of the buffer that shall be used. Buffer will be
-	 *						dynamically allocated when this is NULL.
-	 * @param[in] size		Size of the buffer that has been passed. If buffer is NULL, this
-	 *						will be the size of the dynamically allocated buffer.
+	 * @param[in] onoff		If TRUE a buffer is allocated to maintain console text
+	 * 						when the console is obscured or invisible. If FALSE, then
+	 * 						any existing buffer is deallocated.
+	 * @note	When the history buffer is turned on, scrolling is implemented using the
+	 * 			history buffer.
 	 *
-	 * @return	TRUE on success
-	 */ 
-	bool_t gwinConsoleSetBuffer(GHandle gh, void* buffer, size_t size);
+	 * @return	TRUE if the history buffer is now turned on.
+	 */
+	bool_t gwinConsoleSetBuffer(GHandle gh, bool_t onoff);
 #endif
 
 /**
