@@ -107,7 +107,7 @@ gdispImageError gdispImageGDraw_NATIVE(GDisplay *g, gdispImage *img, coord_t x, 
 	}
 
 	/* For this image decoder we cheat and just seek straight to the region we want to display */
-	pos = FRAME0POS + (img->width * sy + cx) * sizeof(pixel_t);
+	pos = FRAME0POS + (img->width * sy + sx) * sizeof(pixel_t);
 
 	/* Cycle through the lines */
 	for(;cy;cy--, y++) {
@@ -119,7 +119,7 @@ gdispImageError gdispImageGDraw_NATIVE(GDisplay *g, gdispImage *img, coord_t x, 
 			// Read the data
 			len = img->io.fns->read(&img->io,
 						img->priv->buf,
-						mx > BLIT_BUFFER_SIZE ? (BLIT_BUFFER_SIZE*sizeof(pixel_t)) : (mx * sizeof(pixel_t)))
+						mcx > BLIT_BUFFER_SIZE ? (BLIT_BUFFER_SIZE*sizeof(pixel_t)) : (mcx * sizeof(pixel_t)))
 					/ sizeof(pixel_t);
 			if (!len)
 				return GDISP_IMAGE_ERR_BADDATA;
