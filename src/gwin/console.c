@@ -18,13 +18,13 @@
 
 #include "gwin/class_gwin.h"
 
-#define GWIN_CONSOLE_USE_CLEAR_LINES			TRUE
-#define GWIN_CONSOLE_USE_FILLED_CHARS			FALSE
+#define GWIN_CONSOLE_USE_CLEAR_LINES			TRUE			// Clear each line before using it
+#define GWIN_CONSOLE_USE_FILLED_CHARS			FALSE			// Use filled characters instead of drawn characters
+#define GWIN_CONSOLE_BUFFER_SCROLLING			TRUE			// Use the history buffer to scroll when it is available
 
-// some temporary warning
-#if GWIN_CONSOLE_USE_HISTORY
-	#warning "This feature is work in progress and does currently contain a lot of bugs."
-#endif
+// Our control flags
+#define GCONSOLE_FLG_NOSTORE					(GWIN_FIRST_CONTROL_FLAG<<0)
+#define GCONSOLE_FLG_OVERRUN					(GWIN_FIRST_CONTROL_FLAG<<1)
 
 /*
  * Stream interface implementation. The interface is write only
@@ -59,43 +59,163 @@
 #endif
 
 #if GWIN_CONSOLE_USE_HISTORY
-	static void CustomRedraw(GWindowObject *gh) {
+	static void HistoryDestroy(GWindowObject *gh) {
 		#define gcw		((GConsoleObject *)gh)
 
-		uint16_t i;
-
-		// loop through buffer and don't add it again	
-		gcw->store = FALSE;
-		for (i = 0; i < gcw->last_char; i++) {
-			gwinPutChar(gh, gcw->buffer[i]);
+		// Deallocate the history buffer if required.
+		if (gcw->buffer) {
+			gfxFree(gcw->buffer);
+			gcw->buffer = 0;
 		}
-		gcw->store = TRUE;
-	
+
 		#undef gcw
 	}
+
+	static void HistoryRedraw(GWindowObject *gh) {
+		#define gcw		((GConsoleObject *)gh)
+
+		// No redrawing if there is no history
+		if (!gcw->buffer)
+			return;
+
+		// We are printing the buffer - don't store it again
+		gh->flags |= GCONSOLE_FLG_NOSTORE;
+
+		#if !GWIN_CONSOLE_USE_CLEAR_LINES
+			// Clear the screen
+			gdispGFillArea(gh->display, gh->x, gh->y, gh->width, gh->height, gh->bgcolor);
+		#endif
+
+		// Reset the cursor
+		gcw->cx = 0;
+		gcw->cy = 0;
+
+		// Print the buffer
+		gwinPutCharArray(gh, gcw->buffer, gcw->bufpos);
+
+		#if !GWIN_CONSOLE_USE_CLEAR_LINES
+			// Clear the remaining space
+			if (gcw->cy + fy < gh->height)
+				gdispGFillArea(gh->display, gh->x, gh->y+gcw->cy+fy, gh->width, gh->height-(gcw->cy+fy), gh->bgcolor);
+		#endif
+
+		// Turn back on storing of buffer contents
+		gh->flags &= ~GCONSOLE_FLG_NOSTORE;
+
+		#undef gcw
+	}
+
+	/**
+	 * Put a character into our history buffer
+	 */
+	static void putCharInBuffer(GConsoleObject *gcw, char c) {
+		// Only store if we need to
+		if (!gcw->buffer || (gcw->g.flags & GCONSOLE_FLG_NOSTORE))
+			return;
+
+		// Do we have enough space in the buffer
+		if (gcw->bufpos >= gcw->bufsize) {
+			char *	p;
+			size_t	dp;
+
+			/**
+			 * This should never really happen except if the user has changed the window
+			 * size without turning off and then on the buffer. Even then it is unlikely
+			 * because of our conservative allocation strategy.
+			 * If it really is needed we scroll one line to make some space. We also mark
+			 * it is an overrun so that if asked to really scroll later we know we already have.
+			 * Note we only use one bit to indicate an overrun, so an overrun of more
+			 * than one line will lead to some interesting scrolling and refreshing
+			 * effects.
+			 */
+
+			// Remove one line from the start
+			for(p = gcw->buffer; *p && *p != '\n'; p++);
+
+			// Was there a newline?
+			if (*p != '\n')
+				p = gcw->buffer;						// Oops - no newline, just delete one char
+			else
+				gcw->g.flags |= GCONSOLE_FLG_OVERRUN;	// Mark the overrun
+
+			// Delete the data
+			dp = ++p - gcw->buffer;						// Calculate the amount to to be removed
+			gcw->bufpos -= dp;							// Calculate the new size
+			if (gcw->bufpos)
+				memcpy(gcw->buffer, p, gcw->bufpos);	// Move the rest of the data
+		}
+
+		// Save the character
+		gcw->buffer[gcw->bufpos++] = c;
+	}
+
+	/**
+	 * Scroll the history buffer by one line
+	 */
+	static void scrollBuffer(GConsoleObject *gcw) {
+		char *	p;
+		size_t	dp;
+
+		// Only scroll if we need to
+		if (!gcw->buffer || (gcw->g.flags & GCONSOLE_FLG_NOSTORE))
+			return;
+
+		// If a buffer overrun has been marked don't scroll as we have already
+		if ((gcw->g.flags & GCONSOLE_FLG_OVERRUN)) {
+			gcw->g.flags &= ~GCONSOLE_FLG_OVERRUN;
+			return;
+		}
+
+		// Remove one line from the start
+		for(p = gcw->buffer; *p && *p != '\n'; p++);
+
+		// Was there a newline, if not delete everything.
+		if (*p != '\n') {
+			gcw->bufpos = 0;
+			return;
+		}
+
+		// Delete the data
+		dp = ++p - gcw->buffer;						// Calculate the amount to to be removed
+		gcw->bufpos -= dp;							// Calculate the new size
+		if (gcw->bufpos)
+			memcpy(gcw->buffer, p, gcw->bufpos);	// Move the rest of the data
+	}
+
+	/**
+	 * Clear the history buffer
+	 */
+	static void clearBuffer(GConsoleObject *gcw) {
+
+		// Only clear if we need to
+		if (!gcw->buffer || (gcw->g.flags & GCONSOLE_FLG_NOSTORE))
+			return;
+
+		gcw->bufpos = 0;
+	}
+
+#else
+	#define putCharInBuffer(gcw, c)
+	#define scrollBuffer(gcw)
+	#define clearBuffer(gcw)
 #endif
 
 static void AfterClear(GWindowObject *gh) {
 	#define gcw		((GConsoleObject *)gh)
 	gcw->cx = 0;
 	gcw->cy = 0;
-
-	#if GWIN_CONSOLE_USE_HISTORY
-		// issue an overflow, this is some kind
-		// of emptying the buffer
-		gcw->last_char = gcw->size;
-	#endif
-
+	clearBuffer(gcw);
 	#undef gcw		
 }
 
 static const gwinVMT consoleVMT = {
 	"Console",				// The classname
 	sizeof(GConsoleObject),	// The object size
-	0,						// The destroy routine
 	#if GWIN_CONSOLE_USE_HISTORY
-		CustomRedraw,		// The redraw routine (custom)
+		HistoryDestroy,		// The destroy routine (custom)
+		HistoryRedraw,		// The redraw routine (custom)
 	#else
+		0,					// The destroy routine
 		0,					// The redraw routine (default)
 	#endif
 	AfterClear,				// The after-clear routine
@@ -111,8 +231,9 @@ GHandle gwinGConsoleCreate(GDisplay *g, GConsoleObject *gc, const GWindowInit *p
 
 	#if GWIN_CONSOLE_USE_HISTORY
 		gc->buffer = 0;
-		gc->size = 0;
-		gc->last_char = 0;
+		#if GWIN_CONSOLE_HISTORY_ATCREATE
+			gwinConsoleSetBuffer(&gc->g, TRUE);
+		#endif
 	#endif
 
 	gc->cx = 0;
@@ -133,39 +254,43 @@ GHandle gwinGConsoleCreate(GDisplay *g, GConsoleObject *gc, const GWindowInit *p
 #endif
 
 #if GWIN_CONSOLE_USE_HISTORY
-	bool_t gwinConsoleSetBuffer(GHandle gh, void* buffer, size_t size) {
+	bool_t gwinConsoleSetBuffer(GHandle gh, bool_t onoff) {
 		#define gcw		((GConsoleObject *)gh)
-
-		uint8_t buf_width, buf_height, fp, fy;
 
 		if (gh->vmt != &consoleVMT)
 			return FALSE;
 
-		// assign buffer or allocate new one
-		if (buffer == 0) {
-			(void)size;
-
-			// calculate buffer size
-			fy = gdispGetFontMetric(gh->font, fontHeight);
-			fp = gdispGetFontMetric(gh->font, fontMinWidth);
-			buf_height = (gh->height / fy);
-			buf_width = (gh->width / fp);
-			
-			if ((gcw->buffer = (char*)gfxAlloc(buf_width * buf_height)) == 0)
-				return FALSE;
-			gcw->size = buf_width * buf_height;
-
-		} else {
-
-			if (size <= 0)
-				return FALSE;
-			gcw->buffer = (char*)buffer;
-			gcw->size = size;
-
+		// Do we want the buffer turned off?
+		if (!onoff) {
+			if (gcw->buffer) {
+				gfxFree(gcw->buffer);
+				gcw->buffer = 0;
+			}
+			return FALSE;
 		}
 
-		gcw->last_char = 0;
+		// Is the buffer already on?
+		if (gcw->buffer)
+			return TRUE;
 
+		// Get the number of characters that fit in the x direction
+		#if GWIN_CONSOLE_HISTORY_AVERAGING
+			gcw->bufsize = gh->width / ((2*gdispGetFontMetric(gh->font, fontMinWidth)+gdispGetFontMetric(gh->font, fontMaxWidth))/3);
+		#else
+			gcw->bufsize = gh->width / gdispGetFontMetric(gh->font, fontMinWidth);
+		#endif
+		gcw->bufsize++;				// Allow space for a newline on each line.
+
+		// Multiply by the number of lines
+		gcw->bufsize *= gh->height / gdispGetFontMetric(gh->font, fontHeight);
+
+		// Allocate the buffer
+		if (!(gcw->buffer = (char*)gfxAlloc(gcw->bufsize)))
+			return FALSE;
+
+		// All good!
+		gh->flags &= ~GCONSOLE_FLG_OVERRUN;
+		gcw->bufpos = 0;
 		return TRUE;
 		
 		#undef gcw
@@ -174,75 +299,106 @@ GHandle gwinGConsoleCreate(GDisplay *g, GConsoleObject *gc, const GWindowInit *p
 
 void gwinPutChar(GHandle gh, char c) {
 	#define gcw		((GConsoleObject *)gh)
-	uint8_t			width, fy, fp;
+	uint8_t			width, fy;
 
 	if (gh->vmt != &consoleVMT || !gh->font)
 		return;
 
-	#if GWIN_CONSOLE_USE_HISTORY
-		// buffer overflow check
-		if (gcw->last_char >= gcw->size)
-			gcw->last_char = 0;
-
-		// store new character in buffer
-		if (gcw->store && gcw->buffer != 0)
-			gcw->buffer[gcw->last_char++] = c;
-
-		// only render new character and don't issue a complete redraw (performance...)
-		if (!gwinGetVisible(gh))
-			return;
-	#endif
+	// only render new character if the console is visible
+	if (!gwinGetVisible(gh))
+		return;
 
 	fy = gdispGetFontMetric(gh->font, fontHeight);
-	fp = gdispGetFontMetric(gh->font, fontCharPadding);
 
 	#if GDISP_NEED_CLIP
 		gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 	#endif
 	
-	if (c == '\n') {
+	/**
+	 * Special Characters:
+	 *
+	 * Carriage returns and line feeds (\r & \n) are handled in unix terminal cooked mode; that is,
+	 * line feeds perform both actions and carriage-returns are ignored.
+	 *
+	 * All other characters are treated as printable.
+	 */
+	switch (c) {
+	case '\n':
+		// clear to the end of the line
+		#if GWIN_CONSOLE_USE_CLEAR_LINES
+			if (gcw->cx == 0 && gcw->cy+fy < gh->height)
+				gdispGFillArea(gh->display, gh->x, gh->y + gcw->cy, gh->width, fy, gh->bgcolor);
+		#endif
+		// update the cursor
 		gcw->cx = 0;
 		gcw->cy += fy;
+		putCharInBuffer(gcw, '\n');
 		// We use lazy scrolling here and only scroll when the next char arrives
-	} else if (c == '\r') {
+		return;
+
+	case '\r':
 		// gcw->cx = 0;
-	} else {
-		width = gdispGetCharWidth(c, gh->font) + fp;
-		if (gcw->cx + width >= gh->width) {
-			gcw->cx = 0;
-			gcw->cy += fy;
-		}
+		return;
+	}
 
-		if (gcw->cy + fy > gh->height) {
-#if GDISP_NEED_SCROLL
-			/* scroll the console */
-			gdispGVerticalScroll(gh->display, gh->x, gh->y, gh->width, gh->height, fy, gh->bgcolor);
-			/* reset the cursor to the start of the last line */
-			gcw->cx = 0;
-			gcw->cy = (((coord_t)(gh->height/fy))-1)*fy;
-#else
-			/* clear the console */
-			gdispGFillArea(gh->display, gh->x, gh->y, gh->width, gh->height, gh->bgcolor);
-			/* reset the cursor to the top of the window */
-			gcw->cx = 0;
-			gcw->cy = 0;
-#endif
-		}
+	// Characters with no width are ignored
+	if (!(width = gdispGetCharWidth(c, gh->font)))
+		return;
 
-#if GWIN_CONSOLE_USE_CLEAR_LINES
-		/* clear to the end of the line */
+	// Do we need to go to the next line to fit this character?
+	if (gcw->cx + width >= gh->width) {
+		gcw->cx = 0;
+		gcw->cy += fy;
+		putCharInBuffer(gcw, '\n');
+	}
+
+	// Do we need to scroll to fit this character?
+	if (gcw->cy + fy > gh->height) {
+		#if GWIN_CONSOLE_USE_HISTORY && GWIN_CONSOLE_BUFFER_SCROLLING
+			if (gcw->buffer) {
+				// Scroll the buffer and then redraw using the buffer
+				scrollBuffer(gcw);
+				HistoryRedraw(gh);
+			} else
+		#endif
+		#if GDISP_NEED_SCROLL
+			{
+				// Scroll the console using hardware
+				scrollBuffer(gcw);
+				gdispGVerticalScroll(gh->display, gh->x, gh->y, gh->width, gh->height, fy, gh->bgcolor);
+
+				// Set the cursor to the start of the last line
+				gcw->cx = 0;
+				gcw->cy = (((coord_t)(gh->height/fy))-1)*fy;
+			}
+		#else
+			{
+				// Clear the console and reset the cursor
+				clearBuffer(gcw);
+				gdispGFillArea(gh->display, gh->x, gh->y, gh->width, gh->height, gh->bgcolor);
+				gcw->cx = 0;
+				gcw->cy = 0;
+			}
+		#endif
+	}
+
+	// If we are at the beginning of a new line clear the line
+	#if GWIN_CONSOLE_USE_CLEAR_LINES
 		if (gcw->cx == 0)
 			gdispGFillArea(gh->display, gh->x, gh->y + gcw->cy, gh->width, fy, gh->bgcolor);
-#endif
-#if GWIN_CONSOLE_USE_FILLED_CHARS
-		gdispGFillChar(gh->display, gh->x + gcw->cx, gh->y + gcw->cy, c, gh->font, gh->color, gh->bgcolor);
-#else
-		gdispGDrawChar(gh->display, gh->x + gcw->cx, gh->y + gcw->cy, c, gh->font, gh->color);
-#endif
+	#endif
 
-		/* update cursor */
-		gcw->cx += width;
-	}
+	// Draw the character
+	#if GWIN_CONSOLE_USE_FILLED_CHARS
+		gdispGFillChar(gh->display, gh->x + gcw->cx, gh->y + gcw->cy, c, gh->font, gh->color, gh->bgcolor);
+	#else
+		gdispGDrawChar(gh->display, gh->x + gcw->cx, gh->y + gcw->cy, c, gh->font, gh->color);
+	#endif
+	putCharInBuffer(gcw, c);
+
+	// Update the cursor
+	gcw->cx += width + gdispGetFontMetric(gh->font, fontCharPadding);
+
 	#undef gcw
 }
 

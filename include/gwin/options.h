@@ -106,15 +106,51 @@
 		#define GWIN_BUTTON_LAZY_RELEASE		FALSE
 	#endif
 	/**
-	 * @brief	Should the content of the console be logged or not
-	 * @details	If this feature is enable, the content of the console will be stored.
-	 *			Every content that gets printed to the console while being invisible
-	 *			will be rendered once the console is visible again. All previous written
-	 *			content will be restored too.
+	 * @brief	Should the content of the console be saved for redrawing.
 	 * @details	Defaults to FALSE
+	 * @details	If this feature is enabled, the contents of the console will be saved
+	 * 			as it is written. If a redraw is required it will be redrawn from the
+	 * 			history. Scrolling will also use the history buffer if it is turned on.
+	 * @note	Using this option allocates the amount of memory to store the
+	 * 			history based on the minimum character width in the current font
+	 * 			at the time the history is turned on. Using a fixed width font is a good
+	 * 			idea to minimize memory usage.
+	 * @note	If you change the size of the window or you change the font being displayed
+	 * 			you should turn off the history and then turn it back on in order to get
+	 * 			a new buffer of the correct size for the window/font combination. Strange
+	 * 			redrawing and scrolling effects can occur if the buffer is too small to
+	 * 			save a complete screen of data. Note the system tries to optimize storage
+	 * 			so this may only be evident in very limited situations eg with a console
+	 * 			with many characters in it.
+	 * @note	@p gwinConsoleSetBuffer() can be used to turn the history buffer off and on.
 	 */
 	#ifndef GWIN_CONSOLE_USE_HISTORY
 		#define GWIN_CONSOLE_USE_HISTORY		FALSE
+	#endif
+	/**
+	 * @brief	Use font width averaging for the history buffer allocation.
+	 * @details	Defaults to FALSE
+	 * @details	If this feature is enabled, the width one third of the way between
+	 * 			the font's character width minimum and maximum will be used instead
+	 * 			of the font's minimum width.
+	 * @note	This option reduces the memory allocation for a variable width font's
+	 * 			history buffer. Note that strange
+	 * 			redrawing and scrolling effects can occur if the buffer is too small to
+	 * 			save a complete screen of data. The system tries to optimize storage
+	 * 			so this may only be evident in very limited situations eg with a console
+	 * 			with many characters in it.
+	 */
+	#ifndef GWIN_CONSOLE_HISTORY_AVERAGING
+		#define GWIN_CONSOLE_HISTORY_AVERAGING	FALSE
+	#endif
+	/**
+	 * @brief	Should the history be turned on for all console windows when they are first created.
+	 * @details	Defaults to FALSE
+	 * @note	@p gwinConsoleSetBuffer() can be used to turn the history buffer off and on at
+	 * 			any time.
+	 */
+	#ifndef GWIN_CONSOLE_HISTORY_ATCREATE
+		#define GWIN_CONSOLE_HISTORY_ATCREATE	FALSE
 	#endif
 	/**
 	 * @brief   Console Windows need floating point support in @p gwinPrintf

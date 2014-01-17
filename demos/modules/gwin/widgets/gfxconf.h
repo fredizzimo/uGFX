@@ -54,7 +54,10 @@
 #define GDISP_DEFAULT_ORIENTATION	GDISP_ROTATE_LANDSCAPE
 
 /* The following are optional depending on your hardware */
-//#define GDISP_NEED_SCROLL		TRUE
+//#define GDISP_NEED_SCROLL		             TRUE
+//#define GWIN_CONSOLE_USE_HISTORY           TRUE
+//#define GWIN_CONSOLE_HISTORY_AVERAGING     TRUE
+//#define GWIN_CONSOLE_HISTORY_ATCREATE      TRUE
 
 /* GDISP fonts to include */
 #define GDISP_INCLUDE_FONT_UI2	TRUE
