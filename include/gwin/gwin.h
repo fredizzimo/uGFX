@@ -55,7 +55,7 @@ typedef struct GWindowObject {
 		GHandle				child;				// @< The child widget
 	#endif
 } GWindowObject, * GHandle;
-/* @} */
+/** @} */
 
 /**
  * @brief	The structure to initialise a GWIN.
@@ -70,7 +70,7 @@ typedef struct GWindowInit {
 	coord_t			width, height;					// @< The initial dimension
 	bool_t			show;							// @< Should the window be visible initially
 } GWindowInit;
-/* @} */
+/** @} */
 
 /**
  * @brief	A window's minimized, maximized or normal size
@@ -905,6 +905,11 @@ extern "C" {
 /*-------------------------------------------------
  * Additional functionality
  *-------------------------------------------------*/
+
+	/* Include groups */
+	#if GWIN_NEED_GROUPS || defined(__DOXYGEN__)
+		#include "gwin/ggroup.h"
+	#endif
 
 	/* Include widgets */
 	#if GWIN_NEED_WIDGET || defined(__DOXYGEN__)
