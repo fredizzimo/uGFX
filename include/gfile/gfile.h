@@ -34,13 +34,17 @@
 typedef struct GFILE {
 	const struct GFILEVMT *	vmt;
 	uint16_t				flags;
-		#define	GFILEFLG_OPEN			0x0001
-		#define	GFILEFLG_READ			0x0002
-		#define	GFILEFLG_WRITE			0x0004
-		#define	GFILEFLG_APPEND			0x0008
-		#define	GFILEFLG_CANSEEK		0x0010
-		#define	GFILEFLG_DELONCLOSE		0x0020
-		#define GFILEFLG_FAILONBLOCK	0x0040
+		#define	GFILEFLG_OPEN			0x0001		// File is open
+		#define	GFILEFLG_READ			0x0002		// Read the file
+		#define	GFILEFLG_WRITE			0x0004		// Write the file
+		#define	GFILEFLG_APPEND			0x0008		// Append on each write
+		#define GFILEFLG_BINARY			0x0010		// Treat as a binary file
+		#define	GFILEFLG_DELONCLOSE		0x0020		// Delete on close
+		#define	GFILEFLG_CANSEEK		0x0040		// Seek operations are valid
+		#define GFILEFLG_FAILONBLOCK	0x0080		// Fail on a blocking call
+		#define GFILEFLG_MUSTEXIST		0x0100		// On open file must exist
+		#define GFILEFLG_MUSTNOTEXIST	0x0200		// On open file must not exist
+		#define GFILEFLG_TRUNC			0x0400		// On open truncate the file
 	short					err;
 	void *					obj;
 	long int				pos;
@@ -48,18 +52,18 @@ typedef struct GFILE {
 
 typedef struct GFILEVMT {
 	const struct GFILEVMT *	next;
-	char					prefix;
-	uint16_t				flags;
+	uint8_t					flags;
 		#define GFSFLG_WRITEABLE		0x0001
 		#define GFSFLG_CASESENSITIVE	0x0002
 		#define GFSFLG_SEEKABLE			0x0004
 		#define GFSFLG_FAST				0x0010
 		#define GFSFLG_SMALL			0x0020
+	char					prefix;
 	bool_t		del(const char *fname);
 	bool_t		exists(const char *fname);
 	long int	filesize(const char *fname);
 	bool_t		ren(const char *oldname, const char *newname);
-	bool_t		open(GFILE *f, const char *fname, const char *mode);
+	bool_t		open(GFILE *f, const char *fname);
 	void		close(GFILE *f);
 	int			read(GFILE *f, char *buf, int size);
 	int			write(GFILE *f, char *buf, int size);
@@ -103,16 +107,6 @@ extern GFILE *gfileStdOut;
 //puts
 //ungetc
 //void perror (const char * str);
-
-//"r" read: Open file for input operations. The file must exist.
-//"w" write: Create an empty file for output operations. If a file with the same name already exists, its contents are discarded and the file is treated as a new empty file.
-//"a" append: Open file for output at the end of a file. Output operations always write data at the end of the file, expanding it. Repositioning operations (fseek, fsetpos, rewind) are ignored. The file is created if it does not exist.
-//"r+" read/update: Open a file for update (both for input and output). The file must exist.
-//"w+" write/update: Create an empty file and open it for update (both for input and output). If a file with the same name already exists its contents are discarded and the file is treated as a new empty file.
-//"a+" append/update: Open a file for update (both for input and output) with all output operations writing data at the end of the file. Repositioning operations (fseek, fsetpos, rewind) affects the next input operations, but output operations move the position back to the end of file. The file is created if it does not exist.
-//"...b" A binary stream
-//"...x" Added to "w" - fail if file exists
-
 
 #ifdef __cplusplus
 extern "C" {

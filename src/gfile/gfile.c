@@ -147,7 +147,7 @@ long int gfileGetFilesize(const char *fname) {
 bool_t	gfileRename(const char *oldname, const char *newname) {
 	const GFILEVMT *p;
 
-	if ((oldname[0] && oldname[1] == '|') || (newname[0] && newname[1])) {
+	if ((oldname[0] && oldname[1] == '|') || (newname[0] && newname[1] == '|')) {
 		char ch;
 
 		if (oldname[0] && oldname[1] == '|') {
@@ -155,6 +155,7 @@ bool_t	gfileRename(const char *oldname, const char *newname) {
 			oldname += 2;
 			if (newname[0] && newname[1] == '|') {
 				if (newname[0] != ch)
+					// Both oldname and newname are fs specific but different ones.
 					return FALSE;
 				newname += 2;
 			}
@@ -175,12 +176,100 @@ bool_t	gfileRename(const char *oldname, const char *newname) {
 	return FALSE;
 }
 
-GFILE *gfileOpen(const char *fname, const char *mode) {
+static uint16_t mode2flags(const char *mode) {
+	uint16_t	flags;
 
+	switch(mode[0]) {
+	case 'r':
+		flags = GFILEFLG_READ|GFILEFLG_MUSTEXIST;
+		while (*++mode) {
+			switch(mode[0]) {
+			case '+':	flags |= GFILEFLG_WRITE;		break;
+			case 'b':	flags |= GFILEFLG_BINARY;		break;
+			}
+		}
+		return flags;
+	case 'w':
+		flags = GFILEFLG_WRITE|GFILEFLG_TRUNC;
+		while (*++mode) {
+			switch(mode[0]) {
+			case '+':	flags |= GFILEFLG_READ;			break;
+			case 'b':	flags |= GFILEFLG_BINARY;		break;
+			case 'x':	flags |= GFILEFLG_MUSTNOTEXIST;	break;
+			}
+		}
+		return flags;
+	case 'a':
+		flags = GFILEFLG_WRITE|GFILEFLG_APPEND;
+		while (*++mode) {
+			switch(mode[0]) {
+			case '+':	flags |= GFILEFLG_READ;			break;
+			case 'b':	flags |= GFILEFLG_BINARY;		break;
+			case 'x':	flags |= GFILEFLG_MUSTNOTEXIST;	break;
+			}
+		}
+		return flags;
+	}
+	return 0;
+}
+
+static bool_t testopen(const GFILEVMT *p, GFILE *f, const char *fname) {
+	// If we want write but the fs doesn't allow it then return
+	if ((f->flags & GFILEFLG_WRITE) && !(p->flags & GFSFLG_WRITEABLE))
+		return FALSE;
+
+	// Try to open
+	if (!p->open || !p->open(f, fname))
+		return FALSE;
+
+	// File is open - fill in all the details
+	f->vmt = p;
+	f->err = 0;
+	f->pos = 0;
+	f->flags |= GFILEFLG_OPEN;
+	if (p->flags & GFSFLG_SEEKABLE)
+		f->flags |= GFILEFLG_CANSEEK;
+	return TRUE;
+}
+
+GFILE *gfileOpen(const char *fname, const char *mode) {
+	GFILE *f;
+	const GFILEVMT *p;
+
+	// First find an available GFILE slot.
+	for (f = gfileArr; f < &gfileArr[GFILE_MAX_GFILES]; f++) {
+		if (!(f->flags & GFILEFLG_OPEN)) {
+
+			// Get the requested mode
+			if (!(f->flags = mode2flags(mode)))
+				return FALSE;
+
+			// Try to open the file
+			if (fname[0] && fname[1] == '|') {
+				for(p = FsChain; p; p = p->next) {
+					if (p->prefix == fname[0])
+						return testopen(p, f, fname+2);
+				}
+			} else {
+				for(p = FsChain; p; p = p->next) {
+					if (testopen(p, f, fname))
+						return TRUE;
+				}
+			}
+
+			// File not found
+			return FALSE;
+		}
+	}
+
+	// No available slot
+	return FALSE;
 }
 
 void gfileClose(GFILE *f) {
-
+	// Make sure it is one of the system GFILE's
+	if (f < gfileArr || f >= &gfileArr[GFILE_MAX_GFILES])
+		return;
 }
 
 size_t	gfileRead(GFILE *f, char *buf, size_t len) {

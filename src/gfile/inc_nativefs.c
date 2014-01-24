@@ -36,17 +36,34 @@ static bool_t NativeEof(GFILE *f);
 
 static const GFILEVMT FsNativeVMT = {
 	GFILE_CHAINHEAD,									// next
-	'N',												// prefix
 	#if !defined(WIN32) && !GFX_USE_OS_WIN32
 		GFSFLG_CASESENSITIVE|
 	#endif
 	GFSFLG_WRITEABLE|GFSFLG_SEEKABLE|GFSFLG_FAST,		// flags
+	'N',												// prefix
 	NativeDel, NativeExists, NativeFilesize, NativeRen,
 	NativeOpen, NativeClose, NativeRead, NativeWrite,
 	NativeSetpos, NativeGetsize, NativeEof,
 };
 #undef GFILE_CHAINHEAD
 #define GFILE_CHAINHEAD		&FsNativeVMT
+
+static char *flags2mode(char *buf, uint16_t flags) {
+	if (flags & GFILEFLG_MUSTEXIST)
+		*buf = 'r';
+	else if (flags & GFILEFLG_APPEND)
+		*buf = 'a';
+	else
+		*buf = 'w';
+	buf++;
+	if ((flags & (GFILEFLG_READ|GFILEFLG_WRITE)) == (GFILEFLG_READ|GFILEFLG_WRITE))
+		*buf++ = '+';
+	if (flags & GFILEFLG_BINARY)
+		*buf++ = 'b';
+	if (flags & GFILEFLG_MUSTNOTEXIST)
+		*buf++ = 'x';
+	*buf++ = 0;
+}
 
 static bool_t NativeDel(const char *fname) { return remove(fname) ? FALSE : TRUE; }
 static bool_t NativeExists(const char *fname) { return access(fname, 0) ? FALSE : TRUE; }
@@ -56,12 +73,12 @@ static long int	NativeFilesize(const char *fname) {
 	return st.st_size;
 }
 static bool_t NativeRen(const char *oldname, const char *newname) { return rename(oldname, newname) ? FALSE : TRUE };
-static bool_t NativeOpen(GFILE *f, const char *fname, const char *mode) {
+static bool_t NativeOpen(GFILE *f, const char *fname) {
 	FILE *fd;
+	char mode[5];
 
 	if (!(fd = fopen(fname, mode)))
 		return FALSE;
-	f->vmt = &FsNativeVMT;
 	f->obj = (void *)fd;
 	return TRUE;
 }

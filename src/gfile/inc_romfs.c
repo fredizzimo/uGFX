@@ -39,8 +39,8 @@ static bool_t ROMEof(GFILE *f);
 
 static const GFILEVMT FsROMVMT = {
 	GFILE_CHAINHEAD,									// next
-	'S',												// prefix
 	GFSFLG_CASESENSITIVE|GFSFLG_SEEKABLE|GFSFLG_FAST,	// flags
+	'S',												// prefix
 	0, ROMExists, ROMFilesize, 0,
 	ROMOpen, ROMClose, ROMRead, 0,
 	ROMSetpos, ROMGetsize, ROMEof,
@@ -64,20 +64,10 @@ static long int	ROMFilesize(const char *fname) {
 	if (!(p = ROMFindFile(fname))) return -1;
 	return p->size;
 }
-static bool_t ROMOpen(GFILE *f, const char *fname, const char *mode) {
+static bool_t ROMOpen(GFILE *f, const char *fname) {
 	const ROMFS_DIRENTRY *p;
 
-	// Check mode
-	if (mode[0] != 'r') return FALSE;
-	while(*++mode) {
-		switch(*mode) {
-		case '+': case 'w': case 'a':
-			return FALSE;
-		}
-	}
-
 	if (!(p = ROMFindFile(fname))) return FALSE;
-	f->vmt = &FsROMVMT;
 	f->obj = (void *)p;
 	return TRUE;
 }
