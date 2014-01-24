@@ -46,22 +46,30 @@ typedef struct GEventGWinList {
 typedef struct GListObject {
 	GWidgetObject	w;
 
+    #if GINPUT_NEED_MOUSE
+        coord_t start_mouse_x;
+        coord_t start_mouse_y;
+        coord_t last_mouse_y;
+    #endif
 	#if GINPUT_NEED_TOGGLE
 		uint16_t	t_up;
 		uint16_t	t_dn;
 	#endif
 
 	int				cnt;		// Number of items currently in the list (quicker than counting each time)
-	int				top;		// The element at the top of the visible list area
+	int				top;		// Viewing offset in pixels from the top of the list
 	gfxQueueASync	list_head;	// The list of items
 } GListObject;
 
 /**
  * @brief	Enum to change the behaviour of the scroll bar
  *
- * @note	This might be used with @p gwinListSetScroll()
+ * @note	Used with @p gwinListSetScroll()
+ * @note    @p scrollAlways always show the scrollbar
+ * @note    @p scrollAuto show the scrollbar when there are more items on the list then fit on the screen
+ * @note    @p scrollSmooth enable touch screen smooth scrolling
  */
-typedef enum scroll_t { scrollAlways, scrollAuto } scroll_t;
+typedef enum scroll_t { scrollAlways, scrollAuto, scrollSmooth } scroll_t;
 
 #ifdef __cplusplus
 extern "C" {
@@ -97,7 +105,7 @@ GHandle gwinGListCreate(GDisplay *g, GListObject *widget, GWidgetInit *pInit, bo
 /**
  * @brief				Change the behaviour of the scroll bar
  *
- * @note				Current possible values: @p scrollAlways and @p scrollAuto
+ * @note				Current possible values: @p scrollAlways, @p scrollAuto and  @p scrollSmooth
  *
  * @param[in] gh		The widget handle (must be a list handle)
  * @param[in] flag		The behaviour to be set
