@@ -21,11 +21,27 @@
  * @{
  */
 	/**
-	 * @brief   Include printg, fprintg, sprintg etc functions
+	 * @brief   Include printg, fprintg etc functions
 	 * @details	Defaults to FALSE
 	 */
 	#ifndef GFILE_NEED_PRINTG
 		#define GFILE_NEED_PRINTG		FALSE
+	#endif
+	/**
+	 * @brief   Include scang, fscang etc functions
+	 * @details	Defaults to FALSE
+	 */
+	#ifndef GFILE_NEED_SCANG
+		#define GFILE_NEED_SCANG		FALSE
+	#endif
+	/**
+	 * @brief   Include the string sprintg/sscang functions
+	 * @details	Defaults to FALSE
+	 * @pre		To get sprintg functions you also need to define @p GFILE_NEED_PRINTG
+	 * @pre		To get sscang functions you also need to define @p GFILE_NEED_SCANG
+	 */
+	#ifndef GFILE_NEED_STRINGS
+		#define GFILE_NEED_STRINGS		FALSE
 	#endif
 	/**
 	 * @brief   Include scang, fscang, sscang etc functions
@@ -35,7 +51,7 @@
 		#define GFILE_NEED_SCANG		FALSE
 	#endif
 	/**
-	 * @brief   Map all the stdio functions to their GFILE equivalent
+	 * @brief   Map many stdio functions to their GFILE equivalent
 	 * @details	Defaults to FALSE
 	 * @note	This replaces the functions in stdio.h with equivalents
 	 * 			- Do not include stdio.h as it has different conflicting definitions.
@@ -46,7 +62,8 @@
 	/**
 	 * @brief   Include the ROM file system
 	 * @details	Defaults to FALSE
-	 * @note	To ensure that you are opening a file on the ROM file system, prefix
+	 * @note	If GFILE_ALLOW_DEVICESPECIFIC is on then you can ensure that you are
+	 * 			opening a file on the ROM file system by prefixing
 	 * 			its name with "S|" (the letter 'S', followed by a vertical bar).
 	 * @note	This requires a file called romfs_files.h to be included in the
 	 * 			users project. This file includes all the files converted to .h files
@@ -58,7 +75,8 @@
 	/**
 	 * @brief   Include the RAM file system
 	 * @details	Defaults to FALSE
-	 * @note	To ensure that you are opening a file on the RAM file system, prefix
+	 * @note	If GFILE_ALLOW_DEVICESPECIFIC is on then you can ensure that you are
+	 * 			opening a file on the RAM file system by prefixing
 	 * 			its name with "R|" (the letter 'R', followed by a vertical bar).
 	 * @note	You must also define GFILE_RAMFS_SIZE with the size of the file system
 	 * 			to be allocated in RAM.
@@ -69,7 +87,8 @@
 	/**
 	 * @brief   Include the FAT file system driver
 	 * @details	Defaults to FALSE
-	 * @note	To ensure that you are opening a file on the FAT file system, prefix
+	 * @note	If GFILE_ALLOW_DEVICESPECIFIC is on then you can ensure that you are
+	 * 			opening a file on the FAT file system by prefixing
 	 * 			its name with "F|" (the letter 'F', followed by a vertical bar).
 	 * @note	You must separately include the FATFS library and code.
 	 */
@@ -79,7 +98,8 @@
 	/**
 	 * @brief   Include the operating system's native file system
 	 * @details	Defaults to FALSE
-	 * @note	To ensure that you are opening a file on the native file system, prefix
+	 * @note	If GFILE_ALLOW_DEVICESPECIFIC is on then you can ensure that you are
+	 * 			opening a file on the native file system by prefixing
 	 * 			its name with "N|" (the letter 'N', followed by a vertical bar).
 	 * @note	If defined then the gfileStdOut and gfileStdErr handles
 	 * 			use the operating system equivalent stdio and stderr.
@@ -94,6 +114,21 @@
  * @name    GFILE Optional Parameters
  * @{
  */
+	/**
+	 * @brief  Add floating point support to printg/scang etc.
+	 */
+	#ifndef GFILE_ALLOW_FLOATS
+		#define GFILE_ALLOW_FLOATS
+	#endif
+	/**
+	 * @brief   Can the device be specified as part of the file name.
+	 * @note	If this is on then a device letter and a vertical bar can be
+	 * 			prefixed on a file name to specify that it must be on a
+	 * 			specific device.
+	 */
+	#ifndef GFILE_ALLOW_DEVICESPECIFIC
+		#define GFILE_ALLOW_DEVICESPECIFIC		FALSE
+	#endif
 	/**
 	 * @brief   The maximum number of open files
 	 * @note	This count excludes gfileStdIn, gfileStdOut and gfileStdErr

@@ -30,7 +30,7 @@ static const ROMFS_DIRENTRY const *FsROMHead = ROMFS_DIRENTRY_HEAD;
 
 static bool_t ROMExists(const char *fname);
 static long int	ROMFilesize(const char *fname);
-static bool_t ROMOpen(GFILE *f, const char *fname, const char *mode);
+static bool_t ROMOpen(GFILE *f, const char *fname);
 static void ROMClose(GFILE *f);
 static int ROMRead(GFILE *f, char *buf, int size);
 static bool_t ROMSetpos(GFILE *f, long int pos);

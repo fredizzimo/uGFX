@@ -91,87 +91,98 @@ void _gfileInit(void) {
 	#endif
 }
 
-bool_t	gfileExists(const char *fname) {
+bool_t gfileExists(const char *fname) {
 	const GFILEVMT *p;
 
-	if (fname[0] && fname[1] == '|') {
-		for(p = FsChain; p; p = p->next) {
-			if (p->prefix == fname[0])
-				return p->exists && p->exists(fname+2);
+	#if GFILE_ALLOW_DEVICESPECIFIC
+		if (fname[0] && fname[1] == '|') {
+			for(p = FsChain; p; p = p->next) {
+				if (p->prefix == fname[0])
+					return p->exists && p->exists(fname+2);
+			}
+			return FALSE;
 		}
-	} else {
-		for(p = FsChain; p; p = p->next) {
-			if (p->exists && p->exists(fname))
-				return TRUE;
-		}
+	#endif
+
+	for(p = FsChain; p; p = p->next) {
+		if (p->exists && p->exists(fname))
+			return TRUE;
 	}
 	return FALSE;
 }
 
-bool_t	gfileDelete(const char *fname) {
+bool_t gfileDelete(const char *fname) {
 	const GFILEVMT *p;
 
-	if (fname[0] && fname[1] == '|') {
-		for(p = FsChain; p; p = p->next) {
-			if (p->prefix == fname[0])
-				return p->del && p->del(fname+2);
+	#if GFILE_ALLOW_DEVICESPECIFIC
+		if (fname[0] && fname[1] == '|') {
+			for(p = FsChain; p; p = p->next) {
+				if (p->prefix == fname[0])
+					return p->del && p->del(fname+2);
+			}
+			return FALSE;
 		}
-	} else {
-		for(p = FsChain; p; p = p->next) {
-			if (p->del && p->del(fname))
-				return TRUE;
-		}
+	#endif
+
+	for(p = FsChain; p; p = p->next) {
+		if (p->del && p->del(fname))
+			return TRUE;
 	}
 	return FALSE;
 }
 
 long int gfileGetFilesize(const char *fname) {
 	const GFILEVMT *p;
+	long int res;
 
-	if (fname[0] && fname[1] == '|') {
-		for(p = FsChain; p; p = p->next) {
-			if (p->prefix == fname[0])
-				return p->filesize ? p->filesize(fname+2) : -1;
+	#if GFILE_ALLOW_DEVICESPECIFIC
+		if (fname[0] && fname[1] == '|') {
+			for(p = FsChain; p; p = p->next) {
+				if (p->prefix == fname[0])
+					return p->filesize ? p->filesize(fname+2) : -1;
+			}
+			return -1;
 		}
-	} else {
-		long int res;
+	#endif
 
-		for(p = FsChain; p; p = p->next) {
-			if (p->filesize && (res = p->filesize(fname)) != -1)
-				return res;
-		}
+	for(p = FsChain; p; p = p->next) {
+		if (p->filesize && (res = p->filesize(fname)) != -1)
+			return res;
 	}
 	return -1;
 }
 
-bool_t	gfileRename(const char *oldname, const char *newname) {
+bool_t gfileRename(const char *oldname, const char *newname) {
 	const GFILEVMT *p;
 
-	if ((oldname[0] && oldname[1] == '|') || (newname[0] && newname[1] == '|')) {
-		char ch;
+	#if GFILE_ALLOW_DEVICESPECIFIC
+		if ((oldname[0] && oldname[1] == '|') || (newname[0] && newname[1] == '|')) {
+			char ch;
 
-		if (oldname[0] && oldname[1] == '|') {
-			ch = oldname[0];
-			oldname += 2;
-			if (newname[0] && newname[1] == '|') {
-				if (newname[0] != ch)
-					// Both oldname and newname are fs specific but different ones.
-					return FALSE;
+			if (oldname[0] && oldname[1] == '|') {
+				ch = oldname[0];
+				oldname += 2;
+				if (newname[0] && newname[1] == '|') {
+					if (newname[0] != ch)
+						// Both oldname and newname are fs specific but different ones.
+						return FALSE;
+					newname += 2;
+				}
+			} else {
+				ch = newname[0];
 				newname += 2;
 			}
-		} else {
-			ch = newname[0];
-			newname += 2;
+			for(p = FsChain; p; p = p->next) {
+				if (p->prefix == ch)
+					return p->ren && p->ren(oldname, newname);
+			}
+			return FALSE;
 		}
-		for(p = FsChain; p; p = p->next) {
-			if (p->prefix == ch)
-				return p->ren && p->ren(oldname, newname);
-		}
-	} else {
-		for(p = FsChain; p; p = p->next) {
-			if (p->ren && p->ren(oldname,newname))
-				return TRUE;
-		}
+	#endif
+
+	for(p = FsChain; p; p = p->next) {
+		if (p->ren && p->ren(oldname,newname))
+			return TRUE;
 	}
 	return FALSE;
 }
@@ -233,32 +244,47 @@ static bool_t testopen(const GFILEVMT *p, GFILE *f, const char *fname) {
 }
 
 GFILE *gfileOpen(const char *fname, const char *mode) {
-	GFILE *f;
+	uint16_t		flags;
+	GFILE *			f;
 	const GFILEVMT *p;
+
+	// Get the requested mode
+	if (!(flags = mode2flags(mode)))
+		return FALSE;
+
+	#if GFILE_ALLOW_DEVICESPECIFIC
+		if (fname[0] && fname[1] == '|') {
+			// First find an available GFILE slot.
+			for (f = gfileArr; f < &gfileArr[GFILE_MAX_GFILES]; f++) {
+				if (!(f->flags & GFILEFLG_OPEN)) {
+					// Try to open the file
+					f->flags = flags;
+					for(p = FsChain; p; p = p->next) {
+						if (p->prefix == fname[0])
+							return testopen(p, f, fname+2);
+					}
+					// File not found
+					break;
+				}
+			}
+
+			// No available slot
+			return FALSE;
+		}
+	#endif
 
 	// First find an available GFILE slot.
 	for (f = gfileArr; f < &gfileArr[GFILE_MAX_GFILES]; f++) {
 		if (!(f->flags & GFILEFLG_OPEN)) {
 
-			// Get the requested mode
-			if (!(f->flags = mode2flags(mode)))
-				return FALSE;
-
 			// Try to open the file
-			if (fname[0] && fname[1] == '|') {
-				for(p = FsChain; p; p = p->next) {
-					if (p->prefix == fname[0])
-						return testopen(p, f, fname+2);
-				}
-			} else {
-				for(p = FsChain; p; p = p->next) {
-					if (testopen(p, f, fname))
-						return TRUE;
-				}
+			f->flags = flags;
+			for(p = FsChain; p; p = p->next) {
+				if (testopen(p, f, fname))
+					return TRUE;
 			}
-
 			// File not found
-			return FALSE;
+			break;
 		}
 	}
 
@@ -267,48 +293,384 @@ GFILE *gfileOpen(const char *fname, const char *mode) {
 }
 
 void gfileClose(GFILE *f) {
-	// Make sure it is one of the system GFILE's
-	if (f < gfileArr || f >= &gfileArr[GFILE_MAX_GFILES])
+	if (!(f->flags & GFILEFLG_OPEN))
 		return;
+	if (f->vmt->close)
+		f->vmt->close(f);
+	f->flags = 0;
 }
 
-size_t	gfileRead(GFILE *f, char *buf, size_t len) {
+size_t gfileRead(GFILE *f, char *buf, size_t len) {
+	size_t	res;
 
+	if ((f->flags & (GFILEFLG_OPEN|GFILEFLG_READ)) != (GFILEFLG_OPEN|GFILEFLG_READ))
+		return 0;
+	if (!f->vmt->read)
+		return 0;
+	if ((res = f->vmt->read(f, buf, len)) <= 0)
+		return 0;
+	f->pos += res;
+	return res;
 }
 
-size_t	gfileWrite(GFILE *f, const char *buf, size_t len) {
+size_t gfileWrite(GFILE *f, const char *buf, size_t len) {
+	size_t	res;
 
+	if ((f->flags & (GFILEFLG_OPEN|GFILEFLG_WRITE)) != (GFILEFLG_OPEN|GFILEFLG_WRITE))
+		return 0;
+	if (!f->vmt->write)
+		return 0;
+	if ((res = f->vmt->write(f, buf, len)) <= 0)
+		return 0;
+	f->pos += res;
+	return res;
 }
 
-long int	gfileGetPos(GFILE *f) {
-
+long int gfileGetPos(GFILE *f) {
+	if (!(f->flags & GFILEFLG_OPEN))
+		return 0;
+	return f->pos;
 }
 
 bool_t gfileSetPos(GFILE *f, long int pos) {
-
+	if (!(f->flags & GFILEFLG_OPEN))
+		return FALSE;
+	if (!f->vmt->setpos || !f->vmt->setpos(f, pos))
+		return FALSE;
+	f->pos = pos;
 }
 
-long int	gfileGetSize(GFILE *f) {
-
+long int gfileGetSize(GFILE *f) {
+	if (!(f->flags & GFILEFLG_OPEN))
+		return 0;
+	if (!f->vmt->getsize)
+		return 0;
+	return f->vmt->getsize(f);
 }
+
+bool_t gfileEOF(GFILE *f) {
+	if (!(f->flags & GFILEFLG_OPEN))
+		return TRUE;
+	if (!f->vmt->eof)
+		return TRUE;
+	return f->vmt->eof(f);
+}
+
+/********************************************************
+ * String VMT routines
+ ********************************************************/
+#if GFILE_NEED_STRINGS && (GFILE_NEED_PRINTG || GFILE_NEED_SCANG)
+	#include <string.h>
+
+	// Special String VMT
+	static int StringRead(GFILE *f, char *buf, int size) {
+		memcpy(buf, (char *)f->obj+f->pos, size);
+		return size;
+	}
+	static int StringWrite(GFILE *f, const char *buf, int size) {
+		memcpy((char *)f->obj+f->pos, buf, size);
+		return size;
+	}
+	static const GFILEVMT StringVMT = {
+		0,								// next
+		0,								// flags
+		'_',							// prefix
+		0, 0, 0, 0,
+		0, 0, StringRead, StringWrite,
+		0, 0, 0,
+	};
+#endif
 
 /********************************************************
  * printg routines
  ********************************************************/
 #if GFILE_NEED_PRINTG
+	#include <stdarg.h>
+
+	#define MAX_FILLER		11
+	#define FLOAT_PRECISION 100000
+
+	int fnprintg(GFILE *f, int maxlen, const char *fmt, ...) {
+		int		res;
+		va_list	ap;
+
+		va_start(ap, fmt);
+		res = vfnprintg(f, maxlen, fmt, ap);
+		va_end(ap);
+		return res;
+	}
+
+	static char *ltoa_wd(char *p, long num, unsigned radix, long divisor) {
+		int		i;
+		char *	q;
+
+		if (!divisor) divisor = num;
+
+		q = p + MAX_FILLER;
+		do {
+			i = (int)(num % radix);
+			i += '0';
+			if (i > '9')
+			  i += 'A' - '0' - 10;
+			*--q = i;
+			num /= radix;
+		} while ((divisor /= radix) != 0);
+
+		i = (int)(p + MAX_FILLER - q);
+		do {
+			*p++ = *q++;
+		} while (--i);
+
+		return p;
+	}
+
+	int vfnprintg(GFILE *f, int maxlen, const char *fmt, va_list arg) {
+		int		ret;
+		char	*p, *s, c, filler;
+		int		i, precision, width;
+		bool_t	is_long, left_align;
+		long	l;
+		#if GFILE_ALLOW_FLOATS
+			float	f;
+			char	tmpbuf[2*MAX_FILLER + 1];
+		#else
+			char	tmpbuf[MAX_FILLER + 1];
+		#endif
+
+		ret = 0;
+		if (maxlen < 0)
+			return 0;
+		if (!maxlen)
+			maxlen = -1;
+
+		while (*fmt) {
+			if (*fmt != '%') {
+				gfileWrite(f, fmt, 1);
+				ret++; if (--maxlen) return ret;
+				fmt++;
+				continue;
+			}
+			fmt++;
+
+			p = s = tmpbuf;
+			left_align = FALSE;
+			filler = ' ';
+			width = 0;
+			precision = 0;
+
+			if (*fmt == '-') {
+				fmt++;
+				left_align = TRUE;
+			}
+			if (*fmt == '.') {
+				fmt++;
+				filler = '0';
+			}
+
+			while (1) {
+				c = *fmt++;
+				if (c >= '0' && c <= '9')
+					c -= '0';
+				else if (c == '*')
+					c = va_arg(ap, int);
+				else
+					break;
+				width = width * 10 + c;
+			}
+			if (c == '.') {
+				while (1) {
+					c = *fmt++;
+					if (c >= '0' && c <= '9')
+						c -= '0';
+					else if (c == '*')
+						c = va_arg(ap, int);
+					else
+						break;
+					precision = precision * 10 + c;
+				}
+			}
+			/* Long modifier.*/
+			if (c == 'l' || c == 'L') {
+				is_long = TRUE;
+				if (*fmt)
+					c = *fmt++;
+			}
+			else
+				is_long = (c >= 'A') && (c <= 'Z');
+
+			/* Command decoding.*/
+			switch (c) {
+			case 0:
+				return ret;
+			case 'c':
+				filler = ' ';
+				*p++ = va_arg(ap, int);
+				break;
+			case 's':
+				filler = ' ';
+				if ((s = va_arg(ap, char *)) == 0)
+					s = "(null)";
+				if (precision == 0)
+					precision = 32767;
+				for (p = s; *p && (--precision >= 0); p++);
+				break;
+			case 'D':
+			case 'd':
+				if (is_long)
+					l = va_arg(ap, long);
+				else
+					l = va_arg(ap, int);
+				if (l < 0) {
+					*p++ = '-';
+					l = -l;
+				}
+				p = ltoa_wd(p, l, 10, 0);
+				break;
+			#if GFILE_ALLOW_FLOATS
+				case 'f':
+					f = (float) va_arg(ap, double);
+					if (f < 0) {
+						*p++ = '-';
+						f = -f;
+					}
+					l = f;
+					p = ltoa_wd(p, l, 10, 0);
+					*p++ = '.';
+					l = (f - l) * FLOAT_PRECISION;
+					p = ltoa_wd(p, l, 10, FLOAT_PRECISION / 10);
+					break;
+			#endif
+			case 'X':
+			case 'x':
+				c = 16;
+				goto unsigned_common;
+			case 'U':
+			case 'u':
+				c = 10;
+				goto unsigned_common;
+			case 'O':
+			case 'o':
+				c = 8;
+			unsigned_common:
+				if (is_long)
+					l = va_arg(ap, long);
+				else
+					l = va_arg(ap, int);
+				p = ltoa_wd(p, l, c, 0);
+				break;
+			default:
+				*p++ = c;
+				break;
+			}
+
+			i = (int)(p - s);
+			if ((width -= i) < 0)
+				width = 0;
+			if (left_align == FALSE)
+				width = -width;
+			if (width < 0) {
+				if (*s == '-' && filler == '0') {
+					gfileWrite(f, s++, 1);
+					ret++; if (--maxlen) return ret;
+					i--;
+				}
+				do {
+					gfileWrite(f, &filler, 1);
+					ret++; if (--maxlen) return ret;
+				} while (++width != 0);
+			}
+			while (--i >= 0) {
+				gfileWrite(f, s++, 1);
+				ret++; if (--maxlen) return ret;
+			}
+			while (width) {
+				gfileWrite(f, &filler, 1);
+				ret++; if (--maxlen) return ret;
+				width--;
+			}
+		}
+		return ret;
+	}
+
+	#if GFILE_NEED_STRINGS
+		int snprintg(char *buf, int maxlen, const char *fmt, ...) {
+			int		res;
+			GFILE	f;
+			va_list	ap;
+
+			if (maxlen <= 1) {
+				if (maxlen == 1)
+					*buf = 0;
+				return 0;
+			}
+			f.flags = GFILEFLG_OPEN|GFILEFLG_WRITE;
+			f.vmt = &StringVMT;
+			f.pos = 0;
+			f.obj = buf;
+			va_start(ap, fmt);
+			res = vfnprintg(&f, maxlen-1, fmt, ap);
+			va_end(ap);
+			buf[res] = 0;
+			return res;
+		}
+		int vsnprintg(char *buf, int maxlen, const char *fmt, va_list arg) {
+			int		res;
+			GFILE	f;
+
+			if (maxlen <= 1) {
+				if (maxlen == 1)
+					*buf = 0;
+				return 0;
+			}
+			f.flags = GFILEFLG_OPEN|GFILEFLG_WRITE;
+			f.vmt = &StringVMT;
+			f.pos = 0;
+			f.obj = buf;
+			res = vfnprintg(&f, maxlen-1, fmt, arg);
+			buf[res] = 0;
+			return res;
+		}
+	#endif
 #endif
 
 /********************************************************
  * scang routines
  ********************************************************/
 #if GFILE_NEED_SCANG
+	#error "GFILE-SCANG: Not implemented yet"
 #endif
 
 /********************************************************
  * stdio emulation routines
  ********************************************************/
-#ifndef GFILE_NEED_STDIO
-	#define GFILE_NEED_STDIO		FALSE
+#if GFILE_NEED_STDIO
+	size_t gstdioRead(void * ptr, size_t size, size_t count, FILE *f) {
+		return gfileRead(f, ptr, size*count)/size;
+	}
+	size_t gstdioWrite(const void * ptr, size_t size, size_t count, FILE *f) {
+		return gfileWrite(f, ptr, size*count)/size;
+	}
+	int gstdioSeek(FILE *f, size_t offset, int origin) {
+		switch(origin) {
+		case SEEK_SET:
+			break;
+		case SEEK_CUR:
+			offset += f->pos;
+			break;
+		case SEEK_END:
+			offset += gfileGetSize(f);
+			break;
+		default:
+			return -1;
+		}
+		return gfileSetPos(f, offset) ? 0 : -1;
+	}
+	int gstdioGetpos(FILE *f, long int *pos) {
+		if (!(f->flags & GFILEFLG_OPEN))
+			return -1;
+		*pos = f->pos;
+		return 0;
+	}
 #endif
 
 #endif /* GFX_USE_GFILE */
