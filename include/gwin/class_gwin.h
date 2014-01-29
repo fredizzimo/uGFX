@@ -23,20 +23,23 @@
 
 #if GFX_USE_GWIN || defined(__DOXYGEN__)
 
+#include "gwin/ggroup.h"
+
 /**
  * @brief	The predefined flags for a Window
  * @{
  */
-#define GWIN_FLG_DYNAMIC				0x0001			// @< The GWIN structure is allocated
-#define GWIN_FLG_VISIBLE				0x0002			// @< The window is visible
-#define GWIN_FLG_MINIMIZED				0x0004			// @< The window is minimized
-#define GWIN_FLG_MAXIMIZED				0x0008			// @< The window is maximized
-#define GWIN_FLG_ENABLED				0x0010			// @< The window is enabled
-#define GWIN_FLG_WIDGET					0x0020			// @< This is a widget
-#define GWIN_FLG_ALLOCTXT				0x0040			// @< The widget text is allocated
-#define GWIN_FLG_MOUSECAPTURE			0x0080			// @< The widget has captured the mouse
-#define GWIN_FIRST_WM_FLAG				0x0100			// @< 4 bits free for the window manager to use
-#define GWIN_FIRST_CONTROL_FLAG			0x1000			// @< 4 bits free for Windows and Widgets to use
+#define GWIN_FLG_DYNAMIC				0x00000001		// @< The GWIN structure is allocated
+#define GWIN_FLG_VISIBLE				0x00000002		// @< The window is visible
+#define GWIN_FLG_MINIMIZED				0x00000004		// @< The window is minimized
+#define GWIN_FLG_MAXIMIZED				0x00000008		// @< The window is maximized
+#define GWIN_FLG_ENABLED				0x00000010		// @< The window is enabled
+#define GWIN_FLG_WIDGET					0x00000020		// @< This is a widget
+#define GWIN_FLG_ALLOCTXT				0x00000040		// @< The widget text is allocated
+#define GWIN_FLG_MOUSECAPTURE			0x00000080		// @< The widget has captured the mouse
+#define GWIN_FLG_GROUP					0x00000100		// @< This is a group
+#define GWIN_FIRST_WM_FLAG				0x00100000		// @< 4 bits free for the window manager to use
+#define GWIN_FIRST_CONTROL_FLAG			0x01000000		// @< 8 bits free for Windows and Widgets to use
 /* @} */
 
 /**
@@ -101,6 +104,18 @@ typedef struct gwinVMT {
 			};
 		#endif
 	} gwidgetVMT;
+	/* @} */
+#endif
+
+#if GWIN_NEED_GROUPS || defined(__DOXYGEN__)
+	/**
+	 * @brief	The Virtual Method Table for a group
+	 * @note	A widget must have a redraw function. It must call gwinRedrawChildren() after redrawing itself
+	 * @{
+	 */
+	typedef struct ggroupVMT {
+		struct gwinVMT				g;														// @< This is still a GWIN
+	} ggroupVMT;
 	/* @} */
 #endif
 
@@ -206,6 +221,10 @@ GHandle _gwindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pInit
 	void _gwidgetRedraw(GHandle gh);
 #endif
 
+#if GWIN_NEED_GROUPS || defined(__DOXYGEN__)
+	GHandle _ggroupCreate(GDisplay *g, GGroupObject *go, const GWindowInit *pInit, const ggroupVMT *vmt);
+#endif
+
 #ifdef __cplusplus
 }
 #endif
@@ -214,3 +233,4 @@ GHandle _gwindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pInit
 
 #endif /* _CLASS_GWIN_H */
 /** @} */
+

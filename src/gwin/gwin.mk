@@ -1,4 +1,5 @@
 GFXSRC +=   $(GFXLIB)/src/gwin/gwin.c \
+			$(GFXLIB)/src/gwin/ggroup.c \
 			$(GFXLIB)/src/gwin/gwidget.c \
 			$(GFXLIB)/src/gwin/gwm.c \
 			$(GFXLIB)/src/gwin/console.c \

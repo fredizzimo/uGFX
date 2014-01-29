@@ -11,8 +11,8 @@
 
 #include "gwin/class_gwin.h"
 
-GHandle _ggroupCreate(GDisplay *g, GGroupObject *go, const GGroupInit *pInit) {
-	if (!(go = (GGroupObject *)_gwindowCreate(g, &go->g, &pInit->g, &vmt->g, GWIN_FLG_GROUP|GWIN_FLG_ENABLED)))
+GHandle _ggroupCreate(GDisplay *g, GGroupObject *go, const GWindowInit *pInit, const ggroupVMT *vmt) {
+	if (!(go = (GGroupObject *)_gwindowCreate(g, &go->g, pInit, &vmt->g, GWIN_FLG_GROUP|GWIN_FLG_ENABLED)))
 		return NULL;
 
 	go->parent = NULL;

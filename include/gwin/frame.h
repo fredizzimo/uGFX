@@ -31,7 +31,7 @@
 #define GWIN_FRAME_MINMAX_BTN		(GWIN_FIRST_CONTROL_FLAG << 2)
 
 typedef struct GFrameObject {
-	GWidgetObject		w;
+	GGroupObject		w;
 
 	GListener			gl;			// internal listener for the buttons
 	// These could probably be removed... I have to think harder later
@@ -60,7 +60,7 @@ typedef struct GFrameObject {
  *
  * @api
  */
-GHandle gwinGFrameCreate(GDisplay *g, GFrameObject *fo, GWidgetInit *pInit, uint16_t flags);
+GHandle gwinGFrameCreate(GDisplay *g, GFrameObject *fo, GWindowInit *pInit, uint32_t flags);
 #define gwinFrameCreate(fo, pInit, flags)	gwinGFrameCreate(GDISP, fo, pInit, flags);
 
 #endif /* _GWIN_FRAME_H */

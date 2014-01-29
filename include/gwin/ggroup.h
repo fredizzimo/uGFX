@@ -41,6 +41,5 @@ typedef struct GGroupObject {
 } GGroupObject;
 /** @} */
 
-
 #endif /* _GGROUP_H */
 

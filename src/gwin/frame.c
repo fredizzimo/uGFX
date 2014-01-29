@@ -17,7 +17,7 @@
 
 #include "gfx.h"
 
-#if (GFX_USE_GWIN && GWIN_NEED_FRAME) || defined(__DOXYGEN__)
+#if GFX_USE_GWIN && GWIN_NEED_FRAME
 
 /* Some values for the default render */
 #define BORDER_X		5
@@ -29,7 +29,7 @@
 #define gh2obj			((GFrameObject *)gh)
 
 /* Forware declarations */
-void gwinFrameDraw_Std(GWidgetObject *gw, void *param);
+void gwinFrameDraw_Std(GWindowObject *gw);
 static void _callbackBtn(void *param, GEvent *pe);
 
 static void _frameDestroy(GHandle gh) {
@@ -41,83 +41,34 @@ static void _frameDestroy(GHandle gh) {
 	_gwidgetDestroy(gh);
 }
 
-#if GINPUT_NEED_MOUSE
-	static void _mouseDown(GWidgetObject *gw, coord_t x, coord_t y) {
-	
-	}
-
-	static void _mouseUp(GWidgetObject *gw, coord_t x, coord_t y) {
-
-	}
-
-	static void _mouseMove(GWidgetObject *gw, coord_t x, coord_t y) {
-	
-	}
-#endif
-
-static const gwidgetVMT frameVMT = {
+static const ggroupVMT frameVMT = {
 	{
 		"Frame",					// The classname
 		sizeof(GFrameObject),		// The object size
 		_frameDestroy,				// The destroy routie
-		_gwidgetRedraw,				// The redraw routine
+		gwinFrameDraw_Std,			// The redraw routine
 		0,							// The after-clear routine
 	},
-	gwinFrameDraw_Std,				// The default drawing routine
-	#if GINPUT_NEED_MOUSE
-		{
-			_mouseDown,				// Process mouse down event
-			_mouseUp,				// Process mouse up events
-			_mouseMove,				// Process mouse move events
-		},
-	#endif
-	#if GINPUT_NEED_TOGGLE
-		{
-			0,						// 1 toggle role
-			0,						// Assign Toggles
-			0,						// Get Toggles
-			0,						// Process toggle off events
-			0,						// Process toggle on events
-		},
-	#endif
-	#if GINPUT_NEED_DIAL
-		{
-			0,						// 1 dial roles
-			0,						// Assign Dials
-			0,						// Get Dials
-			0,						// Process dial move events
-		},
-	#endif
 };
 
-GHandle gwinGFrameCreate(GDisplay *g, GFrameObject *fo, GWidgetInit *pInit, uint16_t flags) {
-	uint16_t tmp;
-
-	if (!(fo = (GFrameObject *)_gwidgetCreate(g, &fo->w, pInit, &frameVMT)))
+GHandle gwinGFrameCreate(GDisplay *g, GFrameObject *fo, GWindowInit *pInit, uint32_t flags) {
+	if (!(fo = (GFrameObject *)_ggroupCreate(g, &fo->w, pInit, &frameVMT)))
 		return 0;
 
 	fo->btnClose = NULL;
 	fo->btnMin = NULL;
 	fo->btnMax = NULL;
 
-	/* Buttons require a border */
-	tmp = flags;
-	if ((tmp & GWIN_FRAME_CLOSE_BTN || tmp & GWIN_FRAME_MINMAX_BTN) && !(tmp & GWIN_FRAME_BORDER)) {
-		tmp |= GWIN_FRAME_BORDER;
-	}
-
-	/* apply flags */
-	fo->w.g.flags |= tmp;
-
 	/* create and initialize the listener if any button is present. */
-	if ((fo->w.g.flags & GWIN_FRAME_CLOSE_BTN) || (fo->w.g.flags & GWIN_FRAME_MINMAX_BTN)) {
+	if ((flags & GWIN_FRAME_CLOSE_BTN) || (flags & GWIN_FRAME_MINMAX_BTN)) {
+		flags |= GWIN_FRAME_BORDER;				// Buttons require a border
 		geventListenerInit(&fo->gl);
 		gwinAttachListener(&fo->gl);
 		geventRegisterCallback(&fo->gl, _callbackBtn, (GHandle)fo);
 	}
 
 	/* create close button if necessary */
-	if (fo->w.g.flags & GWIN_FRAME_CLOSE_BTN) {
+	if ((flags & GWIN_FRAME_CLOSE_BTN)) {
 		GWidgetInit wi;
 
 		wi.customDraw = 0;
@@ -135,7 +86,7 @@ GHandle gwinGFrameCreate(GDisplay *g, GFrameObject *fo, GWidgetInit *pInit, uint
 	}
 
 	/* create minimize and maximize buttons if necessary */
-	if (fo->w.g.flags & GWIN_FRAME_MINMAX_BTN) {
+	if ((flags & GWIN_FRAME_MINMAX_BTN)) {
 		GWidgetInit wi;
 
 		wi.customDraw = 0;
@@ -160,7 +111,8 @@ GHandle gwinGFrameCreate(GDisplay *g, GFrameObject *fo, GWidgetInit *pInit, uint
 		gwinAddChild((GHandle)fo, fo->btnMax, FALSE);
 	}
 
-	gwinSetVisible(&fo->w.g, pInit->g.show);
+	fo->w.g.flags |= flags & (GWIN_FRAME_BORDER|GWIN_FRAME_CLOSE_BTN|GWIN_FRAME_MINMAX_BTN);
+	gwinSetVisible(&fo->w.g, pInit->show);
 
 	return (GHandle)fo;
 }
@@ -186,47 +138,36 @@ static void _callbackBtn(void *param, GEvent *pe) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// Default render routines                                                                       //
+// Render routine                                                                                //
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const GColorSet* _getDrawColors(GWidgetObject *gw) {
-	if (!(gw->g.flags & GWIN_FLG_ENABLED))
-		return &gw->pstyle->disabled;
-	//if ((gw->g.flags & GBUTTON_FLG_PRESSED))
-	//	return &gw->pstyle->pressed;
-
-	return &gw->pstyle->enabled;
-}
-
-void gwinFrameDraw_Std(GWidgetObject *gw, void *param) {
-	GColorSet		*pcol;
+void gwinFrameDraw_Std(GHandle gh) {
 	color_t			border;
 	color_t			background;
-	(void)param;
+	color_t			text;
 
-	if (gw->g.vmt != (gwinVMT *)&frameVMT)
+	if (gh->vmt != (gwinVMT *)&frameVMT)
 		return;
-
-	pcol = _getDrawColors(gw);
 
 	// do some magic to make the background lighter than the widgets. Fix this somewhen.
 	border = HTML2COLOR(0x2698DE);
 	background = HTML2COLOR(0xEEEEEE);
+	text = White;
 
 	#if GDISP_NEED_CLIP
-		gdispGSetClip(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height);
+		gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 	#endif 
 
 	// Render the actual frame (with border, if any)
-	if (gw->g.flags & GWIN_FRAME_BORDER) {
-		gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, border);
-		gdispGFillArea(gw->g.display, gw->g.x + BORDER_X, gw->g.y + BORDER_Y, gw->g.width - 2*BORDER_X, gw->g.width - BORDER_Y - BORDER_X, background);
+	if (gh->flags & GWIN_FRAME_BORDER) {
+		gdispGFillArea(gh->display, gh->x, gh->y, gh->width, gh->height, border);
+		gdispGFillArea(gh->display, gh->x + BORDER_X, gh->y + BORDER_Y, gh->width - 2*BORDER_X, gh->width - BORDER_Y - BORDER_X, background);
 	} else {
 		// This ensure that the actual frame content (it's children) render at the same spot, no mather whether the frame has a border or not
-		gdispGFillArea(gw->g.display, gw->g.x + BORDER_X, gw->g.y + BORDER_Y, gw->g.width, gw->g.height, background);
+		gdispGFillArea(gh->display, gh->x + BORDER_X, gh->y + BORDER_Y, gh->width, gh->height, background);
 	}
 
-	// Render frame title - if any
+/*	// Render frame title - if any
 	if (gw->text != NULL) {
 		coord_t text_y;
 
@@ -234,12 +175,9 @@ void gwinFrameDraw_Std(GWidgetObject *gw, void *param) {
 
 		gdispGDrawString(gw->g.display, gw->g.x + BORDER_X, gw->g.y + text_y, gw->text, gw->g.font, pcol->text);
 	}
+*/
 
-	#if GDISP_NEED_CLIP
-		gdispGUnsetClip(gw->g.display);
-	#endif
-
-	gwinRedrawChildren((GHandle)gw);
+	gwinRedrawChildren(gh);
 }
 
 #endif  /* (GFX_USE_GWIN && GWIN_NEED_FRAME) || defined(__DOXYGEN__) */
