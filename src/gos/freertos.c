@@ -64,7 +64,7 @@ portTickType MS2ST(portTickType ms)
 
 	uint64_t	val;
 
-	if(configTICK_RATE_HZ == 1000) {	// gain time because no test to do in most case
+	if (configTICK_RATE_HZ == 1000) {	// gain time because no test to do in most case
 		return ms;
 	}
 
@@ -97,7 +97,7 @@ bool_t gfxSemWait(gfxSem* psem, delaytime_t ms)
 {
 	psem->counter--;
 
-	if(xSemaphoreTake(psem->sem, MS2ST(ms)) == pdPASS)
+	if (xSemaphoreTake(psem->sem, MS2ST(ms)) == pdPASS)
 		return TRUE;
 
 	psem->counter++;
@@ -109,7 +109,7 @@ void gfxSemSignal(gfxSem* psem)
 {
 	taskENTER_CRITICAL();
 
-	if(psem->counter < psem->limit) {
+	if (psem->counter < psem->limit) {
 		psem->counter++;
 		xSemaphoreGive(psem->sem);
 	}
@@ -122,7 +122,7 @@ void gfxSemSignalI(gfxSem* psem)
 {
 	portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;
 
-	if(psem->counter < psem->limit) {
+	if (psem->counter < psem->limit) {
 		psem->counter++;
 		xSemaphoreGiveFromISR(psem->sem,&xHigherPriorityTaskWoken);
 	}
@@ -146,3 +146,4 @@ gfxThreadHandle gfxThreadCreate(void *stackarea, size_t stacksz, threadpriority_
 #endif /* GFX_USE_OS_FREERTOS */
 /** @} */
 #endif /* USE_UGFX */
+
