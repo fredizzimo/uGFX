@@ -18,6 +18,7 @@
 
 /* The operating system to use. One of these must be defined - preferably in your Makefile */
 //#define GFX_USE_OS_CHIBIOS                         TRUE
+//#define GFX_USE_OS_FREERTOS                        TRUE
 //#define GFX_USE_OS_WIN32                           TRUE
 //#define GFX_USE_OS_LINUX                           TRUE
 //#define GFX_USE_OS_OSX                             TRUE

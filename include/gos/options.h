@@ -28,6 +28,23 @@
 		#define GFX_USE_OS_CHIBIOS		FALSE
 	#endif
 	/**
+	 * @brief   Use FreeRTOS
+	 * @details	Defaults to FALSE
+	 */
+	#ifndef GFX_USE_OS_FREERTOS
+		#define GFX_USE_OS_FREERTOS		FALSE
+	#endif
+	/**
+	 * @brief   Use Win32
+	 * @details	Defaults to FALSE
+	 */
+	#ifndef GFX_USE_OS_WIN32
+		#define GFX_USE_OS_WIN32		FALSE
+	#endif
+	/**
+	 * @brief   Use a linux based system running X11 
+	 * @details	Defaults to FALSE
+	/**
 	 * @brief   Use Win32
 	 * @details	Defaults to FALSE
 	 */
