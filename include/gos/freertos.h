@@ -15,10 +15,10 @@
 
 #if GFX_USE_OS_FREERTOS
 
-#include "freertos/FreeRTOS.h"
-#include "config/FreeRTOSConfig.h"
-#include "freertos/semphr.h"
-#include "freertos/task.h"
+#include "FreeRTOS.h"
+#include "FreeRTOSConfig.h"
+#include "semphr.h"
+#include "task.h"
 
 /*===========================================================================*/
 /* Type definitions                                                          */

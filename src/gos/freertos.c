@@ -9,12 +9,12 @@
  * @file    src/gos/freertos.c
  * @brief   GOS FreeRTOS Operating System support.
  */
-#include "heivs/config.h"
 #include "gfx.h"
-#include "heivs/delay.h"
-#include "freertos/FreeRTOS.h"
-#include "config/FreeRTOSConfig.h"
 #include <string.h>
+
+#if INCLUDE_vTaskDelay != 1
+	#error "GOS: INCLUDE_vTaskDelay must be defined in FreeRTOSConfig.h"
+#endif
 
 #if configUSE_MUTEXES != 1
 	#error "GOS: configUSE_MUTEXES must be defined in FreeRTOSConfig.h"
@@ -26,8 +26,7 @@
 
 void _gosInit(void)
 {
-	// IMPORTANT: Check for already started scheduler here!!!
-	vTaskStartScheduler(); 
+	// The user must call vTaskStartScheduler() himself before he calls gfxInit(). 
 }
 
 void* gfxRealloc(void *ptr, size_t oldsz, size_t newsz)
