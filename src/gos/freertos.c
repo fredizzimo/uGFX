@@ -50,20 +50,18 @@ void* gfxRealloc(void *ptr, size_t oldsz, size_t newsz)
 
 void gfxSleepMilliseconds(delaytime_t ms)
 {
-	if(ms == TIME_IMMEDIATE) {
-		taskYIELD();
-	} else {
-		vTaskDelay(ms);
-	}
+	// Implement this
 }
 
 void gfxSleepMicroseconds(delaytime_t ms)
 {
-	delay_wait_us(ms);
+	// Implement this
 }
 
 portTickType MS2ST(portTickType ms)
 {
+	// Verify this
+
 	uint64_t	val;
 
 	if(configTICK_RATE_HZ == 1000) {	// gain time because no test to do in most case
