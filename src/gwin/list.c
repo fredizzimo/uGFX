@@ -24,9 +24,10 @@
 #include <stdlib.h>
 
 // user for the default drawing routine
-#define SCROLLWIDTH		16	// the border from the scroll buttons to the frame
-#define ARROW			10	// arrow side length
-#define TEXTGAP			1	// extra vertical padding for text
+#define SCROLLWIDTH			16	// the border from the scroll buttons to the frame
+#define ARROW				10	// arrow side length
+#define HORIZONTAL_PADDING	5	// extra horizontal padding for text
+#define VERTICAL_PADDING	2	// extra vertical padding for text
 
 // Macro's to assist in data type conversions
 #define gh2obj		((GListObject *)gh)
@@ -92,7 +93,7 @@ static void gwinListDefaultDraw(GWidgetObject* gw, void* param) {
 	#endif
 
 	ps = (gw->g.flags & GWIN_FLG_ENABLED) ? &gw->pstyle->enabled : &gw->pstyle->disabled;
-	iheight = gdispGetFontMetric(gw->g.font, fontHeight) + TEXTGAP;
+	iheight = gdispGetFontMetric(gw->g.font, fontHeight) + VERTICAL_PADDING;
 	x = 1;
 
 	// the scroll area
@@ -141,24 +142,24 @@ static void gwinListDefaultDraw(GWidgetObject* gw, void* param) {
 	// Draw until we run out of room or items
 	for (y = 1-(gw2obj->top%iheight); y < gw->g.height-2 && qi; qi = gfxQueueASyncNext(qi), y += iheight) {
 		fill = (qi2li->flags & GLIST_FLG_SELECTED) ? ps->fill : gw->pstyle->background;
+		gdispGFillArea(gw->g.display, gw->g.x+1, gw->g.y+y, iwidth, iheight, fill);
 		#if GWIN_NEED_LIST_IMAGES
 			if ((gw->g.flags & GLIST_FLG_HASIMAGES)) {
 				// Clear the image area
-				gdispGFillArea(gw->g.display, gw->g.x+1, gw->g.y+y, x-1, iheight, fill);
 				if (qi2li->pimg && gdispImageIsOpen(qi2li->pimg)) {
 					// Calculate which image
-					sy = (qi2li->flags & GLIST_FLG_SELECTED) ? 0 : (iheight-TEXTGAP);
+					sy = (qi2li->flags & GLIST_FLG_SELECTED) ? 0 : (iheight-VERTICAL_PADDING);
 					if (!(gw->g.flags & GWIN_FLG_ENABLED))
-						sy += 2*(iheight-TEXTGAP);
+						sy += 2*(iheight-VERTICAL_PADDING);
 					while (sy > qi2li->pimg->height)
-						sy -= iheight-TEXTGAP;
+						sy -= iheight-VERTICAL_PADDING;
 					// Draw the image
 					gdispImageSetBgColor(qi2li->pimg, fill);
-					gdispGImageDraw(gw->g.display, qi2li->pimg, gw->g.x+1, gw->g.y+y, iheight-TEXTGAP, iheight-TEXTGAP, 0, sy);
+					gdispGImageDraw(gw->g.display, qi2li->pimg, gw->g.x+1, gw->g.y+y, iheight-VERTICAL_PADDING, iheight-VERTICAL_PADDING, 0, sy);
 				}
 			}
 		#endif
-		gdispGFillStringBox(gw->g.display, gw->g.x+x, gw->g.y+y, iwidth, iheight, qi2li->text, gw->g.font, ps->text, fill, justifyLeft);
+		gdispGFillStringBox(gw->g.display, gw->g.x+x+HORIZONTAL_PADDING, gw->g.y+y, iwidth-HORIZONTAL_PADDING, iheight, qi2li->text, gw->g.font, ps->text, fill, justifyLeft);
 	}
 
 	// Fill any remaining item space
@@ -172,7 +173,7 @@ static void gwinListDefaultDraw(GWidgetObject* gw, void* param) {
         int                         item, i;
         coord_t                     iheight;
 
-        iheight = gdispGetFontMetric(gw->g.font, fontHeight) + TEXTGAP;
+        iheight = gdispGetFontMetric(gw->g.font, fontHeight) + VERTICAL_PADDING;
 
         // Handle click over the list area
         item = (gw2obj->top + y) / iheight;
@@ -210,7 +211,7 @@ static void gwinListDefaultDraw(GWidgetObject* gw, void* param) {
         gw2obj->start_mouse_y = y;
 		gw2obj->last_mouse_y = y;
 
-		iheight = gdispGetFontMetric(gw->g.font, fontHeight) + TEXTGAP;
+		iheight = gdispGetFontMetric(gw->g.font, fontHeight) + VERTICAL_PADDING;
 		pgsz = (gw->g.height-2);
 		if (pgsz < 1) pgsz = 1;
 
@@ -277,7 +278,7 @@ static void gwinListDefaultDraw(GWidgetObject* gw, void* param) {
 
         if (gw2obj->last_mouse_y != y) {
             oldtop = gw2obj->top;
-            iheight = gdispGetFontMetric(gw->g.font, fontHeight) + TEXTGAP;
+            iheight = gdispGetFontMetric(gw->g.font, fontHeight) + VERTICAL_PADDING;
 
             gw2obj->top -= y - gw2obj->last_mouse_y;
             if (gw2obj->top >= gw2obj->cnt * iheight - (gw->g.height-2))
