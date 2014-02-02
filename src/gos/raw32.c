@@ -542,7 +542,7 @@ static void _gosThreadsInit(void) {
 			char *		framebase;
 
 			// Allocate a buffer to store our test data
-			pframeinfo = (saveloc *)gfxAlloc(sizeof(saveloc)*2);
+			pframeinfo = gfxAlloc(sizeof(saveloc)*2);
 
 			// Get details of the stack frame from within a function
 			get_stack_state_in_fn();

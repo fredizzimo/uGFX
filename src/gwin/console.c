@@ -285,7 +285,7 @@ GHandle gwinGConsoleCreate(GDisplay *g, GConsoleObject *gc, const GWindowInit *p
 		gcw->bufsize *= gh->height / gdispGetFontMetric(gh->font, fontHeight);
 
 		// Allocate the buffer
-		if (!(gcw->buffer = (char*)gfxAlloc(gcw->bufsize)))
+		if (!(gcw->buffer = gfxAlloc(gcw->bufsize)))
 			return FALSE;
 
 		// All good!

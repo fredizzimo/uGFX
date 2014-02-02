@@ -458,7 +458,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	#endif
 
 	// Create a private area for this window
-	priv = (winPriv *)gfxAlloc(sizeof(winPriv));
+	priv = gfxAlloc(sizeof(winPriv));
 	assert(priv != 0);
 	memset(priv, 0, sizeof(winPriv));
 	g->priv = priv;
