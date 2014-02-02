@@ -21,11 +21,13 @@
 
 #include "gwin/class_gwin.h"
 #include <string.h>
+#include <stdlib.h>
 
 // user for the default drawing routine
-#define SCROLLWIDTH		16	// the border from the scroll buttons to the frame
-#define ARROW			10	// arrow side length
-#define TEXTGAP			1	// extra vertical padding for text
+#define SCROLLWIDTH			16	// the border from the scroll buttons to the frame
+#define ARROW				10	// arrow side length
+#define HORIZONTAL_PADDING	5	// extra horizontal padding for text
+#define VERTICAL_PADDING	2	// extra vertical padding for text
 
 // Macro's to assist in data type conversions
 #define gh2obj		((GListObject *)gh)
@@ -38,6 +40,7 @@
 #define GLIST_FLG_MULTISELECT		(GWIN_FIRST_CONTROL_FLAG << 0)
 #define GLIST_FLG_HASIMAGES			(GWIN_FIRST_CONTROL_FLAG << 1)
 #define GLIST_FLG_SCROLLALWAYS		(GWIN_FIRST_CONTROL_FLAG << 2)
+#define GLIST_FLG_SCROLLSMOOTH      (GWIN_FIRST_CONTROL_FLAG << 3)
 
 // Flags on a ListItem.
 #define GLIST_FLG_SELECTED			0x0001
@@ -90,11 +93,21 @@ static void gwinListDefaultDraw(GWidgetObject* gw, void* param) {
 	#endif
 
 	ps = (gw->g.flags & GWIN_FLG_ENABLED) ? &gw->pstyle->enabled : &gw->pstyle->disabled;
-	iheight = gdispGetFontMetric(gw->g.font, fontHeight) + TEXTGAP;
+	iheight = gdispGetFontMetric(gw->g.font, fontHeight) + VERTICAL_PADDING;
 	x = 1;
 
 	// the scroll area
-	if ((gw2obj->cnt > (gw->g.height-2) / iheight) || (gw->g.flags & GLIST_FLG_SCROLLALWAYS)) {
+	if (gw->g.flags & GLIST_FLG_SCROLLSMOOTH) {
+	    iwidth = gw->g.width - 2 - 4;
+	    if (gw2obj->cnt > 0) {
+	        int max_scroll_value = gw2obj->cnt * iheight - gw->g.height-2;
+	        if (max_scroll_value > 0) {
+                int bar_height = (gw->g.height-2) * (gw->g.height-2) / (gw2obj->cnt * iheight);
+                gdispGFillArea(gw->g.display, gw->g.x + gw->g.width-4, gw->g.y + 1, 2, gw->g.height-1, gw->pstyle->background);
+                gdispGFillArea(gw->g.display, gw->g.x + gw->g.width-4, gw->g.y + gw2obj->top * ((gw->g.height-2)-bar_height) / max_scroll_value, 2, bar_height, ps->edge);
+	        }
+	    }
+	} else if ((gw2obj->cnt > (gw->g.height-2) / iheight) || (gw->g.flags & GLIST_FLG_SCROLLALWAYS)) {
 		iwidth = gw->g.width - (SCROLLWIDTH+3);
 		gdispGFillArea(gw->g.display, gw->g.x+iwidth+2, gw->g.y+1, SCROLLWIDTH, gw->g.height-2, gdispBlendColor(ps->fill, gw->pstyle->background, 128));
 		gdispGDrawLine(gw->g.display, gw->g.x+iwidth+1, gw->g.y+1, gw->g.x+iwidth+1, gw->g.y+gw->g.height-2, ps->edge);
@@ -118,40 +131,75 @@ static void gwinListDefaultDraw(GWidgetObject* gw, void* param) {
 
 
 	// Find the top item
-	for (qi = gfxQueueASyncPeek(&gw2obj->list_head), i = 0; i < gw2obj->top && qi; qi = gfxQueueASyncNext(qi), i++);
+	for (qi = gfxQueueASyncPeek(&gw2obj->list_head), i = iheight - 1; i < gw2obj->top && qi; qi = gfxQueueASyncNext(qi), i+=iheight);
+
+    // the list frame
+    gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, ps->edge);
+
+	// Set the clipping region so we do not override the frame.
+    gdispGSetClip(gw->g.display, gw->g.x+1, gw->g.y+1, gw->g.width-2, gw->g.height-2);
 
 	// Draw until we run out of room or items
-	for (y=1; y+iheight < gw->g.height-1 && qi; qi = gfxQueueASyncNext(qi), y += iheight) {
+	for (y = 1-(gw2obj->top%iheight); y < gw->g.height-2 && qi; qi = gfxQueueASyncNext(qi), y += iheight) {
 		fill = (qi2li->flags & GLIST_FLG_SELECTED) ? ps->fill : gw->pstyle->background;
+		gdispGFillArea(gw->g.display, gw->g.x+1, gw->g.y+y, iwidth, iheight, fill);
 		#if GWIN_NEED_LIST_IMAGES
 			if ((gw->g.flags & GLIST_FLG_HASIMAGES)) {
 				// Clear the image area
-				gdispGFillArea(gw->g.display, gw->g.x+1, gw->g.y+y, x-1, iheight, fill);
 				if (qi2li->pimg && gdispImageIsOpen(qi2li->pimg)) {
 					// Calculate which image
-					sy = (qi2li->flags & GLIST_FLG_SELECTED) ? 0 : (iheight-TEXTGAP);
+					sy = (qi2li->flags & GLIST_FLG_SELECTED) ? 0 : (iheight-VERTICAL_PADDING);
 					if (!(gw->g.flags & GWIN_FLG_ENABLED))
-						sy += 2*(iheight-TEXTGAP);
+						sy += 2*(iheight-VERTICAL_PADDING);
 					while (sy > qi2li->pimg->height)
-						sy -= iheight-TEXTGAP;
+						sy -= iheight-VERTICAL_PADDING;
 					// Draw the image
 					gdispImageSetBgColor(qi2li->pimg, fill);
-					gdispGImageDraw(gw->g.display, qi2li->pimg, gw->g.x+1, gw->g.y+y, iheight-TEXTGAP, iheight-TEXTGAP, 0, sy);
+					gdispGImageDraw(gw->g.display, qi2li->pimg, gw->g.x+1, gw->g.y+y, iheight-VERTICAL_PADDING, iheight-VERTICAL_PADDING, 0, sy);
 				}
 			}
 		#endif
-		gdispGFillStringBox(gw->g.display, gw->g.x+x, gw->g.y+y, iwidth, iheight, qi2li->text, gw->g.font, ps->text, fill, justifyLeft);
+		gdispGFillStringBox(gw->g.display, gw->g.x+x+HORIZONTAL_PADDING, gw->g.y+y, iwidth-HORIZONTAL_PADDING, iheight, qi2li->text, gw->g.font, ps->text, fill, justifyLeft);
 	}
 
 	// Fill any remaining item space
 	if (y < gw->g.height-1)
 		gdispGFillArea(gw->g.display, gw->g.x+1, gw->g.y+y, iwidth, gw->g.height-1-y, gw->pstyle->background);
-
-	// the list frame
-	gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, ps->edge);
 }
 
 #if GINPUT_NEED_MOUSE
+    static void MouseSelect(GWidgetObject* gw, coord_t x, coord_t y) {
+        const gfxQueueASyncItem*    qi;
+        int                         item, i;
+        coord_t                     iheight;
+
+        iheight = gdispGetFontMetric(gw->g.font, fontHeight) + VERTICAL_PADDING;
+
+        // Handle click over the list area
+        item = (gw2obj->top + y) / iheight;
+
+        if (item < 0 || item >= gw2obj->cnt)
+            return;
+
+        for(qi = gfxQueueASyncPeek(&gw2obj->list_head), i = 0; qi; qi = gfxQueueASyncNext(qi), i++) {
+            if ((gw->g.flags & GLIST_FLG_MULTISELECT)) {
+                if (item == i) {
+                    qi2li->flags ^= GLIST_FLG_SELECTED;
+                    break;
+                }
+            } else {
+                if (item == i)
+                    qi2li->flags |= GLIST_FLG_SELECTED;
+                else
+                    qi2li->flags &=~ GLIST_FLG_SELECTED;
+            }
+        }
+
+        _gwidgetRedraw(&gw->g);
+        sendListEvent(gw, item);
+
+    }
+
 	// a mouse down has occurred over the list area
 	static void MouseDown(GWidgetObject* gw, coord_t x, coord_t y) {
 		const gfxQueueASyncItem*	qi;
@@ -159,20 +207,32 @@ static void gwinListDefaultDraw(GWidgetObject* gw, void* param) {
 		coord_t						iheight;
 		(void)						x;
 
-		iheight = gdispGetFontMetric(gw->g.font, fontHeight) + TEXTGAP;
-		pgsz = (gw->g.height-2)/iheight;
+        gw2obj->start_mouse_x = x;
+        gw2obj->start_mouse_y = y;
+		gw2obj->last_mouse_y = y;
+
+		iheight = gdispGetFontMetric(gw->g.font, fontHeight) + VERTICAL_PADDING;
+		pgsz = (gw->g.height-2);
 		if (pgsz < 1) pgsz = 1;
 
+		// For smooth scrolling, scrolling is done in the MouseMove and selection is done on MouseUp
+		if (gw->g.flags & GLIST_FLG_SCROLLSMOOTH)
+		    return;
+
 		// Handle click over the scroll bar
-		if (gw2obj->cnt > pgsz && x >= gw->g.width-(SCROLLWIDTH+2)) {
+		if (gw2obj->cnt > (pgsz / iheight) && x >= gw->g.width-(SCROLLWIDTH+2)) {
 			if (y < 2*ARROW) {
 				if (gw2obj->top > 0) {
-					gw2obj->top--;
+					gw2obj->top -= iheight;
+					if (gw2obj->top < 0)
+					    gw2obj->top = 0;
 					_gwidgetRedraw(&gw->g);
 				}
 			} else if (y >= gw->g.height - 2*ARROW) {
-				if (gw2obj->top < gw2obj->cnt - pgsz) {
-					gw2obj->top++;
+				if (gw2obj->top < gw2obj->cnt * iheight - pgsz) {
+				    gw2obj->top += iheight;
+				    if (gw2obj->top > gw2obj->cnt * iheight - pgsz)
+				        gw2obj->top = gw2obj->cnt * iheight - pgsz;
 					_gwidgetRedraw(&gw->g);
 				}
 			} else if (y < gw->g.height/2) {
@@ -184,39 +244,51 @@ static void gwinListDefaultDraw(GWidgetObject* gw, void* param) {
 					_gwidgetRedraw(&gw->g);
 				}
 			} else {
-				if (gw2obj->top < gw2obj->cnt - pgsz) {
-					if (gw2obj->top < gw2obj->cnt - 2*pgsz)
+				if (gw2obj->top < gw2obj->cnt * iheight - pgsz) {
+					if (gw2obj->top < gw2obj->cnt * iheight - 2*pgsz)
 						gw2obj->top += pgsz;
 					else
-						gw2obj->top = gw2obj->cnt - pgsz;
+						gw2obj->top = gw2obj->cnt * iheight - pgsz;
 					_gwidgetRedraw(&gw->g);
 				}
 			}
 			return;
 		}
 
-		// Handle click over the list area
-		item = gw2obj->top + y / iheight;
+        MouseSelect(gw, x, y);
+	}
 
-		if (item < 0 || item >= gw2obj->cnt)
-			return;
+    static void MouseUp(GWidgetObject* gw, coord_t x, coord_t y) {
+        // Only act when we are a smooth scrolling list
+        if (!(gw->g.flags & GLIST_FLG_SCROLLSMOOTH))
+            return;
 
-		for(qi = gfxQueueASyncPeek(&gw2obj->list_head), i = 0; qi; qi = gfxQueueASyncNext(qi), i++) {
-			if ((gw->g.flags & GLIST_FLG_MULTISELECT)) {
-				if (item == i) {
-					qi2li->flags ^= GLIST_FLG_SELECTED;
-					break;
-				}
-			} else {
-				if (item == i)
-					qi2li->flags |= GLIST_FLG_SELECTED;
-				else
-					qi2li->flags &=~ GLIST_FLG_SELECTED;
-			}
-		}
+        // Only allow selection when we did not scroll
+        if (abs(gw2obj->start_mouse_x - x) > 4 || abs(gw2obj->start_mouse_y - y) > 4)
+            return;
 
-		_gwidgetRedraw(&gw->g);
-		sendListEvent(gw, item);
+        MouseSelect(gw, x, y);
+    }
+
+	static void MouseMove(GWidgetObject* gw, coord_t x, coord_t y) {
+        int iheight, oldtop;
+        (void) x;
+
+        if (!(gw->g.flags & GLIST_FLG_SCROLLSMOOTH)) return;
+
+        if (gw2obj->last_mouse_y != y) {
+            oldtop = gw2obj->top;
+            iheight = gdispGetFontMetric(gw->g.font, fontHeight) + VERTICAL_PADDING;
+
+            gw2obj->top -= y - gw2obj->last_mouse_y;
+            if (gw2obj->top >= gw2obj->cnt * iheight - (gw->g.height-2))
+                gw2obj->top = gw2obj->cnt * iheight - (gw->g.height-2) - 1;
+            if (gw2obj->top < 0)
+                gw2obj->top = 0;
+            gw2obj->last_mouse_y = y;
+            if (oldtop != gw2obj->top)
+                _gwidgetRedraw(&gw->g);
+        }
 	}
 #endif
 
@@ -295,8 +367,8 @@ static const gwidgetVMT listVMT = {
 	#if GINPUT_NEED_MOUSE
 		{
 			MouseDown,
-			0,
-			0,
+			MouseUp,
+			MouseMove,
 		},
 	#endif
 	#if GINPUT_NEED_TOGGLE
@@ -340,14 +412,18 @@ void gwinListSetScroll(GHandle gh, scroll_t flag) {
 	if (gh->vmt != (gwinVMT *)&listVMT)
 		return;
 
+    ((GListObject*)gh)->w.g.flags &=~(GLIST_FLG_SCROLLSMOOTH | GLIST_FLG_SCROLLALWAYS);
 	switch (flag) {
 		case scrollAlways:
 			((GListObject*)gh)->w.g.flags |= GLIST_FLG_SCROLLALWAYS;
 			break;
 
 		case scrollAuto:
-			((GListObject*)gh)->w.g.flags &=~ GLIST_FLG_SCROLLALWAYS;	
 			break;
+
+		case scrollSmooth:
+		    ((GListObject*)gh)->w.g.flags |= GLIST_FLG_SCROLLSMOOTH;
+		    break;
 	}
 }
 

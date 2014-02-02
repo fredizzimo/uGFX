@@ -29,8 +29,9 @@
 
 #include "gfx.h"
 
-static GListener gl;
-static GHandle   ghList1;
+GListener	gl;
+GHandle		ghLabel1, ghLabel2;
+GHandle		ghList1, ghList2;
 
 static void createWidgets(void) {
 	GWidgetInit	wi;
@@ -39,17 +40,38 @@ static void createWidgets(void) {
 	wi.customDraw = 0;
 	wi.customParam = 0;
 	wi.customStyle = 0;
+	wi.g.show = TRUE;
+
+	// Create the label for the first list
+	wi.g.width = 150; wi.g.height = 20; wi.g.x = 10, wi.g.y = 80;
+	wi.text = "List 1: Default";
+	ghLabel1 = gwinLabelCreate(NULL, &wi);
+
+	// Create the label for the second list
+	wi.g.width = 150; wi.g.height = 20; wi.g.x = 165, wi.g.y = 80;
+	wi.text = "List 2: Smooth scrolling";
+	ghLabel1 = gwinLabelCreate(NULL, &wi);
+
+	// Make list widgets invisible by default as they would issue
+	// a re-render at every time an item is added
 	wi.g.show = FALSE;
 
-	// Apply the list parameters
-	wi.g.width = 100;
-	wi.g.height = 80;
-	wi.g.y = 10;
+	// The first list widget
+	wi.g.width = 150;
+	wi.g.height = 100;
+	wi.g.y = 100;
 	wi.g.x = 10;
-	wi.text = "List Name";
-
-	// Create the actual list
+	wi.text = "Name of list 1";
 	ghList1 = gwinListCreate(0, &wi, FALSE);
+
+	// The second list widget
+	wi.g.width = 150;
+	wi.g.height = 100;
+	wi.g.y = 100;
+	wi.g.x = 165;
+	wi.text = "Name of list 2";
+	ghList2 = gwinListCreate(0, &wi, FALSE);
+	gwinListSetScroll(ghList2, scrollSmooth);
 }
 
 int main(void) {
@@ -59,7 +81,7 @@ int main(void) {
 	gfxInit();
 
 	// Set the widget defaults
-	gwinSetDefaultFont(gdispOpenFont("UI2"));
+	gwinSetDefaultFont(gdispOpenFont("DejaVuSans12_AA"));
 	gwinSetDefaultStyle(&WhiteWidgetStyle, FALSE);
 	gdispClear(White);
 
@@ -73,7 +95,7 @@ int main(void) {
 	geventListenerInit(&gl);
 	gwinAttachListener(&gl);
 
-	// Add some items to the list widget
+	// Add some items to the first list widget
 	gwinListAddItem(ghList1, "Item 0", FALSE);
 	gwinListAddItem(ghList1, "Item 1", FALSE);
 	gwinListAddItem(ghList1, "Item 2", FALSE);
@@ -89,7 +111,25 @@ int main(void) {
 	gwinListAddItem(ghList1, "Item 12", FALSE);
 	gwinListAddItem(ghList1, "Item 13", FALSE);
 
+	// Add some items to the second list widget
+	gwinListAddItem(ghList2, "Item 0", FALSE);
+	gwinListAddItem(ghList2, "Item 1", FALSE);
+	gwinListAddItem(ghList2, "Item 2", FALSE);
+	gwinListAddItem(ghList2, "Item 3", FALSE);
+	gwinListAddItem(ghList2, "Item 4", FALSE);
+	gwinListAddItem(ghList2, "Item 5", FALSE);
+	gwinListAddItem(ghList2, "Item 6", FALSE);
+	gwinListAddItem(ghList2, "Item 7", FALSE);
+	gwinListAddItem(ghList2, "Item 8", FALSE);
+	gwinListAddItem(ghList2, "Item 9", FALSE);
+	gwinListAddItem(ghList2, "Item 10", FALSE);
+	gwinListAddItem(ghList2, "Item 11", FALSE);
+	gwinListAddItem(ghList2, "Item 12", FALSE);
+	gwinListAddItem(ghList2, "Item 13", FALSE);
+	
+	// Make all the lists visible
 	gwinSetVisible(ghList1, TRUE);
+	gwinSetVisible(ghList2, TRUE);
 
 	while(1) {
 		// Get an Event
