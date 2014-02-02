@@ -66,7 +66,7 @@ int  I_GetHeapSize (void)
 byte* I_ZoneBase (int*	size)
 {
     *size = mb_used*1024*1024;
-    return (byte *) gfxAlloc (*size);
+    return gfxAlloc (*size);
 }
 
 
@@ -124,7 +124,7 @@ byte*	I_Malloc(int length)
 {
     byte*	mem;
         
-    mem = (byte *)gfxAlloc (length);
+    mem = gfxAlloc (length);
     memset (mem,0,length);
     return mem;
 }

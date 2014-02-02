@@ -102,7 +102,7 @@ void _gwinInit(void) {
 GHandle _gwindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pInit, const gwinVMT *vmt, uint16_t flags) {
 	// Allocate the structure if necessary
 	if (!pgw) {
-		if (!(pgw = (GWindowObject *)gfxAlloc(vmt->size)))
+		if (!(pgw = gfxAlloc(vmt->size)))
 			return 0;
 		pgw->flags = flags|GWIN_FLG_DYNAMIC;
 	} else

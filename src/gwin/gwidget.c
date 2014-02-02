@@ -338,7 +338,7 @@ void gwinSetText(GHandle gh, const char *text, bool_t useAlloc) {
 	else if (useAlloc) {
 		char *str;
 
-		if ((str = (char *)gfxAlloc(strlen(text)+1))) {
+		if ((str = gfxAlloc(strlen(text)+1))) {
 			gh->flags |= GWIN_FLG_ALLOCTXT;
 			strcpy(str, text);
 		}
