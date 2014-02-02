@@ -126,7 +126,8 @@ void _gtimerInit(void)
 
 void _gtimerDeinit(void)
 {
-	/* ToDo */
+	gfxSemDestroy(&waitsem);
+	gfxMutexDestroy(&mutex);
 }
 
 void gtimerInit(GTimer *pt) {

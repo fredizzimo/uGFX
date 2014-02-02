@@ -53,7 +53,7 @@ void _geventInit(void)
 
 void _geventDeinit(void)
 {
-	/* ToDo */
+	gfxMutexDestroy(&geventMutex);	
 }
 
 void geventListenerInit(GListener *pl) {

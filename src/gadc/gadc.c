@@ -249,7 +249,15 @@ void _gadcInit(void)
 
 void _gadcDeinit(void)
 {
-	/* ToDo */
+	/* commented stuff is ToDo */
+
+	// gadc_lld_deinit();
+	gfxSemDestroy(&gadcsem);
+	gfxMutexDestroy(&gadcmutex);
+	//gtimerDeinit(&LowSpeedGTimer);
+	#if GFX_USE_GEVENT
+		//gtimerDeinit(&HighSpeedGTimer);
+	#endif	
 }
 
 static inline void StartADC(bool_t onNoHS) {

@@ -94,7 +94,10 @@ void _gaudinInit(void)
 
 void _gaudinDeinit(void)
 {
-	/* ToDo */
+	// Commented stuff still ToDo
+	#if GFX_USE_GEVENT
+		gtimerDeinit(&AudGTimer);
+	#endif
 }
 
 bool_t gaudinInit(uint16_t channel, uint32_t frequency, audin_sample_t *buffer, size_t bufcount, size_t samplesPerEvent) {
