@@ -433,7 +433,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	#endif
 
 	// Create a private area for this window
-	if (!(priv = (netPriv *)gfxAlloc(sizeof(netPriv))))
+	if (!(priv = gfxAlloc(sizeof(netPriv))))
 		gfxHalt("GDISP: uGFXnet - Memory allocation failed");
 	memset(priv, 0, sizeof(netPriv));
 	g->priv = priv;

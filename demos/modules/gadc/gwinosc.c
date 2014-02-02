@@ -70,9 +70,9 @@ GHandle gwinGScopeCreate(GDisplay *g, GScopeObject *gs, GWindowInit *pInit, uint
 		return 0;
 	gfxSemInit(&gs->bsem, 0, 1);
 	gs->nextx = 0;
-	if (!(gs->lastscopetrace = (coord_t *)gfxAlloc(gs->g.width * sizeof(coord_t))))
+	if (!(gs->lastscopetrace = gfxAlloc(gs->g.width * sizeof(coord_t))))
 		return 0;
-	if (!(gs->audiobuf = (adcsample_t *)gfxAlloc(AUDIOBUFSZ * sizeof(adcsample_t))))
+	if (!(gs->audiobuf = gfxAlloc(AUDIOBUFSZ * sizeof(adcsample_t))))
 		return 0;
 #if TRIGGER_METHOD == TRIGGER_POSITIVERAMP
 	gs->lasty = gs->g.height/2;
