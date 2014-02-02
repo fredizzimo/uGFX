@@ -14,7 +14,14 @@
 
 #if GFX_USE_GMISC
 
-void _gmiscInit(void) {
+void _gmiscInit(void)
+{
+
+}
+
+void _gmiscDeinit(void)
+{
+
 }
 
 #endif /* GFX_USE_GMISC */

@@ -22,13 +22,18 @@
 	#error "GOS: CH_USE_SEMAPHORES must be defined in chconf.h"
 #endif
 
-/* Our module initialiser */
-void _gosInit(void) {
+void _gosInit(void)
+{
 	/* Don't initialise if the user already has */
 	if (!chThdSelf()) {
 		halInit();
 		chSysInit();
 	}
+}
+
+void _gosDeinit(void)
+{
+	/* ToDo */
 }
 
 void *gfxRealloc(void *ptr, size_t oldsz, size_t newsz) {

@@ -118,9 +118,15 @@ static DECLARE_THREAD_FUNCTION(GTimerThreadHandler, arg) {
 	return 0;
 }
 
-void _gtimerInit(void) {
+void _gtimerInit(void)
+{
 	gfxSemInit(&waitsem, 0, 1);
 	gfxMutexInit(&mutex);
+}
+
+void _gtimerDeinit(void)
+{
+	/* ToDo */
 }
 
 void gtimerInit(GTimer *pt) {

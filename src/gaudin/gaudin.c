@@ -85,11 +85,16 @@ void GAUDIN_ISR_ErrorI(void) {
 	/* Ignore any errors for now */
 }
 
-/* The module initialiser */
-void _gaudinInit(void) {
+void _gaudinInit(void)
+{
 	#if GFX_USE_GEVENT
 		gtimerInit(&AudGTimer);
 	#endif
+}
+
+void _gaudinDeinit(void)
+{
+	/* ToDo */
 }
 
 bool_t gaudinInit(uint16_t channel, uint32_t frequency, audin_sample_t *buffer, size_t bufcount, size_t samplesPerEvent) {

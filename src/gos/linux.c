@@ -20,8 +20,14 @@
 
 static gfxMutex		SystemMutex;
 
-void _gosInit(void) {
+void _gosInit(void)
+{
 	gfxMutexInit(&SystemMutex);
+}
+
+void _gosDeinit(void)
+{
+	/* ToDo */
 }
 
 void gfxSystemLock(void) {

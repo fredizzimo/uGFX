@@ -204,8 +204,15 @@ extern "C" {
 	 */
 	void gfxInit(void);
 
-	/* Compatibility for old programs */
-	void DEPRECATED("Use gfxInit() instead") gdispInit(void);
+	/**
+	 * @brief	The one call to end it all
+	 *
+	 * @note	This will deinitialise each sub-system that has been turned on.
+	 * @note	Do not call this without a previous @p gfxInit();
+	 *
+	 * @api
+	 */
+	void gfxDeinit(void);
 
 #ifdef __cplusplus
 }

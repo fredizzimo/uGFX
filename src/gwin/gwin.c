@@ -84,7 +84,8 @@ static color_t	defaultBgColor = Black;
  * Class Routines
  *-----------------------------------------------*/
 
-void _gwinInit(void) {
+void _gwinInit(void)
+{
 	#if GWIN_NEED_WIDGET
 		extern void _gwidgetInit(void);
 
@@ -94,6 +95,20 @@ void _gwinInit(void) {
 		extern void _gwmInit(void);
 
 		_gwmInit();
+	#endif
+}
+
+void _gwinDeinit(void)
+{
+	#if GWIN_NEED_WIDGET
+		extern void _gwidgetDeinit(void);
+
+		_gwidgetDeinit();
+	#endif
+	#if GWIN_NEED_WINDOWMANAGER
+		extern void _gwmDeinit(void);
+
+		_gwmDeinit();
 	#endif
 }
 

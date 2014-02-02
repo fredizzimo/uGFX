@@ -46,8 +46,14 @@ static void deleteAssignments(GListener *pl, GSourceHandle gsh) {
 	}
 }
 
-void _geventInit(void) {
+void _geventInit(void)
+{
 	gfxMutexInit(&geventMutex);
+}
+
+void _geventDeinit(void)
+{
+	/* ToDo */
 }
 
 void geventListenerInit(GListener *pl) {
