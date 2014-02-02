@@ -16,11 +16,21 @@
 
 #if GFX_USE_GINPUT
 
-/**
- * This should really call an init routine for each ginput sub-system.
- * Maybe we'll do this later.
- */
-void _ginputInit(void) {}
+void _ginputInit(void)
+{
+	/* ToDo */
+
+	/**
+	 * This should really call an init routine for each ginput sub-system.
+	 * Maybe we'll do this later.
+	 */
+}
+
+void _ginputDeinit(void)
+{
+
+}
 
 #endif /* GFX_USE_GINPUT */
 /** @} */
+

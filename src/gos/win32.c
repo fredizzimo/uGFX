@@ -17,7 +17,13 @@
 
 static HANDLE	SystemMutex;
 
-void _gosInit(void) {
+void _gosInit(void)
+{
+
+}
+
+void _gosDeinit(void)
+{
 
 }
 

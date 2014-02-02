@@ -224,9 +224,15 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 	}
 #endif
 
-void _gwidgetInit(void) {
+void _gwidgetInit(void)
+{
 	geventListenerInit(&gl);
 	geventRegisterCallback(&gl, gwidgetEvent, 0);
+}
+
+void _gwidgetDeinit(void)
+{
+	/* ToDo */
 }
 
 GHandle _gwidgetCreate(GDisplay *g, GWidgetObject *pgw, const GWidgetInit *pInit, const gwidgetVMT *vmt) {

@@ -60,7 +60,8 @@ GWindowManager *		_GWINwm;
  * Window Routines
  *-----------------------------------------------*/
 
-void _gwmInit(void) {
+void _gwmInit(void)
+{
 	gfxQueueASyncInit(&_GWINList);
 	_GWINwm = (GWindowManager *)&GNullWindowManager;
 	_GWINwm->vmt->Init();
@@ -68,6 +69,11 @@ void _gwmInit(void) {
 		gtimerInit(&RedrawTimer);
 		gtimerStart(&RedrawTimer, _gwinRedrawDisplay, 0, TRUE, TIME_INFINITE);
 	#endif
+}
+
+void _gwmDeinit(void)
+{
+	/* ToDo */
 }
 
 void gwinSetWindowManager(struct GWindowManager *gwm) {
