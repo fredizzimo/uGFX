@@ -68,10 +68,8 @@ GFILE *gfileStdErr;
  */
 static const GFILEVMT const * FsChain = GFILE_CHAINHEAD;
 
-/**
- * The init routine
- */
-void _gfileInit(void) {
+void _gfileInit(void)
+{
 	#if GFILE_NEED_NATIVEFS
 		NativeStdIn.flags = GFILEFLG_OPEN|GFILEFLG_READ;
 		NativeStdIn.vmt = &FsNativeVMT;
@@ -89,6 +87,11 @@ void _gfileInit(void) {
 		NativeStdErr.pos = 0;
 		gfileStdErr = &NativeStdErr;
 	#endif
+}
+
+void _gfileDeinit(void)
+{
+	/* ToDo */
 }
 
 bool_t gfileExists(const char *fname) {
