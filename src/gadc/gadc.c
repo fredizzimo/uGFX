@@ -254,9 +254,9 @@ void _gadcDeinit(void)
 	// gadc_lld_deinit();
 	gfxSemDestroy(&gadcsem);
 	gfxMutexDestroy(&gadcmutex);
-	//gtimerDeinit(&LowSpeedGTimer);
+	gtimerDeinit(&LowSpeedGTimer);
 	#if GFX_USE_GEVENT
-		//gtimerDeinit(&HighSpeedGTimer);
+		gtimerDeinit(&HighSpeedGTimer);
 	#endif	
 }
 

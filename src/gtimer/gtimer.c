@@ -130,8 +130,14 @@ void _gtimerDeinit(void)
 	gfxMutexDestroy(&mutex);
 }
 
-void gtimerInit(GTimer *pt) {
+void gtimerInit(GTimer* pt)
+{
 	pt->flags = 0;
+}
+
+void gtimerDeinit(GTimer* pt)
+{
+	(void)pt;
 }
 
 void gtimerStart(GTimer *pt, GTimerFunction fn, void *param, bool_t periodic, delaytime_t millisec) {
