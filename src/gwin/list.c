@@ -431,13 +431,14 @@ int gwinListAddItem(GHandle gh, const char* item_name, bool_t useAlloc) {
 	ListItem	*newItem;
 
 	if (useAlloc) {
-		if (!(newItem = (ListItem *)gfxAlloc(sizeof(ListItem)+strlen(item_name)+1)))
+		size_t len = strlen(item_name)+1;
+		if (!(newItem = gfxAlloc(sizeof(ListItem) + len)))
 			return -1;
 
-		strcpy((char *)(newItem+1), item_name);
+		memcpy((char *)(newItem+1), item_name, len);
 		item_name = (const char *)(newItem+1);
 	} else {
-		if (!(newItem = (ListItem *)gfxAlloc(sizeof(ListItem))))
+		if (!(newItem = gfxAlloc(sizeof(ListItem))))
 			return -1;
 	}
 
