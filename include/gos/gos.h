@@ -429,6 +429,8 @@
  */
 #elif GFX_USE_OS_CHIBIOS
 	#include "gos/chibios.h"
+#elif GFX_USE_OS_FREERTOS
+	#include "gos/freertos.h"
 #elif GFX_USE_OS_WIN32
 	#include "gos/win32.h"
 #elif GFX_USE_OS_LINUX
