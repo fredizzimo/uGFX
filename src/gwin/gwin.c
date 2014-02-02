@@ -127,6 +127,12 @@ GHandle _gwindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pInit
 		_gwm_redim(pgw, pInit->x, pInit->y, pInit->width, pInit->height);
 	#endif
 
+	#if GWIN_NEED_HIERARCHY
+		pgw->parent = NULL;
+		pgw->sibling = NULL;
+		pgw->child = NULL;
+	#endif
+
 	return (GHandle)pgw;
 }
 
@@ -167,12 +173,6 @@ color_t gwinGetDefaultBgColor(void) {
 GHandle gwinGWindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pInit) {
 	if (!(pgw = _gwindowCreate(g, pgw, pInit, &basegwinVMT, 0)))
 		return 0;
-
-	#if GWIN_NEED_HIERARCHY
-		pgw->parent = NULL;
-		pgw->sibling = NULL;
-		pgw->child = NULL;
-	#endif
 
 	gwinSetVisible(pgw, pInit->show);
 
