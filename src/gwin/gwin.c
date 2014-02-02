@@ -167,7 +167,9 @@ color_t gwinGetDefaultBgColor(void) {
 GHandle gwinGWindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pInit) {
 	if (!(pgw = _gwindowCreate(g, pgw, pInit, &basegwinVMT, 0)))
 		return 0;
+
 	gwinSetVisible(pgw, pInit->show);
+
 	return pgw;
 }
 
