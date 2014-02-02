@@ -37,8 +37,14 @@ void get_ticks(mach_timespec_t *mts){
 	
 }
 
-void _gosInit(void) {
+void _gosInit(void)
+{
 	gfxMutexInit(&SystemMutex);
+}
+
+void _gosDeinit(void)
+{
+	/* ToDo */
 }
 
 void gfxSystemLock(void) {

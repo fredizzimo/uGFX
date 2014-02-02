@@ -68,13 +68,22 @@ extern "C" {
 #endif
 
 /**
- * @brief   Initialise a timer.
+ * @brief   Initialise a timer
  *
- * @param[in] pt 	pointer to a GTimer structure
+ * @param[in] pt 	Pointer to a GTimer structure
  *
  * @api
  */
-void gtimerInit(GTimer *pt);
+void gtimerInit(GTimer* pt);
+
+/**
+ * @brief	Deinitialise a timer
+ *
+ * @param[in] pt	Pointer to a GTimer structure
+ *
+ * @api
+ */
+void gtimerDeinit(GTimer* pt);
 
 /**
  * @brief   Set a timer going or alter its properties if it is already going.

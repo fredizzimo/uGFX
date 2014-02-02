@@ -566,8 +566,8 @@ static void line_clip(GDisplay *g) {
 /* Driver exported functions.                                                */
 /*===========================================================================*/
 
-/* Our module initialiser */
-void _gdispInit(void) {
+void _gdispInit(void)
+{
 	GDisplay		*g;
 	uint16_t		i;
 
@@ -625,6 +625,11 @@ void _gdispInit(void) {
 		gtimerInit(&FlushTimer);
 		gtimerStart(&FlushTimer, FlushTimerFn, 0, TRUE, GDISP_NEED_TIMERFLUSH);
 	#endif
+}
+
+void _gdispDeinit(void)
+{
+	/* ToDo */
 }
 
 GDisplay *gdispGetDisplay(unsigned display) {

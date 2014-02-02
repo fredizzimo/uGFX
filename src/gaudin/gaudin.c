@@ -85,10 +85,18 @@ void GAUDIN_ISR_ErrorI(void) {
 	/* Ignore any errors for now */
 }
 
-/* The module initialiser */
-void _gaudinInit(void) {
+void _gaudinInit(void)
+{
 	#if GFX_USE_GEVENT
 		gtimerInit(&AudGTimer);
+	#endif
+}
+
+void _gaudinDeinit(void)
+{
+	// Commented stuff still ToDo
+	#if GFX_USE_GEVENT
+		gtimerDeinit(&AudGTimer);
 	#endif
 }
 

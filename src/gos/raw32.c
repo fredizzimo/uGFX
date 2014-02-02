@@ -26,12 +26,18 @@ static void _gosThreadsInit(void);
  * Initialise
  *********************************************************/
 
-void _gosInit(void) {
+void _gosInit(void)
+{
 	// Set up the heap allocator
 	_gosHeapInit();
 
 	// Start the scheduler
 	_gosThreadsInit();
+}
+
+void _gosDeinit(void)
+{
+	/* ToDo */
 }
 
 /*********************************************************

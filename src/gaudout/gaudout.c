@@ -18,6 +18,16 @@
 
 	#error "GAUDOUT: Not implemented yet"
 
+void _gaudoutInit(void)
+{
+	/* ToDo */
+}
+
+void _gaudoutDeinit(void)
+{
+	/* ToDo */
+}
+
 #endif /* GFX_USE_GAUDOUT */
 /** @} */
 
