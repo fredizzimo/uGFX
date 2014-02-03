@@ -128,9 +128,9 @@ static struct MouseConfig_t {
 		dy1 = ((float)(cross[1].y - cross[2].y)) * ((float)(points[0].x - points[2].x))
 			- ((float)(cross[0].y - cross[2].y)) * ((float)(points[1].x - points[2].x));
 
-		dy2  = cross[0].y * ((float)points[1].x * (float)points[2].y - (float)points[2].x * (float)points[1].y) -
-			   cross[1].y * ((float)points[0].x * (float)points[2].y - (float)points[2].x * (float)points[0].y) +
-			   cross[2].y * ((float)points[0].x * (float)points[1].y - (float)points[1].x * (float)points[0].y);
+		dy2 = cross[0].y * ((float)points[1].x * (float)points[2].y - (float)points[2].x * (float)points[1].y) -
+			  cross[1].y * ((float)points[0].x * (float)points[2].y - (float)points[2].x * (float)points[0].y) +
+			  cross[2].y * ((float)points[0].x * (float)points[1].y - (float)points[1].x * (float)points[0].y);
 
 		/* Now, calculate all the required coefficients */
 		c->ax = dx0 / dx;
