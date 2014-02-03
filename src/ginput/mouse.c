@@ -109,7 +109,7 @@ static struct MouseConfig_t {
 		float dx, dx0, dx1, dx2, dy0, dy1, dy2;
 
 		/* Compute all the required determinants */
-		dx = ((float)(points[0].x - points[2].x)) * ((float)(points[1].y - points[2].y))
+		dx  = ((float)(points[0].x - points[2].x)) * ((float)(points[1].y - points[2].y))
 			- ((float)(points[1].x - points[2].x)) * ((float)(points[0].y - points[2].y));
 
 		dx0 = ((float)(cross[0].x - cross[2].x)) * ((float)(points[1].y - points[2].y))
@@ -119,18 +119,18 @@ static struct MouseConfig_t {
 			- ((float)(cross[0].x - cross[2].x)) * ((float)(points[1].x - points[2].x));
 
 		dx2 = cross[0].x * ((float)points[1].x * (float)points[2].y - (float)points[2].x * (float)points[1].y) -
-			cross[1].x * ((float)points[0].x * (float)points[2].y - (float)points[2].x * (float)points[0].y) +
-			cross[2].x * ((float)points[0].x * (float)points[1].y - (float)points[1].x * (float)points[0].y);
+			  cross[1].x * ((float)points[0].x * (float)points[2].y - (float)points[2].x * (float)points[0].y) +
+			  cross[2].x * ((float)points[0].x * (float)points[1].y - (float)points[1].x * (float)points[0].y);
 
 		dy0 = ((float)(cross[0].y - cross[2].y))  *  ((float)(points[1].y - points[2].y))
 			- ((float)(cross[1].y - cross[2].y))  *  ((float)(points[0].y - points[2].y));
 
-		dy1  = ((float)(cross[1].y - cross[2].y)) * ((float)(points[0].x - points[2].x))
+		dy1 = ((float)(cross[1].y - cross[2].y)) * ((float)(points[0].x - points[2].x))
 			- ((float)(cross[0].y - cross[2].y)) * ((float)(points[1].x - points[2].x));
 
 		dy2  = cross[0].y * ((float)points[1].x * (float)points[2].y - (float)points[2].x * (float)points[1].y) -
-			cross[1].y * ((float)points[0].x * (float)points[2].y - (float)points[2].x * (float)points[0].y) +
-			cross[2].y * ((float)points[0].x * (float)points[1].y - (float)points[1].x * (float)points[0].y);
+			   cross[1].y * ((float)points[0].x * (float)points[2].y - (float)points[2].x * (float)points[0].y) +
+			   cross[2].y * ((float)points[0].x * (float)points[1].y - (float)points[1].x * (float)points[0].y);
 
 		/* Now, calculate all the required coefficients */
 		c->ax = dx0 / dx;
