@@ -128,6 +128,7 @@ void _gtimerDeinit(void)
 {
 	gfxSemDestroy(&waitsem);
 	gfxMutexDestroy(&mutex);
+	// Need to destroy GTimer thread here
 }
 
 void gtimerInit(GTimer* pt)
@@ -137,7 +138,7 @@ void gtimerInit(GTimer* pt)
 
 void gtimerDeinit(GTimer* pt)
 {
-	(void)pt;
+	gtimerStop(pt);
 }
 
 void gtimerStart(GTimer *pt, GTimerFunction fn, void *param, bool_t periodic, delaytime_t millisec) {
