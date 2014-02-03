@@ -15,6 +15,8 @@
 
 #include "gfx.h"
 
+static bool_t initDone = FALSE;
+
 /* These init functions are defined by each module but not published */
 extern void _gosInit(void);
 extern void _gosDeinit(void);
@@ -57,6 +59,11 @@ extern void _gosDeinit(void);
 
 void gfxInit(void)
 {
+	/* Ensure we only initialise once */
+	if (initDone)
+		return;
+	initDone = TRUE;
+
 	// These must be initialised in the order of their dependancies
 
 	_gosInit();
@@ -91,8 +98,11 @@ void gfxInit(void)
 
 void gfxDeinit(void)
 {
-	// We deinitialise the opposit way as we initialised
+	if (!initDone)
+		return;
+	initDone = FALSE;
 
+	// We deinitialise the opposite way as we initialised
 	#if GFX_USE_GAUDOUT
 		_gaudoutDeinit();
 	#endif
