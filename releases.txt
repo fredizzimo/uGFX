@@ -13,6 +13,7 @@ FEATURE:	Added gwinGetColor() and gwinGetBgColor()
 FEATURE:	Console does now have an optional buffer (GWIN_CONSOLE_USE_HISTORY)
 FEATURE:	Added smooth scrolling to list widget
 FEATURE:	Increased performance of gwinListAddItem()
+FEATURE:	Added gfxDeinit()
 
 
 *** changes after 1.9 ***
