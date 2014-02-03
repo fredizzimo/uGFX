@@ -139,7 +139,7 @@ void gaudin_lld_init(const gaudin_params *paud) {
 
 	/* We need to allocate a wave header for each buffer */
 	nBuffers = (paud->bufcount + paud->samplesPerEvent - 1) / paud->samplesPerEvent;
-	if (!(pWaveHdrs = (WAVEHDR *)gfxAlloc(nBuffers * sizeof(WAVEHDR)))) {
+	if (!(pWaveHdrs = gfxAlloc(nBuffers * sizeof(WAVEHDR)))) {
 		fprintf(stderr, "GAUDIN: Buffer header allocation failed\n");
 		return;
 	}

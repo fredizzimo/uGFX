@@ -26,12 +26,18 @@ static void _gosThreadsInit(void);
  * Initialise
  *********************************************************/
 
-void _gosInit(void) {
+void _gosInit(void)
+{
 	// Set up the heap allocator
 	_gosHeapInit();
 
 	// Start the scheduler
 	_gosThreadsInit();
+}
+
+void _gosDeinit(void)
+{
+	/* ToDo */
 }
 
 /*********************************************************
@@ -542,7 +548,7 @@ static void _gosThreadsInit(void) {
 			char *		framebase;
 
 			// Allocate a buffer to store our test data
-			pframeinfo = (saveloc *)gfxAlloc(sizeof(saveloc)*2);
+			pframeinfo = gfxAlloc(sizeof(saveloc)*2);
 
 			// Get details of the stack frame from within a function
 			get_stack_state_in_fn();

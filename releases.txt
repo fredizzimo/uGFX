@@ -12,7 +12,9 @@ FIX:		Console does not execute gwinPrintf() anymore if not visible
 FEATURE:	Added gwinGetColor() and gwinGetBgColor()
 FEATURE:	Console does now have an optional buffer (GWIN_CONSOLE_USE_HISTORY)
 FEATURE:	Added smooth scrolling to list widget
+FEATURE:	Increased performance of gwinListAddItem()
 FEATURE:	Added FreeRTOS port
+FEATURE:	Added gfxDeinit()
 
 
 *** changes after 1.9 ***

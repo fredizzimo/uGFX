@@ -566,8 +566,8 @@ static void line_clip(GDisplay *g) {
 /* Driver exported functions.                                                */
 /*===========================================================================*/
 
-/* Our module initialiser */
-void _gdispInit(void) {
+void _gdispInit(void)
+{
 	GDisplay		*g;
 	uint16_t		i;
 
@@ -625,6 +625,11 @@ void _gdispInit(void) {
 		gtimerInit(&FlushTimer);
 		gtimerStart(&FlushTimer, FlushTimerFn, 0, TRUE, GDISP_NEED_TIMERFLUSH);
 	#endif
+}
+
+void _gdispDeinit(void)
+{
+	/* ToDo */
 }
 
 GDisplay *gdispGetDisplay(unsigned display) {
@@ -2764,8 +2769,14 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 	#if GDISP_NEED_ANTIALIAS && GDISP_HARDWARE_PIXELREAD
 		static void drawcharline(int16_t x, int16_t y, uint8_t count, uint8_t alpha, void *state) {
 			#define GD	((GDisplay *)state)
-			if (y < GD->t.clipy0 || y >= GD->t.clipy1)
+			if (y < GD->t.clipy0 || y >= GD->t.clipy1 || x+count <= GD->t.clipx0 || x >= GD->t.clipx1)
 				return;
+			if (x < GD->t.clipx0) {
+				count -= GD->t.clipx0 - x;
+				x = GD->t.clipx0;
+			}
+			if (x+count > GD->t.clipx1)
+				count = GD->t.clipx1 - x;
 			if (alpha == 255) {
 				GD->p.x = x; GD->p.y = y; GD->p.x1 = x+count-1; GD->p.color = GD->t.color;
 				hline_clip(GD);
@@ -2781,8 +2792,14 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 	#else
 		static void drawcharline(int16_t x, int16_t y, uint8_t count, uint8_t alpha, void *state) {
 			#define GD	((GDisplay *)state)
-			if (y < GD->t.clipy0 || y >= GD->t.clipy1)
+			if (y < GD->t.clipy0 || y >= GD->t.clipy1 || x+count <= GD->t.clipx0 || x >= GD->t.clipx1)
 				return;
+			if (x < GD->t.clipx0) {
+				count -= GD->t.clipx0 - x;
+				x = GD->t.clipx0;
+			}
+			if (x+count > GD->t.clipx1)
+				count = GD->t.clipx1 - x;
 			if (alpha > 0x80) {			// A best approximation when using anti-aliased fonts but we can't actually draw them anti-aliased
 				GD->p.x = x; GD->p.y = y; GD->p.x1 = x+count-1; GD->p.color = GD->t.color;
 				hline_clip(GD);
@@ -2794,8 +2811,14 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 	#if GDISP_NEED_ANTIALIAS
 		static void fillcharline(int16_t x, int16_t y, uint8_t count, uint8_t alpha, void *state) {
 			#define GD	((GDisplay *)state)
-			if (y < GD->t.clipy0 || y >= GD->t.clipy1)
+			if (y < GD->t.clipy0 || y >= GD->t.clipy1 || x+count <= GD->t.clipx0 || x >= GD->t.clipx1)
 				return;
+			if (x < GD->t.clipx0) {
+				count -= GD->t.clipx0 - x;
+				x = GD->t.clipx0;
+			}
+			if (x+count > GD->t.clipx1)
+				count = GD->t.clipx1 - x;
 			if (alpha == 255) {
 				GD->p.color = GD->t.color;
 			} else {

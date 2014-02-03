@@ -118,13 +118,27 @@ static DECLARE_THREAD_FUNCTION(GTimerThreadHandler, arg) {
 	return 0;
 }
 
-void _gtimerInit(void) {
+void _gtimerInit(void)
+{
 	gfxSemInit(&waitsem, 0, 1);
 	gfxMutexInit(&mutex);
 }
 
-void gtimerInit(GTimer *pt) {
+void _gtimerDeinit(void)
+{
+	gfxSemDestroy(&waitsem);
+	gfxMutexDestroy(&mutex);
+	// Need to destroy GTimer thread here
+}
+
+void gtimerInit(GTimer* pt)
+{
 	pt->flags = 0;
+}
+
+void gtimerDeinit(GTimer* pt)
+{
+	gtimerStop(pt);
 }
 
 void gtimerStart(GTimer *pt, GTimerFunction fn, void *param, bool_t periodic, delaytime_t millisec) {

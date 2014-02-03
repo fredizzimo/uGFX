@@ -81,7 +81,7 @@ int main(void) {
 	gfxInit();
 
 	// Set the widget defaults
-	gwinSetDefaultFont(gdispOpenFont("DejaVuSans12_AA"));
+	gwinSetDefaultFont(gdispOpenFont("UI2"));
 	gwinSetDefaultStyle(&WhiteWidgetStyle, FALSE);
 	gdispClear(White);
 

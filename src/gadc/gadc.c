@@ -236,7 +236,8 @@ void GADC_ISR_ErrorI(ADCDriver *adcp, adcerror_t err) {
 }
 
 /* Our module initialiser */
-void _gadcInit(void) {
+void _gadcInit(void)
+{
 	gadc_lld_init();
 	gfxSemInit(&gadcsem, GADC_MAX_LOWSPEED_DEVICES, GADC_MAX_LOWSPEED_DEVICES);
 	gfxMutexInit(&gadcmutex);
@@ -244,6 +245,19 @@ void _gadcInit(void) {
 	#if GFX_USE_GEVENT
 		gtimerInit(&HighSpeedGTimer);
 	#endif
+}
+
+void _gadcDeinit(void)
+{
+	/* commented stuff is ToDo */
+
+	// gadc_lld_deinit();
+	gfxSemDestroy(&gadcsem);
+	gfxMutexDestroy(&gadcmutex);
+	gtimerDeinit(&LowSpeedGTimer);
+	#if GFX_USE_GEVENT
+		gtimerDeinit(&HighSpeedGTimer);
+	#endif	
 }
 
 static inline void StartADC(bool_t onNoHS) {

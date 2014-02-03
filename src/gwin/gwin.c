@@ -84,7 +84,8 @@ static color_t	defaultBgColor = Black;
  * Class Routines
  *-----------------------------------------------*/
 
-void _gwinInit(void) {
+void _gwinInit(void)
+{
 	#if GWIN_NEED_WIDGET
 		extern void _gwidgetInit(void);
 
@@ -97,12 +98,26 @@ void _gwinInit(void) {
 	#endif
 }
 
+void _gwinDeinit(void)
+{
+	#if GWIN_NEED_WIDGET
+		extern void _gwidgetDeinit(void);
+
+		_gwidgetDeinit();
+	#endif
+	#if GWIN_NEED_WINDOWMANAGER
+		extern void _gwmDeinit(void);
+
+		_gwmDeinit();
+	#endif
+}
+
 // Internal routine for use by GWIN components only
 // Initialise a window creating it dynamically if required.
 GHandle _gwindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pInit, const gwinVMT *vmt, uint16_t flags) {
 	// Allocate the structure if necessary
 	if (!pgw) {
-		if (!(pgw = (GWindowObject *)gfxAlloc(vmt->size)))
+		if (!(pgw = gfxAlloc(vmt->size)))
 			return 0;
 		pgw->flags = flags|GWIN_FLG_DYNAMIC;
 	} else
@@ -167,7 +182,9 @@ color_t gwinGetDefaultBgColor(void) {
 GHandle gwinGWindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pInit) {
 	if (!(pgw = _gwindowCreate(g, pgw, pInit, &basegwinVMT, 0)))
 		return 0;
+
 	gwinSetVisible(pgw, pInit->show);
+
 	return pgw;
 }
 
