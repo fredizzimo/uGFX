@@ -82,32 +82,6 @@ extern GFILE *gfileStdOut;
 /* External declarations.                                                    */
 /*===========================================================================*/
 
-//TODO
-//FILE * tmpfile ( void );		// Auto-deleting
-//char * tmpnam ( char * str );
-//L_tmpnam - Minimum length for temporary file name
-//FILENAME_MAX - Maximum length of file names (constant )
-// FOPEN_MAX - Potential limit of simultaneous open streams (constant )
-// TMP_MAX - Number of temporary files (constant )
-//FILE * freopen ( const char * filename, const char * mode, FILE * stream );
-//setbuf
-//setvbuf
-//fflush
-//fscanf
-//scanf
-//sscanf
-//vscanf
-//vsscanf
-//fgetc
-//fgets
-//fputc
-//fputs
-//getc
-//getchar
-//puts
-//ungetc
-//void perror (const char * str);
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -136,13 +110,32 @@ extern "C" {
 		#if GFILE_NEED_STRINGS
 			int vsnprintg(char *buf, int maxlen, const char *fmt, va_list arg);
 			int snprintg(char *buf, int maxlen, const char *fmt, ...);
-			#define vsprintg(s,m,a)			vsnprintg(s,0,m,a)
-			#define sprintg(s,m,...)		snprintg(s,0,m,...)
+			#define vsprintg(s,m,a)		vsnprintg(s,0,m,a)
+			#define sprintg(s,m,...)	snprintg(s,0,m,...)
 		#endif
 	#endif
 
+	#if GFILE_NEED_SCANG
+		int vfscang(GFILE *f, const char *fmt, va_list arg);
+		int fscang(GFILE *f, const char *fmt, ...);
+		#define vscang(f,a)			vfscang(gfileStdIn,f,a)
+		#define scang(f,...)		fscang(gfileStdIn,f,...)
+
+		#if GFILE_NEED_STRINGS
+			int vsscang(const char *buf, const char *fmt, va_list arg);
+			int sscang(const char *buf, const char *fmt, ...);
+		#endif
+	#endif
 
 	#if GFILE_NEED_STDIO && !defined(GFILE_IMPLEMENTATION)
+		#define stdin					gfileStdIn
+		#define stdout					gfileStdOut
+		#define stderr					gfileStdErr
+		#define FILENAME_MAX			256						// Use a relatively small number for an embedded platform
+		#define L_tmpnam				FILENAME_MAX
+		#define FOPEN_MAX				GFILE_MAX_GFILES
+		#define TMP_MAX					GFILE_MAX_GFILES
+		#define P_tmpdir				"/tmp/"
 		#define FILE					GFILE
 		#define fopen(n,m)				gfileOpen(n,m)
 		#define fclose(f)				gfileClose(f)
@@ -164,9 +157,7 @@ extern "C" {
 		#define fgetpos(f,pos)			gstdioGetpos(f,pos)
 		#define fsetpos(f, pos)			(!gfileSetPos(f, *pos))
 		#define rewind(f)				gfileSetPos(f, 0);
-		#define clearerr(f)				(0)
 		#define feof(f)					gfileEOF(f)
-		//#define ferror(f)				(0)
 
 		#define vfprintf(f,m,a)			vfnprintg(f,0,m,a)
 		#define fprintf(f,m,...)		fnprintg(f,0,m,...)
@@ -176,6 +167,30 @@ extern "C" {
 		#define snprintf(s,n,m,...)		snprintg(s,n,m,...)
 		#define vsprintf(s,m,a)			vsnprintg(s,0,m,a)
 		#define sprintf(s,m,...)		snprintg(s,0,m,...)
+		//TODO
+		//void clearerr ( FILE * stream );
+		//int ferror ( FILE * stream );
+		//FILE * tmpfile ( void );		// Auto-deleting
+		//char * tmpnam ( char * str );
+		//char * mktemp (char *template);
+		//FILE * freopen ( const char * filename, const char * mode, FILE * stream );
+		//setbuf
+		//setvbuf
+		//fflush
+		//fscanf
+		//scanf
+		//sscanf
+		//vscanf
+		//vsscanf
+		//fgetc
+		//fgets
+		//fputc
+		//fputs
+		//getc
+		//getchar
+		//puts
+		//ungetc
+		//void perror (const char * str);
 	#endif
 
 #ifdef __cplusplus

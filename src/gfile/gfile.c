@@ -68,8 +68,10 @@ GFILE *gfileStdErr;
  */
 static const GFILEVMT const * FsChain = GFILE_CHAINHEAD;
 
-void _gfileInit(void)
-{
+/**
+ * The init routine
+ */
+void _gfileInit(void) {
 	#if GFILE_NEED_NATIVEFS
 		NativeStdIn.flags = GFILEFLG_OPEN|GFILEFLG_READ;
 		NativeStdIn.vmt = &FsNativeVMT;
@@ -296,7 +298,7 @@ GFILE *gfileOpen(const char *fname, const char *mode) {
 }
 
 void gfileClose(GFILE *f) {
-	if (!(f->flags & GFILEFLG_OPEN))
+	if (!f || !(f->flags & GFILEFLG_OPEN))
 		return;
 	if (f->vmt->close)
 		f->vmt->close(f);
@@ -306,7 +308,7 @@ void gfileClose(GFILE *f) {
 size_t gfileRead(GFILE *f, char *buf, size_t len) {
 	size_t	res;
 
-	if ((f->flags & (GFILEFLG_OPEN|GFILEFLG_READ)) != (GFILEFLG_OPEN|GFILEFLG_READ))
+	if (!f || (f->flags & (GFILEFLG_OPEN|GFILEFLG_READ)) != (GFILEFLG_OPEN|GFILEFLG_READ))
 		return 0;
 	if (!f->vmt->read)
 		return 0;
@@ -319,7 +321,7 @@ size_t gfileRead(GFILE *f, char *buf, size_t len) {
 size_t gfileWrite(GFILE *f, const char *buf, size_t len) {
 	size_t	res;
 
-	if ((f->flags & (GFILEFLG_OPEN|GFILEFLG_WRITE)) != (GFILEFLG_OPEN|GFILEFLG_WRITE))
+	if (!f || (f->flags & (GFILEFLG_OPEN|GFILEFLG_WRITE)) != (GFILEFLG_OPEN|GFILEFLG_WRITE))
 		return 0;
 	if (!f->vmt->write)
 		return 0;
@@ -330,13 +332,13 @@ size_t gfileWrite(GFILE *f, const char *buf, size_t len) {
 }
 
 long int gfileGetPos(GFILE *f) {
-	if (!(f->flags & GFILEFLG_OPEN))
+	if (!f || !(f->flags & GFILEFLG_OPEN))
 		return 0;
 	return f->pos;
 }
 
 bool_t gfileSetPos(GFILE *f, long int pos) {
-	if (!(f->flags & GFILEFLG_OPEN))
+	if (!f || !(f->flags & GFILEFLG_OPEN))
 		return FALSE;
 	if (!f->vmt->setpos || !f->vmt->setpos(f, pos))
 		return FALSE;
@@ -344,7 +346,7 @@ bool_t gfileSetPos(GFILE *f, long int pos) {
 }
 
 long int gfileGetSize(GFILE *f) {
-	if (!(f->flags & GFILEFLG_OPEN))
+	if (!f || !(f->flags & GFILEFLG_OPEN))
 		return 0;
 	if (!f->vmt->getsize)
 		return 0;
@@ -352,7 +354,7 @@ long int gfileGetSize(GFILE *f) {
 }
 
 bool_t gfileEOF(GFILE *f) {
-	if (!(f->flags & GFILEFLG_OPEN))
+	if (!f || !(f->flags & GFILEFLG_OPEN))
 		return TRUE;
 	if (!f->vmt->eof)
 		return TRUE;
@@ -367,12 +369,16 @@ bool_t gfileEOF(GFILE *f) {
 
 	// Special String VMT
 	static int StringRead(GFILE *f, char *buf, int size) {
-		memcpy(buf, (char *)f->obj+f->pos, size);
-		return size;
+		// size must be 1 for a complete read
+		if (!((char *)f->obj)[f->pos])
+			return 0;
+		buf[0] = ((char *)f->obj)[f->pos];
+		return 1;
 	}
 	static int StringWrite(GFILE *f, const char *buf, int size) {
-		memcpy((char *)f->obj+f->pos, buf, size);
-		return size;
+		// size must be 1 for a complete write
+		((char *)f->obj)[f->pos] = buf[0];
+		return 1;
 	}
 	static const GFILEVMT StringVMT = {
 		0,								// next
@@ -640,7 +646,206 @@ bool_t gfileEOF(GFILE *f) {
  * scang routines
  ********************************************************/
 #if GFILE_NEED_SCANG
-	#error "GFILE-SCANG: Not implemented yet"
+	int fscang(GFILE *f, const char *fmt, ...) {
+		int		res;
+		va_list	ap;
+
+		va_start(ap, fmt);
+		res = vfscang(f, fmt, ap);
+		va_end(ap);
+		return res;
+	}
+
+	int vfscang(GFILE *f, const char *fmt, va_list arg) {
+		int		res, width, size, base;
+		char	c;
+		bool_t	assign;
+		void	*p;
+
+		for(res = 0; *fmt; fmt++) {
+			switch(*fmt) {
+			case ' ': case '\t': case '\r': case '\n': case '\v': case '\f':
+				break;
+
+			case '%':
+				fmt++;
+				assign = TRUE;
+				width = 0;
+				size = 1;
+
+				if (*fmt == '*') {
+					fmt++;
+					assign = FALSE;
+				}
+				while(*fmt >= '0' && *fmt <= '9')
+					width = width * 10 + (*fmt++ - '0');
+				if (*fmt == 'h') {
+					fmt++;
+					size = 0;
+				} else if (*fmt == 'l') {
+					fmt++;
+					size = 2;
+				} else if (*fmt == 'L') {
+					fmt++;
+					size = 3;
+				}
+				switch(*fmt) {
+				case 0:
+					return res;
+				case '%':
+					goto matchchar;
+				case 'c':
+					if (!width) {
+						while(1) {
+							if (!gfileRead(f, &c, 1))			return res;
+							switch(c) {
+							case ' ': case '\t': case '\r':
+							case '\n': case '\v': case '\f':	continue;
+							}
+							break;
+						}
+						width = 1;
+					} else {
+						if (!gfileRead(f, &c, 1)) 				return res;
+					}
+					if (assign) {
+						p = va_arg(ap, char *);
+						res++;
+						*((char *)p)++ = c;
+					}
+					while(--width) {
+						if (!gfileRead(f, &c, 1)) 			return res;
+						if (assign) *((char *)p)++ = c;
+					}
+					break;
+				case 's':
+					while(1) {
+						if (!gfileRead(f, &c, 1))			return res;
+						switch(c) {
+						case ' ': case '\t': case '\r':
+						case '\n': case '\v': case '\f':	continue;
+						}
+						break;
+					}
+					if (assign) {
+						p = va_arg(ap, char *);
+						res++;
+						*((char *)p)++ = c;
+					}
+					if (width) {
+						while(--width) {
+							if (!gfileRead(f, &c, 1)) {
+								if (assign) *((char *)p) = 0;
+								return res;
+							}
+							if (assign) *((char *)p)++ = c;
+						}
+					} else {
+						while(1) {
+							if (!gfileRead(f, &c, 1)) {
+								if (assign) *((char *)p) = 0;
+								return res;
+							}
+							switch(c) {
+							case ' ': case '\t': case '\r':
+							case '\n': case '\v': case '\f':	break;
+							default:
+								if (assign) *((char *)p)++ = c;
+								continue;
+							}
+							break;
+						}
+						//ungetch(c);
+					}
+					if (assign) *((char *)p) = 0;
+					break;
+				case 'd':
+				case 'i':
+				case 'o':
+				case 'u':
+				case 'x':
+				case 'b':
+					/*
+					while (isspace (*buf))
+					    buf++;
+					if (*s == 'd' || *s == 'u')
+					    base = 10;
+					else if (*s == 'x')
+					    base = 16;
+					else if (*s == 'o')
+					    base = 8;
+					else if (*s == 'b')
+					    base = 2;
+					if (!width) {
+					    if (isspace (*(s + 1)) || *(s + 1) == 0)
+						width = strcspn (buf, ISSPACE);
+					    else
+						width = strchr (buf, *(s + 1)) - buf;
+					}
+					strncpy (tmp, buf, width);
+					tmp[width] = '\0';
+					buf += width;
+					if (!noassign)
+					    atob (va_arg (ap, u_int32_t *), tmp, base);
+				    }
+				    if (!noassign)
+					count++;
+					*/
+
+				#if GFILE_ALLOW_FLOATS
+					case 'e': case 'f': case 'g':
+				#endif
+				default:
+					return res;
+				}
+
+				break;
+
+			default:
+			matchchar:
+				while(1) {
+					if (!gfileRead(f, &c, 1))			return res;
+					switch(c) {
+					case ' ': case '\t': case '\r':
+					case '\n': case '\v': case '\f':	continue;
+					}
+					break;
+				}
+				if (c != *fmt) 							return res;
+				break;
+			}
+		}
+		return res;
+	}
+
+	#if GFILE_NEED_STRINGS
+		int sscang(const char *buf, const char *fmt, ...) {
+			int		res;
+			GFILE	f;
+			va_list	ap;
+
+			f.flags = GFILEFLG_OPEN|GFILEFLG_READ;
+			f.vmt = &StringVMT;
+			f.pos = 0;
+			f.obj = buf;
+			va_start(ap, fmt);
+			res = vfscang(&f, fmt, ap);
+			va_end(ap);
+			return res;
+		}
+
+		int vsscang(const char *buf, const char *fmt, va_list arg) {
+			int		res;
+			GFILE	f;
+
+			f.flags = GFILEFLG_OPEN|GFILEFLG_READ;
+			f.vmt = &StringVMT;
+			f.pos = 0;
+			f.obj = buf;
+			res = vfscang(&f, fmt, arg);
+			return res;
+		}
+	#endif
 #endif
 
 /********************************************************
