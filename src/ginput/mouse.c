@@ -122,8 +122,8 @@ static struct MouseConfig_t {
 			  cross[1].x * ((float)points[0].x * (float)points[2].y - (float)points[2].x * (float)points[0].y) +
 			  cross[2].x * ((float)points[0].x * (float)points[1].y - (float)points[1].x * (float)points[0].y);
 
-		dy0 = ((float)(cross[0].y - cross[2].y))  *  ((float)(points[1].y - points[2].y))
-			- ((float)(cross[1].y - cross[2].y))  *  ((float)(points[0].y - points[2].y));
+		dy0 = ((float)(cross[0].y - cross[2].y)) * ((float)(points[1].y - points[2].y))
+			- ((float)(cross[1].y - cross[2].y)) * ((float)(points[0].y - points[2].y));
 
 		dy1 = ((float)(cross[1].y - cross[2].y)) * ((float)(points[0].x - points[2].x))
 			- ((float)(cross[0].y - cross[2].y)) * ((float)(points[1].x - points[2].x));
