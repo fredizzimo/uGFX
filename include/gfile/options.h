@@ -65,9 +65,9 @@
 	 * @note	If GFILE_ALLOW_DEVICESPECIFIC is on then you can ensure that you are
 	 * 			opening a file on the ROM file system by prefixing
 	 * 			its name with "S|" (the letter 'S', followed by a vertical bar).
-	 * @note	This requires a file called romfs_files.h to be included in the
-	 * 			users project. This file includes all the files converted to .h files
-	 * 			using the file2c utility using the "-r" flag.
+	 * @note	This requires a file called romfs_files.h to be in the
+	 * 			users project include path. This file should include all the files
+	 * 			converted to .h files using the file2c utility (using flags "-dbcs").
 	 */
 	#ifndef GFILE_NEED_ROMFS
 		#define GFILE_NEED_ROMFS		FALSE

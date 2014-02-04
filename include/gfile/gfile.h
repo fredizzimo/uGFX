@@ -177,11 +177,6 @@ extern "C" {
 		//setbuf
 		//setvbuf
 		//fflush
-		//fscanf
-		//scanf
-		//sscanf
-		//vscanf
-		//vsscanf
 		//fgetc
 		//fgets
 		//fputc
