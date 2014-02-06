@@ -21,7 +21,7 @@
 
 #include "gfx.h"
 
-#if GFX_USE_GMISC || defined(__DOXYGEN__)
+#if GFX_USE_GFILE || defined(__DOXYGEN__)
 
 /*===========================================================================*/
 /* Type definitions                                                          */
@@ -98,6 +98,13 @@ extern "C" {
 	bool_t		gfileSetPos(GFILE *f, long int pos);
 	long int	gfileGetSize(GFILE *f);
 	bool_t		gfileEOF(GFILE *f);
+
+	#if GFILE_NEED_CHIBIOSFS && GFX_USE_OS_CHIBIOS
+		GFILE *		gfileOpenBaseFileStream(void *BaseFileStreamPtr, const char *mode);
+	#endif
+	#if GFILE_NEED_MEMFS
+		GFILE *		gfileOpenMemory(void *memptr, const char *mode);
+	#endif
 
 	#if GFILE_NEED_PRINTG
 		int vfnprintg(GFILE *f, int maxlen, const char *fmt, va_list arg);
@@ -192,8 +199,8 @@ extern "C" {
 }
 #endif
 
-#endif /* GFX_USE_MISC */
+#endif /* GFX_USE_GFILE */
 
-#endif /* _GMISC_H */
+#endif /* _GFILE_H */
 /** @} */
 

@@ -32,6 +32,20 @@ GFILE *gfileStdErr;
  */
 
 /********************************************************
+ * The ChibiOS BaseFileStream VMT
+ ********************************************************/
+#if GFILE_NEED_CHIBIOSFS && GFX_USE_OS_CHIBIOS
+	#include "../src/gfile/inc_chibiosfs.c"
+#endif
+
+/********************************************************
+ * The Memory Pointer VMT
+ ********************************************************/
+#if GFILE_NEED_MEMFS
+	#include "../src/gfile/inc_memfs.c"
+#endif
+
+/********************************************************
  * The RAM file-system VMT
  ********************************************************/
 #if GFILE_NEED_RAMFS
@@ -297,6 +311,66 @@ GFILE *gfileOpen(const char *fname, const char *mode) {
 	return FALSE;
 }
 
+#if GFILE_NEED_CHIBIOSFS && GFX_USE_OS_CHIBIOS
+	GFILE *		gfileOpenBaseFileStream(void *BaseFileStreamPtr, const char *mode) {
+		GFILE *			f;
+
+		// First find an available GFILE slot.
+		for (f = gfileArr; f < &gfileArr[GFILE_MAX_GFILES]; f++) {
+			if (!(f->flags & GFILEFLG_OPEN)) {
+				// Get the flags
+				if (!(f->flags = mode2flags(mode)))
+					return FALSE;
+
+				// If we want write but the fs doesn't allow it then return
+				if ((f->flags & GFILEFLG_WRITE) && !(FsCHIBIOSVMT.flags & GFSFLG_WRITEABLE))
+					return FALSE;
+
+				// File is open - fill in all the details
+				f->vmt = &FsCHIBIOSVMT;
+				f->fd = BaseFileStreamPtr;
+				f->err = 0;
+				f->pos = 0;
+				f->flags |= GFILEFLG_OPEN|GFILEFLG_CANSEEK;
+				return TRUE;
+			}
+		}
+
+		// No available slot
+		return FALSE;
+	}
+#endif
+
+#if GFILE_NEED_MEMFS
+	GFILE *		gfileOpenMemory(void *memptr, const char *mode) {
+		GFILE *			f;
+
+		// First find an available GFILE slot.
+		for (f = gfileArr; f < &gfileArr[GFILE_MAX_GFILES]; f++) {
+			if (!(f->flags & GFILEFLG_OPEN)) {
+				// Get the flags
+				if (!(f->flags = mode2flags(mode)))
+					return FALSE;
+
+				// If we want write but the fs doesn't allow it then return
+				if ((f->flags & GFILEFLG_WRITE) && !(FsMemVMT.flags & GFSFLG_WRITEABLE))
+					return FALSE;
+
+				// File is open - fill in all the details
+				f->vmt = &FsMemVMT;
+				f->fd = memptr;
+				f->err = 0;
+				f->pos = 0;
+				f->flags |= GFILEFLG_OPEN|GFILEFLG_CANSEEK;
+				return TRUE;
+			}
+		}
+
+		// No available slot
+		return FALSE;
+	}
+#endif
+
 void gfileClose(GFILE *f) {
 	if (!f || !(f->flags & GFILEFLG_OPEN))
 		return;
@@ -357,7 +431,7 @@ bool_t gfileEOF(GFILE *f) {
 	if (!f || !(f->flags & GFILEFLG_OPEN))
 		return TRUE;
 	if (!f->vmt->eof)
-		return TRUE;
+		return FALSE;
 	return f->vmt->eof(f);
 }
 

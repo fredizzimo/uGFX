@@ -44,13 +44,6 @@
 		#define GFILE_NEED_STRINGS		FALSE
 	#endif
 	/**
-	 * @brief   Include scang, fscang, sscang etc functions
-	 * @details	Defaults to FALSE
-	 */
-	#ifndef GFILE_NEED_SCANG
-		#define GFILE_NEED_SCANG		FALSE
-	#endif
-	/**
 	 * @brief   Map many stdio functions to their GFILE equivalent
 	 * @details	Defaults to FALSE
 	 * @note	This replaces the functions in stdio.h with equivalents
@@ -108,6 +101,28 @@
 	#ifndef GFILE_NEED_NATIVEFS
 		#define GFILE_NEED_NATIVEFS		FALSE
 	#endif
+	/**
+	 * @brief   Include ChibiOS BaseFileStream support
+	 * @details	Defaults to FALSE
+	 * @pre		This is only relevant on the ChibiOS operating system.
+	 * @note	Use the @p gfileOpenBaseFileStream() call to open a GFILE based on a
+	 * 			BaseFileStream. The BaseFileStream must already be open.
+	 * @note	A GFile of this type cannot be opened by filename. The BaseFileStream
+	 * 			must be pre-opened using the operating system.
+	 */
+	#ifndef GFILE_NEED_CHIBIOSFS
+		#define GFILE_NEED_CHIBIOSFS	FALSE
+	#endif
+	/**
+	 * @brief   Include raw memory pointer support
+	 * @details	Defaults to FALSE
+	 * @note	Use the @p gfileOpenMemory() call to open a GFILE based on a
+	 * 			memory pointer. The GFILE opened appears to be of unlimited size.
+	 * @note	A GFile of this type cannot be opened by filename.
+	 */
+	#ifndef GFILE_NEED_MEMFS
+		#define GFILE_NEED_MEMFS		FALSE
+	#endif
 /**
  * @}
  *
@@ -136,12 +151,6 @@
 	 */
 	#ifndef GFILE_MAX_GFILES
 		#define GFILE_MAX_GFILES		3
-	#endif
-	/**
-	 * @brief   The size in bytes of the RAM file system
-	 */
-	#ifndef GFILE_RAMFS_SIZE
-		#define GFILE_RAMFS_SIZE		0
 	#endif
 /** @} */
 
