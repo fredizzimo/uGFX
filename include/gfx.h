@@ -150,6 +150,13 @@
 	#ifndef GFX_USE_GMISC
 		#define GFX_USE_GMISC	FALSE
 	#endif
+	/**
+	 * @brief   GFX File API
+	 * @details	Defaults to FALSE
+	 */
+	#ifndef GFX_USE_GFILE
+		#define GFX_USE_GFILE	FALSE
+	#endif
 /** @} */
 
 /**
@@ -157,6 +164,7 @@
  *
  */
 #include "gos/options.h"
+#include "gfile/options.h"
 #include "gmisc/options.h"
 #include "gqueue/options.h"
 #include "gevent/options.h"
@@ -169,7 +177,7 @@
 #include "gaudout/options.h"
 
 /**
- * Inter-dependancy safety checks on the sub-systems.
+ * Interdependency safety checks on the sub-systems.
  *
  */
 #include "gfx_rules.h"
@@ -178,6 +186,7 @@
  *  Include the sub-system header files
  */
 #include "gos/gos.h"
+#include "gfile/options.h"
 #include "gmisc/gmisc.h"
 #include "gqueue/gqueue.h"
 #include "gevent/gevent.h"
@@ -208,7 +217,6 @@ extern "C" {
 	 * @brief	The one call to end it all
 	 *
 	 * @note	This will deinitialise each sub-system that has been turned on.
-	 * @note	Do not call this without a previous @p gfxInit();
 	 *
 	 * @api
 	 */
