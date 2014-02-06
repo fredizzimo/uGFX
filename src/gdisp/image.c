@@ -18,6 +18,77 @@
 
 #include <string.h>
 
+static gdispImageError imageOpen(gdispImage *img) {
+	gdispImageError err;
+
+	img->bgcolor = White;
+	for(img->fns = ImageHandlers; img->fns < ImageHandlers+sizeof(ImageHandlers)/sizeof(ImageHandlers[0]); img->fns++) {
+		err = img->fns->open(img);
+		if (err != GDISP_IMAGE_ERR_BADFORMAT) {
+			if (!(err & GDISP_IMAGE_ERR_UNRECOVERABLE))
+				return err;
+			goto unrecoverable;
+		}
+		img->io.fns->seek(&img->io, 0);
+	}
+
+	err = GDISP_IMAGE_ERR_BADFORMAT;
+	img->type = GDISP_IMAGE_TYPE_UNKNOWN;
+
+unrecoverable:
+	img->fns->close(img);
+	img->flags = 0;
+	img->fns = 0;
+	img->priv = 0;
+	return err;
+}
+
+gdispImageError
+		DEPRECATED("If possible please use gdispImageOpenFile(), gdispImageOpenMemory() or gdispImageOpenBaseFileStream() instead")
+		gdispImageOpen(gdispImage *img) {
+	return imageOpen(img);
+}
+
+#if GDISP_NEED_IMAGE_NATIVE
+	extern gdispImageError gdispImageOpen_NATIVE(gdispImage *img);
+	extern void gdispImageClose_NATIVE(gdispImage *img);
+	extern gdispImageError gdispImageCache_NATIVE(gdispImage *img);
+	extern gdispImageError gdispGImageDraw_NATIVE(GDisplay *g, gdispImage *img, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t sx, coord_t sy);
+	extern delaytime_t gdispImageNext_NATIVE(gdispImage *img);
+#endif
+
+#if GDISP_NEED_IMAGE_GIF
+	extern gdispImageError gdispImageOpen_GIF(gdispImage *img);
+	extern void gdispImageClose_GIF(gdispImage *img);
+	extern gdispImageError gdispImageCache_GIF(gdispImage *img);
+	extern gdispImageError gdispGImageDraw_GIF(GDisplay *g, gdispImage *img, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t sx, coord_t sy);
+	extern delaytime_t gdispImageNext_GIF(gdispImage *img);
+#endif
+
+#if GDISP_NEED_IMAGE_BMP
+	extern gdispImageError gdispImageOpen_BMP(gdispImage *img);
+	extern void gdispImageClose_BMP(gdispImage *img);
+	extern gdispImageError gdispImageCache_BMP(gdispImage *img);
+	extern gdispImageError gdispGImageDraw_BMP(GDisplay *g, gdispImage *img, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t sx, coord_t sy);
+	extern delaytime_t gdispImageNext_BMP(gdispImage *img);
+#endif
+
+#if GDISP_NEED_IMAGE_JPG
+	extern gdispImageError gdispImageOpen_JPG(gdispImage *img);
+	extern void gdispImageClose_JPG(gdispImage *img);
+	extern gdispImageError gdispImageCache_JPG(gdispImage *img);
+	extern gdispImageError gdispGImageDraw_JPG(GDisplay *g, gdispImage *img, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t sx, coord_t sy);
+	extern delaytime_t gdispImageNext_JPG(gdispImage *img);
+#endif
+
+#if GDISP_NEED_IMAGE_PNG
+	extern gdispImageError gdispImageOpen_PNG(gdispImage *img);
+	extern void gdispImageClose_PNG(gdispImage *img);
+	extern gdispImageError gdispImageCache_PNG(gdispImage *img);
+	extern gdispImageError gdispGImageDraw_PNG(GDisplay *g, gdispImage *img, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t sx, coord_t sy);
+	extern delaytime_t gdispImageNext_PNG(gdispImage *img);
+#endif
+
 /* The structure defining the routines for image drawing */
 typedef struct gdispImageHandlers {
 	gdispImageError	(*open)(gdispImage *img);			/* The open function */
@@ -59,128 +130,86 @@ static gdispImageHandlers ImageHandlers[] = {
 	#endif
 };
 
-static size_t ImageMemoryRead(struct gdispImageIO *pio, void *buf, size_t len) {
-	if (pio->fd == (void *)-1) return 0;
-	memcpy(buf, ((const char *)pio->fd)+pio->pos, len);
+static size_t ImageGFileRead(struct gdispImageIO *pio, void *buf, size_t len) {
+	if (!pio->fd) return 0;
+	len = gfileRead((GFILE *)pio->fd, buf, len);
+	if ((int)len < 0) len = 0;
 	pio->pos += len;
 	return len;
 }
 
-static void ImageMemorySeek(struct gdispImageIO *pio, size_t pos) {
-	if (pio->fd == (void *)-1) return;
-	pio->pos = pos;
+static void ImageGFileSeek(struct gdispImageIO *pio, size_t pos) {
+	if (!pio->fd) return;
+	if (pio->pos != pos) {
+		gfileSetPos((GFILE *)pio->fd, pos);
+		pio->pos = pos;
+	}
 }
 
-static void ImageMemoryClose(struct gdispImageIO *pio) {
-	pio->fd = (void *)-1;
+static void ImageGFileClose(struct gdispImageIO *pio) {
+	if (!pio->fd) return;
+	gfileClose((GFILE *)pio->fd);
+	pio->fd = 0;
 	pio->pos = 0;
 }
 
-static const gdispImageIOFunctions ImageMemoryFunctions =
-	{ ImageMemoryRead, ImageMemorySeek, ImageMemoryClose };
+static const gdispImageIOFunctions ImageGFileFunctions =
+	{ ImageGFileRead, ImageGFileSeek, ImageGFileClose };
 
-bool_t gdispImageSetMemoryReader(gdispImage *img, const void *memimage) {
-	img->io.fns = &ImageMemoryFunctions;
-	img->io.pos = 0;
-	img->io.fd = memimage;
-	return TRUE;
-}
-
-#if GFX_USE_OS_CHIBIOS
-	static size_t ImageBaseFileStreamRead(struct gdispImageIO *pio, void *buf, size_t len) {
-		if (pio->fd == (void *)-1) return 0;
-		len = chSequentialStreamRead(((BaseFileStream *)pio->fd), (uint8_t *)buf, len);
-		pio->pos += len;
-		return len;
-	}
-
-	static void ImageBaseFileStreamSeek(struct gdispImageIO *pio, size_t pos) {
-		if (pio->fd == (void *)-1) return;
-		if (pio->pos != pos) {
-			chFileStreamSeek(((BaseFileStream *)pio->fd), pos);
-			pio->pos = pos;
-		}
-	}
-
-	static void ImageBaseFileStreamClose(struct gdispImageIO *pio) {
-		if (pio->fd == (void *)-1) return;
-		chFileStreamClose(((BaseFileStream *)pio->fd));
-		pio->fd = (void *)-1;
-		pio->pos = 0;
-	}
-
-	static const gdispImageIOFunctions ImageBaseFileStreamFunctions =
-		{ ImageBaseFileStreamRead, ImageBaseFileStreamSeek, ImageBaseFileStreamClose };
-
-	bool_t gdispImageSetBaseFileStreamReader(gdispImage *img, void *BaseFileStreamPtr) {
-		img->io.fns = &ImageBaseFileStreamFunctions;
+#if GFILE_NEED_MEMFS
+	gdispImageError gdispImageOpenMemory(gdispImage *img, const void *memimage) {
+		img->io.fns = &ImageGFileFunctions;
 		img->io.pos = 0;
-		img->io.fd = BaseFileStreamPtr;
-		return TRUE;
-	}
-#endif
-
-#if defined(WIN32) || GFX_USE_OS_WIN32 || GFX_USE_OS_LINUX || GFX_USE_OS_OSX
-	#include <stdio.h>
-
-	static size_t ImageFileRead(struct gdispImageIO *pio, void *buf, size_t len) {
-		if (!pio->fd) return 0;
-		len = fread(buf, 1, len, (FILE *)pio->fd);
-		if ((int)len < 0) len = 0;
-		pio->pos += len;
-		return len;
+		img->io.fd = gfileOpenMemory(memimage, "rb");
+		if (!img->io.fd)
+			return GDISP_IMAGE_ERR_NOSUCHFILE;
+		return imageOpen(img);
 	}
 
-	static void ImageFileSeek(struct gdispImageIO *pio, size_t pos) {
-		if (!pio->fd) return;
-		if (pio->pos != pos) {
-			fseek((FILE *)pio->fd, pos, SEEK_SET);
-			pio->pos = pos;
-		}
-	}
-
-	static void ImageFileClose(struct gdispImageIO *pio) {
-		if (!pio->fd) return;
-		fclose((FILE *)pio->fd);
-		pio->fd = 0;
-		pio->pos = 0;
-	}
-
-	static const gdispImageIOFunctions ImageFileFunctions =
-		{ ImageFileRead, ImageFileSeek, ImageFileClose };
-
-	bool_t gdispImageSetFileReader(gdispImage *img, const char *filename) {
-		img->io.fns = &ImageFileFunctions;
+	bool_t DEPRECATED("Use gdispImageOpenMemory() instead. GFX_USE_GFILE, GFILE_NEED_MEMFS must also be TRUE") gdispImageSetMemoryReader(gdispImage *img, const void *memimage) {
+		img->io.fns = &ImageGFileFunctions;
 		img->io.pos = 0;
-		#if defined(WIN32) || GFX_USE_OS_WIN32
-			img->io.fd = (void *)fopen(filename, "rb");
-		#else
-			img->io.fd = (void *)fopen(filename, "r");
-		#endif
-
+		img->io.fd = gfileOpenMemory(memimage, "rb");
 		return img->io.fd != 0;
 	}
 #endif
 
-gdispImageError gdispImageOpen(gdispImage *img) {
-	gdispImageError err;
-
-	img->bgcolor = White;
-	for(img->fns = ImageHandlers; img->fns < ImageHandlers+sizeof(ImageHandlers)/sizeof(ImageHandlers[0]); img->fns++) {
-		err = img->fns->open(img);
-		if (err != GDISP_IMAGE_ERR_BADFORMAT) {
-			if ((err & GDISP_IMAGE_ERR_UNRECOVERABLE))
-				img->fns = 0;
-			return err;
-		}
-		img->io.fns->seek(&img->io, 0);
-	}
-	img->type = GDISP_IMAGE_TYPE_UNKNOWN;
-	img->flags = 0;
-	img->fns = 0;
-	img->priv = 0;
-	return GDISP_IMAGE_ERR_BADFORMAT;
+gdispImageError gdispImageOpenFile(gdispImage *img, const char *filename) {
+	img->io.fns = &ImageGFileFunctions;
+	img->io.pos = 0;
+	img->io.fd = gfileOpen(filename, "rb");
+	if (!img->io.fd)
+		return GDISP_IMAGE_ERR_NOSUCHFILE;
+	return imageOpen(img);
 }
+
+#if defined(WIN32) || GFX_USE_OS_WIN32 || GFX_USE_OS_LINUX || GFX_USE_OS_OSX
+	bool_t DEPRECATED("Please use gdispImageOpenFile() instead. GFX_USE_GFILE must also be TRUE") gdispImageSetFileReader(gdispImage *img, const char *filename) {
+		img->io.fns = &ImageGFileFunctions;
+		img->io.pos = 0;
+		img->io.fd = gfileOpen(filename, "rb");
+		return img->io.fd != 0;
+	}
+#endif
+
+#if GFILE_NEED_CHIBIOSFS && GFX_USE_OS_CHIBIOS
+	bool_t DEPRECATED("Use gdispImageOpenBaseFileStream() instead. GFX_USE_GFILE, GFILE_NEED_CHIBIOSFS must also be TRUE") gdispImageSetBaseFileStreamReader(gdispImage *img, void *BaseFileStreamPtr) {
+		img->io.fns = &ImageGFileFunctions;
+		img->io.pos = 0;
+		img->io.fd = gfileOpenBaseFileStream(BaseFileStreamPtr, "rb");
+		return img->io.fd != 0;
+	}
+
+	gdispImageError gdispImageOpenBaseFileStream(gdispImage *img, void *BaseFileStreamPtr) {
+		img->io.fns = &ImageGFileFunctions;
+		img->io.pos = 0;
+		img->io.fd = gfileOpenBaseFileStream(BaseFileStreamPtr, "rb");
+		if (!img->io.fd)
+			return GDISP_IMAGE_ERR_NOSUCHFILE;
+		return imageOpen(img);
+	}
+
+#endif
 
 void gdispImageClose(gdispImage *img) {
 	if (img->fns)
