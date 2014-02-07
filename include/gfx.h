@@ -186,7 +186,7 @@
  *  Include the sub-system header files
  */
 #include "gos/gos.h"
-#include "gfile/options.h"
+#include "gfile/gfile.h"
 #include "gmisc/gmisc.h"
 #include "gqueue/gqueue.h"
 #include "gevent/gevent.h"

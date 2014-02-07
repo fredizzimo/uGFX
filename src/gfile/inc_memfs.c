@@ -15,8 +15,8 @@
 
 #include <string.h>
 
-static int MEMRead(GFILE *f, char *buf, int size);
-static int MEMWrite(GFILE *f, char *buf, int size);
+static int MEMRead(GFILE *f, void *buf, int size);
+static int MEMWrite(GFILE *f, const void *buf, int size);
 static bool_t MEMSetpos(GFILE *f, long int pos);
 
 static const GFILEVMT FsMemVMT = {
@@ -28,14 +28,16 @@ static const GFILEVMT FsMemVMT = {
 	MEMSetpos, 0, 0,
 };
 
-static int MEMRead(GFILE *f, char *buf, int size) {
-	memset(buf, ((char *)f->fd)+f->pos, size);
+static int MEMRead(GFILE *f, void *buf, int size) {
+	memcpy(buf, ((char *)f->obj)+f->pos, size);
 	return size;
 }
-static int MEMWrite(GFILE *f, char *buf, int size) {
-	memset(((char *)f->fd)+f->pos, buf, size);
+static int MEMWrite(GFILE *f, const void *buf, int size) {
+	memcpy(((char *)f->obj)+f->pos, buf, size);
 	return size;
 }
 static bool_t MEMSetpos(GFILE *f, long int pos) {
+	(void) f;
+	(void) pos;
 	return TRUE;
 }

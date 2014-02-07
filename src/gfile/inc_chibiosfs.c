@@ -14,8 +14,8 @@
  ********************************************************/
 
 static void ChibiOSBFSClose(GFILE *f);
-static int ChibiOSBFSRead(GFILE *f, char *buf, int size);
-static int ChibiOSBFSWrite(GFILE *f, char *buf, int size);
+static int ChibiOSBFSRead(GFILE *f, void *buf, int size);
+static int ChibiOSBFSWrite(GFILE *f, const void *buf, int size);
 static bool_t ChibiOSBFSSetpos(GFILE *f, long int pos);
 static long int ChibiOSBFSGetsize(GFILE *f);
 static bool_t ChibiOSBFSEof(GFILE *f);
@@ -32,10 +32,10 @@ static const GFILEVMT FsCHIBIOSVMT = {
 static void ChibiOSBFSClose(GFILE *f) {
 	chFileStreamClose(((BaseFileStream *)f->fd));
 }
-static int ChibiOSBFSRead(GFILE *f, char *buf, int size) {
+static int ChibiOSBFSRead(GFILE *f, void *buf, int size) {
 	return chSequentialStreamRead(((BaseFileStream *)f->fd), (uint8_t *)buf, size);
 }
-static int ChibiOSBFSWrite(GFILE *f, char *buf, int size) {
+static int ChibiOSBFSWrite(GFILE *f, const void *buf, int size) {
 	return chSequentialStreamWrite(((BaseFileStream *)f->fd), (uint8_t *)buf, size);
 }
 static bool_t ChibiOSBFSSetpos(GFILE *f, long int pos) {

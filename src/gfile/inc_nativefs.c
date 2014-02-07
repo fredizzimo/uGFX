@@ -28,8 +28,8 @@ static long int	NativeFilesize(const char *fname);
 static bool_t NativeRen(const char *oldname, const char *newname);
 static bool_t NativeOpen(GFILE *f, const char *fname);
 static void NativeClose(GFILE *f);
-static int NativeRead(GFILE *f, char *buf, int size);
-static int NativeWrite(GFILE *f, const char *buf, int size);
+static int NativeRead(GFILE *f, void *buf, int size);
+static int NativeWrite(GFILE *f, const void *buf, int size);
 static bool_t NativeSetpos(GFILE *f, long int pos);
 static long int NativeGetsize(GFILE *f);
 static bool_t NativeEof(GFILE *f);
@@ -85,8 +85,8 @@ static bool_t NativeOpen(GFILE *f, const char *fname) {
 	return TRUE;
 }
 static void NativeClose(GFILE *f) { fclose((FILE *)f->obj); }
-static int NativeRead(GFILE *f, char *buf, int size) { return fread(buf, 1, size, (FILE *)f->obj); }
-static int NativeWrite(GFILE *f, const char *buf, int size) { return fwrite(buf, 1, size, (FILE *)f->obj); }
+static int NativeRead(GFILE *f, void *buf, int size) { return fread(buf, 1, size, (FILE *)f->obj); }
+static int NativeWrite(GFILE *f, const void *buf, int size) { return fwrite(buf, 1, size, (FILE *)f->obj); }
 static bool_t NativeSetpos(GFILE *f, long int pos) {
 	return fseek((FILE *)f->obj, pos, SEEK_SET) ?  FALSE : TRUE;
 }

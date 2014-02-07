@@ -12,9 +12,51 @@
  */
 
 #define GFILE_IMPLEMENTATION
+
 #include "gfx.h"
 
 #if GFX_USE_GFILE
+
+struct GFILE {
+	const struct GFILEVMT *	vmt;
+	uint16_t				flags;
+		#define	GFILEFLG_OPEN			0x0001		// File is open
+		#define	GFILEFLG_READ			0x0002		// Read the file
+		#define	GFILEFLG_WRITE			0x0004		// Write the file
+		#define	GFILEFLG_APPEND			0x0008		// Append on each write
+		#define GFILEFLG_BINARY			0x0010		// Treat as a binary file
+		#define	GFILEFLG_DELONCLOSE		0x0020		// Delete on close
+		#define	GFILEFLG_CANSEEK		0x0040		// Seek operations are valid
+		#define GFILEFLG_FAILONBLOCK	0x0080		// Fail on a blocking call
+		#define GFILEFLG_MUSTEXIST		0x0100		// On open file must exist
+		#define GFILEFLG_MUSTNOTEXIST	0x0200		// On open file must not exist
+		#define GFILEFLG_TRUNC			0x0400		// On open truncate the file
+	void *					obj;
+	long int				pos;
+};
+
+typedef struct GFILEVMT {
+	const struct GFILEVMT *	next;
+	uint8_t					flags;
+		#define GFSFLG_WRITEABLE		0x0001
+		#define GFSFLG_CASESENSITIVE	0x0002
+		#define GFSFLG_SEEKABLE			0x0004
+		#define GFSFLG_FAST				0x0010
+		#define GFSFLG_SMALL			0x0020
+		#define GFSFLG_TEXTMODES		0x0040
+	char					prefix;
+	bool_t		(*del)		(const char *fname);
+	bool_t		(*exists)	(const char *fname);
+	long int	(*filesize)	(const char *fname);
+	bool_t		(*ren)		(const char *oldname, const char *newname);
+	bool_t		(*open)		(GFILE *f, const char *fname);
+	void		(*close)	(GFILE *f);
+	int			(*read)		(GFILE *f, void *buf, int size);
+	int			(*write)	(GFILE *f, const void *buf, int size);
+	bool_t		(*setpos)	(GFILE *f, long int pos);
+	long int	(*getsize)	(GFILE *f);
+	bool_t		(*eof)		(GFILE *f);
+} GFILEVMT;
 
 // The chain of FileSystems
 #define GFILE_CHAINHEAD		0
@@ -254,7 +296,6 @@ static bool_t testopen(const GFILEVMT *p, GFILE *f, const char *fname) {
 
 	// File is open - fill in all the details
 	f->vmt = p;
-	f->err = 0;
 	f->pos = 0;
 	f->flags |= GFILEFLG_OPEN;
 	if (p->flags & GFSFLG_SEEKABLE)
@@ -269,7 +310,7 @@ GFILE *gfileOpen(const char *fname, const char *mode) {
 
 	// Get the requested mode
 	if (!(flags = mode2flags(mode)))
-		return FALSE;
+		return 0;
 
 	#if GFILE_ALLOW_DEVICESPECIFIC
 		if (fname[0] && fname[1] == '|') {
@@ -280,7 +321,7 @@ GFILE *gfileOpen(const char *fname, const char *mode) {
 					f->flags = flags;
 					for(p = FsChain; p; p = p->next) {
 						if (p->prefix == fname[0])
-							return testopen(p, f, fname+2);
+							return testopen(p, f, fname+2) ? f : 0;
 					}
 					// File not found
 					break;
@@ -288,7 +329,7 @@ GFILE *gfileOpen(const char *fname, const char *mode) {
 			}
 
 			// No available slot
-			return FALSE;
+			return 0;
 		}
 	#endif
 
@@ -300,7 +341,7 @@ GFILE *gfileOpen(const char *fname, const char *mode) {
 			f->flags = flags;
 			for(p = FsChain; p; p = p->next) {
 				if (testopen(p, f, fname))
-					return TRUE;
+					return f;
 			}
 			// File not found
 			break;
@@ -308,7 +349,7 @@ GFILE *gfileOpen(const char *fname, const char *mode) {
 	}
 
 	// No available slot
-	return FALSE;
+	return 0;
 }
 
 #if GFILE_NEED_CHIBIOSFS && GFX_USE_OS_CHIBIOS
@@ -320,24 +361,23 @@ GFILE *gfileOpen(const char *fname, const char *mode) {
 			if (!(f->flags & GFILEFLG_OPEN)) {
 				// Get the flags
 				if (!(f->flags = mode2flags(mode)))
-					return FALSE;
+					return 0;
 
 				// If we want write but the fs doesn't allow it then return
 				if ((f->flags & GFILEFLG_WRITE) && !(FsCHIBIOSVMT.flags & GFSFLG_WRITEABLE))
-					return FALSE;
+					return 0;
 
 				// File is open - fill in all the details
 				f->vmt = &FsCHIBIOSVMT;
-				f->fd = BaseFileStreamPtr;
-				f->err = 0;
+				f->obj = BaseFileStreamPtr;
 				f->pos = 0;
 				f->flags |= GFILEFLG_OPEN|GFILEFLG_CANSEEK;
-				return TRUE;
+				return f;
 			}
 		}
 
 		// No available slot
-		return FALSE;
+		return 0;
 	}
 #endif
 
@@ -350,24 +390,23 @@ GFILE *gfileOpen(const char *fname, const char *mode) {
 			if (!(f->flags & GFILEFLG_OPEN)) {
 				// Get the flags
 				if (!(f->flags = mode2flags(mode)))
-					return FALSE;
+					return 0;
 
 				// If we want write but the fs doesn't allow it then return
 				if ((f->flags & GFILEFLG_WRITE) && !(FsMemVMT.flags & GFSFLG_WRITEABLE))
-					return FALSE;
+					return 0;
 
 				// File is open - fill in all the details
 				f->vmt = &FsMemVMT;
-				f->fd = memptr;
-				f->err = 0;
+				f->obj = memptr;
 				f->pos = 0;
 				f->flags |= GFILEFLG_OPEN|GFILEFLG_CANSEEK;
-				return TRUE;
+				return f;
 			}
 		}
 
 		// No available slot
-		return FALSE;
+		return 0;
 	}
 #endif
 
@@ -379,7 +418,7 @@ void gfileClose(GFILE *f) {
 	f->flags = 0;
 }
 
-size_t gfileRead(GFILE *f, char *buf, size_t len) {
+size_t gfileRead(GFILE *f, void *buf, size_t len) {
 	size_t	res;
 
 	if (!f || (f->flags & (GFILEFLG_OPEN|GFILEFLG_READ)) != (GFILEFLG_OPEN|GFILEFLG_READ))
@@ -392,7 +431,7 @@ size_t gfileRead(GFILE *f, char *buf, size_t len) {
 	return res;
 }
 
-size_t gfileWrite(GFILE *f, const char *buf, size_t len) {
+size_t gfileWrite(GFILE *f, const void *buf, size_t len) {
 	size_t	res;
 
 	if (!f || (f->flags & (GFILEFLG_OPEN|GFILEFLG_WRITE)) != (GFILEFLG_OPEN|GFILEFLG_WRITE))
@@ -417,6 +456,7 @@ bool_t gfileSetPos(GFILE *f, long int pos) {
 	if (!f->vmt->setpos || !f->vmt->setpos(f, pos))
 		return FALSE;
 	f->pos = pos;
+	return TRUE;
 }
 
 long int gfileGetSize(GFILE *f) {
@@ -442,16 +482,16 @@ bool_t gfileEOF(GFILE *f) {
 	#include <string.h>
 
 	// Special String VMT
-	static int StringRead(GFILE *f, char *buf, int size) {
+	static int StringRead(GFILE *f, void *buf, int size) {
 		// size must be 1 for a complete read
 		if (!((char *)f->obj)[f->pos])
 			return 0;
-		buf[0] = ((char *)f->obj)[f->pos];
+		((char *)buf)[0] = ((char *)f->obj)[f->pos];
 		return 1;
 	}
-	static int StringWrite(GFILE *f, const char *buf, int size) {
+	static int StringWrite(GFILE *f, const void *buf, int size) {
 		// size must be 1 for a complete write
-		((char *)f->obj)[f->pos] = buf[0];
+		((char *)f->obj)[f->pos] = ((char *)buf)[0];
 		return 1;
 	}
 	static const GFILEVMT StringVMT = {

@@ -32,7 +32,7 @@ static bool_t ROMExists(const char *fname);
 static long int	ROMFilesize(const char *fname);
 static bool_t ROMOpen(GFILE *f, const char *fname);
 static void ROMClose(GFILE *f);
-static int ROMRead(GFILE *f, char *buf, int size);
+static int ROMRead(GFILE *f, void *buf, int size);
 static bool_t ROMSetpos(GFILE *f, long int pos);
 static long int ROMGetsize(GFILE *f);
 static bool_t ROMEof(GFILE *f);
@@ -72,7 +72,7 @@ static bool_t ROMOpen(GFILE *f, const char *fname) {
 	return TRUE;
 }
 static void ROMClose(GFILE *f) { (void)f; }
-static int ROMRead(GFILE *f, char *buf, int size) {
+static int ROMRead(GFILE *f, void *buf, int size) {
 	const ROMFS_DIRENTRY *p;
 
 	p = (const ROMFS_DIRENTRY *)f->obj;
