@@ -60,42 +60,51 @@ GHandle gwinGImageCreate(GDisplay *g, GImageObject *widget, GWindowInit *pInit);
 #define gwinImageCreate(w, pInit)			gwinGImageCreate(GDISP, w, pInit)
 
 /**
- * @brief				Sets the input routines that support reading the image from memory
- *						in RAM or flash.
- * @return				TRUE if the IO open function succeeds
+ * @brief				Opens the image using a GFILE
+ * @return				TRUE if the image can be opened
  *
  * @param[in] gh		The widget (must be an image widget)
- * @param[in] memory	A pointer to the image in RAM or Flash
+ * @param[in] f			The open (for reading) GFILE to use
  *
  * @api
  */
-bool_t gwinImageOpenMemory(GHandle gh, const void* memory);
+bool_t gwinImageOpenGFile(GHandle gh, GFILE *f);
 
-#if defined(WIN32) || GFX_USE_OS_WIN32 || GFX_USE_OS_LINUX || GFX_USE_OS_OSX || defined(__DOXYGEN__)
+/**
+ * @brief				Opens the image using the specified filename
+ * @return				TRUE if the open succeeds
+ *
+ * @param[in] gh		The widget (must be an image widget)
+ * @param[in] filename	The filename to open
+ *
+ * @api
+ */
+#define gwinImageOpenFile(gh, filename)			gwinImageOpenGFile((gh), gfileOpen((filename), "rb"))
+
 	/**
-	 * @brief				Sets the input routines that support reading the image from a file
+	 * @brief				Sets the input routines that support reading the image from memory
+	 *						in RAM or flash.
+	 * @pre					GFILE_NEED_MEMFS must be TRUE
 	 * @return				TRUE if the IO open function succeeds
 	 *
 	 * @param[in] gh		The widget (must be an image widget)
-	 * @param[in] filename	The filename to open
+	 * @param[in] ptr		A pointer to the image in RAM or Flash
 	 *
 	 * @api
 	 */
-	bool_t gwinImageOpenFile(GHandle gh, const char* filename);
-#endif
+#define gwinImageOpenMemory(gh, ptr)			gwinImageOpenGFile((gh), gfileOpenMemory((void *)(ptr), "rb"))
 
-#if GFX_USE_OS_CHIBIOS || defined(__DOXYGEN__)
-	/**
-	 * @brief				Sets the input routines that support reading the image from a BaseFileStream (eg. an SD-Card).
-	 * @return				TRUE if the IO open function succeeds
-	 *
-	 * @param[in] gh		The widget (must be an image widget)
-	 * @param[in] streamPtr	A pointer to the (open) BaseFileStream object.
-	 *
-	 * @api
-	 */
-	bool_t gwinImageOpenStream(GHandle gh, void *streamPtr);
-#endif
+/**
+ * @brief				Sets the input routines that support reading the image from a BaseFileStream (eg. an SD-Card).
+ * @return				TRUE if the IO open function succeeds
+ * @pre					GFILE_NEED_CHIBIOSFS and GFX_USE_OS_CHIBIOS must be TRUE
+ *
+ * @param[in] gh		The widget (must be an image widget)
+ * @param[in] streamPtr	A pointer to the (open) BaseFileStream object.
+ *
+ * @api
+ */
+#define gwinImageOpenStream(gh, streamPtr)		gwinImageOpenGFile((gh), gfileOpenBaseFIleStream((streamPtr), "rb"))
 
 /**
  * @brief				Cache the image.

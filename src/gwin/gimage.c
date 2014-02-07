@@ -139,14 +139,11 @@ GHandle gwinGImageCreate(GDisplay *g, GImageObject *gobj, GWindowInit *pInit) {
 	return (GHandle)gobj;
 }
 
-bool_t gwinImageOpenMemory(GHandle gh, const void* memory) {
+bool_t gwinImageOpenGFile(GHandle gh, GFILE *f) {
 	if (gdispImageIsOpen(&widget(gh)->image))
 		gdispImageClose(&widget(gh)->image);
 
-	if (!gdispImageSetMemoryReader(&widget(gh)->image, memory))
-		return FALSE;
-
-	if (gdispImageOpen(&widget(gh)->image) != GDISP_IMAGE_ERR_OK)
+	if ((gdispImageOpenGFile(&widget(gh)->image, f) & GDISP_IMAGE_ERR_UNRECOVERABLE))
 		return FALSE;
 
 	if ((gh->flags & GWIN_FLG_VISIBLE)) {
@@ -160,54 +157,6 @@ bool_t gwinImageOpenMemory(GHandle gh, const void* memory) {
 
 	return TRUE;
 }
-
-#if defined(WIN32) || GFX_USE_OS_WIN32 || GFX_USE_OS_LINUX || GFX_USE_OS_OSX || defined(__DOXYGEN__)
-bool_t gwinImageOpenFile(GHandle gh, const char* filename) {
-	if (gdispImageIsOpen(&widget(gh)->image))
-		gdispImageClose(&widget(gh)->image);
-
-	if (!gdispImageSetFileReader(&widget(gh)->image, filename))
-		return FALSE;
-
-	if (gdispImageOpen(&widget(gh)->image) != GDISP_IMAGE_ERR_OK)
-		return FALSE;
-
-	if ((gh->flags & GWIN_FLG_VISIBLE)) {
-		// Setting the clip here shouldn't be necessary if the redraw doesn't overdraw
-		//	but we put it in for safety anyway
-		#if GDISP_NEED_CLIP
-			gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
-		#endif
-		_redraw(gh);
-	}
-
-	return TRUE;
-}
-#endif 
-
-#if GFX_USE_OS_CHIBIOS || defined(__DOXYGEN__)
-bool_t gwinImageOpenStream(GHandle gh, void *streamPtr) {
-	if (gdispImageIsOpen(&widget(gh)->image))
-		gdispImageClose(&widget(gh)->image);
-
-	if (!gdispImageSetBaseFileStreamReader(&widget(gh)->image, streamPtr))
-		return FALSE;
-
-	if (gdispImageOpen(&widget(gh)->image) != GDISP_IMAGE_ERR_OK)
-		return FALSE;
-
-	if ((gh->flags & GWIN_FLG_VISIBLE)) {
-		// Setting the clip here shouldn't be necessary if the redraw doesn't overdraw
-		//	but we put it in for safety anyway
-		#if GDISP_NEED_CLIP
-			gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
-		#endif
-		_redraw(gh);
-	}
-
-	return TRUE;
-}
-#endif
 
 gdispImageError gwinImageCache(GHandle gh) {
 	return gdispImageCache(&widget(gh)->image);
