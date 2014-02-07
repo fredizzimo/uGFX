@@ -184,8 +184,7 @@ static void createWidgets(void) {
 	wi.g.x = 0+2*(LIST_WIDTH+1); wi.text = "L3"; ghList3 = gwinListCreate(0, &wi, TRUE);
 	gwinListAddItem(ghList3, "Item 0", FALSE);	gwinListAddItem(ghList3, "Item 1", FALSE);
 	gwinListAddItem(ghList3, "Item 2", FALSE);	gwinListAddItem(ghList3, "Item 3", FALSE);
-	gdispImageSetMemoryReader(&imgYesNo, image_yesno);
-	gdispImageOpen(&imgYesNo);
+	gdispImageOpenMemory(&imgYesNo, image_yesno);
 	gwinListItemSetImage(ghList3, 1, &imgYesNo);
 	gwinListItemSetImage(ghList3, 3, &imgYesNo);
 

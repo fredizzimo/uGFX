@@ -76,12 +76,11 @@ int main(void) {
 
 	// Set up IO for our image
 #if USE_MEMORY_FILE
-	gdispImageSetMemoryReader(&myImage, testanim);
+	if (!(gdispImageOpenMemory(&myImage, testanim) & GDISP_IMAGE_ERR_UNRECOVERABLE)) {
 #else
-	gdispImageSetFileReader(&myImage, "testanim.gif");
+	if (!(gdispImageOpenFile(&myImage, "testanim.gif") & GDISP_IMAGE_ERR_UNRECOVERABLE)) {
 #endif
 
-	if (gdispImageOpen(&myImage) == GDISP_IMAGE_ERR_OK) {
 		gdispImageSetBgColor(&myImage, MY_BG_COLOR);
 		// Adjust the error indicator area if necessary
 		if (myImage.width > errx && myImage.height < sheight) {

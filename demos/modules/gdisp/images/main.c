@@ -53,12 +53,11 @@ int main(void) {
 
 	// Set up IO for our image
 #if USE_MEMORY_FILE
-	gdispImageSetMemoryReader(&myImage, test_pal8);
+	gdispImageOpenMemory(&myImage, test_pal8);
 #else
-	gdispImageSetSimulFileReader(&myImage, "test-pal8.bmp");
+	gdispImageOpenFile(&myImage, "test-pal8.bmp");
 #endif
 
-	gdispImageOpen(&myImage);
 	gdispImageDraw(&myImage, 0, 0, swidth, sheight, 0, 0);
 	gdispImageClose(&myImage);
 
