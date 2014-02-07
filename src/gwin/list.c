@@ -172,6 +172,7 @@ static void gwinListDefaultDraw(GWidgetObject* gw, void* param) {
         const gfxQueueASyncItem*    qi;
         int                         item, i;
         coord_t                     iheight;
+        (void)						x;
 
         iheight = gdispGetFontMetric(gw->g.font, fontHeight) + VERTICAL_PADDING;
 
@@ -202,8 +203,7 @@ static void gwinListDefaultDraw(GWidgetObject* gw, void* param) {
 
 	// a mouse down has occurred over the list area
 	static void MouseDown(GWidgetObject* gw, coord_t x, coord_t y) {
-		const gfxQueueASyncItem*	qi;
-		int							item, i, pgsz;
+		int							pgsz;
 		coord_t						iheight;
 		(void)						x;
 
