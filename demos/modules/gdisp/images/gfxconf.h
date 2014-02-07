@@ -52,7 +52,8 @@
 #define GDISP_NEED_IMAGE_PNG		FALSE
 
 #define GFX_USE_GFILE				TRUE
-#define GFILE_NEED_MEMFS			TRUE
+#define GFILE_NEED_ROMFS			TRUE
+//#define GFILE_NEED_NATIVEFS		TRUE
 
 #endif /* _GFXCONF_H */
 

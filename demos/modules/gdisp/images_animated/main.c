@@ -29,22 +29,19 @@
 
 #include "gfx.h"
 
+/**
+ * The image file must be stored on a GFILE file-system.
+ * Use either GFILE_NEED_NATIVEFS or GFILE_NEED_ROMFS (or both).
+ *
+ * The ROMFS uses the file "romfs_files.h" to describe the set of files in the ROMFS.
+ */
+
 #define USE_IMAGE_CACHE			FALSE						// Only if you want to get performance at the expense of RAM
 #define MY_BG_COLOR				RGB2COLOR(220, 220, 255)	// Pale blue so we can see the transparent parts
 
-#ifdef WIN32
-	#define USE_MEMORY_FILE		TRUE				// Can be true or false for Win32
-#else
-	#define USE_MEMORY_FILE		TRUE				// Non-Win32 - use the compiled in image
-#endif
+static gdispImage myImage;
 
 #define SHOW_ERROR(color)		gdispFillArea(errx, erry, errcx, errcy, color)
-
-#if USE_MEMORY_FILE
-	#include "testanim.h"
-#endif
-
-static gdispImage myImage;
 
 /**
  * This demo display the animated gif (either directly from a file or from a
@@ -75,11 +72,7 @@ int main(void) {
 	errcy = sheight;
 
 	// Set up IO for our image
-#if USE_MEMORY_FILE
-	if (!(gdispImageOpenMemory(&myImage, testanim) & GDISP_IMAGE_ERR_UNRECOVERABLE)) {
-#else
 	if (!(gdispImageOpenFile(&myImage, "testanim.gif") & GDISP_IMAGE_ERR_UNRECOVERABLE)) {
-#endif
 
 		gdispImageSetBgColor(&myImage, MY_BG_COLOR);
 		// Adjust the error indicator area if necessary

@@ -81,7 +81,8 @@
 
 /* Features for the GFILE subsystem. */
 #define GFX_USE_GFILE				TRUE
-#define GFILE_NEED_MEMFS			TRUE
+#define GFILE_NEED_ROMFS			TRUE
+//#define GFILE_NEED_NATIVEFS			TRUE
 
 /* Features for the GINPUT subsystem. */
 #define GINPUT_NEED_MOUSE		TRUE

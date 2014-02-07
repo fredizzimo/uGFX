@@ -28,14 +28,17 @@
 
 #include "gfx.h"
 
-// include our chibios logo in a .gif format
-#include "image_chibios.h"
-#include "image_yesno.h"
-
 /**
  * This demo demonstrates many of the GWIN widgets.
  * On the "Radio" tab try playing with the color radio buttons.
  * On the "Checkbox" tab try playing with the "Disable All" checkbox.
+ */
+
+/**
+ * The image files must be stored on a GFILE file-system.
+ * Use either GFILE_NEED_NATIVEFS or GFILE_NEED_ROMFS (or both).
+ *
+ * The ROMFS uses the file "romfs_files.h" to describe the set of files in the ROMFS.
  */
 
 /* Our custom yellow style */
@@ -184,14 +187,14 @@ static void createWidgets(void) {
 	wi.g.x = 0+2*(LIST_WIDTH+1); wi.text = "L3"; ghList3 = gwinListCreate(0, &wi, TRUE);
 	gwinListAddItem(ghList3, "Item 0", FALSE);	gwinListAddItem(ghList3, "Item 1", FALSE);
 	gwinListAddItem(ghList3, "Item 2", FALSE);	gwinListAddItem(ghList3, "Item 3", FALSE);
-	gdispImageOpenMemory(&imgYesNo, image_yesno);
+	gdispImageOpenFile(&imgYesNo, "image_yesno.gif");
 	gwinListItemSetImage(ghList3, 1, &imgYesNo);
 	gwinListItemSetImage(ghList3, 3, &imgYesNo);
 
 	// Image
 	wi.g.x = ScrWidth-210; wi.g.y = TAB_HEIGHT + 10; wi.g.width = 200; wi.g.height = 200;
 	ghImage1 = gwinImageCreate(0, &wi.g);
-	gwinImageOpenMemory(ghImage1, image_chibios);
+	gwinImageOpenFile(ghImage1, "chibios.bmp");
 	gwinImageCache(ghImage1);
 
 	// Console - we apply some special colors before making it visible

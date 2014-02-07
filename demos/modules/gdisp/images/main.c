@@ -29,15 +29,12 @@
 
 #include "gfx.h"
 
-#ifdef WIN32
-	#define USE_MEMORY_FILE		TRUE				// Can be true or false for Win32
-#else
-	#define USE_MEMORY_FILE		TRUE				// Non-Win32 - use the compiled in image
-#endif
-
-#if USE_MEMORY_FILE
-	#include "test-pal8.h"
-#endif
+/**
+ * The image file must be stored on a GFILE file-system.
+ * Use either GFILE_NEED_NATIVEFS or GFILE_NEED_ROMFS (or both).
+ *
+ * The ROMFS uses the file "romfs_files.h" to describe the set of files in the ROMFS.
+ */
 
 static gdispImage myImage;
 
@@ -52,12 +49,7 @@ int main(void) {
 	sheight = gdispGetHeight();
 
 	// Set up IO for our image
-#if USE_MEMORY_FILE
-	gdispImageOpenMemory(&myImage, test_pal8);
-#else
 	gdispImageOpenFile(&myImage, "test-pal8.bmp");
-#endif
-
 	gdispImageDraw(&myImage, 0, 0, swidth, sheight, 0, 0);
 	gdispImageClose(&myImage);
 
