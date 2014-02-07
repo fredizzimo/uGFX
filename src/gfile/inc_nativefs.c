@@ -16,7 +16,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
+//#include <unistd.h>
 
 static GFILE NativeStdIn;
 static GFILE NativeStdOut;
@@ -50,7 +50,7 @@ static const GFILEVMT FsNativeVMT = {
 #undef GFILE_CHAINHEAD
 #define GFILE_CHAINHEAD		&FsNativeVMT
 
-static char *flags2mode(char *buf, uint16_t flags) {
+static void flags2mode(char *buf, uint16_t flags) {
 	if (flags & GFILEFLG_MUSTEXIST)
 		*buf = 'r';
 	else if (flags & GFILEFLG_APPEND)
@@ -67,32 +67,36 @@ static char *flags2mode(char *buf, uint16_t flags) {
 	*buf++ = 0;
 }
 
-static bool_t NativeDel(const char *fname) { return remove(fname) ? FALSE : TRUE; }
-static bool_t NativeExists(const char *fname) { return access(fname, 0) ? FALSE : TRUE; }
+static bool_t NativeDel(const char *fname)							{ return remove(fname) ? FALSE : TRUE; }
+static void NativeClose(GFILE *f)									{ fclose((FILE *)f->obj); }
+static int NativeRead(GFILE *f, void *buf, int size)				{ return fread(buf, 1, size, (FILE *)f->obj); }
+static int NativeWrite(GFILE *f, const void *buf, int size)			{ return fwrite(buf, 1, size, (FILE *)f->obj); }
+static bool_t NativeSetpos(GFILE *f, long int pos)					{ return fseek((FILE *)f->obj, pos, SEEK_SET) ?  FALSE : TRUE; }
+static bool_t NativeEof(GFILE *f)									{ return feof((FILE *)f->obj) ? TRUE : FALSE; }
+static bool_t NativeRen(const char *oldname, const char *newname)	{ return rename(oldname, newname) ? FALSE : TRUE; }
+static bool_t NativeExists(const char *fname) {
+	// We define access this way so we don't have to include <unistd.h> which may
+	//	(and does under windows) contain conflicting definitions for types such as uint16_t.
+	extern int access(const char *pathname, int mode);
+	return access(fname, 0) ? FALSE : TRUE;
+}
 static long int	NativeFilesize(const char *fname) {
 	struct stat st;
 	if (stat(fname, &st)) return -1;
 	return st.st_size;
 }
-static bool_t NativeRen(const char *oldname, const char *newname) { return rename(oldname, newname) ? FALSE : TRUE };
 static bool_t NativeOpen(GFILE *f, const char *fname) {
 	FILE *fd;
 	char mode[5];
 
+	flags2mode(mode, f->flags);
 	if (!(fd = fopen(fname, mode)))
 		return FALSE;
 	f->obj = (void *)fd;
 	return TRUE;
-}
-static void NativeClose(GFILE *f) { fclose((FILE *)f->obj); }
-static int NativeRead(GFILE *f, void *buf, int size) { return fread(buf, 1, size, (FILE *)f->obj); }
-static int NativeWrite(GFILE *f, const void *buf, int size) { return fwrite(buf, 1, size, (FILE *)f->obj); }
-static bool_t NativeSetpos(GFILE *f, long int pos) {
-	return fseek((FILE *)f->obj, pos, SEEK_SET) ?  FALSE : TRUE;
 }
 static long int NativeGetsize(GFILE *f) {
 	struct stat st;
 	if (fstat(fileno((FILE *)f->obj), &st)) return -1;
 	return st.st_size;
 }
-static bool_t NativeEof(GFILE *f) { return feof((FILE *)f->obj) ? TRUE : FALSE; }

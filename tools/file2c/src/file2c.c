@@ -195,7 +195,7 @@ size_t		i;
 	/* Add the directory entry if required */
 	if (opt_romdir) {
 		fprintf(f_output, "\n#ifdef ROMFS_DIRENTRY_HEAD\n");
-		fprintf(f_output, "\t%s%sROMFS_DIRENTRY %s_dir = { ROMFS_DIRENTRY_HEAD, \"%s\", %u, %s };\n", opt_static, opt_const, opt_arrayname, opt_dirname, totallen, opt_arrayname);
+		fprintf(f_output, "\t%s%sROMFS_DIRENTRY %s_dir = { 0, 0, ROMFS_DIRENTRY_HEAD, \"%s\", %u, %s };\n", opt_static, opt_const, opt_arrayname, opt_dirname, totallen, opt_arrayname);
 		fprintf(f_output, "\t#undef ROMFS_DIRENTRY_HEAD\n\t#define ROMFS_DIRENTRY_HEAD &%s_dir\n#endif\n", opt_arrayname);
 	}
 

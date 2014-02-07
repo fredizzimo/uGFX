@@ -15,11 +15,19 @@
 
 #include <string.h>
 
+// What directory file formats do we understand
+#define ROMFS_DIR_VER_MAX			0x0000
+
+// Compression Formats
+#define ROMFS_CMP_UNCOMPRESSED		0
+
 typedef struct ROMFS_DIRENTRY {
-	const struct ROMFS_DIRENTRY *	next;
-	const char *					name;
-	long int						size;
-	const char *					file;
+	uint16_t						ver;			// Directory Entry Version
+	uint16_t						cmp;			// Compression format
+	const struct ROMFS_DIRENTRY *	next;			// The next entry
+	const char *					name;			// The file name
+	long int						size;			// The file size
+	const char *					file;			// The file data
 } ROMFS_DIRENTRY;
 
 #define ROMFS_DIRENTRY_HEAD		0
@@ -48,11 +56,11 @@ static const GFILEVMT FsROMVMT = {
 #undef GFILE_CHAINHEAD
 #define GFILE_CHAINHEAD		&FsROMVMT
 
-static ROMFS_DIRENTRY *ROMFindFile(const char *fname) {
+static const ROMFS_DIRENTRY *ROMFindFile(const char *fname) {
 	const ROMFS_DIRENTRY *p;
 
 	for(p = FsROMHead; p; p = p->next) {
-		if (!strcmp(p->name, fname))
+		if (p->ver <= ROMFS_DIR_VER_MAX && p->cmp == ROMFS_CMP_UNCOMPRESSED && !strcmp(p->name, fname))
 			break;
 	}
 	return p;
