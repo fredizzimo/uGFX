@@ -16,39 +16,6 @@
 
 #if GFX_USE_GDISP && GDISP_NEED_IMAGE
 
-#include <string.h>
-
-static gdispImageError imageOpen(gdispImage *img) {
-	gdispImageError err;
-
-	img->bgcolor = White;
-	for(img->fns = ImageHandlers; img->fns < ImageHandlers+sizeof(ImageHandlers)/sizeof(ImageHandlers[0]); img->fns++) {
-		err = img->fns->open(img);
-		if (err != GDISP_IMAGE_ERR_BADFORMAT) {
-			if (!(err & GDISP_IMAGE_ERR_UNRECOVERABLE))
-				return err;
-			goto unrecoverable;
-		}
-		img->io.fns->seek(&img->io, 0);
-	}
-
-	err = GDISP_IMAGE_ERR_BADFORMAT;
-	img->type = GDISP_IMAGE_TYPE_UNKNOWN;
-
-unrecoverable:
-	img->fns->close(img);
-	img->flags = 0;
-	img->fns = 0;
-	img->priv = 0;
-	return err;
-}
-
-gdispImageError
-		DEPRECATED("If possible please use gdispImageOpenFile(), gdispImageOpenMemory() or gdispImageOpenBaseFileStream() instead")
-		gdispImageOpen(gdispImage *img) {
-	return imageOpen(img);
-}
-
 #if GDISP_NEED_IMAGE_NATIVE
 	extern gdispImageError gdispImageOpen_NATIVE(gdispImage *img);
 	extern void gdispImageClose_NATIVE(gdispImage *img);
@@ -130,92 +97,76 @@ static gdispImageHandlers ImageHandlers[] = {
 	#endif
 };
 
-static size_t ImageGFileRead(struct gdispImageIO *pio, void *buf, size_t len) {
-	if (!pio->fd) return 0;
-	len = gfileRead((GFILE *)pio->fd, buf, len);
-	if ((int)len < 0) len = 0;
-	pio->pos += len;
-	return len;
+gdispImageError
+		DEPRECATED("Use gdispImageOpenGFile() instead")
+		gdispImageOpen(gdispImage *img) {
+	return gdispImageOpenGFile(img, img->f);
 }
-
-static void ImageGFileSeek(struct gdispImageIO *pio, size_t pos) {
-	if (!pio->fd) return;
-	if (pio->pos != pos) {
-		gfileSetPos((GFILE *)pio->fd, pos);
-		pio->pos = pos;
-	}
-}
-
-static void ImageGFileClose(struct gdispImageIO *pio) {
-	if (!pio->fd) return;
-	gfileClose((GFILE *)pio->fd);
-	pio->fd = 0;
-	pio->pos = 0;
-}
-
-static const gdispImageIOFunctions ImageGFileFunctions =
-	{ ImageGFileRead, ImageGFileSeek, ImageGFileClose };
 
 #if GFILE_NEED_MEMFS
-	gdispImageError gdispImageOpenMemory(gdispImage *img, const void *memimage) {
-		img->io.fns = &ImageGFileFunctions;
-		img->io.pos = 0;
-		img->io.fd = gfileOpenMemory(memimage, "rb");
-		if (!img->io.fd)
-			return GDISP_IMAGE_ERR_NOSUCHFILE;
-		return imageOpen(img);
-	}
-
-	bool_t DEPRECATED("Use gdispImageOpenMemory() instead. GFX_USE_GFILE, GFILE_NEED_MEMFS must also be TRUE") gdispImageSetMemoryReader(gdispImage *img, const void *memimage) {
-		img->io.fns = &ImageGFileFunctions;
-		img->io.pos = 0;
-		img->io.fd = gfileOpenMemory(memimage, "rb");
-		return img->io.fd != 0;
+	bool_t
+			DEPRECATED("Use gdispImageOpenMemory() instead")
+			gdispImageSetMemoryReader(gdispImage *img, const void *memimage) {
+		img->f = gfileOpenMemory((void *)memimage, "rb");
+		return img->f != 0;
 	}
 #endif
 
-gdispImageError gdispImageOpenFile(gdispImage *img, const char *filename) {
-	img->io.fns = &ImageGFileFunctions;
-	img->io.pos = 0;
-	img->io.fd = gfileOpen(filename, "rb");
-	if (!img->io.fd)
-		return GDISP_IMAGE_ERR_NOSUCHFILE;
-	return imageOpen(img);
-}
-
 #if defined(WIN32) || GFX_USE_OS_WIN32 || GFX_USE_OS_LINUX || GFX_USE_OS_OSX
-	bool_t DEPRECATED("Please use gdispImageOpenFile() instead. GFX_USE_GFILE must also be TRUE") gdispImageSetFileReader(gdispImage *img, const char *filename) {
-		img->io.fns = &ImageGFileFunctions;
-		img->io.pos = 0;
-		img->io.fd = gfileOpen(filename, "rb");
-		return img->io.fd != 0;
+	bool_t
+			DEPRECATED("Use gdispImageOpenFile() instead")
+			gdispImageSetFileReader(gdispImage *img, const char *filename) {
+		img->f = gfileOpen(filename, "rb");
+		return img->f != 0;
 	}
 #endif
 
 #if GFILE_NEED_CHIBIOSFS && GFX_USE_OS_CHIBIOS
-	bool_t DEPRECATED("Use gdispImageOpenBaseFileStream() instead. GFX_USE_GFILE, GFILE_NEED_CHIBIOSFS must also be TRUE") gdispImageSetBaseFileStreamReader(gdispImage *img, void *BaseFileStreamPtr) {
-		img->io.fns = &ImageGFileFunctions;
-		img->io.pos = 0;
-		img->io.fd = gfileOpenBaseFileStream(BaseFileStreamPtr, "rb");
-		return img->io.fd != 0;
+	bool_t
+			DEPRECATED("Use gdispImageOpenBaseFileStream() instead")
+			gdispImageSetBaseFileStreamReader(gdispImage *img, void *BaseFileStreamPtr) {
+		img->f = gfileOpenBaseFileStream(BaseFileStreamPtr, "rb");
+		return img->f != 0;
 	}
-
-	gdispImageError gdispImageOpenBaseFileStream(gdispImage *img, void *BaseFileStreamPtr) {
-		img->io.fns = &ImageGFileFunctions;
-		img->io.pos = 0;
-		img->io.fd = gfileOpenBaseFileStream(BaseFileStreamPtr, "rb");
-		if (!img->io.fd)
-			return GDISP_IMAGE_ERR_NOSUCHFILE;
-		return imageOpen(img);
-	}
-
 #endif
+
+gdispImageError gdispImageOpenGFile(gdispImage *img, GFILE *f) {
+	gdispImageError err;
+
+	if (!f)
+		return GDISP_IMAGE_ERR_NOSUCHFILE;
+	img->f = f;
+	img->bgcolor = White;
+	for(img->fns = ImageHandlers; img->fns < ImageHandlers+sizeof(ImageHandlers)/sizeof(ImageHandlers[0]); img->fns++) {
+		err = img->fns->open(img);
+		if (err != GDISP_IMAGE_ERR_BADFORMAT) {
+			if ((err & GDISP_IMAGE_ERR_UNRECOVERABLE))
+				goto unrecoverable;
+
+			// Everything is possible
+			return err;
+		}
+
+		// Try the next decoder
+		gfileSetPos(img->f, 0);
+	}
+
+	err = GDISP_IMAGE_ERR_BADFORMAT;
+	img->type = GDISP_IMAGE_TYPE_UNKNOWN;
+
+unrecoverable:
+	gfileClose(img->f);
+	img->f = 0;
+	img->flags = 0;
+	img->fns = 0;
+	img->priv = 0;
+	return err;
+}
 
 void gdispImageClose(gdispImage *img) {
 	if (img->fns)
 		img->fns->close(img);
-	else
-		img->io.fns->close(&img->io);
+	gfileClose(img->f);
 	img->type = GDISP_IMAGE_TYPE_UNKNOWN;
 	img->flags = 0;
 	img->fns = 0;
@@ -223,7 +174,7 @@ void gdispImageClose(gdispImage *img) {
 }
 
 bool_t gdispImageIsOpen(gdispImage *img) {
-	return img->type != GDISP_IMAGE_TYPE_UNKNOWN && img->fns != 0;
+	return img->fns != 0;
 }
 
 void gdispImageSetBgColor(gdispImage *img, color_t bgcolor) {

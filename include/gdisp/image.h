@@ -104,10 +104,10 @@ typedef struct gdispImage {
 	gdispImageFlags						flags;				/* @< The image flags */
 	color_t								bgcolor;			/* @< The default background color */
 	coord_t								width, height;		/* @< The image dimensions */
-	gdispImageIO						io;					/* @< The image IO functions */
+	GFILE *								f;					/* @< The underlying GFILE */
 	#if GDISP_NEED_IMAGE_ACCOUNTING
-		uint32_t							memused;			/* @< How much RAM is currently allocated */
-		uint32_t							maxmemused;			/* @< How much RAM has been allocated (maximum) */
+		uint32_t						memused;			/* @< How much RAM is currently allocated */
+		uint32_t						maxmemused;			/* @< How much RAM has been allocated (maximum) */
 	#endif
 	const struct gdispImageHandlers *	fns;				/* @< Don't mess with this! */
 	struct gdispImagePrivate *			priv;				/* @< Don't mess with this! */
@@ -117,78 +117,28 @@ typedef struct gdispImage {
 extern "C" {
 #endif
 
-	gdispImageError DEPRECATED("If possible please use gdispImageOpenFile(), gdispImageOpenMemory() or gdispImageOpenBaseFileStream() instead")
-					gdispImageOpen(gdispImage *img);
-	bool_t DEPRECATED("Use gdispImageOpenMemory() instead. GFX_USE_GFILE, GFILE_NEED_MEMFS must also be TRUE") gdispImageSetMemoryReader(gdispImage *img, const void *memimage);
+	/**
+	 * Deprecated Functions.
+	 */
+	gdispImageError DEPRECATED("Use gdispImageOpenGFile() instead") gdispImageOpen(gdispImage *img);
+	bool_t DEPRECATED("Use gdispImageOpenMemory() instead") gdispImageSetMemoryReader(gdispImage *img, const void *memimage);
 	#if GFX_USE_OS_CHIBIOS
-		bool_t DEPRECATED("Use gdispImageOpenBaseFileStream() instead. GFX_USE_GFILE, GFILE_NEED_CHIBIOSFS must also be TRUE") gdispImageSetBaseFileStreamReader(gdispImage *img, void *BaseFileStreamPtr);
+		bool_t DEPRECATED("Use gdispImageOpenBaseFileStream() instead") gdispImageSetBaseFileStreamReader(gdispImage *img, void *BaseFileStreamPtr);
 	#endif
 	#if defined(WIN32) || GFX_USE_OS_WIN32 || GFX_USE_OS_LINUX || GFX_USE_OS_OSX
-		bool_t DEPRECATED("Please use gdispImageOpenFile() instead. GFX_USE_GFILE must also be TRUE")
-				gdispImageSetFileReader(gdispImage *img, const char *filename);
+		bool_t DEPRECATED("Please use gdispImageOpenFile() instead") gdispImageSetFileReader(gdispImage *img, const char *filename);
 		#define gdispImageSetSimulFileReader(img, fname)	gdispImageSetFileReader(img, fname)
 	#endif
 
-	#if GFX_USE_GFILE || defined(__DOXYGEN__)
-		/**
-		 * @brief	Open an image in a file and get it ready for drawing
-		 * @details	Determine the image format and get ready to decode the first image frame
-		 * @return	GDISP_IMAGE_ERR_OK (0) on success or an error code.
-		 *
-		 * @pre		GFX_USE_GFILE must be TRUE and you must have included the file-system support
-		 * 			you want to use.
-		 *
-		 * @param[in] img  		The image structure
-		 * @param[in] filename	The filename to open
-		 *
-		 * @note	This determines which decoder to use and then initialises all other fields
-		 * 			in the gdispImage structure.
-		 * @note	The image background color is set to White.
-		 * @note	There are three types of return - everything OK, partial success and unrecoverable
-		 * 			failures. For everything OK it returns GDISP_IMAGE_ERR_OK. A partial success can
-		 * 			be distinguished from a unrecoverable failure by testing the GDISP_IMAGE_ERR_UNRECOVERABLE
-		 * 			bit in the error code.
-		 * 			A partial success return code means an image can still be drawn but perhaps with
-		 * 			reduced functionality eg only the first page of a multi-page image.
-		 * @note	@p gdispImageClose() should be called even after a partial failure in order to
-		 * 			properly close the file.
-		 */
-		gdispImageError gdispImageOpenFile(gdispImage *img, const char *filename);
-	#endif
-	
-	#if GFX_USE_OS_CHIBIOS || defined(__DOXYGEN__)
-		/**
-		 * @brief	Open an image in a ChibiOS basefilestream and get it ready for drawing
-		 * @details	Determine the image format and get ready to decode the first image frame
-		 * @return	GDISP_IMAGE_ERR_OK (0) on success or an error code.
-		 *
-		 * @pre		This only makes sense on the ChibiOS operating system.
-		 *
-		 * @param[in] img  				The image structure
-		 * @param[in] BaseFileStreamPtr	A pointer to an open BaseFileStream
-		 *
-		 * @note	This determines which decoder to use and then initialises all other fields
-		 * 			in the gdispImage structure.
-		 * @note	The image background color is set to White.
-		 * @note	There are three types of return - everything OK, partial success and unrecoverable
-		 * 			failures. For everything OK it returns GDISP_IMAGE_ERR_OK. A partial success can
-		 * 			be distinguished from a unrecoverable failure by testing the GDISP_IMAGE_ERR_UNRECOVERABLE
-		 * 			bit in the error code.
-		 * 			A partial success return code means an image can still be drawn but perhaps with
-		 * 			reduced functionality eg only the first page of a multi-page image.
-		 * @note	@p gdispImageClose() should be called even after a partial failure in order to
-		 * 			properly close the file.
-		 */
-		gdispImageError gdispImageOpenBaseFileStream(gdispImage *img, void *BaseFileStreamPtr);
-	#endif
-
 	/**
-	 * @brief	Open an image in memory and get it ready for drawing
+	 * @brief	Open an image using an open GFILE and get it ready for drawing
 	 * @details	Determine the image format and get ready to decode the first image frame
 	 * @return	GDISP_IMAGE_ERR_OK (0) on success or an error code.
-	 * 
+	 *
 	 * @param[in] img  		The image structure
-	 * @param[in] memimage	A pointer to the image bytes in memory
+	 * @param[in] f			The open GFILE stream.
+	 *
+	 * @pre		The GFILE must be open for reading.
 	 * 
 	 * @note	This determines which decoder to use and then initialises all other fields
 	 * 			in the gdispImage structure.
@@ -199,10 +149,55 @@ extern "C" {
 	 * 			bit in the error code.
 	 * 			A partial success return code means an image can still be drawn but perhaps with
 	 * 			reduced functionality eg only the first page of a multi-page image.
-	 * @note	@p gdispImageClose() should be called even after a partial failure in order to
-	 * 			properly close the file.
+	 * @note	@p gdispImageClose() should be called when finished with the image. This will close
+	 * 			the image and its underlying GFILE file. Note that images opened with partial success
+	 * 			(eg GDISP_IMAGE_ERR_UNSUPPORTED_OK)
+	 * 			still need to be closed when you are finished with them.
 	 */
-	gdispImageError gdispImageOpenMemory(gdispImage *img, const void *memimage);
+	gdispImageError gdispImageOpenGFile(gdispImage *img, GFILE *filename);
+
+	/**
+	 * @brief	Open an image in a file and get it ready for drawing
+	 * @details	Determine the image format and get ready to decode the first image frame
+	 * @return	GDISP_IMAGE_ERR_OK (0) on success or an error code.
+	 *
+	 * @pre		You must have included the file-system support into GFILE that you want to use.
+	 *
+	 * @param[in] img  		The image structure
+	 * @param[in] filename	The filename to open
+	 *
+	 * @note	This function just opens the GFILE using the filename and passes it to @p gdispImageOpenGFile().
+	 */
+	#define gdispImageOpenFile(img, filename)			gdispImageOpenGFile((img), gfileOpen((filename), "rb"))
+
+	/**
+	 * @brief	Open an image in a ChibiOS basefilestream and get it ready for drawing
+	 * @details	Determine the image format and get ready to decode the first image frame
+	 * @return	GDISP_IMAGE_ERR_OK (0) on success or an error code.
+	 *
+	 * @pre		GFILE_NEED_CHIBIOSFS and GFX_USE_OS_CHIBIOS must be TRUE. This only makes sense on the ChibiOS
+	 * 			operating system.
+	 *
+	 * @param[in] img  				The image structure
+	 * @param[in] BaseFileStreamPtr	A pointer to an open BaseFileStream
+	 *
+	 * @note	This function just opens the GFILE using the basefilestream and passes it to @p gdispImageOpenGFile().
+	 */
+	#define gdispImageOpenBaseFileStream(img, BaseFileStreamPtr)			gdispImageOpenGFile((img), gfileOpenBaseFileStream((BaseFileStreamPtr), "rb"))
+
+	/**
+	 * @brief	Open an image in memory and get it ready for drawing
+	 * @details	Determine the image format and get ready to decode the first image frame
+	 * @return	GDISP_IMAGE_ERR_OK (0) on success or an error code.
+	 *
+	 * @pre		GFILE_NEED_MEMFS must be TRUE
+	 *
+	 * @param[in] img  		The image structure
+	 * @param[in] ptr		A pointer to the image bytes in memory
+	 *
+	 * @note	This function just opens the GFILE using the basefilestream and passes it to @p gdispImageOpenGFile().
+	 */
+	#define gdispImageOpenMemory(img, ptr)			gdispImageOpenGFile((img), gfileOpenMemory((void *)(ptr), "rb"))
 
 	/**
 	 * @brief	Close an image and release any dynamically allocated working storage.

@@ -118,6 +118,19 @@ typedef struct gdispImagePrivate {
 	pixel_t		buf[BLIT_BUFFER_SIZE];
 	} gdispImagePrivate;
 
+void gdispImageClose_BMP(gdispImage *img) {
+	if (img->priv) {
+#if GDISP_NEED_IMAGE_BMP_1 || GDISP_NEED_IMAGE_BMP_4 || GDISP_NEED_IMAGE_BMP_4_RLE || GDISP_NEED_IMAGE_BMP_8 || GDISP_NEED_IMAGE_BMP_8_RLE
+		if (img->priv->palette)
+			gdispImageFree(img, (void *)img->priv->palette, img->priv->palsize*sizeof(color_t));
+#endif
+		if (img->priv->frame0cache)
+			gdispImageFree(img, (void *)img->priv->frame0cache, img->width*img->height*sizeof(pixel_t));
+		gdispImageFree(img, (void *)img->priv, sizeof(gdispImagePrivate));
+		img->priv = 0;
+	}
+}
+
 gdispImageError gdispImageOpen_BMP(gdispImage *img) {
 	gdispImagePrivate *priv;
 	uint8_t		hdr[2];
@@ -126,7 +139,7 @@ gdispImageError gdispImageOpen_BMP(gdispImage *img) {
 	uint32_t	offsetColorTable;
 
 	/* Read the file identifier */
-	if (img->io.fns->read(&img->io, hdr, 2) != 2)
+	if (gfileRead(img->f, hdr, 2) != 2)
 		return GDISP_IMAGE_ERR_BADFORMAT;		// It can't be us
 
 	/* Process the BITMAPFILEHEADER structure */
@@ -154,18 +167,18 @@ gdispImageError gdispImageOpen_BMP(gdispImage *img) {
 #endif
 
 	/* Skip the size field and the 2 reserved fields */
-	if (img->io.fns->read(&img->io, priv->buf, 8) != 8)
+	if (gfileRead(img->f, priv->buf, 8) != 8)
 		goto baddatacleanup;
 
 	/* Get the offset to the bitmap data */
-	if (img->io.fns->read(&img->io, &priv->frame0pos, 4) != 4)
+	if (gfileRead(img->f, &priv->frame0pos, 4) != 4)
 		goto baddatacleanup;
 	CONVERT_FROM_DWORD_LE(priv->frame0pos);
 
 	/* Process the BITMAPCOREHEADER structure */
 
 	/* Get the offset to the colour data */
-	if (img->io.fns->read(&img->io, &offsetColorTable, 4) != 4)
+	if (gfileRead(img->f, &offsetColorTable, 4) != 4)
 		goto baddatacleanup;
 	CONVERT_FROM_DWORD_LE(offsetColorTable);
 	offsetColorTable += 14;						// Add the size of the BITMAPFILEHEADER
@@ -175,7 +188,7 @@ gdispImageError gdispImageOpen_BMP(gdispImage *img) {
 		img->priv->bmpflags |= BMP_V2;
 
 		// Read the header
-		if (img->io.fns->read(&img->io, priv->buf, 12-4) != 12-4)
+		if (gfileRead(img->f, priv->buf, 12-4) != 12-4)
 			goto baddatacleanup;
 		// Get the width
 		img->width = *(uint16_t *)(((uint8_t *)priv->buf)+0);
@@ -224,7 +237,7 @@ gdispImageError gdispImageOpen_BMP(gdispImage *img) {
 			priv->bmpflags |= BMP_V4;
 
 		// Read the header
-		if (img->io.fns->read(&img->io, priv->buf, 40-4) != 40-4)
+		if (gfileRead(img->f, priv->buf, 40-4) != 40-4)
 			goto baddatacleanup;
 		// Get the width
 		adword = *(uint32_t *)(((uint8_t *)priv->buf)+0);
@@ -327,18 +340,18 @@ gdispImageError gdispImageOpen_BMP(gdispImage *img) {
 #if GDISP_NEED_IMAGE_BMP_1 || GDISP_NEED_IMAGE_BMP_4 || GDISP_NEED_IMAGE_BMP_4_RLE || GDISP_NEED_IMAGE_BMP_8 || GDISP_NEED_IMAGE_BMP_8_RLE
 	/* Load the palette tables */
 	if (priv->bmpflags & BMP_PALETTE) {
-		img->io.fns->seek(&img->io, offsetColorTable);
+		gfileSetPos(img->f, offsetColorTable);
 
 		if (!(priv->palette = (color_t *)gdispImageAlloc(img, priv->palsize*sizeof(color_t))))
 			return GDISP_IMAGE_ERR_NOMEMORY;
 		if (priv->bmpflags & BMP_V2) {
 			for(aword = 0; aword < priv->palsize; aword++) {
-				if (img->io.fns->read(&img->io, &priv->buf, 3) != 3) goto baddatacleanup;
+				if (gfileRead(img->f, &priv->buf, 3) != 3) goto baddatacleanup;
 				priv->palette[aword] = RGB2COLOR(((uint8_t *)priv->buf)[2], ((uint8_t *)priv->buf)[1], ((uint8_t *)priv->buf)[0]);
 			}
 		} else {
 			for(aword = 0; aword < priv->palsize; aword++) {
-				if (img->io.fns->read(&img->io, &priv->buf, 4) != 4) goto baddatacleanup;
+				if (gfileRead(img->f, &priv->buf, 4) != 4) goto baddatacleanup;
 				priv->palette[aword] = RGB2COLOR(((uint8_t *)priv->buf)[2], ((uint8_t *)priv->buf)[1], ((uint8_t *)priv->buf)[0]);
 			}
 		}
@@ -349,15 +362,15 @@ gdispImageError gdispImageOpen_BMP(gdispImage *img) {
 #if GDISP_NEED_IMAGE_BMP_16 || GDISP_NEED_IMAGE_BMP_32
 	/* Load the bit masks */
 	if (priv->bmpflags & BMP_COMP_MASK) {
-		img->io.fns->seek(&img->io, offsetColorTable);
-		if (img->io.fns->read(&img->io, &priv->maskred, 4) != 4) goto baddatacleanup;
+		gfileSetPos(img->f, offsetColorTable);
+		if (gfileRead(img->f, &priv->maskred, 4) != 4) goto baddatacleanup;
 		CONVERT_FROM_DWORD_LE(priv->maskred);
-		if (img->io.fns->read(&img->io, &priv->maskgreen, 4) != 4) goto baddatacleanup;
+		if (gfileRead(img->f, &priv->maskgreen, 4) != 4) goto baddatacleanup;
 		CONVERT_FROM_DWORD_LE(priv->maskgreen);
-		if (img->io.fns->read(&img->io, &priv->maskblue, 4) != 4) goto baddatacleanup;
+		if (gfileRead(img->f, &priv->maskblue, 4) != 4) goto baddatacleanup;
 		CONVERT_FROM_DWORD_LE(priv->maskblue);
 		if (priv->bmpflags & BMP_V4) {
-			if (img->io.fns->read(&img->io, &priv->maskalpha, 4) != 4) goto baddatacleanup;
+			if (gfileRead(img->f, &priv->maskalpha, 4) != 4) goto baddatacleanup;
 			CONVERT_FROM_DWORD_LE(priv->maskalpha);
 		} else
 			priv->maskalpha = 0;
@@ -419,20 +432,6 @@ unsupportedcleanup:
 	return GDISP_IMAGE_ERR_UNSUPPORTED;		// Not supported
 }
 
-void gdispImageClose_BMP(gdispImage *img) {
-	if (img->priv) {
-#if GDISP_NEED_IMAGE_BMP_1 || GDISP_NEED_IMAGE_BMP_4 || GDISP_NEED_IMAGE_BMP_4_RLE || GDISP_NEED_IMAGE_BMP_8 || GDISP_NEED_IMAGE_BMP_8_RLE
-		if (img->priv->palette)
-			gdispImageFree(img, (void *)img->priv->palette, img->priv->palsize*sizeof(color_t));
-#endif
-		if (img->priv->frame0cache)
-			gdispImageFree(img, (void *)img->priv->frame0cache, img->width*img->height*sizeof(pixel_t));
-		gdispImageFree(img, (void *)img->priv, sizeof(gdispImagePrivate));
-		img->priv = 0;
-	}
-	img->io.fns->close(&img->io);
-}
-
 static coord_t getPixels(gdispImage *img, coord_t x) {
 	gdispImagePrivate *	priv;
 	color_t *			pc;
@@ -454,7 +453,7 @@ static coord_t getPixels(gdispImage *img, coord_t x) {
 			len = 0;
 
 			while(x < img->width && len <= BLIT_BUFFER_SIZE-32) {
-				if (img->io.fns->read(&img->io, &b, 4) != 4)
+				if (gfileRead(img->f, &b, 4) != 4)
 					return 0;
 
 				for(m=0x80; m; m >>= 1, pc++)
@@ -499,7 +498,7 @@ static coord_t getPixels(gdispImage *img, coord_t x) {
 						return len;
 				} else if (priv->bmpflags & BMP_RLE_ABS) {
 					while (priv->rlerun && len <= BLIT_BUFFER_SIZE-2 && x < img->width) {
-						if (img->io.fns->read(&img->io, &b, 1) != 1)
+						if (gfileRead(img->f, &b, 1) != 1)
 							return 0;
 						*pc++ = priv->palette[b[0] >> 4];
 						priv->rlerun--;
@@ -514,8 +513,8 @@ static coord_t getPixels(gdispImage *img, coord_t x) {
 					}
 					if (priv->rlerun)			// Return if we have more run to do
 						return len;
-					if ((img->io.pos - priv->frame0pos)&1) {	// Make sure we are on a word boundary
-						if (img->io.fns->read(&img->io, &b, 1) != 1)
+					if ((gfileGetPos(img->f) - priv->frame0pos)&1) {	// Make sure we are on a word boundary
+						if (gfileRead(img->f, &b, 1) != 1)
 							return 0;
 					}
 				}
@@ -524,7 +523,7 @@ static coord_t getPixels(gdispImage *img, coord_t x) {
 				priv->bmpflags &= ~(BMP_RLE_ENC|BMP_RLE_ABS);
 
 				// There are always at least 2 bytes in an RLE code
-				if (img->io.fns->read(&img->io, &b, 2) != 2)
+				if (gfileRead(img->f, &b, 2) != 2)
 					return 0;
 
 				if (b[0]) {								// Encoded mode
@@ -541,7 +540,7 @@ static coord_t getPixels(gdispImage *img, coord_t x) {
 					return len;
 				} else if (b[1] == 2) {					// Delta x, y
 					// There are always at least 2 bytes in an RLE code
-					if (img->io.fns->read(&img->io, &b, 2) != 2)
+					if (gfileRead(img->f, &b, 2) != 2)
 						return 0;
 					priv->rlerun = b[0] + (uint16_t)b[1] * img->width;
 					priv->rlecode = 0;					// Who knows what color this should really be
@@ -559,7 +558,7 @@ static coord_t getPixels(gdispImage *img, coord_t x) {
 			uint8_t		b[4];
 
 			while(x < img->width && len <= BLIT_BUFFER_SIZE-8) {
-				if (img->io.fns->read(&img->io, &b, 4) != 4)
+				if (gfileRead(img->f, &b, 4) != 4)
 					return 0;
 
 				*pc++ = priv->palette[b[0] >> 4];
@@ -599,7 +598,7 @@ static coord_t getPixels(gdispImage *img, coord_t x) {
 						return len;
 				} else if (priv->bmpflags & BMP_RLE_ABS) {
 					while (priv->rlerun && len < BLIT_BUFFER_SIZE && x < img->width) {
-						if (img->io.fns->read(&img->io, &b, 1) != 1)
+						if (gfileRead(img->f, &b, 1) != 1)
 							return 0;
 						*pc++ = priv->palette[b[0]];
 						priv->rlerun--;
@@ -608,8 +607,8 @@ static coord_t getPixels(gdispImage *img, coord_t x) {
 					}
 					if (priv->rlerun)			// Return if we have more run to do
 						return len;
-					if ((img->io.pos - priv->frame0pos)&1) {	// Make sure we are on a word boundary
-						if (img->io.fns->read(&img->io, &b, 1) != 1)
+					if ((gfileGetPos(img->f) - priv->frame0pos)&1) {	// Make sure we are on a word boundary
+						if (gfileRead(img->f, &b, 1) != 1)
 							return 0;
 					}
 				}
@@ -618,7 +617,7 @@ static coord_t getPixels(gdispImage *img, coord_t x) {
 				priv->bmpflags &= ~(BMP_RLE_ENC|BMP_RLE_ABS);
 
 				// There are always at least 2 bytes in an RLE code
-				if (img->io.fns->read(&img->io, &b, 2) != 2)
+				if (gfileRead(img->f, &b, 2) != 2)
 					return 0;
 
 				if (b[0]) {								// Encoded mode
@@ -635,7 +634,7 @@ static coord_t getPixels(gdispImage *img, coord_t x) {
 					return len;
 				} else if (b[1] == 2) {					// Delta x, y
 					// There are always at least 2 bytes in an RLE code
-					if (img->io.fns->read(&img->io, &b, 2) != 2)
+					if (gfileRead(img->f, &b, 2) != 2)
 						return GDISP_IMAGE_ERR_BADDATA;
 					priv->rlerun = b[0] + (uint16_t)b[1] * img->width;
 					priv->rlecode = 0;					// Who knows what color this should really be
@@ -653,7 +652,7 @@ static coord_t getPixels(gdispImage *img, coord_t x) {
 			uint8_t		b[4];
 
 			while(x < img->width && len <= BLIT_BUFFER_SIZE-4) {
-				if (img->io.fns->read(&img->io, &b, 4) != 4)
+				if (gfileRead(img->f, &b, 4) != 4)
 					return 0;
 
 				*pc++ = priv->palette[b[0]];
@@ -675,7 +674,7 @@ static coord_t getPixels(gdispImage *img, coord_t x) {
 		color_t		r, g, b;
 
 			while(x < img->width && len <= BLIT_BUFFER_SIZE-2) {
-				if (img->io.fns->read(&img->io, &w, 4) != 4)
+				if (gfileRead(img->f, &w, 4) != 4)
 					return 0;
 				CONVERT_FROM_WORD_LE(w[0]);
 				CONVERT_FROM_WORD_LE(w[1]);
@@ -720,7 +719,7 @@ static coord_t getPixels(gdispImage *img, coord_t x) {
 		uint8_t		b[3];
 
 			while(x < img->width && len < BLIT_BUFFER_SIZE) {
-				if (img->io.fns->read(&img->io, &b, 3) != 3)
+				if (gfileRead(img->f, &b, 3) != 3)
 					return 0;
 				*pc++ = RGB2COLOR(b[2], b[1], b[0]);
 				x++;
@@ -729,7 +728,7 @@ static coord_t getPixels(gdispImage *img, coord_t x) {
 
 			if (x >= img->width) {
 				// Make sure we have read a multiple of 4 bytes for the line
-				if ((x & 3) && img->io.fns->read(&img->io, &b, x & 3) != (x & 3))
+				if ((x & 3) && gfileRead(img->f, &b, x & 3) != (x & 3))
 					return 0;
 			}
 		}
@@ -743,7 +742,7 @@ static coord_t getPixels(gdispImage *img, coord_t x) {
 		color_t		r, g, b;
 
 			while(x < img->width && len < BLIT_BUFFER_SIZE) {
-				if (img->io.fns->read(&img->io, &dw, 4) != 4)
+				if (gfileRead(img->f, &dw, 4) != 4)
 					return 0;
 				CONVERT_FROM_DWORD_LE(dw);
 				if (priv->shiftred < 0)
@@ -791,7 +790,7 @@ gdispImageError gdispImageCache_BMP(gdispImage *img) {
 		return GDISP_IMAGE_ERR_NOMEMORY;
 
 	/* Read the entire bitmap into cache */
-	img->io.fns->seek(&img->io, priv->frame0pos);
+	gfileSetPos(img->f, priv->frame0pos);
 #if GDISP_NEED_IMAGE_BMP_4_RLE || GDISP_NEED_IMAGE_BMP_8_RLE
 	priv->rlerun = 0;
 	priv->rlecode = 0;
@@ -847,7 +846,7 @@ gdispImageError gdispGImageDraw_BMP(GDisplay *g, gdispImage *img, coord_t x, coo
 	}
 
 	/* Start decoding from the beginning */
-	img->io.fns->seek(&img->io, priv->frame0pos);
+	gfileSetPos(img->f, priv->frame0pos);
 #if GDISP_NEED_IMAGE_BMP_4_RLE || GDISP_NEED_IMAGE_BMP_8_RLE
 	priv->rlerun = 0;
 	priv->rlecode = 0;
