@@ -117,7 +117,7 @@ typedef struct gdispImage {
 extern "C" {
 #endif
 
-	/**
+	/*
 	 * Deprecated Functions.
 	 */
 	gdispImageError DEPRECATED("Use gdispImageOpenGFile() instead") gdispImageOpen(gdispImage *img);
@@ -136,7 +136,7 @@ extern "C" {
 	 * @return	GDISP_IMAGE_ERR_OK (0) on success or an error code.
 	 *
 	 * @param[in] img  		The image structure
-	 * @param[in] f			The open GFILE stream.
+	 * @param[in] filename	The open GFILE stream.
 	 *
 	 * @pre		The GFILE must be open for reading.
 	 * 
