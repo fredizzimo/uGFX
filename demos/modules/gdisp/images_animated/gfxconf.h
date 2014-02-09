@@ -51,5 +51,8 @@
 #define GDISP_NEED_IMAGE_JPG		FALSE
 #define GDISP_NEED_IMAGE_PNG		FALSE
 
+#define GFX_USE_GFILE				TRUE
+#define GFILE_NEED_ROMFS			TRUE
+
 #endif /* _GFXCONF_H */
 
