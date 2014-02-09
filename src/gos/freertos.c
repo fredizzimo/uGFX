@@ -12,6 +12,8 @@
 #include "gfx.h"
 #include <string.h>
 
+#if GFX_USE_OS_FREERTOS
+
 #if INCLUDE_vTaskDelay != 1
 	#error "GOS: INCLUDE_vTaskDelay must be defined in FreeRTOSConfig.h"
 #endif
@@ -145,5 +147,4 @@ gfxThreadHandle gfxThreadCreate(void *stackarea, size_t stacksz, threadpriority_
 
 #endif /* GFX_USE_OS_FREERTOS */
 /** @} */
-#endif /* USE_UGFX */
 
