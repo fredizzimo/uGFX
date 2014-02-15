@@ -187,6 +187,15 @@
 		#undef GDISP_INCLUDE_FONT_UI2
 		#define GDISP_INCLUDE_FONT_UI2		TRUE
 	#endif
+	#if GDISP_NEED_IMAGE
+		#if !GFX_USE_GFILE
+			#if GFX_DISPLAY_RULE_WARNINGS
+				#warning "GDISP: GFX_USE_GFILE is required when GDISP_NEED_IMAGE is TRUE. It has been turned on for you."
+			#endif
+			#undef GFX_USE_GFILE
+			#define GFX_USE_GFILE	TRUE
+		#endif
+	#endif
 #endif
 
 #if GFX_USE_GAUDIN
@@ -228,6 +237,9 @@
 #endif
 
 #if GFX_USE_GMISC
+#endif
+
+#if GFX_USE_GFILE
 #endif
 
 #endif /* _GFX_H */

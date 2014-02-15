@@ -12,4 +12,4 @@ include $(GFXLIB)/src/gadc/gadc.mk
 include $(GFXLIB)/src/gaudin/gaudin.mk
 include $(GFXLIB)/src/gaudout/gaudout.mk
 include $(GFXLIB)/src/gmisc/gmisc.mk
-
+include $(GFXLIB)/src/gfile/gfile.mk

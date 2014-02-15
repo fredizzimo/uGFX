@@ -40,6 +40,7 @@ typedef uint16_t	gdispImageError;
 	#define GDISP_IMAGE_ERR_UNSUPPORTED			(GDISP_IMAGE_ERR_UNRECOVERABLE+3)
 	#define GDISP_IMAGE_ERR_UNSUPPORTED_OK		3
 	#define GDISP_IMAGE_ERR_NOMEMORY			(GDISP_IMAGE_ERR_UNRECOVERABLE+4)
+	#define GDISP_IMAGE_ERR_NOSUCHFILE			(GDISP_IMAGE_ERR_UNRECOVERABLE+5)
 
 /**
  * @brief	Image flags
@@ -103,10 +104,10 @@ typedef struct gdispImage {
 	gdispImageFlags						flags;				/* @< The image flags */
 	color_t								bgcolor;			/* @< The default background color */
 	coord_t								width, height;		/* @< The image dimensions */
-	gdispImageIO						io;					/* @< The image IO functions */
+	GFILE *								f;					/* @< The underlying GFILE */
 	#if GDISP_NEED_IMAGE_ACCOUNTING
-		uint32_t							memused;			/* @< How much RAM is currently allocated */
-		uint32_t							maxmemused;			/* @< How much RAM has been allocated (maximum) */
+		uint32_t						memused;			/* @< How much RAM is currently allocated */
+		uint32_t						maxmemused;			/* @< How much RAM has been allocated (maximum) */
 	#endif
 	const struct gdispImageHandlers *	fns;				/* @< Don't mess with this! */
 	struct gdispImagePrivate *			priv;				/* @< Don't mess with this! */
@@ -116,59 +117,28 @@ typedef struct gdispImage {
 extern "C" {
 #endif
 
-	/**
-	 * @brief	Sets the io fields in the image structure to routines
-	 * 			that support reading from an image stored in RAM or Flash.
-	 * 			
-	 * @return	TRUE if the IO open function succeeds
-	 *
-	 * @param[in] img   	The image structure
-	 * @param[in] memimage	A pointer to the image in RAM or Flash 
-	 *
-	 * @note	Always returns TRUE for a Memory Reader
+	/*
+	 * Deprecated Functions.
 	 */
-	bool_t gdispImageSetMemoryReader(gdispImage *img, const void *memimage);
-
-	#if GFX_USE_OS_CHIBIOS || defined(__DOXYGEN__)
-		/**
-		 * @brief	Sets the io fields in the image structure to routines
-		 * 			that support reading from an image stored on a BaseFileStream (eg SDCard).
-		 *
-		 * @return	TRUE if the IO open function succeeds
-		 *
-		 * @param[in] img   			The image structure
-		 * @param[in] BaseFileStreamPtr	A pointer to the (open) BaseFileStream object.
-		 *
-		 */
-		bool_t gdispImageSetBaseFileStreamReader(gdispImage *img, void *BaseFileStreamPtr);
+	gdispImageError DEPRECATED("Use gdispImageOpenGFile() instead") gdispImageOpen(gdispImage *img);
+	bool_t DEPRECATED("Use gdispImageOpenMemory() instead") gdispImageSetMemoryReader(gdispImage *img, const void *memimage);
+	#if GFX_USE_OS_CHIBIOS
+		bool_t DEPRECATED("Use gdispImageOpenBaseFileStream() instead") gdispImageSetBaseFileStreamReader(gdispImage *img, void *BaseFileStreamPtr);
 	#endif
-
-	#if defined(WIN32) || GFX_USE_OS_WIN32 || GFX_USE_OS_LINUX || GFX_USE_OS_OSX || defined(__DOXYGEN__)
-		/**
-		 * @brief	Sets the io fields in the image structure to routines
-		 * 			that support reading from an image stored in Win32 simulators native
-		 * 			file system.
-		 * @pre		Only available on the Win32 simulator
-		 *
-		 * @return	TRUE if the IO open function succeeds
-		 *
-		 * @param[in] img   	The image structure
-		 * @param[in] filename	The filename to open
-		 *
-		 */
-		bool_t gdispImageSetFileReader(gdispImage *img, const char *filename);
-		/* Old definition */
+	#if defined(WIN32) || GFX_USE_OS_WIN32 || GFX_USE_OS_LINUX || GFX_USE_OS_OSX
+		bool_t DEPRECATED("Please use gdispImageOpenFile() instead") gdispImageSetFileReader(gdispImage *img, const char *filename);
 		#define gdispImageSetSimulFileReader(img, fname)	gdispImageSetFileReader(img, fname)
 	#endif
-	
+
 	/**
-	 * @brief	Open an image ready for drawing
+	 * @brief	Open an image using an open GFILE and get it ready for drawing
 	 * @details	Determine the image format and get ready to decode the first image frame
 	 * @return	GDISP_IMAGE_ERR_OK (0) on success or an error code.
-	 * 
-	 * @param[in] img   The image structure
-	 * 
-	 * @pre		The io fields should be filled in before calling gdispImageOpen()
+	 *
+	 * @param[in] img  		The image structure
+	 * @param[in] f			The open GFILE stream.
+	 *
+	 * @pre		The GFILE must be open for reading.
 	 * 
 	 * @note	This determines which decoder to use and then initialises all other fields
 	 * 			in the gdispImage structure.
@@ -179,17 +149,62 @@ extern "C" {
 	 * 			bit in the error code.
 	 * 			A partial success return code means an image can still be drawn but perhaps with
 	 * 			reduced functionality eg only the first page of a multi-page image.
-	 * @note	@p gdispImageClose() can be called even after a failure to open the image to ensure
-	 * 			that the IO close routine gets called.
+	 * @note	@p gdispImageClose() should be called when finished with the image. This will close
+	 * 			the image and its underlying GFILE file. Note that images opened with partial success
+	 * 			(eg GDISP_IMAGE_ERR_UNSUPPORTED_OK)
+	 * 			still need to be closed when you are finished with them.
 	 */
-	gdispImageError gdispImageOpen(gdispImage *img);
-	
+	gdispImageError gdispImageOpenGFile(gdispImage *img, GFILE *f);
+
+	/**
+	 * @brief	Open an image in a file and get it ready for drawing
+	 * @details	Determine the image format and get ready to decode the first image frame
+	 * @return	GDISP_IMAGE_ERR_OK (0) on success or an error code.
+	 *
+	 * @pre		You must have included the file-system support into GFILE that you want to use.
+	 *
+	 * @param[in] img  		The image structure
+	 * @param[in] filename	The filename to open
+	 *
+	 * @note	This function just opens the GFILE using the filename and passes it to @p gdispImageOpenGFile().
+	 */
+	#define gdispImageOpenFile(img, filename)			gdispImageOpenGFile((img), gfileOpen((filename), "rb"))
+
+	/**
+	 * @brief	Open an image in a ChibiOS basefilestream and get it ready for drawing
+	 * @details	Determine the image format and get ready to decode the first image frame
+	 * @return	GDISP_IMAGE_ERR_OK (0) on success or an error code.
+	 *
+	 * @pre		GFILE_NEED_CHIBIOSFS and GFX_USE_OS_CHIBIOS must be TRUE. This only makes sense on the ChibiOS
+	 * 			operating system.
+	 *
+	 * @param[in] img  				The image structure
+	 * @param[in] BaseFileStreamPtr	A pointer to an open BaseFileStream
+	 *
+	 * @note	This function just opens the GFILE using the basefilestream and passes it to @p gdispImageOpenGFile().
+	 */
+	#define gdispImageOpenBaseFileStream(img, BaseFileStreamPtr)			gdispImageOpenGFile((img), gfileOpenBaseFileStream((BaseFileStreamPtr), "rb"))
+
+	/**
+	 * @brief	Open an image in memory and get it ready for drawing
+	 * @details	Determine the image format and get ready to decode the first image frame
+	 * @return	GDISP_IMAGE_ERR_OK (0) on success or an error code.
+	 *
+	 * @pre		GFILE_NEED_MEMFS must be TRUE
+	 *
+	 * @param[in] img  		The image structure
+	 * @param[in] ptr		A pointer to the image bytes in memory
+	 *
+	 * @note	This function just opens the GFILE using the basefilestream and passes it to @p gdispImageOpenGFile().
+	 */
+	#define gdispImageOpenMemory(img, ptr)			gdispImageOpenGFile((img), gfileOpenMemory((void *)(ptr), "rb"))
+
 	/**
 	 * @brief	Close an image and release any dynamically allocated working storage.
 	 * 
 	 * @param[in] img   The image structure
 	 * 
-	 * @pre		gdispImageOpen() must have returned successfully.
+	 * @pre		gdispImageOpenFile() must have returned successfully.
 	 *
 	 * @note	Also calls the IO close function (if it hasn't already been called).
 	 */
@@ -282,94 +297,6 @@ extern "C" {
 	 */
 	delaytime_t gdispImageNext(gdispImage *img);
 	
-	#if GDISP_NEED_IMAGE_NATIVE
-		/**
-		 * @brief	The image drawing routines for a NATIVE format image.
-		 * 
-		 * @note	Only use these functions if you absolutely know the format
-		 * 			of the image you are decoding. Generally you should use the
-		 * 			generic functions and it will auto-detect the format.
-		 * @note	A NATIVE format image is defined as an 8 byte header described below, immediately
-		 * 			followed by the bitmap data. The bitmap data is stored in the native format for
-		 * 			the display controller. If the pixel format specified in the header does not
-		 * 			match the controller native format then the image is rejected.
-		 * @note	The 8 byte header:
-		 *  			{ 'N', 'I', width.hi, width.lo, height.hi, height.lo, format.hi, format.lo }
-		 *  			The format word = GDISP_PIXELFORMAT
-		 * @{
-		 */
-		gdispImageError gdispImageOpen_NATIVE(gdispImage *img);
-		void gdispImageClose_NATIVE(gdispImage *img);
-		gdispImageError gdispImageCache_NATIVE(gdispImage *img);
-		gdispImageError gdispGImageDraw_NATIVE(GDisplay *g, gdispImage *img, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t sx, coord_t sy);
-		delaytime_t gdispImageNext_NATIVE(gdispImage *img);
-		/* @} */
-	#endif
-
-	#if GDISP_NEED_IMAGE_GIF
-		/**
-		 * @brief	The image drawing routines for a GIF image.
-		 * @note	Only use these functions if you absolutely know the format
-		 * 			of the image you are decoding. Generally you should use the
-		 * 			generic functions and it will auto-detect the format.
-		 * @{
-		 */
-		gdispImageError gdispImageOpen_GIF(gdispImage *img);
-		void gdispImageClose_GIF(gdispImage *img);
-		gdispImageError gdispImageCache_GIF(gdispImage *img);
-		gdispImageError gdispGImageDraw_GIF(GDisplay *g, gdispImage *img, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t sx, coord_t sy);
-		delaytime_t gdispImageNext_GIF(gdispImage *img);
-		/* @} */
-	#endif
-
-	#if GDISP_NEED_IMAGE_BMP
-		/**
-		 * @brief	The image drawing routines for a BMP image.
-		 * @note	Only use these functions if you absolutely know the format
-		 * 			of the image you are decoding. Generally you should use the
-		 * 			generic functions and it will auto-detect the format.
-		 * @{
-		 */
-		gdispImageError gdispImageOpen_BMP(gdispImage *img);
-		void gdispImageClose_BMP(gdispImage *img);
-		gdispImageError gdispImageCache_BMP(gdispImage *img);
-		gdispImageError gdispGImageDraw_BMP(GDisplay *g, gdispImage *img, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t sx, coord_t sy);
-		delaytime_t gdispImageNext_BMP(gdispImage *img);
-		/* @} */
-	#endif
-	
-	#if GDISP_NEED_IMAGE_JPG
-		/**
-		 * @brief	The image drawing routines for a JPG image.
-		 * @note	Only use these functions if you absolutely know the format
-		 * 			of the image you are decoding. Generally you should use the
-		 * 			generic functions and it will auto-detect the format.
-		 * @{
-		 */
-		gdispImageError gdispImageOpen_JPG(gdispImage *img);
-		void gdispImageClose_JPG(gdispImage *img);
-		gdispImageError gdispImageCache_JPG(gdispImage *img);
-		gdispImageError gdispGImageDraw_JPG(GDisplay *g, gdispImage *img, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t sx, coord_t sy);
-		delaytime_t gdispImageNext_JPG(gdispImage *img);
-		/* @} */
-	#endif
-
-	#if GDISP_NEED_IMAGE_PNG
-		/**
-		 * @brief	The image drawing routines for a PNG image.
-		 * @note	Only use these functions if you absolutely know the format
-		 * 			of the image you are decoding. Generally you should use the
-		 * 			generic functions and it will auto-detect the format.
-		 * @{
-		 */
-		gdispImageError gdispImageOpen_PNG(gdispImage *img);
-		void gdispImageClose_PNG(gdispImage *img);
-		gdispImageError gdispImageCache_PNG(gdispImage *img);
-		gdispImageError gdispGImageDraw_PNG(GDisplay *g, gdispImage *img, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t sx, coord_t sy);
-		delaytime_t gdispImageNext_PNG(gdispImage *img);
-		/* @} */
-	#endif
-
 #ifdef __cplusplus
 }
 #endif

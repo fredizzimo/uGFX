@@ -33,11 +33,20 @@ typedef struct gdispImagePrivate {
 	pixel_t		buf[BLIT_BUFFER_SIZE];
 	} gdispImagePrivate;
 
+void gdispImageClose_NATIVE(gdispImage *img) {
+	if (img->priv) {
+		if (img->priv->frame0cache)
+			gdispImageFree(img, (void *)img->priv->frame0cache, img->width * img->height * sizeof(pixel_t));
+		gdispImageFree(img, (void *)img->priv, sizeof(gdispImagePrivate));
+		img->priv = 0;
+	}
+}
+
 gdispImageError gdispImageOpen_NATIVE(gdispImage *img) {
 	uint8_t		hdr[HEADER_SIZE];
 
 	/* Read the 8 byte header */
-	if (img->io.fns->read(&img->io, hdr, 8) != 8)
+	if (gfileRead(img->f, hdr, 8) != 8)
 		return GDISP_IMAGE_ERR_BADFORMAT;		// It can't be us
 
 	if (hdr[0] != 'N' || hdr[1] != 'I')
@@ -60,16 +69,6 @@ gdispImageError gdispImageOpen_NATIVE(gdispImage *img) {
 	return GDISP_IMAGE_ERR_OK;
 }
 
-void gdispImageClose_NATIVE(gdispImage *img) {
-	if (img->priv) {
-		if (img->priv->frame0cache)
-			gdispImageFree(img, (void *)img->priv->frame0cache, img->width * img->height * sizeof(pixel_t));
-		gdispImageFree(img, (void *)img->priv, sizeof(gdispImagePrivate));
-		img->priv = 0;
-	}
-	img->io.fns->close(&img->io);
-}
-
 gdispImageError gdispImageCache_NATIVE(gdispImage *img) {
 	size_t		len;
 
@@ -84,8 +83,8 @@ gdispImageError gdispImageCache_NATIVE(gdispImage *img) {
 		return GDISP_IMAGE_ERR_NOMEMORY;
 
 	/* Read the entire bitmap into cache */
-	img->io.fns->seek(&img->io, FRAME0POS);
-	if (img->io.fns->read(&img->io, img->priv->frame0cache, len) != len)
+	gfileSetPos(img->f, FRAME0POS);
+	if (gfileRead(img->f, img->priv->frame0cache, len) != len)
 		return GDISP_IMAGE_ERR_BADDATA;
 
 	return GDISP_IMAGE_ERR_OK;
@@ -112,12 +111,12 @@ gdispImageError gdispImageGDraw_NATIVE(GDisplay *g, gdispImage *img, coord_t x, 
 	/* Cycle through the lines */
 	for(;cy;cy--, y++) {
 		/* Move to the start of the line */
-		img->io.fns->seek(&img->io, pos);
+		gfileSetPos(img->f, pos);
 
 		/* Draw the line in chunks using BitBlt */
 		for(mx = x, mcx = cx; mcx > 0; mcx -= len, mx += len) {
 			// Read the data
-			len = img->io.fns->read(&img->io,
+			len = gfileRead(img->f,
 						img->priv->buf,
 						mcx > BLIT_BUFFER_SIZE ? (BLIT_BUFFER_SIZE*sizeof(pixel_t)) : (mcx * sizeof(pixel_t)))
 					/ sizeof(pixel_t);

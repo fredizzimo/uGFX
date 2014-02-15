@@ -9,6 +9,8 @@
 /**
  * Copy this file into your project directory and rename it as gfxconf.h
  * Edit your copy to turn on the uGFX features you want to use.
+ * The values below are the defaults. You should delete anything
+ * you are leaving as default.
  *
  * Please use spaces instead of tabs in this file.
  */
@@ -27,7 +29,7 @@
 ///////////////////////////////////////////////////////////////////////////
 // GDISP                                                                 //
 ///////////////////////////////////////////////////////////////////////////
-#define GFX_USE_GDISP                                TRUE
+#define GFX_USE_GDISP                                FALSE
 
 #define GDISP_NEED_AUTOFLUSH                         FALSE
 #define GDISP_NEED_TIMERFLUSH                        FALSE
@@ -184,6 +186,27 @@
 #define GINPUT_NEED_KEYBOARD                         FALSE
 #define GINPUT_NEED_TOGGLE                           FALSE
 #define GINPUT_NEED_DIAL                             FALSE
+
+
+///////////////////////////////////////////////////////////////////////////
+// GFILE                                                                 //
+///////////////////////////////////////////////////////////////////////////
+#define GFX_USE_GFILE                                FALSE
+
+#define GFILE_NEED_PRINTG                            FALSE
+#define GFILE_NEED_SCANG                             FALSE
+#define GFILE_NEED_STRINGS                           FALSE
+#define GFILE_NEED_STDIO                             FALSE
+    #define GFILE_ALLOW_FLOATS                       FALSE
+    #define GFILE_ALLOW_DEVICESPECIFIC               FALSE
+    #define GFILE_MAX_GFILES                         3
+
+#define GFILE_NEED_MEMFS                             FALSE
+#define GFILE_NEED_ROMFS                             FALSE
+#define GFILE_NEED_RAMFS                             FALSE
+#define GFILE_NEED_FATFS                             FALSE
+#define GFILE_NEED_NATIVEFS                          FALSE
+#define GFILE_NEED_CHBIOSFS                          FALSE
 
 
 ///////////////////////////////////////////////////////////////////////////
