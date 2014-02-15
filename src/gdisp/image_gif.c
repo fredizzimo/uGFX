@@ -172,9 +172,9 @@ static gdispImageError startDecode(gdispImage *img) {
 		// Local palette
 		decode->maxpixel = priv->frame.palsize-1;
 		decode->palette = (color_t *)(decode+1);
-		img->io.fns->seek(&img->io, priv->frame.pospal);
+		gfileSetPos(img->f, priv->frame.pospal);
 		for(cnt = 0; cnt < priv->frame.palsize; cnt++) {
-			if (img->io.fns->read(&img->io, &decode->buf, 3) != 3)
+			if (gfileRead(img->f, &decode->buf, 3) != 3)
 				goto baddatacleanup;
 			decode->palette[cnt] = RGB2COLOR(decode->buf[0], decode->buf[1], decode->buf[2]);
 		}
@@ -188,8 +188,8 @@ static gdispImageError startDecode(gdispImage *img) {
 	}
 
 	// Get the initial lzw code size and values
-	img->io.fns->seek(&img->io, priv->frame.posimg);
-	if (img->io.fns->read(&img->io, &decode->bitsperpixel, 1) != 1 || decode->bitsperpixel >= MAX_CODE_BITS)
+	gfileSetPos(img->f, priv->frame.posimg);
+	if (gfileRead(img->f, &decode->bitsperpixel, 1) != 1 || decode->bitsperpixel >= MAX_CODE_BITS)
 		goto baddatacleanup;
 	decode->code_clear = 1 << decode->bitsperpixel;
 	decode->code_eof = decode->code_clear + 1;
@@ -273,8 +273,8 @@ static uint16_t getbytes(gdispImage *img) {
 	    // Get another code - a code is made up of decode->bitspercode bits.
 	    while (decode->shiftbits < decode->bitspercode) {
 	    	// Get a byte - we may have to start a new data block
-	    	if ((!decode->blocksz && (img->io.fns->read(&img->io, &decode->blocksz, 1) != 1 || !decode->blocksz))
-	    			|| img->io.fns->read(&img->io, &bdata, 1) != 1) {
+	    	if ((!decode->blocksz && (gfileRead(img->f, &decode->blocksz, 1) != 1 || !decode->blocksz))
+	    			|| gfileRead(img->f, &bdata, 1) != 1) {
 	    		// Pretend we got the EOF code - some encoders seem to just end the file
 	    		decode->code_last = decode->code_eof;
 	    		return cnt;
@@ -302,8 +302,8 @@ static uint16_t getbytes(gdispImage *img) {
 		if (code == decode->code_eof) {
 			// Skip to the end of the data blocks
 			do {
-				img->io.fns->seek(&img->io, img->io.pos+decode->blocksz);
-			} while (img->io.fns->read(&img->io, &decode->blocksz, 1) == 1 && decode->blocksz);
+				gfileSetPos(img->f, gfileGetPos(img->f)+decode->blocksz);
+			} while (gfileRead(img->f, &decode->blocksz, 1) == 1 && decode->blocksz);
 
 			// Mark the end
 			decode->code_last = decode->code_eof;
@@ -398,8 +398,8 @@ static gdispImageError initFrame(gdispImage *img) {
 	priv->dispose.height = priv->frame.height;
 
 	// Check for a cached version of this image
-	for(cache=priv->cache; cache && cache->frame.posstart <= img->io.pos; cache=cache->next) {
-		if (cache->frame.posstart == img->io.pos) {
+	for(cache=priv->cache; cache && cache->frame.posstart <= (size_t)gfileGetPos(img->f); cache=cache->next) {
+		if (cache->frame.posstart == (size_t)gfileGetPos(img->f)) {
 			priv->frame = cache->frame;
 			priv->curcache = cache;
 			return GDISP_IMAGE_ERR_OK;
@@ -408,20 +408,20 @@ static gdispImageError initFrame(gdispImage *img) {
 
 	// Get ready for a new image
 	priv->curcache = 0;
-	priv->frame.posstart = img->io.pos;
+	priv->frame.posstart = gfileGetPos(img->f);
 	priv->frame.flags = 0;
 	priv->frame.delay = 0;
 	priv->frame.palsize = 0;
 
 	// Process blocks until we reach the image descriptor
 	while(1) {
-		if (img->io.fns->read(&img->io, &blocktype, 1) != 1)
+		if (gfileRead(img->f, &blocktype, 1) != 1)
 			return GDISP_IMAGE_ERR_BADDATA;
 
 		switch(blocktype) {
 		case 0x2C:			//',' - IMAGE_DESC_RECORD_TYPE;
 			// Read the Image Descriptor
-			if (img->io.fns->read(&img->io, priv->buf, 9) != 9)
+			if (gfileRead(img->f, priv->buf, 9) != 9)
 				return GDISP_IMAGE_ERR_BADDATA;
 			priv->frame.x = *(uint16_t *)(((uint8_t *)priv->buf)+0);
 			CONVERT_FROM_WORD_LE(priv->frame.x);
@@ -437,7 +437,7 @@ static gdispImageError initFrame(gdispImage *img) {
 				priv->frame.flags |= GIFL_INTERLACE;
 
 			// We are ready to go for the actual palette read and image decode
-			priv->frame.pospal = img->io.pos;
+			priv->frame.pospal = gfileGetPos(img->f);
 			priv->frame.posimg = priv->frame.pospal+priv->frame.palsize*3;
 			priv->frame.posend = 0;
 
@@ -448,13 +448,13 @@ static gdispImageError initFrame(gdispImage *img) {
 
 		case 0x21:			//'!' - EXTENSION_RECORD_TYPE;
 			// Read the extension type
-			if (img->io.fns->read(&img->io, &blocktype, 1) != 1)
+			if (gfileRead(img->f, &blocktype, 1) != 1)
 				return GDISP_IMAGE_ERR_BADDATA;
 
 			switch(blocktype) {
 			case 0xF9:			// EXTENSION - Graphics Control Block
 				// Read the GCB
-				if (img->io.fns->read(&img->io, priv->buf, 6) != 6)
+				if (gfileRead(img->f, priv->buf, 6) != 6)
 					return GDISP_IMAGE_ERR_BADDATA;
 				// Check we have read a 4 byte data block and a data block terminator (0)
 				if (((uint8_t *)priv->buf)[0] != 4 || ((uint8_t *)priv->buf)[5] != 0)
@@ -485,7 +485,7 @@ static gdispImageError initFrame(gdispImage *img) {
 				if (priv->flags & GIF_LOOP)
 					goto skipdatablocks;
 				// Read the Application header
-				if (img->io.fns->read(&img->io, priv->buf, 16) != 16)
+				if (gfileRead(img->f, priv->buf, 16) != 16)
 					return GDISP_IMAGE_ERR_BADDATA;
 				// Check we have read a 11 byte data block
 				if (((uint8_t *)priv->buf)[0] != 11 && ((uint8_t *)priv->buf)[12] != 3)
@@ -516,11 +516,11 @@ static gdispImageError initFrame(gdispImage *img) {
 				// We don't understand this extension - just skip it by skipping data blocks
 			skipdatablocks:
 				while(1) {
-					if (img->io.fns->read(&img->io, &blocksz, 1) != 1)
+					if (gfileRead(img->f, &blocksz, 1) != 1)
 						return GDISP_IMAGE_ERR_BADDATA;
 					if (!blocksz)
 						break;
-					img->io.fns->seek(&img->io, img->io.pos + blocksz);
+					gfileSetPos(img->f, gfileGetPos(img->f) + blocksz);
 				}
 				break;
 			}
@@ -537,12 +537,33 @@ static gdispImageError initFrame(gdispImage *img) {
 			}
 
 			// Seek back to frame0
-			img->io.fns->seek(&img->io, priv->frame0pos);
+			gfileSetPos(img->f, priv->frame0pos);
 			return GDISP_IMAGE_LOOP;
 
 		default:			// UNDEFINED_RECORD_TYPE;
 			return GDISP_IMAGE_ERR_UNSUPPORTED;
 		}
+	}
+}
+
+void gdispImageClose_GIF(gdispImage *img) {
+	gdispImagePrivate *	priv;
+	imgcache *			cache;
+	imgcache *			ncache;
+
+	priv = img->priv;
+	if (priv) {
+		// Free any stored frames
+		cache = priv->cache;
+		while(cache) {
+			ncache = cache->next;
+			gdispImageFree(img, (void *)cache, sizeof(imgcache)+cache->frame.width*cache->frame.height+cache->frame.palsize*sizeof(color_t));
+			cache = ncache;
+		}
+		if (priv->palette)
+			gdispImageFree(img, (void *)priv->palette, priv->palsize*sizeof(color_t));
+		gdispImageFree(img, (void *)img->priv, sizeof(gdispImagePrivate));
+		img->priv = 0;
 	}
 }
 
@@ -552,7 +573,7 @@ gdispImageError gdispImageOpen_GIF(gdispImage *img) {
 	uint16_t	aword;
 
 	/* Read the file identifier */
-	if (img->io.fns->read(&img->io, hdr, 6) != 6)
+	if (gfileRead(img->f, hdr, 6) != 6)
 		return GDISP_IMAGE_ERR_BADFORMAT;		// It can't be us
 
 	/* Process the GIFFILEHEADER structure */
@@ -580,7 +601,7 @@ gdispImageError gdispImageOpen_GIF(gdispImage *img) {
 	/* Process the Screen Descriptor structure */
 
 	// Read the screen descriptor
-	if (img->io.fns->read(&img->io, priv->buf, 7) != 7)
+	if (gfileRead(img->f, priv->buf, 7) != 7)
 		goto baddatacleanup;
 	// Get the width
 	img->width = *(uint16_t *)(((uint8_t *)priv->buf)+0);
@@ -596,7 +617,7 @@ gdispImageError gdispImageOpen_GIF(gdispImage *img) {
 			goto nomemcleanup;
 		// Read the global palette
 		for(aword = 0; aword < priv->palsize; aword++) {
-			if (img->io.fns->read(&img->io, &priv->buf, 3) != 3)
+			if (gfileRead(img->f, &priv->buf, 3) != 3)
 				goto baddatacleanup;
 			priv->palette[aword] = RGB2COLOR(((uint8_t *)priv->buf)[0], ((uint8_t *)priv->buf)[1], ((uint8_t *)priv->buf)[2]);
 		}
@@ -604,7 +625,7 @@ gdispImageError gdispImageOpen_GIF(gdispImage *img) {
 	priv->bgcolor = ((uint8_t *)priv->buf)[5];
 
 	// Save the fram0pos
-	priv->frame0pos = img->io.pos;
+	priv->frame0pos = gfileGetPos(img->f);
 
 	// Read the first frame descriptor
 	switch(initFrame(img)) {
@@ -626,28 +647,6 @@ gdispImageError gdispImageOpen_GIF(gdispImage *img) {
 		gdispImageClose_GIF(img);					// Clean up the private data area
 		return GDISP_IMAGE_ERR_BADDATA;
 	}
-}
-
-void gdispImageClose_GIF(gdispImage *img) {
-	gdispImagePrivate *	priv;
-	imgcache *			cache;
-	imgcache *			ncache;
-
-	priv = img->priv;
-	if (priv) {
-		// Free any stored frames
-		cache = priv->cache;
-		while(cache) {
-			ncache = cache->next;
-			gdispImageFree(img, (void *)cache, sizeof(imgcache)+cache->frame.width*cache->frame.height+cache->frame.palsize*sizeof(color_t));
-			cache = ncache;
-		}
-		if (priv->palette)
-			gdispImageFree(img, (void *)priv->palette, priv->palsize*sizeof(color_t));
-		gdispImageFree(img, (void *)img->priv, sizeof(gdispImagePrivate));
-		img->priv = 0;
-	}
-	img->io.fns->close(&img->io);
 }
 
 gdispImageError gdispImageCache_GIF(gdispImage *img) {
@@ -786,7 +785,7 @@ gdispImageError gdispImageCache_GIF(gdispImage *img) {
 	}
 	// We could be pedantic here but extra bytes won't hurt us
 	while(getbytes(img));
-	priv->frame.posend = cache->frame.posend = img->io.pos;
+	priv->frame.posend = cache->frame.posend = gfileGetPos(img->f);
 
 	// Save everything
 	priv->curcache = cache;
@@ -1150,7 +1149,7 @@ gdispImageError gdispGImageDraw_GIF(GDisplay *g, gdispImage *img, coord_t x, coo
 	}
 	// We could be pedantic here but extra bytes won't hurt us
 	while (getbytes(img));
-	priv->frame.posend = img->io.pos;
+	priv->frame.posend = gfileGetPos(img->f);
 
 	stopDecode(img);
 	return GDISP_IMAGE_ERR_OK;
@@ -1173,19 +1172,19 @@ delaytime_t gdispImageNext_GIF(gdispImage *img) {
 	// We need to get to the end of this frame
 	if (!priv->frame.posend) {
 		// We don't know where the end of the frame is yet - find it!
-		img->io.fns->seek(&img->io, priv->frame.posimg+1);				// Skip the code size byte too
+		gfileSetPos(img->f, priv->frame.posimg+1);				// Skip the code size byte too
 		while(1) {
-			if (img->io.fns->read(&img->io, &blocksz, 1) != 1)
+			if (gfileRead(img->f, &blocksz, 1) != 1)
 				return TIME_INFINITE;
 			if (!blocksz)
 				break;
-			img->io.fns->seek(&img->io, img->io.pos + blocksz);
+			gfileSetPos(img->f, gfileGetPos(img->f) + blocksz);
 		}
-		priv->frame.posend = img->io.pos;
+		priv->frame.posend = gfileGetPos(img->f);
 	}
 
 	// Seek to the end of this frame
-	img->io.fns->seek(&img->io, priv->frame.posend);
+	gfileSetPos(img->f, priv->frame.posend);
 
 	// Read the next frame descriptor
 	for(blocksz=0; blocksz < 2; blocksz++) {		// 2 loops max to prevent cycling forever with a bad file
