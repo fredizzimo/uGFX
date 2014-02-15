@@ -1,7 +1,7 @@
 /**
  * This file was generated from "image_yesno.gif" using...
  *
- *	file2c -bbcs image_yesno.gif romfs_img_yesno.h
+ *	file2c -dcs image_yesno.gif romfs_img_yesno.h
  *
  */
 static const char image_yesno[] = {
