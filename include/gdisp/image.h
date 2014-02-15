@@ -136,7 +136,7 @@ extern "C" {
 	 * @return	GDISP_IMAGE_ERR_OK (0) on success or an error code.
 	 *
 	 * @param[in] img  		The image structure
-	 * @param[in] filename	The open GFILE stream.
+	 * @param[in] f			The open GFILE stream.
 	 *
 	 * @pre		The GFILE must be open for reading.
 	 * 
@@ -154,7 +154,7 @@ extern "C" {
 	 * 			(eg GDISP_IMAGE_ERR_UNSUPPORTED_OK)
 	 * 			still need to be closed when you are finished with them.
 	 */
-	gdispImageError gdispImageOpenGFile(gdispImage *img, GFILE *filename);
+	gdispImageError gdispImageOpenGFile(gdispImage *img, GFILE *f);
 
 	/**
 	 * @brief	Open an image in a file and get it ready for drawing
