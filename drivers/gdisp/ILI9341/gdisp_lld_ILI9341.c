@@ -304,7 +304,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			switch((orientation_t)g->p.ptr) {
 			case GDISP_ROTATE_0:
 				acquire_bus(g);
-				write_reg(g, 0x36, 0x00);	/* X and Y axes non-inverted */
+				write_reg(g, 0x36, 0x48);	/* X and Y axes non-inverted */
 				release_bus(g);
 				g->g.Height = GDISP_SCREEN_HEIGHT;
 				g->g.Width = GDISP_SCREEN_WIDTH;
