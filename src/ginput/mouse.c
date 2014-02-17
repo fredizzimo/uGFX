@@ -39,12 +39,12 @@
 	#endif
 
 	typedef struct Calibration_t {
-	    float ax;
-	    float bx;
-	    float cx;
-	    float ay;
-	    float by;
-	    float cy;
+		float	ax;
+		float	bx;
+		float	cx;
+		float	ay;
+		float	by;
+		float	cy;
 	} Calibration;
 #endif
 
@@ -76,7 +76,57 @@ static struct MouseConfig_t {
 	GDisplay *							display;
 } MouseConfig;
 
+void _tsOrientClip(MouseReading *pt, GDisplay *g, bool_t doClip) {
+	coord_t		w, h;
+
+	w = gdispGGetWidth(g);
+	h = gdispGGetHeight(g);
+
+	#if GDISP_NEED_CONTROL && !GINPUT_MOUSE_NO_ROTATION
+		switch(gdispGGetOrientation(g)) {
+			case GDISP_ROTATE_0:
+				break;
+			case GDISP_ROTATE_90:
+				{
+					coord_t t = pt->x;
+					pt->x = w - 1 - pt->y;
+					pt->y = t;
+				}
+				break;
+			case GDISP_ROTATE_180:
+				pt->x = w - 1 - pt->x;
+				pt->y = h - 1 - pt->y;
+				break;
+			case GDISP_ROTATE_270:
+				{
+					coord_t t = pt->y;
+					pt->y = h - 1 - pt->x;
+					pt->x = t;
+				}
+				break;
+			default:
+				break;
+		}
+	#endif
+
+	if (doClip) {
+		if (pt->x < 0)	pt->x = 0;
+		else if (pt->x >= w) pt->x = w-1;
+		if (pt->y < 0)	pt->y = 0;
+		else if (pt->y >= h) pt->y = h-1;
+	}
+}
+
 #if GINPUT_MOUSE_NEED_CALIBRATION
+	static inline void _tsSetIdentity(Calibration *c) {
+		c->ax = 1;
+		c->bx = 0;
+		c->cx = 0;
+		c->ay = 0;
+		c->by = 1;
+		c->cy = 0;
+	}
+
 	static inline void _tsDrawCross(const MousePoint *pp) {
 		gdispGDrawLine(MouseConfig.display, pp->x-15, pp->y, pp->x-2, pp->y, White);
 		gdispGDrawLine(MouseConfig.display, pp->x+2, pp->y, pp->x+15, pp->y, White);
@@ -105,41 +155,96 @@ static struct MouseConfig_t {
 		pt->y = (coord_t) (c->ay * pt->x + c->by * pt->y + c->cy);
 	}
 
-	static inline void _tsDo3PointCalibration(const MousePoint *cross, const MousePoint *points, Calibration *c) {
-		float dx, dx0, dx1, dx2, dy0, dy1, dy2;
+	static inline void _tsDo3PointCalibration(const MousePoint *cross, const MousePoint *points, GDisplay *g, Calibration *c) {
+		float		dx;
+		coord_t		c0, c1, c2;
+
+		#if GDISP_NEED_CONTROL
+			/* Convert all cross points back to GDISP_ROTATE_0 convention
+			 * before calculating the calibration matrix.
+			 */
+			switch(gdispGGetOrientation(g)) {
+			case GDISP_ROTATE_90:
+				c0 = cross[0].y;
+				c1 = cross[1].y;
+				c2 = cross[2].y;
+				break;
+			case GDISP_ROTATE_180:
+				c0 = c1 = c2 = gdispGGetWidth(g) - 1;
+				c0 -= cross[0].x;
+				c1 -= cross[1].x;
+				c2 -= cross[2].x;
+				break;
+			case GDISP_ROTATE_270:
+				c0 = c1 = c2 = gdispGGetHeight(g) - 1;
+				c0 -= cross[0].y;
+				c1 -= cross[1].y;
+				c2 -= cross[2].y;
+				break;
+			case GDISP_ROTATE_0:
+			default:
+				c0 = cross[0].x;
+				c1 = cross[1].x;
+				c2 = cross[2].x;
+				break;
+			}
+		#else
+			c0 = cross[0].x;
+			c1 = cross[1].x;
+			c2 = cross[2].x;
+		#endif
 
 		/* Compute all the required determinants */
-		dx  = ((float)(points[0].x - points[2].x)) * ((float)(points[1].y - points[2].y))
-			- ((float)(points[1].x - points[2].x)) * ((float)(points[0].y - points[2].y));
+		dx  = (float)(points[0].x - points[2].x) * (float)(points[1].y - points[2].y)
+				- (float)(points[1].x - points[2].x) * (float)(points[0].y - points[2].y);
 
-		dx0 = ((float)(cross[0].x - cross[2].x)) * ((float)(points[1].y - points[2].y))
-			- ((float)(cross[1].x - cross[2].x)) * ((float)(points[0].y - points[2].y));
+		c->ax = ((float)(c0 - c2) * (float)(points[1].y - points[2].y)
+				- (float)(c1 - c2) * (float)(points[0].y - points[2].y)) / dx;
+		c->bx = ((float)(c1 - c2) * (float)(points[0].x - points[2].x)
+				- (float)(c0 - c2) * (float)(points[1].x - points[2].x)) / dx;
+		c->cx = (c0 * ((float)points[1].x * (float)points[2].y - (float)points[2].x * (float)points[1].y)
+				- c1 * ((float)points[0].x * (float)points[2].y - (float)points[2].x * (float)points[0].y)
+				+ c2 * ((float)points[0].x * (float)points[1].y - (float)points[1].x * (float)points[0].y)) / dx;
 
-		dx1 = ((float)(cross[1].x - cross[2].x)) * ((float)(points[0].x - points[2].x))
-			- ((float)(cross[0].x - cross[2].x)) * ((float)(points[1].x - points[2].x));
+		#if GDISP_NEED_CONTROL
+			switch(gdispGGetOrientation(g)) {
+			case GDISP_ROTATE_90:
+				c0 = c1 = c2 = gdispGGetWidth(g) - 1;
+				c0 -= cross[0].x;
+				c1 -= cross[1].x;
+				c2 -= cross[2].x;
+				break;
+			case GDISP_ROTATE_180:
+				c0 = c1 = c2 = gdispGGetHeight(g) - 1;
+				c0 -= cross[0].y;
+				c1 -= cross[1].y;
+				c2 -= cross[2].y;
+				break;
+			case GDISP_ROTATE_270:
+				c0 = cross[0].x;
+				c1 = cross[1].x;
+				c2 = cross[2].x;
+				break;
+			case GDISP_ROTATE_0:
+			default:
+				c0 = cross[0].y;
+				c1 = cross[1].y;
+				c2 = cross[2].y;
+				break;
+			}
+		#else
+			c0 = cross[0].y;
+			c1 = cross[1].y;
+			c2 = cross[2].y;
+		#endif
 
-		dx2 = cross[0].x * ((float)points[1].x * (float)points[2].y - (float)points[2].x * (float)points[1].y) -
-			  cross[1].x * ((float)points[0].x * (float)points[2].y - (float)points[2].x * (float)points[0].y) +
-			  cross[2].x * ((float)points[0].x * (float)points[1].y - (float)points[1].x * (float)points[0].y);
-
-		dy0 = ((float)(cross[0].y - cross[2].y)) * ((float)(points[1].y - points[2].y))
-			- ((float)(cross[1].y - cross[2].y)) * ((float)(points[0].y - points[2].y));
-
-		dy1 = ((float)(cross[1].y - cross[2].y)) * ((float)(points[0].x - points[2].x))
-			- ((float)(cross[0].y - cross[2].y)) * ((float)(points[1].x - points[2].x));
-
-		dy2 = cross[0].y * ((float)points[1].x * (float)points[2].y - (float)points[2].x * (float)points[1].y) -
-			  cross[1].y * ((float)points[0].x * (float)points[2].y - (float)points[2].x * (float)points[0].y) +
-			  cross[2].y * ((float)points[0].x * (float)points[1].y - (float)points[1].x * (float)points[0].y);
-
-		/* Now, calculate all the required coefficients */
-		c->ax = dx0 / dx;
-		c->bx = dx1 / dx;
-		c->cx = dx2 / dx;
-
-		c->ay = dy0 / dx;
-		c->by = dy1 / dx;
-		c->cy = dy2 / dx;
+		c->ay = ((float)(c0 - c2) * (float)(points[1].y - points[2].y)
+				- (float)(c1 - c2) * (float)(points[0].y - points[2].y)) / dx;
+		c->by = ((float)(c1 - c2) * (float)(points[0].x - points[2].x)
+				- (float)(c0 - c2) * (float)(points[1].x - points[2].x)) / dx;
+		c->cy = (c0 * ((float)points[1].x * (float)points[2].y - (float)points[2].x * (float)points[1].y)
+				- c1 * ((float)points[0].x * (float)points[2].y - (float)points[2].x * (float)points[0].y)
+				+ c2 * ((float)points[0].x * (float)points[1].y - (float)points[1].x * (float)points[0].y)) / dx;
 	}
 #endif
 
@@ -166,56 +271,13 @@ static struct MouseConfig_t {
 #endif
 
 static void get_calibrated_reading(MouseReading *pt) {
-	#if GINPUT_MOUSE_NEED_CALIBRATION || (GDISP_NEED_CONTROL && !GINPUT_MOUSE_NO_ROTATION)
-		coord_t		w, h;
-	#endif
-
 	get_raw_reading(pt);
 
 	#if GINPUT_MOUSE_NEED_CALIBRATION
 		_tsTransform(pt, &MouseConfig.caldata);
 	#endif
 
-	#if GINPUT_MOUSE_NEED_CALIBRATION || (GDISP_NEED_CONTROL && !GINPUT_MOUSE_NO_ROTATION)
-		w = gdispGGetWidth(MouseConfig.display);
-		h = gdispGGetHeight(MouseConfig.display);
-	#endif
-
-	#if GDISP_NEED_CONTROL && !GINPUT_MOUSE_NO_ROTATION
-		switch(gdispGGetOrientation(MouseConfig.display)) {
-			case GDISP_ROTATE_0:
-				break;
-			case GDISP_ROTATE_90:
-				{
-					coord_t t = pt->x;
-					pt->x = w - 1 - pt->y;
-					pt->y = t;
-				}
-				break;
-			case GDISP_ROTATE_180:
-				pt->x = w - 1 - pt->x;
-				pt->y = h - 1 - pt->y;
-				break;
-			case GDISP_ROTATE_270:
-				{
-					coord_t t = pt->y;
-					pt->y = h - 1 - pt->x;
-					pt->x = t;
-				}
-				break;
-			default:
-				break;
-		}
-	#endif
-
-	#if GINPUT_MOUSE_NEED_CALIBRATION
-		if (!(MouseConfig.flags & FLG_CAL_RAW)) {
-			if (pt->x < 0)	pt->x = 0;
-			else if (pt->x >= w) pt->x = w-1;
-			if (pt->y < 0)	pt->y = 0;
-			else if (pt->y >= h) pt->y = h-1;
-		}
-	#endif
+	_tsOrientClip(pt, MouseConfig.display, !(MouseConfig.flags & FLG_CAL_RAW));
 }
 
 static void MousePoll(void *param) {
@@ -359,12 +421,7 @@ GSourceHandle ginputGetMouse(uint16_t instance) {
 				if ((MouseConfig.flags & FLG_CAL_FREE))
 					gfxFree((void *)pc);
 			} else if (instance == 9999) {
-				MouseConfig.caldata.ax = 1;
-				MouseConfig.caldata.bx = 0;
-				MouseConfig.caldata.cx = 0;
-				MouseConfig.caldata.ay = 0;
-				MouseConfig.caldata.by = 1;
-				MouseConfig.caldata.cy = 0;
+				_tsSetIdentity(&MouseConfig.caldata);
 				MouseConfig.flags |= (FLG_CAL_OK|FLG_CAL_SAVED|FLG_CAL_RAW);
 			} else
 				ginputCalibrateMouse(instance);
@@ -461,10 +518,6 @@ bool_t ginputCalibrateMouse(uint16_t instance) {
 		gtimerStop(&MouseTimer);
 		MouseConfig.flags &= ~(FLG_CAL_OK|FLG_CAL_SAVED|FLG_CAL_RAW);
 
-		#if GDISP_NEED_CONTROL
-			gdispGSetOrientation(MouseConfig.display, GDISP_ROTATE_0);
-		#endif
-
 		#if GDISP_NEED_CLIP
 			gdispGSetClip(MouseConfig.display, 0, 0, width, height);
 		#endif
@@ -511,7 +564,7 @@ bool_t ginputCalibrateMouse(uint16_t instance) {
 				}
 
 				/* Apply 3 point calibration algorithm */
-				_tsDo3PointCalibration(cross, points, &MouseConfig.caldata);
+				_tsDo3PointCalibration(cross, points, MouseConfig.display, &MouseConfig.caldata);
 
 				 /* Verification of correctness of calibration (optional) :
 				 *  See if the 4th point (Middle of the screen) coincides with the calibrated
@@ -523,6 +576,7 @@ bool_t ginputCalibrateMouse(uint16_t instance) {
 				MouseConfig.t.x = points[3].x;
 				MouseConfig.t.y = points[3].y;
 				_tsTransform(&MouseConfig.t, &MouseConfig.caldata);
+				_tsOrientClip(&MouseConfig.t, MouseConfig.display, FALSE);
 
 				/* Calculate the delta */
 				err = (MouseConfig.t.x - cross[3].x) * (MouseConfig.t.x - cross[3].x) +
