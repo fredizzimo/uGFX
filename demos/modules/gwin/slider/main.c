@@ -77,7 +77,7 @@ int main(void) {
 
 		switch(pe->type) {
 			case GEVENT_GWIN_SLIDER:
-				printf("Slider %s = %d\n", gwinGetText(((GEventGWinSlider *)pe)->slider), ((GEventGWinSlider *)pe)->position);
+				//printf("Slider %s = %d\n", gwinGetText(((GEventGWinSlider *)pe)->slider), ((GEventGWinSlider *)pe)->position);
 				break;
 
 			default:
