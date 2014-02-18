@@ -15,8 +15,8 @@
 #if GFX_USE_GDISP
 
 #define GDISP_DRIVER_VMT			GDISPVMT_SSD2119
-#include "../drivers/gdisp/SSD2119/gdisp_lld_config.h"
-#include "gdisp/lld/gdisp_lld.h"
+#include "drivers/gdisp/SSD2119/gdisp_lld_config.h"
+#include "src/gdisp/driver.h"
 
 #include "board_SSD2119.h"
 
@@ -37,7 +37,7 @@
 	#define GDISP_INITIAL_BACKLIGHT	100
 #endif
 
-#include "ssd2119.h"
+#include "drivers/gdisp/SSD2119/ssd2119.h"
 
 /*===========================================================================*/
 /* Driver local functions.                                                   */

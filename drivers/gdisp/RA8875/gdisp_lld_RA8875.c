@@ -15,8 +15,8 @@
 #if GFX_USE_GDISP /*|| defined(__DOXYGEN__)*/
 
 #define GDISP_DRIVER_VMT			GDISPVMT_RA8875
-#include "../drivers/gdisp/RA8875/gdisp_lld_config.h"
-#include "gdisp/lld/gdisp_lld.h"
+#include "drivers/gdisp/RA8875/gdisp_lld_config.h"
+#include "src/gdisp/driver.h"
 
 /* include the users board interface */
 #include "board_RA8875.h"

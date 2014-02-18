@@ -15,7 +15,7 @@
 #if GFX_USE_GAUDIN
 
 /* Include the driver defines */
-#include "gaudin/lld/gaudin_lld.h"
+#include "src/gaudin/driver.h"
 
 #undef Red
 #undef Green

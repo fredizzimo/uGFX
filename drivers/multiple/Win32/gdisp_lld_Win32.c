@@ -14,8 +14,8 @@
 #if GFX_USE_GDISP
 
 #define GDISP_DRIVER_VMT			GDISPVMT_Win32
-#include "../drivers/multiple/Win32/gdisp_lld_config.h"
-#include "gdisp/lld/gdisp_lld.h"
+#include "drivers/multiple/Win32/gdisp_lld_config.h"
+#include "src/gdisp/driver.h"
 
 #ifndef GDISP_SCREEN_WIDTH
 	#define GDISP_SCREEN_WIDTH	640
@@ -64,12 +64,12 @@
 
 #if GINPUT_NEED_TOGGLE
 	/* Include toggle support code */
-	#include "ginput/lld/toggle.h"
+	#include "src/ginput/driver_toggle.h"
 #endif
 
 #if GINPUT_NEED_MOUSE
 	/* Include mouse support code */
-	#include "ginput/lld/mouse.h"
+	#include "src/ginput/driver_mouse.h"
 #endif
 
 static DWORD			winThreadId;

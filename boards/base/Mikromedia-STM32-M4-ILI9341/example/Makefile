@@ -82,8 +82,11 @@ include $(GFXLIB)/boards/base/Mikromedia-STM32-M4-ILI9341/ChibiOS_Board/board.mk
 include $(GFXLIB)/gfx.mk
 
 # Where is our source code - alter these for your project.
-MYFILES = $(GFXLIB)/demos/modules/gdisp/basics
-MYCSRC  = $(MYFILES)/main.c
+# Either just include the demo makefile or add your own definitions
+include $(GFXLIB)/demos/modules/gdisp/basics/demo.mk
+#MYFILES = my-project-directory
+#MYCSRC  = $(MYFILES)/main.c
+#MYDEFS  =
 
 # C sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.

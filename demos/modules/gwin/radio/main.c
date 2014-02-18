@@ -101,7 +101,7 @@ int main(void) {
 
 		switch(pe->type) {
 			case GEVENT_GWIN_RADIO:
-				printf("group: %u   radio: %s\n", ((GEventGWinRadio *)pe)->group, gwinGetText(((GEventGWinRadio *)pe)->radio));
+				//printf("group: %u   radio: %s\n", ((GEventGWinRadio *)pe)->group, gwinGetText(((GEventGWinRadio *)pe)->radio));
 				break;
 
 			default:

@@ -15,8 +15,8 @@
 #if GFX_USE_GDISP
 
 #define GDISP_DRIVER_VMT			GDISPVMT_ST7565
-#include "../drivers/gdisp/ST7565/gdisp_lld_config.h"
-#include "gdisp/lld/gdisp_lld.h"
+#include "drivers/gdisp/ST7565/gdisp_lld_config.h"
+#include "src/gdisp/driver.h"
 
 #include "board_ST7565.h"
 
@@ -39,7 +39,7 @@
 
 #define GDISP_FLG_NEEDFLUSH			(GDISP_FLG_DRIVER<<0)
 
-#include "st7565.h"
+#include "drivers/gdisp/ST7565/st7565.h"
 
 /*===========================================================================*/
 /* Driver config defaults for backward compatibility.               	     */

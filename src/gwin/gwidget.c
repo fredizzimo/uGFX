@@ -11,7 +11,7 @@
 
 #include <string.h>
 
-#include "gwin/class_gwin.h"
+#include "src/gwin/class_gwin.h"
 
 /* Our listener for events for widgets */
 static GListener			gl;

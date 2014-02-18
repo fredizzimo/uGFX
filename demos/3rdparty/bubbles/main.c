@@ -60,7 +60,7 @@ void matrix (int16_t xyz[3][N], color_t col[N])
       xyz[0][i] = x;
       xyz[1][i] = y;
 
-      d = sqrtf(x * x + y * y);	/* originally a fastsqrt() call */
+      d = sqrt(x * x + y * y);	/* originally a fastsqrt() call */
       s = sine[(t * 30) % SCALE] + SCALE;
 
       xyz[2][i] = sine[(d + s) % SCALE] * sine[(t * 10) % SCALE] / SCALE / 2;
@@ -151,11 +151,11 @@ int main (void)
 
   gfxInit();
 
-  chThdSleepMilliseconds (10);
+  gfxSleepMilliseconds (10);
   gdispClear (background); /* glitches.. */
-  chThdSleepMilliseconds (10);
+  gfxSleepMilliseconds (10);
   gdispClear (background);  /* glitches.. */
-  chThdSleepMilliseconds (10);
+  gfxSleepMilliseconds (10);
   gdispClear (background);  /* glitches.. */
 
   width = (uint16_t)gdispGetWidth();

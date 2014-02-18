@@ -16,11 +16,11 @@
 
 #include "gfx.h"
 
-#include "stmpe811.h"
-
 #if (GFX_USE_GINPUT && GINPUT_NEED_MOUSE) /*|| defined(__DOXYGEN__)*/
 
-#include "ginput/lld/mouse.h"
+#include "src/ginput/driver_mouse.h"
+
+#include "drivers/ginput/touch/STMPE811/stmpe811.h"
 
 #include "ginput_lld_mouse_board.h"
 

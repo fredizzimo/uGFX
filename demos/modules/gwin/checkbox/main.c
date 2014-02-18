@@ -81,7 +81,7 @@ int main(void) {
 			case GEVENT_GWIN_CHECKBOX:
 				if (((GEventGWinCheckbox*)pe)->checkbox == ghCheckbox1) {
 					// The state of our checkbox has changed
-					printf("Checkbox state: %d\r\n", ((GEventGWinCheckbox*)pe)->isChecked);
+					//printf("Checkbox state: %d\r\n", ((GEventGWinCheckbox*)pe)->isChecked);
 				}
 				break;
 
