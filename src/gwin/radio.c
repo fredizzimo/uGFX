@@ -19,7 +19,7 @@
 
 #if GFX_USE_GWIN && GWIN_NEED_RADIO
 
-#include "gwin/class_gwin.h"
+#include "src/gwin/class_gwin.h"
 
 // Our pressed state
 #define GRADIO_FLG_PRESSED		(GWIN_FIRST_CONTROL_FLAG<<0)

@@ -19,7 +19,7 @@
 
 #if GFX_USE_GWIN && GWIN_NEED_LIST
 
-#include "gwin/class_gwin.h"
+#include "src/gwin/class_gwin.h"
 #include <string.h>
 #include <stdlib.h>
 

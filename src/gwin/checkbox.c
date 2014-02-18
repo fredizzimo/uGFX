@@ -19,7 +19,7 @@
 
 #if (GFX_USE_GWIN && GWIN_NEED_CHECKBOX) || defined(__DOXYGEN__)
 
-#include "gwin/class_gwin.h"
+#include "src/gwin/class_gwin.h"
 
 // Our checked state
 #define GCHECKBOX_FLG_CHECKED		(GWIN_FIRST_CONTROL_FLAG<<0)

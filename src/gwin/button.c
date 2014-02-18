@@ -19,7 +19,7 @@
 
 #if GFX_USE_GWIN && GWIN_NEED_BUTTON
 
-#include "gwin/class_gwin.h"
+#include "src/gwin/class_gwin.h"
 
 // Parameters for various shapes
 #define RND_CNR_SIZE			5		// Rounded corner size for rounded buttons

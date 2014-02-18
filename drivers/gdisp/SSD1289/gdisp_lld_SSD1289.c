@@ -15,8 +15,8 @@
 #if GFX_USE_GDISP
 
 #define GDISP_DRIVER_VMT			GDISPVMT_SSD1289
-#include "../drivers/gdisp/SSD1289/gdisp_lld_config.h"
-#include "gdisp/lld/gdisp_lld.h"
+#include "drivers/gdisp/SSD1289/gdisp_lld_config.h"
+#include "src/gdisp/driver.h"
 
 #include "board_SSD1289.h"
 

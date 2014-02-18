@@ -107,7 +107,7 @@ void gfxDeinit(void)
 		_gaudoutDeinit();
 	#endif
 	#if GFX_USE_GAUDIN
-		_gaoudinDeinit();
+		_gaudinDeinit();
 	#endif
 	#if GFX_USE_GADC
 		_gadcDeinit();

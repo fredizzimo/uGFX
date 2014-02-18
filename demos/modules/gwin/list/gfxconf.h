@@ -43,6 +43,7 @@
 
 #define GWIN_NEED_WINDOWMANAGER                      TRUE
 #define GWIN_NEED_WIDGET                             TRUE
+    #define GWIN_NEED_LABEL                          TRUE
     #define GWIN_NEED_LIST                           TRUE
         #define GWIN_NEED_LIST_IMAGES                TRUE
 

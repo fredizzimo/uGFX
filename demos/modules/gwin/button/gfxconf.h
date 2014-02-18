@@ -48,6 +48,7 @@
 #define GDISP_NEED_CLIP			TRUE
 #define GDISP_NEED_CIRCLE		TRUE
 #define GDISP_NEED_TEXT			TRUE
+#define GDISP_NEED_CONTROL		TRUE
 
 /* GDISP fonts to include */
 #define GDISP_INCLUDE_FONT_UI2	TRUE

@@ -77,42 +77,42 @@ GFILE *gfileStdErr;
  * The ChibiOS BaseFileStream VMT
  ********************************************************/
 #if GFILE_NEED_CHIBIOSFS && GFX_USE_OS_CHIBIOS
-	#include "../src/gfile/inc_chibiosfs.c"
+	#include "src/gfile/inc_chibiosfs.c"
 #endif
 
 /********************************************************
  * The Memory Pointer VMT
  ********************************************************/
 #if GFILE_NEED_MEMFS
-	#include "../src/gfile/inc_memfs.c"
+	#include "src/gfile/inc_memfs.c"
 #endif
 
 /********************************************************
  * The RAM file-system VMT
  ********************************************************/
 #if GFILE_NEED_RAMFS
-	#include "../src/gfile/inc_ramfs.c"
+	#include "src/gfile/inc_ramfs.c"
 #endif
 
 /********************************************************
  * The FAT file-system VMT
  ********************************************************/
 #ifndef GFILE_NEED_FATFS
-	#include "../src/gfile/inc_fatfs.c"
+	#include "src/gfile/inc_fatfs.c"
 #endif
 
 /********************************************************
  * The native file-system
  ********************************************************/
 #if GFILE_NEED_NATIVEFS
-	#include "../src/gfile/inc_nativefs.c"
+	#include "src/gfile/inc_nativefs.c"
 #endif
 
 /********************************************************
  * The ROM file-system VMT
  ********************************************************/
 #if GFILE_NEED_ROMFS
-	#include "../src/gfile/inc_romfs.c"
+	#include "src/gfile/inc_romfs.c"
 #endif
 
 /********************************************************

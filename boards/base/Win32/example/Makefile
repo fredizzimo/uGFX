@@ -76,8 +76,11 @@ else
 endif
 
 # Where is our source code - alter these for your project.
-MYFILES = $(GFXLIB)/demos/modules/gdisp/basics
-MYCSRC  = $(MYFILES)/main.c
+# Either just include the demo makefile or add your own definitions
+include $(GFXLIB)/demos/modules/gdisp/basics/demo.mk
+#MYFILES = my-project-directory
+#MYCSRC  = $(MYFILES)/main.c
+#MYDEFS  =
 
 # List C source files here
 SRC  += ${GFXSRC} \

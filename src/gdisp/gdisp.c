@@ -17,7 +17,7 @@
 #if GFX_USE_GDISP
 
 /* Include the low level driver information */
-#include "gdisp/lld/gdisp_lld.h"
+#include "src/gdisp/driver.h"
 
 #if 1
 	#undef INLINE

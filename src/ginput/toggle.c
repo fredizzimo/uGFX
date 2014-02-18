@@ -17,7 +17,7 @@
 
 #if (GFX_USE_GINPUT && GINPUT_NEED_TOGGLE) || defined(__DOXYGEN__)
 
-#include "ginput/lld/toggle.h"
+#include "src/ginput/driver_toggle.h"
 
 #define GINPUT_TOGGLE_ISON		0x01
 #define GINPUT_TOGGLE_INVERT	0x02

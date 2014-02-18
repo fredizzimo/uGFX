@@ -31,7 +31,7 @@
 #endif
 
 /* Include the driver defines */
-#include "gaudin/lld/gaudin_lld.h"
+#include "src/gaudin/driver.h"
 
 /*===========================================================================*/
 /* External declarations.                                                    */

@@ -19,7 +19,7 @@
 
 #if (GFX_USE_GWIN && GWIN_NEED_PROGRESSBAR) || defined(__DOXYGEN__)
 
-#include "gwin/class_gwin.h"
+#include "src/gwin/class_gwin.h"
 
 // Reset the display position back to the value predicted by the saved progressbar position
 static void ResetDisplayPos(GProgressbarObject *gsw) {

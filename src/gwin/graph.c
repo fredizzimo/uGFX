@@ -14,7 +14,7 @@
 
 #if GFX_USE_GWIN && GWIN_NEED_GRAPH
 
-#include "gwin/class_gwin.h"
+#include "src/gwin/class_gwin.h"
 
 #define GGRAPH_FLG_CONNECTPOINTS			(GWIN_FIRST_CONTROL_FLAG<<0)
 #define GGRAPH_ARROW_SIZE					5

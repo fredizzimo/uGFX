@@ -19,7 +19,7 @@
 
 #if GFX_USE_GWIN && GWIN_NEED_LABEL
 
-#include "gwin/class_gwin.h"
+#include "src/gwin/class_gwin.h"
 
 // macros to assist in data type conversions
 #define gh2obj					((GLabelObject *)gh)

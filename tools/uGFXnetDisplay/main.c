@@ -6,7 +6,7 @@
  */
 
 #include "gfx.h"
-#include "../drivers/multiple/uGFXnet/uGFXnetProtocol.h"
+#include "drivers/multiple/uGFXnet/uGFXnetProtocol.h"
 
 #ifndef GDISP_GFXNET_PORT
 	#define GDISP_GFXNET_PORT	GNETCODE_DEFAULT_PORT

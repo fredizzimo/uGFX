@@ -14,7 +14,7 @@
  * Configuration settings related to GFX               *
  *******************************************************/
 
-#include <gfx.h>
+#include "gfx.h"
 
 #if !GFX_USE_GDISP || !GDISP_NEED_TEXT
 	#define MF_NO_COMPILE				// Don't compile any font code
@@ -31,7 +31,7 @@
 #endif
 
 #define MF_USE_KERNING GDISP_NEED_TEXT_KERNING
-#define MF_FONT_FILE_NAME "../src/gdisp/fonts/fonts.h"
+#define MF_FONT_FILE_NAME "src/gdisp/fonts/fonts.h"
 
 /* These are not used for now */
 #define MF_USE_ADVANCED_WORDWRAP 0
