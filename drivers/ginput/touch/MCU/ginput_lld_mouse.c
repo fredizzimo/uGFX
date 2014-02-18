@@ -19,7 +19,7 @@
 
 #if (GFX_USE_GINPUT && GINPUT_NEED_MOUSE) /*|| defined(__DOXYGEN__)*/
 
-#include "ginput/lld/mouse.h"
+#include "src/ginput/driver_mouse.h"
 
 #include "ginput_lld_mouse_board.h"
 

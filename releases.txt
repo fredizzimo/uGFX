@@ -14,6 +14,11 @@ FEATURE:	Console does now have an optional buffer (GWIN_CONSOLE_USE_HISTORY)
 FEATURE:	Added smooth scrolling to list widget
 FEATURE:	Increased performance of gwinListAddItem()
 FEATURE:	Added gfxDeinit()
+FEATURE:	Allow touch screen calibration in any display orientation
+FEATURE:	New GFILE module to abstract File IO.
+FEATURE:	Image file handling changed to use new GFILE module.
+DEPRECTATE:	Old image opening functions deprecated.
+FEATURE:	Restructure and simplify the include path for GFX
 
 
 *** changes after 1.9 ***

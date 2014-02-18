@@ -18,7 +18,7 @@
 
 #if (GFX_USE_GINPUT && GINPUT_NEED_TOGGLE) /*|| defined(__DOXYGEN__)*/
 
-#include "ginput/lld/toggle.h"
+#include "src/ginput/driver_toggle.h"
 
 GINPUT_TOGGLE_DECLARE_STRUCTURE();
 

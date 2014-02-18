@@ -18,7 +18,7 @@
 
 #if GFX_USE_GADC
 
-#include "gadc/lld/gadc_lld.h"
+#include "src/gadc/driver.h"
 
 static ADCConversionGroup acg = {
 		FALSE,					// circular

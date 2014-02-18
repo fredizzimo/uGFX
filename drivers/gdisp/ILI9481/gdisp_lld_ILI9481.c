@@ -25,8 +25,8 @@
 #endif
 
 #define GDISP_DRIVER_VMT			GDISPVMT_ILI9481
-#include "../drivers/gdisp/ILI9481/gdisp_lld_config.h"
-#include "gdisp/lld/gdisp_lld.h"
+#include "drivers/gdisp/ILI9481/gdisp_lld_config.h"
+#include "src/gdisp/driver.h"
 
 #include "board_ILI9481.h"
 

@@ -36,7 +36,7 @@
 #include "gwinosc.h"
 
 /* Include internal GWIN routines so we can build our own superset class */
-#include "gwin/class_gwin.h"
+#include "src/gwin/class_gwin.h"
 
 /* The size of our dynamically allocated audio buffer */
 #define AUDIOBUFSZ				64*2

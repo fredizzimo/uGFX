@@ -16,7 +16,7 @@
 
 #include <string.h>
 
-#include "gwin/class_gwin.h"
+#include "src/gwin/class_gwin.h"
 
 #define GWIN_CONSOLE_USE_CLEAR_LINES			TRUE			// Clear each line before using it
 #define GWIN_CONSOLE_USE_FILLED_CHARS			FALSE			// Use filled characters instead of drawn characters

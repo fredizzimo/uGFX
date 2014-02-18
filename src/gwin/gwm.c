@@ -17,7 +17,7 @@
 
 #if GFX_USE_GWIN && GWIN_NEED_WINDOWMANAGER
 
-#include "gwin/class_gwin.h"
+#include "src/gwin/class_gwin.h"
 
 /*-----------------------------------------------
  * Data

@@ -17,7 +17,7 @@
 #if GFX_USE_GADC
 
 /* Include the driver defines */
-#include "gadc/lld/gadc_lld.h"
+#include "src/gadc/driver.h"
 
 #if GADC_MAX_HIGH_SPEED_SAMPLERATE > GADC_MAX_SAMPLE_FREQUENCY/2
 	#error "GADC: GADC_MAX_HIGH_SPEED_SAMPLERATE has been set too high. It must be less than half the maximum CPU rate"

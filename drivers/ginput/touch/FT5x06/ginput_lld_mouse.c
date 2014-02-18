@@ -14,15 +14,13 @@
  * @{
  */
 
-#include "ch.h"
-#include "hal.h"
 #include "gfx.h"
-
-#include "ft5x06.h"
 
 #if (GFX_USE_GINPUT && GINPUT_NEED_MOUSE) /*|| defined(__DOXYGEN__)*/
 
-#include "ginput/lld/mouse.h"
+#include "src/ginput/driver_mouse.h"
+
+#include "drivers/ginput/touch/FT5x06/ft5x06.h"
 
 // include board abstraction 
 #include "ginput_lld_mouse_board.h"

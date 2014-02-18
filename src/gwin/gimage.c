@@ -14,7 +14,7 @@
 
 #if GFX_USE_GWIN && GWIN_NEED_IMAGE
 
-#include "gwin/class_gwin.h"
+#include "src/gwin/class_gwin.h"
 
 #define widget(gh)	((GImageObject *)gh)
 

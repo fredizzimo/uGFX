@@ -59,8 +59,8 @@
 #endif
 
 #define GDISP_DRIVER_VMT			GDISPVMT_Nokia6610GE8
-#include "../drivers/gdisp/Nokia6610GE8/gdisp_lld_config.h"
-#include "gdisp/lld/gdisp_lld.h"
+#include "drivers/gdisp/Nokia6610GE8/gdisp_lld_config.h"
+#include "src/gdisp/driver.h"
 
 #include "board_Nokia6610GE8.h"
 
@@ -68,7 +68,7 @@
 /* Driver local definitions.                                                 */
 /*===========================================================================*/
 
-#include "GE8.h"
+#include "drivers/gdisp/Nokia6610GE8/GE8.h"
 
 #define GDISP_SCAN_LINES			132
 

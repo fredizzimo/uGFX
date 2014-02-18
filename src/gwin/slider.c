@@ -19,7 +19,7 @@
 
 #if (GFX_USE_GWIN && GWIN_NEED_SLIDER) || defined(__DOXYGEN__)
 
-#include "gwin/class_gwin.h"
+#include "src/gwin/class_gwin.h"
 
 #ifndef GWIN_SLIDER_DEAD_BAND
 	#define GWIN_SLIDER_DEAD_BAND	5

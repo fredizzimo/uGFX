@@ -9,7 +9,7 @@
 
 #if GFX_USE_GWIN
 
-#include "gwin/class_gwin.h"
+#include "src/gwin/class_gwin.h"
 
 // Needed if there is no window manager
 #define MIN_WIN_WIDTH	1

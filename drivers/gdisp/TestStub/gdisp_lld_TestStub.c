@@ -15,8 +15,8 @@
 #if GFX_USE_GDISP /*|| defined(__DOXYGEN__)*/
 
 #define GDISP_DRIVER_VMT			GDISPVMT_TestStub
-#include "../drivers/gdisp/TestStub/gdisp_lld_config.h"
-#include "gdisp/lld/gdisp_lld.h"
+#include "drivers/gdisp/TestStub/gdisp_lld_config.h"
+#include "src/gdisp/driver.h"
 
 #ifndef GDISP_SCREEN_HEIGHT
 	#define GDISP_SCREEN_HEIGHT		128
