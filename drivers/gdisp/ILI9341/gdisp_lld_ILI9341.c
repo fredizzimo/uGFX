@@ -47,7 +47,7 @@
 	#define GDISP_INITIAL_BACKLIGHT	100
 #endif
 
-#include "../drivers/gdisp/ILI9341/ILI9341.h"
+#include "drivers/gdisp/ILI9341/ILI9341.h"
 
 /*===========================================================================*/
 /* Driver local functions.                                                   */

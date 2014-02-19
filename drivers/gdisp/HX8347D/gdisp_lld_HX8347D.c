@@ -41,7 +41,7 @@
 /* Driver local functions.                                                   */
 /*===========================================================================*/
 
-#include "../drivers/gdisp/HX8347D/HX8347D.h"
+#include "drivers/gdisp/HX8347D/HX8347D.h"
 
 #define write_reg(g, reg, data)		{ write_index(g, reg); write_data(g, data); }
 
