@@ -55,7 +55,7 @@ typedef struct GEventAudioIn_t {
 		 * @brief   The event flag values.
 		 * @{
 		 */
-		#define	GADC_AUDIO_IN_LOSTEVENT		0x0001		/**< @brief The last GEVENT_AUDIO_IN event was lost */
+		#define	GAUDIN_LOSTEVENT		0x0001		/**< @brief The last GEVENT_AUDIO_IN event was lost */
 		/** @} */
 	/**
 	 * @brief The number of audio samples in the buffer
@@ -123,7 +123,7 @@ bool_t gaudinInit(uint16_t channel, uint32_t frequency, audin_sample_t *buffer, 
 	 * @note				The audio input will not use the GEVENT system unless this is
 	 * 						called first. This saves processing time if the application does
 	 * 						not want to use the GEVENT sub-system for audio input.
-	 * 						Once turned on it can only be turned off by calling @p gadcHighSpeedInit() again.
+	 * 						Once turned on it can only be turned off by calling @p gaudinInit() again.
 	 * @note				The audio input is capable of signalling via this method and a binary semaphore
 	 * 						at the same time.
 	 *

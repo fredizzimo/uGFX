@@ -40,7 +40,7 @@ static uint16_t			audFlags;
 		while ((psl = geventGetSourceListener((GSourceHandle)(&aud), psl))) {
 			if (!(pe = (GEventAudioIn *)geventGetEventBuffer(psl))) {
 				// This listener is missing - save this.
-				psl->srcflags |= GADC_AUDIO_IN_LOSTEVENT;
+				psl->srcflags |= GAUDIN_LOSTEVENT;
 				continue;
 			}
 
@@ -107,7 +107,7 @@ bool_t gaudinInit(uint16_t channel, uint32_t frequency, audin_sample_t *buffer, 
 
 	/* Stop any existing transfers */
 	if ((audFlags & AUDFLG_RUNNING))
-		gadc_lld_stop();
+		gaudin_lld_stop();
 	audFlags = 0;
 
 	/* Initialise everything */
@@ -143,13 +143,13 @@ void gaudinSetBSem(gfxSem *pbsem, GEventAudioIn *pEvent) {
 void gaudinStart(void) {
 	if (!(audFlags & AUDFLG_RUNNING)) {
 		audFlags |= AUDFLG_RUNNING;
-		gadc_lld_start();
+		gaudin_lld_start();
 	}
 }
 
 void gaudinStop(void) {
 	if ((audFlags & AUDFLG_RUNNING)) {
-		gadc_lld_stop();
+		gaudin_lld_stop();
 		audFlags &= ~AUDFLG_RUNNING;
 	}
 }

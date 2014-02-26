@@ -2,4 +2,4 @@
 GFXSRC += $(GFXLIB)/drivers/gaudin/gadc/gaudin_lld.c
 
 # Required include directories
-GFXINC += $(GFXLIB)/drivers/gaudin/gadc
+GFXINC += $(GFXLIB)/drivers/audio/gadc

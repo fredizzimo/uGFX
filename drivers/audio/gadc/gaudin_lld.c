@@ -50,11 +50,11 @@ void gaudin_lld_init(const gaudin_params *paud) {
 	 */
 }
 
-void gadc_lld_start(void) {
+void gaudin_lld_start(void) {
 	gadcHighSpeedStart();
 }
 
-void gadc_lld_stop(void) {
+void gaudin_lld_stop(void) {
 	gadcHighSpeedStop();
 }
 

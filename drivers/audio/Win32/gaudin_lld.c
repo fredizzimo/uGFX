@@ -6,7 +6,7 @@
  */
 
 /**
- * @file    drivers/gaudin/Win32/gaudin_lld.c
+ * @file    drivers/audio/Win32/gaudin_lld.c
  * @brief   GAUDIN - Driver file for Win32.
  */
 
@@ -26,9 +26,10 @@
 #include <mmsystem.h>
 
 static HWAVEIN		ah;
-static volatile int	nUsedBuffers;
+static volatile int	nQueuedBuffers;
+static bool_t		isClosing;
 static WAVEHDR		*pWaveHdrs;
-static HANDLE		waveInThread;
+static HANDLE		waveThread;
 static DWORD		threadID;
 
 /*
@@ -45,7 +46,7 @@ static void PrintWaveErrorMsg(DWORD err, TCHAR * str)
 }
 */
 
-/**************************** waveInProc() *******************************
+/**************************** waveProc() *******************************
  * We don't use CALLBACK_FUNCTION because it is restricted to calling only
  * a few particular Windows functions, namely some of the time functions,
  * and a few of the Low Level MIDI API. If you violate this rule, your app can
@@ -55,43 +56,32 @@ static void PrintWaveErrorMsg(DWORD err, TCHAR * str)
  * anyway, so instead just use CALLBACK_THREAD here instead.
  *************************************************************************/
 
-DWORD WINAPI waveInProc(LPVOID arg) {
+static DWORD WINAPI waveProc(LPVOID arg) {
 	MSG		msg;
-	bool_t	isRecording;
 	(void)	arg;
 
-	isRecording = FALSE;
 	while (GetMessage(&msg, 0, 0, 0)) {
 		switch (msg.message) {
 			case MM_WIM_DATA:
 				GAUDIN_ISR_CompleteI((audin_sample_t *)((WAVEHDR *)msg.lParam)->lpData, ((WAVEHDR *)msg.lParam)->dwBytesRecorded/sizeof(audin_sample_t));
 
-				/* Are we still recording? */
-				if (isRecording) {
-					/* Yes. Now we need to requeue this buffer so the driver can use it for another block of audio
+				/* Are we closing? */
+				if (isClosing) {
+					/* Yes. We aren't recording, so another WAVEHDR has been returned to us after recording has stopped.
+					 * When we get all of them back, things can be cleaned up
+					 */
+					nQueuedBuffers--;
+					waveInUnprepareHeader(ah, (WAVEHDR *)msg.lParam, sizeof(WAVEHDR));
+				} else {
+					/* No. Now we need to requeue this buffer so the driver can use it for another block of audio
 					 * data. NOTE: We shouldn't need to waveInPrepareHeader() a WAVEHDR that has already been prepared once.
 					 * Note: We are assuming here that both the application can still access the buffer while
 					 * it is on the queue.
 					 */
 					waveInAddBuffer(ah, (WAVEHDR *)msg.lParam, sizeof(WAVEHDR));
-
-				} else {
-					/* We aren't recording, so another WAVEHDR has been returned to us after recording has stopped.
-					 * When we get all of them back, DoneAll will be equal to how many WAVEHDRs we queued
-					 */
-					nUsedBuffers--;
-					waveInUnprepareHeader(ah, (WAVEHDR *)msg.lParam, sizeof(WAVEHDR));
 				}
 
                 break;
-
-			case MM_WIM_OPEN:
-				isRecording = TRUE;
-                break;
-
-			case MM_WIM_CLOSE:
-				isRecording = FALSE;
-				break;
 		}
 	}
 	return 0;
@@ -101,12 +91,20 @@ DWORD WINAPI waveInProc(LPVOID arg) {
 /* External declarations.                                                    */
 /*===========================================================================*/
 
+void gaudin_lld_deinit(void) {
+	if (ah) {
+		isClosing = TRUE;
+		waveInReset(ah);
+		while(nQueuedBuffers) Sleep(1);
+		waveInClose(ah);
+		ah = 0;
+		if (pWaveHdrs) gfxFree(pWaveHdrs);
+		pWaveHdrs = 0;
+		isClosing = FALSE;
+	}
+}
+
 void gaudin_lld_init(const gaudin_params *paud) {
-//	uint16_t		channel;
-//	uint32_t		frequency;
-//	audin_sample_t	*buffer;
-//	size_t			bufcount;
-//	size_t			samplesPerEvent;
 	WAVEFORMATEX	wfx;
 	size_t			spaceleft;
 	audin_sample_t	*p;
@@ -114,15 +112,15 @@ void gaudin_lld_init(const gaudin_params *paud) {
 	size_t			nBuffers;
 	size_t			sz;
 
-	if (!waveInThread) {
-		if (!(waveInThread = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)waveInProc, 0, 0, &threadID))) {
-			fprintf(stderr, "GAUDIN: Can't create WAVE recording thread\n");
+	if (!waveThread) {
+		if (!(waveThread = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)waveProc, 0, 0, &threadID))) {
+			fprintf(stderr, "GAUDIN/GAUDOUT: Can't create WAVE recording thread\n");
 			return;
 		}
-		CloseHandle(waveInThread);
+		CloseHandle(waveThread);
 	}
 
-	nUsedBuffers = 0;
+	gaudin_lld_deinit();
 
 	wfx.wFormatTag = WAVE_FORMAT_PCM;
 	wfx.nChannels = paud->channel == GAUDIN_STEREO ? 2 : 1;
@@ -153,26 +151,20 @@ void gaudin_lld_init(const gaudin_params *paud) {
 		phdr->dwFlags = 0;
 		if (!waveInPrepareHeader(ah, phdr, sizeof(WAVEHDR))
 				&& !waveInAddBuffer(ah, phdr, sizeof(WAVEHDR)))
-			nUsedBuffers++;
+			nQueuedBuffers++;
 		else
 			fprintf(stderr, "GAUDIN: Buffer prepare failed\n");
 	}
-	if (!nUsedBuffers)
+	if (!nQueuedBuffers)
 		fprintf(stderr, "GAUDIN: Failed to prepare any buffers\n");
 }
 
-void gadc_lld_start(void) {
-	if (nUsedBuffers)
-		waveInStart(ah);
+void gaudin_lld_start(void) {
+	waveInStart(ah);
 }
 
-void gadc_lld_stop(void) {
-	waveInReset(ah);
-	while(nUsedBuffers) Sleep(1);
-	if (pWaveHdrs) {
-		gfxFree(pWaveHdrs);
-		pWaveHdrs = 0;
-	}
+void gaudin_lld_stop(void) {
+	waveInStop(ah);
 }
 
 #endif /* GFX_USE_GAUDIN */
