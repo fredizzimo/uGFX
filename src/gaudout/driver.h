@@ -62,12 +62,13 @@ void gaudoutReleaseDataBlockI(GAudioData *paud);
  *
  * @param[in] channel	The channel to use (see the driver for the available channels provided)
  * @param[in] frequency	The sample frequency to use
+ * @param[in] format	The sample format
  *
  * @note				The driver will always have been stopped and de-init before this is called.
  *
  * @api
  */
-bool_t gaudout_lld_init(uint16_t channel, uint32_t frequency);
+bool_t gaudout_lld_init(uint16_t channel, uint32_t frequency, ArrayDataFormat format);
 
 /**
  * @brief				De-Initialise the driver

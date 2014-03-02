@@ -94,10 +94,10 @@ GAudioData *gaudioGetBuffer(delaytime_t ms) {
 	return (GAudioData *)gfxQueueGSyncGet(&freelist, ms);
 }
 
-bool_t gaudioPlayInit(uint16_t channel, uint32_t frequency) {
+bool_t gaudioPlayInit(uint16_t channel, uint32_t frequency, ArrayDataFormat format) {
 	gaudioPlayStop();
 	gaudout_lld_deinit();
-	return gaudout_lld_init(channel, frequency);
+	return gaudout_lld_init(channel, frequency, format);
 }
 
 void gaudioPlay(GAudioData *paud) {
@@ -127,11 +127,11 @@ bool_t gaudioPlaySetVolume(uint8_t vol) {
  */
 
 GAudioData *gaudoutGetDataBlockI(void) {
-	return (GAudioData *)gfxQueueASyncGet(&playlist);
+	return (GAudioData *)gfxQueueASyncGetI(&playlist);
 }
 
 void gaudoutReleaseDataBlockI(GAudioData *paud) {
-	gfxQueueGSyncPut(&freelist, (gfxQueueGSyncItem *)paud);
+	gfxQueueGSyncPutI(&freelist, (gfxQueueGSyncItem *)paud);
 }
 
 

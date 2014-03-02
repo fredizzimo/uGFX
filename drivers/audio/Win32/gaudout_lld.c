@@ -64,7 +64,10 @@ static bool_t senddata(WAVEHDR *pwh) {
 	GAudioData *paud;
 
 	// Get the next data block to send
-	if (!(paud = gaudoutGetDataBlockI()))
+	gfxSystemLock();
+	paud = gaudoutGetDataBlockI();
+	gfxSystemUnlock();
+	if (!paud)
 		return FALSE;
 
 	// Prepare the wave header for Windows
@@ -104,7 +107,9 @@ static DWORD WINAPI waveProc(LPVOID arg) {
 				waveOutUnprepareHeader(ah, pwh, sizeof(WAVEHDR));
 
 				// Give the buffer back to the Audio Free List
+				gfxSystemLock();
 				gaudoutReleaseDataBlockI((GAudioData *)pwh->dwUser);
+				gfxSystemUnlock();
 				pwh->lpData = 0;
 				nQueuedBuffers--;
 
@@ -131,8 +136,11 @@ void gaudout_lld_deinit() {
 	}
 }
 
-bool_t gaudout_lld_init(uint16_t channel, uint32_t frequency) {
+bool_t gaudout_lld_init(uint16_t channel, uint32_t frequency, ArrayDataFormat format) {
 	WAVEFORMATEX	wfx;
+
+	if (format != ARRAY_DATA_8BITUNSIGNED && format != ARRAY_DATA_16BITSIGNED)
+		return FALSE;
 
 	if (!waveThread) {
 		if (!(waveThread = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)waveProc, 0, 0, &threadID))) {
@@ -145,9 +153,9 @@ bool_t gaudout_lld_init(uint16_t channel, uint32_t frequency) {
 	wfx.wFormatTag = WAVE_FORMAT_PCM;
 	wfx.nChannels = channel == GAUDOUT_STEREO ? 2 : 1;
 	wfx.nSamplesPerSec = frequency;
-	wfx.nBlockAlign = wfx.nChannels * sizeof(audout_sample_t);
+	wfx.nBlockAlign = wfx.nChannels * (format == ARRAY_DATA_8BITUNSIGNED ? 1 : 2);
 	wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign;
-	wfx.wBitsPerSample = sizeof(audout_sample_t) * 8;
+	wfx.wBitsPerSample = (format == ARRAY_DATA_8BITUNSIGNED ? 8 : 16);
 	wfx.cbSize = 0;
 
 	if (waveOutOpen(&ah, WAVE_MAPPER, &wfx, (DWORD_PTR)threadID, 0, CALLBACK_THREAD)) {

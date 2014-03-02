@@ -39,7 +39,7 @@
 typedef struct GAudioData {
 	gfxQueueASyncItem	next;		// @< Used for queuing the buffers
 	size_t				size;		// @< The size of the buffer area following this structure (in bytes)
-	size_t				len;		// @< The length of the data in the buffer area (in samples)
+	size_t				len;		// @< The length of the data in the buffer area (in bytes)
 } GAudioData;
 
 /*===========================================================================*/
@@ -92,13 +92,14 @@ void gaudioReleaseBuffer(GAudioData *paud);
  *
  * @param[in] channel	The audio output channel to use.
  * @param[in] frequency	The audio sample rate in samples per second
+ * @param[in] format	The audio sample format
  *
  * @note		Some channels are mono, and some are stereo. See your driver config file
  * 				to determine which channels to use and whether they are stereo or not.
  *
  * @api
  */
-bool_t gaudioPlayInit(uint16_t channel, uint32_t frequency);
+bool_t gaudioPlayInit(uint16_t channel, uint32_t frequency, ArrayDataFormat format);
 
 /**
  * @brief		Play the specified sample data.
@@ -109,8 +110,7 @@ bool_t gaudioPlayInit(uint16_t channel, uint32_t frequency);
  *
  * @note		Calling this will cancel any pause.
  * @note		Before calling this function the len field of the GAudioData structure must be
- * 				specified. While the buffer size is specified in bytes, this length is specified in samples
- * 				and must be even for stereo channels.
+ * 				specified (in bytes).
  * @note		For stereo channels the sample data is interleaved in the buffer.
  * @note		This call returns before the data has completed playing. Subject to available buffers (which
  * 				can be obtained from the free-list), any number of buffers may be played. They will be queued
