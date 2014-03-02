@@ -22,47 +22,64 @@
 	gfxQueueASyncItem *gfxQueueASyncGet(gfxQueueASync *pqueue) {
 		gfxQueueASyncItem	*pi;
 
+		// This is just a shortcut to speed execution
 		if (!pqueue->head)
 			return 0;
 
 		gfxSystemLock();
-		if ((pi = pqueue->head))
-			pqueue->head = pi->next;
-		pi->next = 0;
+		pi = gfxQueueASyncGetI(pqueue);
 		gfxSystemUnlock();
+
+		return pi;
+	}
+	gfxQueueASyncItem *gfxQueueASyncGetI(gfxQueueASync *pqueue) {
+		gfxQueueASyncItem	*pi;
+
+		if ((pi = pqueue->head)) {
+			pqueue->head = pi->next;
+			pi->next = 0;
+		}
 
 		return pi;
 	}
 
 	void gfxQueueASyncPut(gfxQueueASync *pqueue, gfxQueueASyncItem *pitem) {
-		pitem->next = 0;
-
 		gfxSystemLock();
+		gfxQueueASyncPutI(pqueue, pitem);
+		gfxSystemUnlock();
+	}
+	void gfxQueueASyncPutI(gfxQueueASync *pqueue, gfxQueueASyncItem *pitem) {
+		pitem->next = 0;
 		if (!pqueue->head) {
 			pqueue->head = pqueue->tail = pitem;
 		} else {
 			pqueue->tail->next = pitem;
 			pqueue->tail = pitem;
 		}
-		gfxSystemUnlock();
 	}
 
 	void gfxQueueASyncPush(gfxQueueASync *pqueue, gfxQueueASyncItem *pitem) {
 		gfxSystemLock();
+		gfxQueueASyncPushI(pqueue, pitem);
+		gfxSystemUnlock();
+	}
+	void gfxQueueASyncPushI(gfxQueueASync *pqueue, gfxQueueASyncItem *pitem) {
 		pitem->next = pqueue->head;
 		pqueue->head = pitem;
 		if (!pitem->next)
 			pqueue->tail = pitem;
-		gfxSystemUnlock();
 	}
 
 	void gfxQueueASyncRemove(gfxQueueASync *pqueue, gfxQueueASyncItem *pitem) {
+		gfxSystemLock();
+		gfxQueueASyncRemoveI(pqueue, pitem);
+		gfxSystemUnlock();
+	}
+	void gfxQueueASyncRemoveI(gfxQueueASync *pqueue, gfxQueueASyncItem *pitem) {
 		gfxQueueASyncItem *pi;
 
 		if (!pitem)
 			return;
-
-		gfxSystemLock();
 		if (pqueue->head) {
 			if (pqueue->head == pitem) {
 				pqueue->head = pitem->next;
@@ -79,25 +96,24 @@
 				}
 			}
 		}
-		gfxSystemUnlock();
-	}
-
-	bool_t gfxQueueASyncIsEmpty(gfxQueueASync *pqueue) {
-		return pqueue->head == 0;
 	}
 
 	bool_t gfxQueueASyncIsIn(gfxQueueASync *pqueue, const gfxQueueASyncItem *pitem) {
-		gfxQueueASyncItem *pi;
+		bool_t	res;
 
 		gfxSystemLock();
-		for(pi = pqueue->head; pi; pi = pi->next) {
-			if (pi == pitem) {
-				gfxSystemUnlock();
-				return TRUE;
-			}
-		}
+		res = gfxQueueASyncIsInI(pqueue, pitem);
 		gfxSystemUnlock();
 
+		return res;
+	}
+	bool_t gfxQueueASyncIsInI(gfxQueueASync *pqueue, const gfxQueueASyncItem *pitem) {
+		gfxQueueASyncItem *pi;
+
+		for(pi = pqueue->head; pi; pi = pi->next) {
+			if (pi == pitem)
+				return TRUE;
+		}
 		return FALSE;
 	}
 #endif
@@ -124,38 +140,44 @@
 	}
 
 	void gfxQueueGSyncPut(gfxQueueGSync *pqueue, gfxQueueGSyncItem *pitem) {
-		pitem->next = 0;
-
 		gfxSystemLock();
+		gfxQueueGSyncPutI(pqueue, pitem);
+		gfxSystemUnlock();
+	}
+	void gfxQueueGSyncPutI(gfxQueueGSync *pqueue, gfxQueueGSyncItem *pitem) {
+		pitem->next = 0;
 		if (!pqueue->head) {
 			pqueue->head = pqueue->tail = pitem;
 		} else {
 			pqueue->tail->next = pitem;
 			pqueue->tail = pitem;
 		}
-		gfxSystemUnlock();
-
-		gfxSemSignal(&pqueue->sem);
+		gfxSemSignalI(&pqueue->sem);
 	}
 
 	void gfxQueueGSyncPush(gfxQueueGSync *pqueue, gfxQueueGSyncItem *pitem) {
 		gfxSystemLock();
+		gfxQueueGSyncPushI(pqueue, pitem);
+		gfxSystemUnlock();
+	}
+	void gfxQueueGSyncPushI(gfxQueueGSync *pqueue, gfxQueueGSyncItem *pitem) {
 		pitem->next = pqueue->head;
 		pqueue->head = pitem;
 		if (!pitem->next)
 			pqueue->tail = pitem;
-		gfxSystemUnlock();
-
-		gfxSemSignal(&pqueue->sem);
+		gfxSemSignalI(&pqueue->sem);
 	}
 
 	void gfxQueueGSyncRemove(gfxQueueGSync *pqueue, gfxQueueGSyncItem *pitem) {
+		gfxSystemLock();
+		gfxQueueGSyncRemoveI(pqueue, pitem);
+		gfxSystemUnlock();
+	}
+	void gfxQueueGSyncRemoveI(gfxQueueGSync *pqueue, gfxQueueGSyncItem *pitem) {
 		gfxQueueGSyncItem *pi;
 
 		if (!pitem)
 			return;
-
-		gfxSystemLock();
 		if (pqueue->head) {
 			if (pqueue->head == pitem) {
 				pqueue->head = pitem->next;
@@ -172,25 +194,24 @@
 				}
 			}
 		}
-		gfxSystemUnlock();
-	}
-
-	bool_t gfxQueueGSyncIsEmpty(gfxQueueGSync *pqueue) {
-		return pqueue->head == 0;
 	}
 
 	bool_t gfxQueueGSyncIsIn(gfxQueueGSync *pqueue, const gfxQueueGSyncItem *pitem) {
-		gfxQueueGSyncItem *pi;
+		bool_t		res;
 
 		gfxSystemLock();
-		for(pi = pqueue->head; pi; pi = pi->next) {
-			if (pi == pitem) {
-				gfxSystemUnlock();
-				return TRUE;
-			}
-		}
+		res = gfxQueueGSyncIsInI(pqueue, pitem);
 		gfxSystemUnlock();
 
+		return res;
+	}
+	bool_t gfxQueueGSyncIsInI(gfxQueueGSync *pqueue, const gfxQueueGSyncItem *pitem) {
+		gfxQueueGSyncItem *pi;
+
+		for(pi = pqueue->head; pi; pi = pi->next) {
+			if (pi == pitem)
+				return TRUE;
+		}
 		return FALSE;
 	}
 #endif
@@ -213,7 +234,7 @@
 		pi->next = 0;
 		gfxSystemUnlock();
 
-		gfxSemSignalI(&pi->sem);
+		gfxSemSignal(&pi->sem);
 		gfxSemDestroy(&pi->sem);
 
 		return pi;
@@ -281,25 +302,24 @@
 		gfxSystemUnlock();
 	}
 
-	bool_t gfxQueueFSyncIsEmpty(gfxQueueFSync *pqueue) {
-		return pqueue->head == 0;
-	}
-
 	bool_t gfxQueueFSyncIsIn(gfxQueueFSync *pqueue, const gfxQueueFSyncItem *pitem) {
-		gfxQueueASyncItem *pi;
+		bool_t	res;
 
 		gfxSystemLock();
-		for(pi = pqueue->head; pi; pi = pi->next) {
-			if (pi == pitem) {
-				gfxSystemUnlock();
-				return TRUE;
-			}
-		}
+		res = gfxQueueFSyncIsInI(pqueue, pitem);
 		gfxSystemUnlock();
 
+		return res;
+	}
+	bool_t gfxQueueFSyncIsInI(gfxQueueFSync *pqueue, const gfxQueueFSyncItem *pitem) {
+		gfxQueueASyncItem *pi;
+
+		for(pi = pqueue->head; pi; pi = pi->next) {
+			if (pi == pitem)
+				return TRUE;
+		}
 		return FALSE;
 	}
 #endif
 
 #endif /* GFX_USE_GQUEUE */
-
