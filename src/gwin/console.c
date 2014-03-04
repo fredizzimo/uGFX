@@ -26,6 +26,14 @@
 #define GCONSOLE_FLG_NOSTORE					(GWIN_FIRST_CONTROL_FLAG<<0)
 #define GCONSOLE_FLG_OVERRUN					(GWIN_FIRST_CONTROL_FLAG<<1)
 
+// Meaning of our attribute bits.
+#define	ESC_REDBIT		0x01
+#define	ESC_GREENBIT	0x02
+#define	ESC_BLUEBIT		0x04
+#define ESC_USECOLOR	0x08
+#define ESC_UNDERLINE	0x10
+#define ESC_BOLD		0x20
+
 /*
  * Stream interface implementation. The interface is write only
  */
@@ -56,6 +64,68 @@
 		GWinStreamWriteTimed,
 		GWinStreamReadTimed
 	};
+#endif
+
+#if GWIN_CONSOLE_ESCSEQ
+	// Convert escape sequences to attributes
+	static bool_t ESCtoAttr(char c, uint8_t *pattr) {
+		uint8_t		attr;
+
+		attr = pattr[0];
+		switch(c) {
+		case '0': case '1': case '2': case '3':
+		case '4': case '5': case '6': case '7':
+			attr &= ~(ESC_REDBIT|ESC_GREENBIT|ESC_BLUEBIT);
+			attr |= (c - '0') | ESC_USECOLOR;
+			break;
+		case 'C':
+			attr &= ~(ESC_REDBIT|ESC_GREENBIT|ESC_BLUEBIT|ESC_USECOLOR);
+			break;
+		case 'u':
+			attr |= ESC_UNDERLINE;
+			break;
+		case 'U':
+			attr &= ~ESC_UNDERLINE;
+			break;
+		case 'b':
+			attr |= ESC_BOLD;
+			break;
+		case 'B':
+			attr &= ~ESC_BOLD;
+			break;
+		default:
+			return FALSE;
+		}
+		if (attr == pattr[0])
+			return FALSE;
+		pattr[0] = attr;
+		return TRUE;
+	}
+
+	static color_t ESCPrintColor(GConsoleObject *gcw) {
+		switch(gcw->currattr & (ESC_REDBIT|ESC_GREENBIT|ESC_BLUEBIT|ESC_USECOLOR)) {
+		case (ESC_USECOLOR):
+			return Black;
+		case (ESC_USECOLOR|ESC_REDBIT):
+			return Red;
+		case (ESC_USECOLOR|ESC_GREENBIT):
+			return Green;
+		case (ESC_USECOLOR|ESC_REDBIT|ESC_GREENBIT):
+			return Yellow;
+		case (ESC_USECOLOR|ESC_BLUEBIT):
+			return Blue;
+		case (ESC_USECOLOR|ESC_REDBIT|ESC_BLUEBIT):
+			return Magenta;
+		case (ESC_USECOLOR|ESC_GREENBIT|ESC_BLUEBIT):
+			return Cyan;
+		case (ESC_USECOLOR|ESC_REDBIT|ESC_GREENBIT|ESC_BLUEBIT):
+			return White;
+		default:
+			return gcw->g.color;
+		}
+	}
+#else
+	#define ESCPrintColor(gcw)		((gcw)->g.color)
 #endif
 
 #if GWIN_CONSOLE_USE_HISTORY
@@ -90,6 +160,11 @@
 		gcw->cx = 0;
 		gcw->cy = 0;
 
+		// Reset the current attributes
+		#if GWIN_CONSOLE_ESCSEQ
+			gcw->currattr = gcw->startattr;
+		#endif
+
 		// Print the buffer
 		gwinPutCharArray(gh, gcw->buffer, gcw->bufpos);
 
@@ -115,7 +190,7 @@
 
 		// Do we have enough space in the buffer
 		if (gcw->bufpos >= gcw->bufsize) {
-			char *	p;
+			char	*p, *ep;
 			size_t	dp;
 
 			/**
@@ -130,7 +205,13 @@
 			 */
 
 			// Remove one line from the start
-			for(p = gcw->buffer; *p && *p != '\n'; p++);
+			ep = gcw->buffer+gcw->bufpos;
+			for(p = gcw->buffer; p < ep && *p != '\n'; p++) {
+				#if GWIN_CONSOLE_ESCSEQ
+					if (*p == 27)
+						ESCtoAttr(p[1], &gcw->startattr);
+				#endif
+			}
 
 			// Was there a newline?
 			if (*p != '\n')
@@ -153,7 +234,7 @@
 	 * Scroll the history buffer by one line
 	 */
 	static void scrollBuffer(GConsoleObject *gcw) {
-		char *	p;
+		char	*p, *ep;
 		size_t	dp;
 
 		// Only scroll if we need to
@@ -167,7 +248,13 @@
 		}
 
 		// Remove one line from the start
-		for(p = gcw->buffer; *p && *p != '\n'; p++);
+		ep = gcw->buffer+gcw->bufpos;
+		for(p = gcw->buffer; p < ep && *p != '\n'; p++) {
+			#if GWIN_CONSOLE_ESCSEQ
+				if (*p == 27)
+					ESCtoAttr(p[1], &gcw->startattr);
+			#endif
+		}
 
 		// Was there a newline, if not delete everything.
 		if (*p != '\n') {
@@ -205,6 +292,9 @@ static void AfterClear(GWindowObject *gh) {
 	gcw->cx = 0;
 	gcw->cy = 0;
 	clearBuffer(gcw);
+	#if GWIN_CONSOLE_ESCSEQ
+		gcw->startattr = gcw->currattr;
+	#endif
 	#undef gcw		
 }
 
@@ -238,6 +328,11 @@ GHandle gwinGConsoleCreate(GDisplay *g, GConsoleObject *gc, const GWindowInit *p
 
 	gc->cx = 0;
 	gc->cy = 0;
+
+	#if GWIN_CONSOLE_ESCSEQ
+		gc->startattr = gc->currattr = 0;
+		gc->escstate = 0;
+	#endif
 
 	gwinSetVisible((GHandle)gc, pInit->show);
 
@@ -313,12 +408,53 @@ void gwinPutChar(GHandle gh, char c) {
 	#if GDISP_NEED_CLIP
 		gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 	#endif
-	
+
+	#if GWIN_CONSOLE_ESCSEQ
+		/**
+		 * Handle escape sequences
+		 * 			ESC color		Change subsequent text color
+		 * 							color:	"0" = black, "1" = red, "2" = green, "3" = yellow, "4" = blue,
+		 * 									"5" = magenta, "6" = cyan, "7" = white
+		 * 			ESC C			Revert subsequent text color to the window default
+		 * 			ESC u			Turn on underline
+		 * 			ESC U			Turn off underline
+		 * 			ESC b			Turn on bold
+		 * 			ESC B			Turn off bold
+		 * 			ESC J			Clear the window
+		 */
+		switch (gcw->escstate) {
+		case 1:
+			gcw->escstate = 0;
+			if (ESCtoAttr(c, &gcw->currattr)) {
+				if (gcw->cx == 0 && gcw->cy == 0)
+					gcw->startattr = gcw->currattr;
+				else {
+					putCharInBuffer(gcw, 27);
+					putCharInBuffer(gcw, c);
+				}
+			} else {
+				switch(c) {
+				case 'J':
+					// Clear the console and reset the cursor
+					clearBuffer(gcw);
+					gdispGFillArea(gh->display, gh->x, gh->y, gh->width, gh->height, gh->bgcolor);
+					gcw->cx = 0;
+					gcw->cy = 0;
+					gcw->startattr = gcw->currattr;
+					break;
+				}
+			}
+			return;
+		}
+	#endif
+
 	/**
 	 * Special Characters:
 	 *
 	 * Carriage returns and line feeds (\r & \n) are handled in unix terminal cooked mode; that is,
 	 * line feeds perform both actions and carriage-returns are ignored.
+	 *
+	 * if GWIN_CONSOLE_ESCSEQ is turned on then ESC is trapped ready for the escape command.
 	 *
 	 * All other characters are treated as printable.
 	 */
@@ -339,11 +475,23 @@ void gwinPutChar(GHandle gh, char c) {
 	case '\r':
 		// gcw->cx = 0;
 		return;
+
+	#if GWIN_CONSOLE_ESCSEQ
+		case 27:		// ESC
+			gcw->escstate = 1;
+			return;
+	#endif
 	}
 
 	// Characters with no width are ignored
 	if (!(width = gdispGetCharWidth(c, gh->font)))
 		return;
+
+	// Allow space for (very crude) bold
+	#if GWIN_CONSOLE_ESCSEQ
+		if ((gcw->currattr & ESC_BOLD))
+			width++;
+	#endif
 
 	// Do we need to go to the next line to fit this character?
 	if (gcw->cx + width >= gh->width) {
@@ -378,6 +526,9 @@ void gwinPutChar(GHandle gh, char c) {
 				gdispGFillArea(gh->display, gh->x, gh->y, gh->width, gh->height, gh->bgcolor);
 				gcw->cx = 0;
 				gcw->cy = 0;
+				#if GWIN_CONSOLE_ESCSEQ
+					gcw->startattr = gcw->currattr;
+				#endif
 			}
 		#endif
 	}
@@ -390,11 +541,22 @@ void gwinPutChar(GHandle gh, char c) {
 
 	// Draw the character
 	#if GWIN_CONSOLE_USE_FILLED_CHARS
-		gdispGFillChar(gh->display, gh->x + gcw->cx, gh->y + gcw->cy, c, gh->font, gh->color, gh->bgcolor);
+		gdispGFillChar(gh->display, gh->x + gcw->cx, gh->y + gcw->cy, c, gh->font, ESCPrintColor(gcw), gh->bgcolor);
 	#else
-		gdispGDrawChar(gh->display, gh->x + gcw->cx, gh->y + gcw->cy, c, gh->font, gh->color);
+		gdispGDrawChar(gh->display, gh->x + gcw->cx, gh->y + gcw->cy, c, gh->font, ESCPrintColor(gcw));
 	#endif
 	putCharInBuffer(gcw, c);
+
+	#if GWIN_CONSOLE_ESCSEQ
+		// Draw the underline
+		if ((gcw->currattr & ESC_UNDERLINE))
+			gdispGDrawLine(gh->display, gh->x + gcw->cx, gh->y + gcw->cy + fy - gdispGetFontMetric(gh->font, fontDescendersHeight),
+										gh->x + gcw->cx + width + gdispGetFontMetric(gh->font, fontCharPadding), gh->y + gcw->cy + fy - gdispGetFontMetric(gh->font, fontDescendersHeight),
+										ESCPrintColor(gcw));
+		// Bold (very crude)
+		if ((gcw->currattr & ESC_BOLD))
+			gdispGDrawChar(gh->display, gh->x + gcw->cx + 1, gh->y + gcw->cy, c, gh->font, ESCPrintColor(gcw));
+	#endif
 
 	// Update the cursor
 	gcw->cx += width + gdispGetFontMetric(gh->font, fontCharPadding);

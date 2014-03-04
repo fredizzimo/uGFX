@@ -75,17 +75,17 @@ int main(void) {
 
 	/* Output some data on the first console */
 	for(i = 0; i < 10; i++) {
-		gwinPrintf(GW1, "Hello uGFX!\r\n");
+		gwinPrintf(GW1, "Hello \033buGFX\033B!\r\n");
 	}
 
 	/* Output some data on the second console */
 	for(i = 0; i < 16; i++) {
-		gwinPrintf(GW2, "Message Nr.: %d\r\n", i+1);
+		gwinPrintf(GW2, "Message Nr.: \0331\033b%d\033B\033C\r\n", i+1);
 	}
 
 	/* Output some data on the third console */
 	for(i = 0; i < 18; i++) {
-		gwinPrintf(GW3, "Message Nr.: %d\r\n", i+1);
+		gwinPrintf(GW3, "Message Nr.: \033u%d\033U\r\n", i+1);
 	}
 
 	while(TRUE) {

@@ -52,6 +52,7 @@
 /* Features for the GWIN subsystem. */
 #define GWIN_NEED_WINDOWMANAGER	TRUE
 #define GWIN_NEED_CONSOLE		TRUE
+#define GWIN_CONSOLE_ESCSEQ		TRUE
 
 #endif /* _GFXCONF_H */
 

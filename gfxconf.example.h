@@ -129,6 +129,7 @@
     #define GWIN_CONSOLE_USE_HISTORY                 FALSE
 		#define GWIN_CONSOLE_HISTORY_AVERAGING       FALSE
 		#define GWIN_CONSOLE_HISTORY_ATCREATE        FALSE
+		#define GWIN_CONSOLE_ESCSEQ                  FALSE
 	#define GWIN_CONSOLE_USE_BASESTREAM              FALSE
     #define GWIN_CONSOLE_USE_FLOAT                   FALSE
 #define GWIN_NEED_GRAPH                              FALSE
