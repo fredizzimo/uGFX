@@ -77,16 +77,14 @@ static bool_t senddata(WAVEHDR *pwh) {
 	pwh->dwFlags = 0;
 	pwh->dwLoops = 0;
 	if (waveOutPrepareHeader(ah, pwh, sizeof(WAVEHDR))) {
-		pwh->lpData = 0;
 		fprintf(stderr, "GAUDOUT: Failed to prepare a buffer");
-		return FALSE;
+		exit(-1);
 	}
 
 	// Send it to windows
 	if (waveOutWrite(ah, pwh, sizeof(WAVEHDR))) {
-		pwh->lpData = 0;
 		fprintf(stderr, "GAUDOUT: Failed to write the buffer");
-		return FALSE;
+		exit(-1);
 	}
 
 	nQueuedBuffers++;
@@ -114,8 +112,11 @@ static DWORD WINAPI waveProc(LPVOID arg) {
 				nQueuedBuffers--;
 
 				// Try and get a new block
-				if (isRunning)
-					senddata(pwh);
+				if ((!isRunning || !senddata(pwh)) && !nQueuedBuffers) {
+					gfxSystemLock();
+					gaudoutDoneI();
+					gfxSystemUnlock();
+				}
                 break;
 		}
 	}
@@ -145,7 +146,7 @@ bool_t gaudout_lld_init(uint16_t channel, uint32_t frequency, ArrayDataFormat fo
 	if (!waveThread) {
 		if (!(waveThread = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)waveProc, 0, 0, &threadID))) {
 			fprintf(stderr, "GAUDOUT: Can't create WAVE play-back thread\n");
-			return FALSE;
+			exit(-1);
 		}
 		CloseHandle(waveThread);
 	}
@@ -160,7 +161,7 @@ bool_t gaudout_lld_init(uint16_t channel, uint32_t frequency, ArrayDataFormat fo
 
 	if (waveOutOpen(&ah, WAVE_MAPPER, &wfx, (DWORD_PTR)threadID, 0, CALLBACK_THREAD)) {
 		fprintf(stderr, "GAUDOUT: Can't open WAVE play-back device\n");
-		return FALSE;
+		exit(-1);
 	}
 
 	return TRUE;

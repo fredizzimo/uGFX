@@ -42,6 +42,36 @@ typedef struct GAudioData {
 	size_t				len;		// @< The length of the data in the buffer area (in bytes)
 } GAudioData;
 
+
+// Event types for GAUDOUT
+#define GEVENT_AUDIO_OUT			(GEVENT_GAUDOUT_FIRST+0)
+
+/**
+ * @brief   The Audio output event structure.
+ * @{
+ */
+typedef struct GEventAudioOut_t {
+	#if GFX_USE_GEVENT || defined(__DOXYGEN__)
+	/**
+	 * @brief The type of this event (GEVENT_AUDIO_OUT)
+	 */
+		GEventType				type;
+	#endif
+	/**
+	 * @brief The event flags
+	 */
+	uint16_t				flags;
+		/**
+		 * @brief   The event flag values.
+		 * @{
+		 */
+		#define	GAUDOUT_LOSTEVENT		0x0001		/**< @brief The last GEVENT_AUDIO_OUT event was lost */
+		#define	GAUDOUT_PLAYING			0x0002		/**< @brief The audio out system is currently playing */
+		#define	GAUDOUT_FREEBLOCK		0x0004		/**< @brief An audio buffer has been freed */
+		/** @} */
+} GEventAudioOut;
+/** @} */
+
 /*===========================================================================*/
 /* External declarations.                                                    */
 /*===========================================================================*/
@@ -96,6 +126,8 @@ void gaudioReleaseBuffer(GAudioData *paud);
  *
  * @note		Some channels are mono, and some are stereo. See your driver config file
  * 				to determine which channels to use and whether they are stereo or not.
+ * @note		Only one channel can be playing at a time. Calling this will stop any
+ * 				currently playing channel.
  *
  * @api
  */
@@ -154,6 +186,25 @@ void gaudioPlayStop(void);
  * @api
  */
 bool_t gaudioPlaySetVolume(uint8_t vol);
+
+#if GFX_USE_GEVENT || defined(__DOXYGEN__)
+	/**
+	 * @brief   			Turn on sending results to the GEVENT sub-system.
+	 * @details				Returns a GSourceHandle to listen for GEVENT_AUDIO_OUT events.
+	 *
+	 * @note				The audio output will not use the GEVENT system unless this is
+	 * 						called first. This saves processing time if the application does
+	 * 						not want to use the GEVENT sub-system for audio output.
+	 * 						Once turned on it can only be turned off by calling @p gaudioPlayInit() again.
+	 * @note				The audio output is capable of signalling via this method and other methods
+	 * 						at the same time.
+	 *
+	 * @return				The GSourceHandle
+	 *
+	 * @api
+	 */
+	GSourceHandle gaudioPlayGetSource(void);
+#endif
 
 #ifdef __cplusplus
 }

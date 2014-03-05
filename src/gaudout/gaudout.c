@@ -21,32 +21,33 @@
 static gfxQueueASync	playlist;
 static gfxQueueGSync	freelist;
 
-static uint16_t			audFlags;
-	#define AUDOUTFLG_RUNNING		0x0001
-	#define AUDOUTFLG_USE_EVENTS	0x0002
+static uint16_t			PlayFlags;
+	#define PLAYFLG_USEEVENTS	0x0001
+	#define PLAYFLG_PLAYING		0x0002
 
 #if GFX_USE_GEVENT
-	static GTimer AudGTimer;
+	static GTimer PlayTimer;
 
-	static void AudGTimerCallback(void *param) {
+	static void PlayTimerCallback(void *param) {
 		(void) param;
 		GSourceListener	*psl;
-		GEventADC		*pe;
+		GEventAudioOut	*pe;
 
 		psl = 0;
 		while ((psl = geventGetSourceListener((GSourceHandle)(&aud), psl))) {
-			if (!(pe = (GEventAudioIn *)geventGetEventBuffer(psl))) {
+			if (!(pe = (GEventAudioOut *)geventGetEventBuffer(psl))) {
 				// This listener is missing - save this.
-				psl->srcflags |= GAUDIN_LOSTEVENT;
+				psl->srcflags |= GAUDOUT_LOSTEVENT;
 				continue;
 			}
 
-			pe->type = GEVENT_AUDIO_IN;
-			pe->channel = aud.channel;
-			pe->count = lastcount;
-			pe->buffer = lastbuffer;
+			pe->type = GEVENT_AUDIO_OUT;
 			pe->flags = psl->srcflags;
 			psl->srcflags = 0;
+			if ((PlayFlags & PLAYFLG_PLAYING))
+				pe->flags |= GAUDOUT_PLAYING;
+			if (!gfxQueueGSyncIsEmpty(&freelist))
+				pe->flags |= GAUDOUT_FREEBLOCK;
 			geventSendEvent(psl);
 		}
 	}
@@ -57,11 +58,17 @@ void _gaudoutInit(void)
 {
 	gfxQueueASyncInit(&playlist);
 	gfxQueueGSyncInit(&freelist);
+	#if GFX_USE_GEVENT
+		gtimerInit(&PlayTimer);
+	#endif
 }
 
 void _gaudoutDeinit(void)
 {
 	/* ToDo */
+	#if GFX_USE_GEVENT
+		gtimerDeinit(&PlayTimer);
+	#endif
 }
 
 bool_t gaudioAllocBuffers(unsigned num, size_t size) {
@@ -103,6 +110,7 @@ bool_t gaudioPlayInit(uint16_t channel, uint32_t frequency, ArrayDataFormat form
 void gaudioPlay(GAudioData *paud) {
 	if (paud)
 		gfxQueueASyncPut(&playlist, (gfxQueueASyncItem *)paud);
+	PlayFlags |= PLAYFLG_PLAYING;
 	gaudout_lld_start();
 }
 
@@ -116,11 +124,21 @@ void gaudioPlayStop(void) {
 	gaudout_lld_stop();
 	while((paud = (GAudioData *)gfxQueueASyncGet(&playlist)))
 		gfxQueueGSyncPut(&freelist, (gfxQueueGSyncItem *)paud);
+	PlayFlags &= ~PLAYFLG_PLAYING;
 }
 
 bool_t gaudioPlaySetVolume(uint8_t vol) {
 	return gaudout_lld_set_volume(vol);
 }
+
+#if GFX_USE_GEVENT || defined(__DOXYGEN__)
+	GSourceHandle gaudioPlayGetSource(void) {
+		if (!gtimerIsActive(&PlayTimer))
+			gtimerStart(&PlayTimer, PlayTimerCallback, 0, TRUE, TIME_INFINITE);
+		PlayFlags |= PLAYFLG_USEEVENTS;
+		return (GSourceHandle)&PlayFlags;
+	}
+#endif
 
 /**
  * Routines provided for use by drivers.
@@ -132,8 +150,19 @@ GAudioData *gaudoutGetDataBlockI(void) {
 
 void gaudoutReleaseDataBlockI(GAudioData *paud) {
 	gfxQueueGSyncPutI(&freelist, (gfxQueueGSyncItem *)paud);
+	#if GFX_USE_GEVENT
+		if (PlayFlags & PLAYFLG_USEEVENTS)
+			gtimerJabI(&PlayTimer);
+	#endif
 }
 
+void gaudoutDoneI(void) {
+	PlayFlags &= ~PLAYFLG_PLAYING;
+	#if GFX_USE_GEVENT
+		if (PlayFlags & PLAYFLG_USEEVENTS)
+			gtimerJabI(&PlayTimer);
+	#endif
+}
 
 #endif /* GFX_USE_GAUDOUT */
 /** @} */

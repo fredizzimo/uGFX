@@ -23,27 +23,20 @@
 /*===========================================================================*/
 
 /**
- * @brief	The audio input sample type
- */
-//typedef uint8_t		audout_sample_t;
-typedef int16_t		audout_sample_t;
-
-/**
  * @brief	The maximum sample frequency supported by this audio device
  */
-#define GAUDOUT_MAX_SAMPLE_FREQUENCY			44100
+#define GAUDOUT_MAX_SAMPLE_FREQUENCY		44100
 
 /**
- * @brief	The number of bits in a sample
+ * @brief	The number of audio formats supported by this driver
  */
-//#define GAUDOUT_BITS_PER_SAMPLE				8
-#define GAUDOUT_BITS_PER_SAMPLE				16
+#define GAUDOUT_NUM_FORMATS					2
 
 /**
- * @brief	The format of an audio sample
+ * @brief	The available audio sample formats in order of preference
  */
-//#define GAUDOUT_SAMPLE_FORMAT				ARRAY_DATA_8BITUNSIGNED
-#define GAUDOUT_SAMPLE_FORMAT				ARRAY_DATA_16BITSIGNED
+#define GAUDOUT_FORMAT1						ARRAY_DATA_16BITSIGNED
+#define GAUDOUT_FORMAT2						ARRAY_DATA_8BITUNSIGNED
 
 /**
  * @brief	The number of audio channels supported by this driver

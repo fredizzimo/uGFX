@@ -57,6 +57,16 @@ GAudioData *gaudoutGetDataBlockI(void);
 void gaudoutReleaseDataBlockI(GAudioData *paud);
 
 /**
+ * @brief				Signal that all playing has now stopped
+ *
+ * @note				Defined in the high level GAUDOUT code for use by the GAUDOUT drivers.
+ *
+ * @iclass
+ * @notapi
+ */
+void gaudoutDoneI(void);
+
+/**
  * @brief				Initialise the driver
  * @return				TRUE if the channel and frequency are valid.
  *
