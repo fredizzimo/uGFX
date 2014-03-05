@@ -168,10 +168,17 @@
 		// Print the buffer
 		gwinPutCharArray(gh, gcw->buffer, gcw->bufpos);
 
-		#if !GWIN_CONSOLE_USE_CLEAR_LINES
+		#if GWIN_CONSOLE_USE_CLEAR_LINES
 			// Clear the remaining space
-			if (gcw->cy + fy < gh->height)
-				gdispGFillArea(gh->display, gh->x, gh->y+gcw->cy+fy, gh->width, gh->height-(gcw->cy+fy), gh->bgcolor);
+			{
+				coord_t		y;
+
+				y = gcw->cy;
+				if (gcw->cx)
+					y += gdispGetFontMetric(gh->font, fontHeight);
+				if (y < gh->height)
+					gdispGFillArea(gh->display, gh->x, gh->y+y, gh->width, gh->height-y, gh->bgcolor);
+			}
 		#endif
 
 		// Turn back on storing of buffer contents
