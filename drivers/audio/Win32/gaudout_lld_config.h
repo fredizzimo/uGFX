@@ -44,7 +44,13 @@
 #define GAUDOUT_NUM_CHANNELS				2
 
 /**
- * @brief	The list of audio channels and their uses
+ * @brief	Whether each channel is mono or stereo
+ */
+#define GAUDOUT_CHANNEL0_STEREO				FALSE
+#define GAUDOUT_CHANNEL1_STEREO				TRUE
+
+/**
+ * @brief	The list of audio channel names and their uses
  * @{
  */
 #define	GAUDOUT_MONO						0
