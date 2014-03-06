@@ -47,6 +47,7 @@
 #define GFX_USE_GTIMER			TRUE
 //#define GFX_USE_GADC			TRUE
 #define GFX_USE_GAUDIN			TRUE
+#define GFX_USE_GAUDOUT			TRUE
 
 /* Features for the GDISP sub-system. */
 #define GDISP_NEED_VALIDATION	TRUE
