@@ -40,6 +40,16 @@ typedef enum ArrayDataFormat_e {
 	} ArrayDataFormat;
 
 /**
+ * @brief	Is the sample data format a "signed" data format?
+ */
+#define gfxSampleFormatIsSigned(fmt)	((fmt) & 1)
+
+/**
+ * @brief	How many bits are in the sample data format
+ */
+#define gfxSampleFormatBits(fmt)	((fmt) & ~1)
+
+/**
  * @brief   The type for a fixed point type.
  * @details	The top 16 bits are the integer component, the bottom 16 bits are the real component.
  */
