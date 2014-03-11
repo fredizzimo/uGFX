@@ -74,6 +74,7 @@ typedef HANDLE gfxThreadHandle;
 #define gfxMutexExit(pmutex)			ReleaseMutex(*(pmutex))
 #define gfxSemInit(psem, val, limit)	*(psem) = CreateSemaphore(0, val, limit, 0)
 #define gfxSemDestroy(psem)				CloseHandle(*(psem))
+#define gfxSemWaitI(psem)				gfxSemWait((psem), TIME_IMMEDIATE)
 #define gfxSemSignal(psem)				ReleaseSemaphore(*(psem), 1, 0)
 #define gfxSemSignalI(psem)				ReleaseSemaphore(*(psem), 1, 0)
 #define gfxSemCounterI(psem)			gfxSemCounter(psem)

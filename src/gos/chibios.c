@@ -89,6 +89,13 @@ bool_t gfxSemWait(gfxSem *psem, delaytime_t ms) {
 	return chSemWaitTimeout(&psem->sem, MS2ST(ms)) != RDY_TIMEOUT;
 }
 
+bool_t gfxSemWaitI(gfxSem *psem) {
+	if (chSemGetCounterI(&psem->sem) <= 0)
+		return FALSE;
+	chSemFastWaitI(&psem->sem);
+	return TRUE;
+}
+
 void gfxSemSignal(gfxSem *psem) {
 	chSysLock();
 

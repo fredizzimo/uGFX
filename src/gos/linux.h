@@ -46,6 +46,7 @@ typedef pthread_mutex_t		gfxMutex;
 #define gfxMutexDestroy(pmtx)			pthread_mutex_destroy(pmtx)
 #define gfxMutexEnter(pmtx)				pthread_mutex_lock(pmtx)
 #define gfxMutexExit(pmtx)				pthread_mutex_unlock(pmtx)
+#define gfxSemWaitI(psem)				gfxSemWait(psem, TIME_IMMEDIATE)
 #define gfxSemSignalI(psem)				gfxSemSignal(psem)
 #define gfxSemCounterI(pSem)			((pSem)->cnt)
 
