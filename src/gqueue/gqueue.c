@@ -138,6 +138,17 @@
 
 		return pi;
 	}
+	gfxQueueGSyncItem *gfxQueueGSyncGetI(gfxQueueGSync *pqueue) {
+		gfxQueueGSyncItem	*pi;
+
+		if (!gfxSemWaitI(&pqueue->sem))
+			return 0;
+
+		pi = pqueue->head;
+		pqueue->head = pi->next;
+		pi->next = 0;
+		return pi;
+	}
 
 	void gfxQueueGSyncPut(gfxQueueGSync *pqueue, gfxQueueGSyncItem *pitem) {
 		gfxSystemLock();

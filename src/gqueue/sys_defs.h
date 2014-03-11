@@ -113,6 +113,7 @@ void gfxQueueFSyncInit(gfxQueueFSync *pqueue);
 gfxQueueASyncItem *gfxQueueASyncGet(gfxQueueASync *pqueue);
 gfxQueueASyncItem *gfxQueueASyncGetI(gfxQueueASync *pqueue);
 gfxQueueGSyncItem *gfxQueueGSyncGet(gfxQueueGSync *pqueue, delaytime_t ms);
+gfxQueueGSyncItem *gfxQueueGSyncGetI(gfxQueueGSync *pqueue);
 gfxQueueFSyncItem *gfxQueueFSyncGet(gfxQueueFSync *pqueue, delaytime_t ms);
 /* @} */
 
@@ -208,12 +209,12 @@ void gfxQueueFSyncRemove(gfxQueueFSync *pqueue, gfxQueueFSyncItem *pitem);
  * @api
  * @{
  */
-#define gfxQueueASyncIsEmpty(pqueue)		(pqueue->head == 0)
-#define gfxQueueASyncIsEmptyI(pqueue)		(pqueue->head == 0)
-#define gfxQueueGSyncIsEmpty(pqueue)		(pqueue->head == 0)
-#define gfxQueueGSyncIsEmptyI(pqueue)		(pqueue->head == 0)
-#define gfxQueueFSyncIsEmpty(pqueue)		(pqueue->head == 0)
-#define gfxQueueFSyncIsEmptyI(pqueue)		(pqueue->head == 0)
+#define gfxQueueASyncIsEmpty(pqueue)		((pqueue)->head == 0)
+#define gfxQueueASyncIsEmptyI(pqueue)		((pqueue)->head == 0)
+#define gfxQueueGSyncIsEmpty(pqueue)		((pqueue)->head == 0)
+#define gfxQueueGSyncIsEmptyI(pqueue)		((pqueue)->head == 0)
+#define gfxQueueFSyncIsEmpty(pqueue)		((pqueue)->head == 0)
+#define gfxQueueFSyncIsEmptyI(pqueue)		((pqueue)->head == 0)
 /* @} */
 
 /**
