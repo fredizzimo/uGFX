@@ -44,13 +44,9 @@ extern void _gosDeinit(void);
 	extern void _gadcInit(void);
 	extern void _gadcDeinit(void);
 #endif
-#if GFX_USE_GAUDIN
-	extern void _gaudinInit(void);
-	extern void _gaudinDeinit(void);
-#endif
-#if GFX_USE_GAUDOUT
-	extern void _gaudoutInit(void);
-	extern void _gaudoutDeinit(void);
+#if GFX_USE_GAUDIO
+	extern void _gaudioInit(void);
+	extern void _gaudioDeinit(void);
 #endif
 #if GFX_USE_GMISC
 	extern void _gmiscInit(void);
@@ -88,11 +84,8 @@ void gfxInit(void)
 	#if GFX_USE_GADC
 		_gadcInit();
 	#endif
-	#if GFX_USE_GAUDIN
-		_gaudinInit();
-	#endif
-	#if GFX_USE_GAUDOUT
-		_gaudoutInit();
+	#if GFX_USE_GAUDIO
+		_gaudioInit();
 	#endif
 }
 
@@ -103,11 +96,8 @@ void gfxDeinit(void)
 	initDone = FALSE;
 
 	// We deinitialise the opposite way as we initialised
-	#if GFX_USE_GAUDOUT
-		_gaudoutDeinit();
-	#endif
 	#if GFX_USE_GAUDIN
-		_gaudinDeinit();
+		_gaudioDeinit();
 	#endif
 	#if GFX_USE_GADC
 		_gadcDeinit();

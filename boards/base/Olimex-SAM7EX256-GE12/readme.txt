@@ -6,7 +6,7 @@ On this board uGFX currently supports:
 	- GADC via the AT91SAM7 driver
 	- GINPUT-dials via the GADC driver
 	- GINPUT-toggles via the Pal driver
-	- GAUDIN via the GADC driver
+	- GAUDIO recording via the GADC driver
 
 Note there are two variants of this board - one with the GE8 display
 	and one with the GE12 display. This one is for the GE12 display.
