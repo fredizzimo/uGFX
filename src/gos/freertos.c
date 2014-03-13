@@ -107,6 +107,20 @@ bool_t gfxSemWait(gfxSem* psem, delaytime_t ms)
 	return FALSE;
 }
 
+bool_t gfxSemWaitI(gfxSem* psem)
+{
+	portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;
+
+	psem->counter--;
+
+	if (xSemaphoreTakeFromISR(psem->sem,&xHigherPriorityTaskWoken) == pdTRUE)
+		return TRUE;
+
+	psem->counter++;
+
+	return FALSE;
+}
+
 void gfxSemSignal(gfxSem* psem)
 {
 	taskENTER_CRITICAL();
