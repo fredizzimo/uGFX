@@ -150,7 +150,7 @@ size_t		i;
 	fprintf(f_output, "using...\n *\n *\t%s", opt_progname);
 	if (opt_arrayname || opt_static[0] || opt_const[0] || opt_breakblocks || opt_romdir) {
 		fprintf(f_output, " -");
-		if (opt_romdir)  fprintf(f_output, "b");
+		if (opt_romdir)  fprintf(f_output, "d");
 		if (opt_breakblocks) fprintf(f_output, "b");
 		if (opt_const[0]) fprintf(f_output, "c");
 		if (opt_static[0]) fprintf(f_output, "s");

@@ -189,6 +189,8 @@ void _tsOrientClip(MouseReading *pt, GDisplay *g, bool_t doClip) {
 				break;
 			}
 		#else
+			(void)	g;
+
 			c0 = cross[0].x;
 			c1 = cross[1].x;
 			c2 = cross[2].x;

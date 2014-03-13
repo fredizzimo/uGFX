@@ -82,6 +82,7 @@ void gfxSleepMicroseconds(delaytime_t ms);
 void gfxSemInit(gfxSem *psem, semcount_t val, semcount_t limit);
 void gfxSemDestroy(gfxSem *psem);
 bool_t gfxSemWait(gfxSem *psem, delaytime_t ms);
+bool_t gfxSemWaitI(gfxSem *psem);
 void gfxSemSignal(gfxSem *psem);
 void gfxSemSignalI(gfxSem *psem);
 #define gfxSemCounterI(psem)		((psem)->sem.s_cnt)

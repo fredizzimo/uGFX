@@ -128,8 +128,9 @@
 
 #define GWIN_NEED_CONSOLE                            FALSE
     #define GWIN_CONSOLE_USE_HISTORY                 FALSE
-		#define GWIN_CONSOLE_HISTORY_AVERAGING       FALSE
-		#define GWIN_CONSOLE_HISTORY_ATCREATE        FALSE
+        #define GWIN_CONSOLE_HISTORY_AVERAGING       FALSE
+        #define GWIN_CONSOLE_HISTORY_ATCREATE        FALSE
+    #define GWIN_CONSOLE_ESCSEQ                      FALSE
 	#define GWIN_CONSOLE_USE_BASESTREAM              FALSE
     #define GWIN_CONSOLE_USE_FLOAT                   FALSE
 #define GWIN_NEED_GRAPH                              FALSE
@@ -218,15 +219,11 @@
 
 
 ///////////////////////////////////////////////////////////////////////////
-// GAUDIN                                                                //
+// GAUDIO                                                                //
 ///////////////////////////////////////////////////////////////////////////
-#define GFX_USE_GAUDIN                               FALSE
-
-
-///////////////////////////////////////////////////////////////////////////
-// GAUDOUT                                                               //
-///////////////////////////////////////////////////////////////////////////
-#define GFX_USE_GAUDOUT                              FALSE
+#define GFX_USE_GAUDIO                               FALSE
+    #define GAUDIO_NEED_PLAY                         FALSE
+    #define GAUDIO_NEED_RECORD                       FALSE
 
 
 ///////////////////////////////////////////////////////////////////////////
@@ -243,4 +240,3 @@
 
 
 #endif /* _GFXCONF_H */
-

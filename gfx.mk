@@ -9,7 +9,6 @@ include $(GFXLIB)/src/gtimer/sys_make.mk
 include $(GFXLIB)/src/gwin/sys_make.mk
 include $(GFXLIB)/src/ginput/sys_make.mk
 include $(GFXLIB)/src/gadc/sys_make.mk
-include $(GFXLIB)/src/gaudin/sys_make.mk
-include $(GFXLIB)/src/gaudout/sys_make.mk
+include $(GFXLIB)/src/gaudio/sys_make.mk
 include $(GFXLIB)/src/gmisc/sys_make.mk
 include $(GFXLIB)/src/gfile/sys_make.mk

@@ -31,6 +31,12 @@ typedef struct GConsoleObject {
 	GWindowObject	g;
 	coord_t			cx, cy;			// Cursor position
 
+	#if GWIN_CONSOLE_ESCSEQ
+		uint8_t		startattr;		// ANSI-like escape sequences
+		uint8_t		currattr;
+		uint16_t	escstate;
+	#endif
+
 	#if GWIN_CONSOLE_USE_HISTORY
 		char *		buffer;			// buffer to store console content
 		size_t		bufsize;		// size of buffer

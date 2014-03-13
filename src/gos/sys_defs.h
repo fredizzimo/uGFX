@@ -328,6 +328,19 @@
 	bool_t gfxSemWait(gfxSem *psem, delaytime_t ms);
 
 	/**
+	 * @brief	Test if a wait on a semaphore can be satisfied immediately
+	 * @details	Equivalent to @p gfxSemWait(psem, TIME_IMMEDIATE) except it can be called at interrupt level
+	 * @return	FALSE if the wait would occur occurred otherwise TRUE
+	 *
+	 * @param[in] psem		A pointer to the semaphore
+	 * @param[in] ms		The maximum time to wait for the semaphore
+	 *
+	 * @iclass
+	 * @api
+	 */
+	bool_t gfxSemWaitI(gfxSem *psem);
+
+	/**
 	 * @brief	Signal a semaphore
 	 * @details	The semaphore counter is increased and if the result is non-positive then a waiting thread
 	 * 						 is queued for execution. Note that once the thread reaches "limit", further signals are
