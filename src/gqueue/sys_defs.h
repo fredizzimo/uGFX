@@ -105,11 +105,15 @@ void gfxQueueFSyncInit(gfxQueueFSync *pqueue);
  * @param[in]	ms		The maxmimum time to wait for an item. For ASync queues this parameter is
  * 						not specified as TIME_IMMEDIATE is assumed.
  *
+ * @note		The routines ending in "I" are interrupt/system/iclass level routines.
+ *
  * @api
  * @{
  */
 gfxQueueASyncItem *gfxQueueASyncGet(gfxQueueASync *pqueue);
+gfxQueueASyncItem *gfxQueueASyncGetI(gfxQueueASync *pqueue);
 gfxQueueGSyncItem *gfxQueueGSyncGet(gfxQueueGSync *pqueue, delaytime_t ms);
+gfxQueueGSyncItem *gfxQueueGSyncGetI(gfxQueueGSync *pqueue);
 gfxQueueFSyncItem *gfxQueueFSyncGet(gfxQueueFSync *pqueue, delaytime_t ms);
 /* @} */
 
@@ -124,12 +128,15 @@ gfxQueueFSyncItem *gfxQueueFSyncGet(gfxQueueFSync *pqueue, delaytime_t ms);
  * @note		FSync: Use a delay time of TIME_IMMEDIATE if you don't want to wait until the
  * 				item is removed from the queue. Note that even if the timeout occurs - the item
  * 				remains in the queue.
+ * @note		The routines ending in "I" are interrupt/system/iclass level routines.
  *
  * @api
  * @{
  */
 void gfxQueueASyncPut(gfxQueueASync *pqueue, gfxQueueASyncItem *pitem);
+void gfxQueueASyncPutI(gfxQueueASync *pqueue, gfxQueueASyncItem *pitem);
 void gfxQueueGSyncPut(gfxQueueGSync *pqueue, gfxQueueGSyncItem *pitem);
+void gfxQueueGSyncPutI(gfxQueueGSync *pqueue, gfxQueueGSyncItem *pitem);
 bool_t gfxQueueFSyncPut(gfxQueueFSync *pqueue, gfxQueueFSyncItem *pitem, delaytime_t ms);
 /* @} */
 
@@ -141,6 +148,7 @@ bool_t gfxQueueFSyncPut(gfxQueueFSync *pqueue, gfxQueueFSyncItem *pitem, delayti
  * @{
  */
 #define gfxQueueASyncPop(pqueue)			gfxQueueASyncGet(pqueue)
+#define gfxQueueASyncPopI(pqueue)			gfxQueueASyncGetI(pqueue)
 #define gfxQueueGSyncPop(pqueue, ms)		gfxQueueGSyncGet(pqueue, ms)
 #define gfxQueueFSyncPop(pqueue, ms)		gfxQueueFSyncGet(pqueue, ms)
 /* @} */
@@ -156,12 +164,15 @@ bool_t gfxQueueFSyncPut(gfxQueueFSync *pqueue, gfxQueueFSyncItem *pitem, delayti
  * @note		FSync: Use a delay time of TIME_IMMEDIATE if you don't want to wait until the
  * 				item is removed from the queue. Note that even if the timeout occurs - the item
  * 				remains in the queue.
+ * @note		The routines ending in "I" are interrupt/system/iclass level routines.
  *
  * @api
  * @{
  */
 void gfxQueueASyncPush(gfxQueueASync *pqueue, gfxQueueASyncItem *pitem);
+void gfxQueueASyncPushI(gfxQueueASync *pqueue, gfxQueueASyncItem *pitem);
 void gfxQueueGSyncPush(gfxQueueGSync *pqueue, gfxQueueGSyncItem *pitem);
+void gfxQueueGSyncPushI(gfxQueueGSync *pqueue, gfxQueueGSyncItem *pitem);
 bool_t gfxQueueFSyncPush(gfxQueueFSync *pqueue, gfxQueueFSyncItem *pitem, delaytime_t ms);
 /* @} */
 
@@ -175,12 +186,15 @@ bool_t gfxQueueFSyncPush(gfxQueueFSync *pqueue, gfxQueueFSyncItem *pitem, delayt
  * @note	If the item isn't in the queue the routine just returns.
  * @note	If a process is waiting on the Put/Push operation for the item, that process
  * 			will be signaled.
+ * @note	The routines ending in "I" are interrupt/system/iclass level routines.
  *
  * @api
  * @{
  */
 void gfxQueueASyncRemove(gfxQueueASync *pqueue, gfxQueueASyncItem *pitem);
+void gfxQueueASyncRemoveI(gfxQueueASync *pqueue, gfxQueueASyncItem *pitem);
 void gfxQueueGSyncRemove(gfxQueueGSync *pqueue, gfxQueueGSyncItem *pitem);
+void gfxQueueGSyncRemoveI(gfxQueueGSync *pqueue, gfxQueueGSyncItem *pitem);
 void gfxQueueFSyncRemove(gfxQueueFSync *pqueue, gfxQueueFSyncItem *pitem);
 /* @} */
 
@@ -190,12 +204,17 @@ void gfxQueueFSyncRemove(gfxQueueFSync *pqueue, gfxQueueFSyncItem *pitem);
  *
  * @param[in]	pqueue	A pointer to the queue
  *
+ * @note	The routines ending in "I" are interrupt/system/iclass level routines.
+ *
  * @api
  * @{
  */
-bool_t gfxQueueASyncIsEmpty(gfxQueueASync *pqueue);
-bool_t gfxQueueGSyncIsEmpty(gfxQueueGSync *pqueue);
-bool_t gfxQueueFSyncIsEmpty(gfxQueueFSync *pqueue);
+#define gfxQueueASyncIsEmpty(pqueue)		((pqueue)->head == 0)
+#define gfxQueueASyncIsEmptyI(pqueue)		((pqueue)->head == 0)
+#define gfxQueueGSyncIsEmpty(pqueue)		((pqueue)->head == 0)
+#define gfxQueueGSyncIsEmptyI(pqueue)		((pqueue)->head == 0)
+#define gfxQueueFSyncIsEmpty(pqueue)		((pqueue)->head == 0)
+#define gfxQueueFSyncIsEmptyI(pqueue)		((pqueue)->head == 0)
 /* @} */
 
 /**
@@ -206,13 +225,17 @@ bool_t gfxQueueFSyncIsEmpty(gfxQueueFSync *pqueue);
  * @param[in]	pitem	A pointer to the queue item
  *
  * @note	This operation may be expensive.
+ * @note	The routines ending in "I" are interrupt/system/iclass level routines.
  *
  * @api
  * @{
  */
 bool_t gfxQueueASyncIsIn(gfxQueueASync *pqueue, const gfxQueueASyncItem *pitem);
+bool_t gfxQueueASyncIsInI(gfxQueueASync *pqueue, const gfxQueueASyncItem *pitem);
 bool_t gfxQueueGSyncIsIn(gfxQueueGSync *pqueue, const gfxQueueGSyncItem *pitem);
+bool_t gfxQueueGSyncIsInI(gfxQueueGSync *pqueue, const gfxQueueGSyncItem *pitem);
 bool_t gfxQueueFSyncIsIn(gfxQueueFSync *pqueue, const gfxQueueFSyncItem *pitem);
+bool_t gfxQueueFSyncIsInI(gfxQueueFSync *pqueue, const gfxQueueFSyncItem *pitem);
 /* @} */
 
 /**
@@ -226,13 +249,17 @@ bool_t gfxQueueFSyncIsIn(gfxQueueFSync *pqueue, const gfxQueueFSyncItem *pitem);
  * @note	As that item is still on the queue, it should be treated as read-only. It could
  * 			also be removed from the queue at any time by another thread (thereby altering the
  * 			queue item).
+ * @note	The routines ending in "I" are interrupt/system/iclass level routines.
  *
  * @api
  * @{
  */
 #define gfxQueueASyncPeek(pqueue)	((const gfxQueueASyncItem *)((pqueue)->head))
+#define gfxQueueASyncPeekI(pqueue)	((const gfxQueueASyncItem *)((pqueue)->head))
 #define gfxQueueGSyncPeek(pqueue)	((const gfxQueueGSyncItem *)((pqueue)->head))
+#define gfxQueueGSyncPeekI(pqueue)	((const gfxQueueGSyncItem *)((pqueue)->head))
 #define gfxQueueFSyncPeek(pqueue)	((const gfxQueueFSyncItem *)((pqueue)->head))
+#define gfxQueueFSyncPeekI(pqueue)	((const gfxQueueFSyncItem *)((pqueue)->head))
 /* @} */
 
 /**
@@ -246,13 +273,17 @@ bool_t gfxQueueFSyncIsIn(gfxQueueFSync *pqueue, const gfxQueueFSyncItem *pitem);
  * @note	As that item is still on the queue, it should be treated as read-only. It could
  * 			also be removed from the queue at any time by another thread (thereby altering the
  * 			queue item).
+ * @note	The routines ending in "I" are interrupt/system/iclass level routines.
  *
  * @api
  * @{
  */
 #define gfxQueueASyncNext(pitem)	((const gfxQueueASyncItem *)((pitem)->next))
+#define gfxQueueASyncNextI(pitem)	((const gfxQueueASyncItem *)((pitem)->next))
 #define gfxQueueGSyncNext(pitem)	((const gfxQueueGSyncItem *)((pitem)->next))
+#define gfxQueueGSyncNextI(pitem)	((const gfxQueueGSyncItem *)((pitem)->next))
 #define gfxQueueFSyncNext(pitem)	((const gfxQueueFSyncItem *)((pitem)->next))
+#define gfxQueueFSyncNextI(pitem)	((const gfxQueueFSyncItem *)((pitem)->next))
 /* @} */
 
 #ifdef __cplusplus

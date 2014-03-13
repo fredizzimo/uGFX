@@ -62,7 +62,7 @@
 	 * @brief   GFX Graphics Display Basic API
 	 * @details	Defaults to FALSE
 	 * @note	Also add the specific hardware driver to your makefile.
-	 * 			Eg.  include $(GFXLIB)/drivers/gdisp/Nokia6610/gdisp_lld.mk
+	 * 			Eg.  include $(GFXLIB)/drivers/gdisp/Nokia6610/driver.mk
 	 */
 	#ifndef GFX_USE_GDISP
 		#define GFX_USE_GDISP	FALSE
@@ -106,9 +106,9 @@
 	 * @details	Defaults to FALSE
 	 * @note	Also add the specific hardware drivers to your makefile.
 	 * 			Eg.
-	 * 				include $(GFXLIB)/drivers/ginput/toggle/Pal/ginput_lld.mk
+	 * 				include $(GFXLIB)/drivers/ginput/toggle/Pal/driver.mk
 	 * 			and...
-	 * 				include $(GFXLIB)/drivers/ginput/touch/MCU/ginput_lld.mk
+	 * 				include $(GFXLIB)/drivers/ginput/touch/MCU/driver.mk
 	 */
 	#ifndef GFX_USE_GINPUT
 		#define GFX_USE_GINPUT	FALSE
@@ -121,24 +121,14 @@
 		#define GFX_USE_GADC	FALSE
 	#endif
 	/**
-	 * @brief   GFX Audio Input Device API
+	 * @brief   GFX Audio API
 	 * @details	Defaults to FALSE
 	 * @note	Also add the specific hardware drivers to your makefile.
 	 * 			Eg.
-	 * 				include $(GFXLIB)/drivers/gaudin/GADC/gaudin_lld.mk
+	 * 				include $(GFXLIB)/drivers/gaudio/GADC/driver.mk
 	 */
-	#ifndef GFX_USE_GAUDIN
-		#define GFX_USE_GAUDIN	FALSE
-	#endif
-	/**
-	 * @brief   GFX Audio Output Device API
-	 * @details	Defaults to FALSE
-	 * @note	Also add the specific hardware drivers to your makefile.
-	 * 			Eg.
-	 * 				include $(GFXLIB)/drivers/gaudout/PWM/gaudout_lld.mk
-	 */
-	#ifndef GFX_USE_GAUDOUT
-		#define GFX_USE_GAUDOUT	FALSE
+	#ifndef GFX_USE_GAUDIO
+		#define GFX_USE_GAUDIO	FALSE
 	#endif
 	/**
 	 * @brief   GFX Miscellaneous Routines API
@@ -173,8 +163,7 @@
 #include "src/gwin/sys_options.h"
 #include "src/ginput/sys_options.h"
 #include "src/gadc/sys_options.h"
-#include "src/gaudin/sys_options.h"
-#include "src/gaudout/sys_options.h"
+#include "src/gaudio/sys_options.h"
 
 /**
  * Interdependency safety checks on the sub-systems.
@@ -187,8 +176,7 @@
 #include "src/gwin/sys_rules.h"
 #include "src/ginput/sys_rules.h"
 #include "src/gdisp/sys_rules.h"
-#include "src/gaudout/sys_rules.h"
-#include "src/gaudin/sys_rules.h"
+#include "src/gaudio/sys_rules.h"
 #include "src/gadc/sys_rules.h"
 #include "src/gevent/sys_rules.h"
 #include "src/gtimer/sys_rules.h"
@@ -210,8 +198,7 @@
 #include "src/gwin/sys_defs.h"
 #include "src/ginput/sys_defs.h"
 #include "src/gadc/sys_defs.h"
-#include "src/gaudin/sys_defs.h"
-#include "src/gaudout/sys_defs.h"
+#include "src/gaudio/sys_defs.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -231,7 +218,7 @@ extern "C" {
 	/**
 	 * @brief	The one call to end it all
 	 *
-	 * @note	This will deinitialise each sub-system that has been turned on.
+	 * @note	This will de-initialise each sub-system that has been turned on.
 	 *
 	 * @api
 	 */

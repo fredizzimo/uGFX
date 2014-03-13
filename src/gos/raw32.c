@@ -346,6 +346,13 @@ bool_t gfxSemWait(gfxSem *psem, delaytime_t ms) {
 	return TRUE;
 }
 
+bool_t gfxSemWaitI(gfxSem *psem) {
+	if (psem->cnt <= 0)
+		return FALSE;
+	psem->cnt--;
+	return TRUE;
+}
+
 void gfxSemSignal(gfxSem *psem) {
 	INTERRUPTS_OFF();
 	gfxSemSignalI(psem);

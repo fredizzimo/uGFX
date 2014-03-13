@@ -174,6 +174,25 @@
 		#define GWIN_CONSOLE_USE_FLOAT			FALSE
 	#endif
 	/**
+	 * @brief   Console windows support escape sequences to control display
+	 * @details	Defaults to FALSE
+	 *
+	 * @note
+	 * 		Currently supported:
+	 * 			ESC color		Change subsequent text color
+	 * 							color:	"0" = black, "1" = red, "2" = green, "3" = yellow, "4" = blue,
+	 * 									"5" = magenta, "6" = cyan, "7" = white
+	 * 			ESC C			Revert subsequent text color to the window default
+	 * 			ESC u			Turn on underline
+	 * 			ESC U			Turn off underline
+	 * 			ESC b			Turn on bold
+	 * 			ESC B			Turn off bold
+	 * 			ESC J			Clear the window
+	 */
+	#ifndef GWIN_CONSOLE_ESCSEQ
+		#define GWIN_CONSOLE_ESCSEQ				FALSE
+	#endif
+	/**
 	 * @brief   Console Windows need BaseStreamSequential support (ChibiOS only)
 	 * @details	Defaults to FALSE
 	 * @note	To use the ChibiOS basestream functions such as chprintf()

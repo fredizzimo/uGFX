@@ -75,18 +75,27 @@ int main(void) {
 
 	/* Output some data on the first console */
 	for(i = 0; i < 10; i++) {
-		gwinPrintf(GW1, "Hello uGFX!\r\n");
+		gwinPrintf(GW1, "Hello \033buGFX\033B!\n");
 	}
 
-	/* Output some data on the second console */
-	for(i = 0; i < 16; i++) {
-		gwinPrintf(GW2, "Message Nr.: %d\r\n", i+1);
+	/* Output some data on the second console - Fast */
+	for(i = 0; i < 32; i++) {
+		gwinPrintf(GW2, "Message Nr.: \0331\033b%d\033B\033C\n", i+1);
 	}
 
-	/* Output some data on the third console */
-	for(i = 0; i < 18; i++) {
-		gwinPrintf(GW3, "Message Nr.: %d\r\n", i+1);
+	/* Output some data on the third console - Slowly */
+	for(i = 0; i < 32; i++) {
+		gwinPrintf(GW3, "Message Nr.: \033u%d\033U\n", i+1);
+		gfxSleepMilliseconds(500);
 	}
+
+	/* Make console 3 invisible and then visible again to demonstrate the history buffer */
+	gwinPrintf(GW2, "Making red window \033uinvisible\033U\n");
+	gwinSetVisible(GW3, FALSE);
+	gfxSleepMilliseconds(1000);
+	gwinPrintf(GW2, "Making red window \033uvisible\033U\n");
+	gwinSetVisible(GW3, TRUE);
+	gwinPrintf(GW3, "\033bI'm back!!!\033B\n", i+1);
 
 	while(TRUE) {
 		gfxSleepMilliseconds(500);

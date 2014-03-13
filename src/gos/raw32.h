@@ -110,6 +110,7 @@ extern "C" {
 	void gfxMutexExit(gfxMutex *pmutex);
 	void gfxSemInit(gfxSem *psem, semcount_t val, semcount_t limit);
 	bool_t gfxSemWait(gfxSem *psem, delaytime_t ms);
+	bool_t gfxSemWaitI(gfxSem *psem);
 	void gfxSemSignal(gfxSem *psem);
 	void gfxSemSignalI(gfxSem *psem);
 	gfxThreadHandle gfxThreadCreate(void *stackarea, size_t stacksz, threadpriority_t prio, DECLARE_THREAD_FUNCTION((*fn),p), void *param);
