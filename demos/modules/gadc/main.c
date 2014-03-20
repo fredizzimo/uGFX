@@ -167,6 +167,11 @@ int main(void) {
 		gtimerStart(&lsTimer, LowSpeedTimer, ghText, TRUE, MY_LS_DELAY);
 	#endif
 
+	// Allocate buffers for the high speed GADC device - 4 x 128 byte buffers.
+	//	You may need to increase this for slower cpu's.
+	//	You may be able to decrease this for low latency operating systems.
+	gfxBufferAlloc(4, 128);
+
 	/* Set up the scope window in the top right on the screen */
 	{
 		GWindowInit	wi;

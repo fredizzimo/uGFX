@@ -27,6 +27,12 @@
 #define GAUDIO_RECORD_NUM_CHANNELS					1
 
 /**
+ * @brief	Whether each channel is mono or stereo
+ * @note	This is an example
+ */
+#define GAUDIO_RECORD_CHANNEL0_IS_STEREO			FALSE
+
+/**
  * @brief	The list of audio channels and their uses
  * @note	This is an example
  * @{
@@ -40,7 +46,7 @@
  * @{
  */
 #ifdef GAUDIO_RECORD_LLD_IMPLEMENTATION
-	static uint32_t gaudin_lld_physdevs[GAUDIO_RECORD_NUM_CHANNELS] = {
+	static uint32_t gaudio_gadc_physdevs[GAUDIO_RECORD_NUM_CHANNELS] = {
 			GADC_PHYSDEV_MICROPHONE,
 			};
 #endif

@@ -23,28 +23,20 @@
 /*===========================================================================*/
 
 /**
- * @brief	The audio record sample type
- * @details	For this driver it matches the cpu sample type
- */
-typedef adcsample_t		audio_record_sample_t;
-
-/**
  * @brief	The maximum sample frequency supported by this audio device
  * @details	For this driver it matches the GADC maximum high speed sample rate
  */
-#define GAUDIO_RECORD_MAX_SAMPLE_FREQUENCY		GADC_MAX_HIGH_SPEED_SAMPLERATE
+#define GAUDIO_RECORD_MAX_SAMPLE_FREQUENCY			GADC_MAX_HIGH_SPEED_SAMPLERATE
 
 /**
- * @brief	The number of bits in a sample
- * @details	For this driver it matches the cpu sample bits
+ * @brief	The number of audio formats supported by this driver
  */
-#define GAUDIO_RECORD_BITS_PER_SAMPLE			GADC_BITS_PER_SAMPLE
+#define GAUDIO_RECORD_NUM_FORMATS					1
 
 /**
- * @brief	The format of an audio sample
- * @details	For this driver it matches the cpu sample format
+ * @brief	The available audio sample formats in order of preference
  */
-#define GAUDIO_RECORD_SAMPLE_FORMAT				GADC_SAMPLE_FORMAT
+#define GAUDIO_RECORD_FORMAT1						GADC_SAMPLE_FORMAT
 
 /**
  * For the GAUDIO driver that uses GADC - all the remaining config definitions are specific

@@ -35,17 +35,12 @@
  * @note	For the AT91SAM7 ADC driver, it post-dates the finding of the bug so we safely
  * 			say that the bug doesn't exist for this driver.
  */
-#define ADC_ISR_FULL_CODE_BUG				FALSE
+#define CHIBIOS_ADC_ISR_FULL_CODE_BUG		FALSE
 
 /**
  * @brief	The maximum sample frequency supported by this CPU
  */
 #define GADC_MAX_SAMPLE_FREQUENCY			132000
-
-/**
- * @brief	The number of bits in a sample
- */
-#define GADC_BITS_PER_SAMPLE				AT91_ADC1_RESOLUTION
 
 /**
  * @brief	The sample format

@@ -64,9 +64,6 @@ typedef struct GScopeObject_t {
 	GWindowObject		g;						// Base Class
 
 	coord_t				*lastscopetrace;		// To store last scope trace
-	gfxSem				bsem;					// We get signalled on this
-	adcsample_t			*audiobuf;				// To store audio samples
-	GEventADC			myEvent;				// Information on received samples
 	coord_t				nextx;					// Where we are up to
 #if TRIGGER_METHOD == TRIGGER_POSITIVERAMP
 	coord_t				lasty;					// The last y value - used for trigger slope detection
