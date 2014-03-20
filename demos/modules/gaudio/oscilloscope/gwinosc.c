@@ -96,7 +96,7 @@ GHandle gwinGScopeCreate(GDisplay *g, GScopeObject *gs, GWindowInit *pInit, uint
 
 void gwinScopeWaitForTrace(GHandle gh) {
 	#define 		gs	((GScopeObject *)(gh))
-	GAudioData		*paud;
+	GDataBuffer		*paud;
 	int				i;
 	coord_t			x, y;
 	coord_t			yoffset;
@@ -216,6 +216,6 @@ void gwinScopeWaitForTrace(GHandle gh) {
 	gs->scopemin = scopemin;
 #endif
 
-	gaudioReleaseBuffer(paud);
+	gfxBufferRelease(paud);
 	#undef gs
 }

@@ -42,19 +42,19 @@ extern "C" {
  * @iclass
  * @notapi
  */
-GAudioData *gaudioPlayGetDataBlockI(void);
+GDataBuffer *gaudioPlayGetDataBlockI(void);
 
 /**
  * @brief				Release a block of audio data to the free list
  *
- * @param[in] paud		The GAudioData block to be released.
+ * @param[in] paud		The GDataBuffer block to be released.
  *
  * @note				Defined in the high level GAUDIO code for use by the GAUDIO play drivers.
  *
  * @iclass
  * @notapi
  */
-void gaudioPlayReleaseDataBlockI(GAudioData *paud);
+void gaudioPlayReleaseDataBlockI(GDataBuffer *paud);
 
 /**
  * @brief				Signal that all playing has now stopped

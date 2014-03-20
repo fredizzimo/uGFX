@@ -23,6 +23,8 @@
  * 			operations because fully synchronous queues have the highest storage requirements. The other queue types are
  * 			optimizations. Efficiency IS important to use (particularly RAM efficiency).
  * 			In practice we only implement ASync, GSync and FSync queues as PSync queues are of dubious value.
+ * 			<br>
+ * 			We also define GDataBuffer which is a data buffer that supports being queued.
  * @{
  */
 
@@ -32,38 +34,12 @@
 #if GFX_USE_GQUEUE || defined(__DOXYGEN__)
 
 /**
- * @brief	A queue
- * @{
- */
-typedef struct gfxQueueASync {
-	struct gfxQueueASyncItem	*head;
-	struct gfxQueueASyncItem	*tail;
-} gfxQueueASync;
-
-typedef struct gfxQueueGSync {
-	struct gfxQueueGSyncItem	*head;
-	struct gfxQueueGSyncItem	*tail;
-	gfxSem						sem;
-} gfxQueueGSync;
-
-typedef struct gfxQueueFSync {
-	struct gfxQueueFSyncItem	*head;
-	struct gfxQueueFSyncItem	*tail;
-	gfxSem						sem;
-} gfxQueueFSync;
-/* @} */
-
-/**
  * @brief	A queue item
  * @{
  */
 typedef struct gfxQueueASyncItem {
 	struct gfxQueueASyncItem	*next;
-} gfxQueueASyncItem;
-
-typedef struct gfxQueueGSyncItem {
-	struct gfxQueueGSyncItem	*next;
-} gfxQueueGSyncItem;
+} gfxQueueASyncItem, gfxQueueGSyncItem;
 
 typedef struct gfxQueueFSyncItem {
 	struct gfxQueueFSyncItem	*next;
@@ -71,6 +47,39 @@ typedef struct gfxQueueFSyncItem {
 } gfxQueueFSyncItem;
 /* @} */
 
+/**
+ * @brief	A queue
+ * @{
+ */
+typedef struct gfxQueueASync {
+	gfxQueueASyncItem	*head;
+	gfxQueueASyncItem	*tail;
+} gfxQueueASync;
+
+typedef struct gfxQueueGSync {
+	gfxQueueGSyncItem	*head;
+	gfxQueueGSyncItem	*tail;
+	gfxSem				sem;
+} gfxQueueGSync;
+
+typedef struct gfxQueueFSync {
+	gfxQueueFSyncItem	*head;
+	gfxQueueFSyncItem	*tail;
+	gfxSem				sem;
+} gfxQueueFSync;
+/* @} */
+
+/**
+ * @brief	A Data Buffer Queue
+ * @note	This structure is followed immediately by the data itself.
+ * 			When allocating the buffers for the data put this structure
+ * 			at the beginning of the buffer.
+ */
+typedef struct GDataBuffer {
+	gfxQueueGSyncItem	next;		// @< Used for queueing the buffers
+	size_t				size;		// @< The size of the buffer area following this structure (in bytes)
+	size_t				len;		// @< The length of the data in the buffer area (in bytes)
+} GDataBuffer;
 
 /*===========================================================================*/
 /* Function declarations.                                                    */
@@ -95,6 +104,19 @@ extern "C" {
 void gfxQueueASyncInit(gfxQueueASync *pqueue);
 void gfxQueueGSyncInit(gfxQueueGSync *pqueue);
 void gfxQueueFSyncInit(gfxQueueFSync *pqueue);
+/* @} */
+
+/**
+ * @brief	De-Initialise a queue.
+ *
+ * @param[in]	pqueue	A pointer to the queue
+ *
+ * @api
+ * @{
+ */
+#define gfxQueueASyncDeinit(pqueue)
+void gfxQueueGSyncDeinit(gfxQueueGSync *pqueue);
+void gfxQueueFSyncDeinit(gfxQueueFSync *pqueue);
 /* @} */
 
 /**
@@ -285,6 +307,58 @@ bool_t gfxQueueFSyncIsInI(gfxQueueFSync *pqueue, const gfxQueueFSyncItem *pitem)
 #define gfxQueueFSyncNext(pitem)	((const gfxQueueFSyncItem *)((pitem)->next))
 #define gfxQueueFSyncNextI(pitem)	((const gfxQueueFSyncItem *)((pitem)->next))
 /* @} */
+
+/**
+ * @brief		Allocate some buffers and put them on the free list
+ * @return		TRUE is it succeeded. FALSE on allocation failure.
+ *
+ * @param[in] num	The number of buffers to allocate
+ * @param[in] size	The size (in bytes) of each buffer
+ *
+ * @api
+ */
+bool_t gfxBufferAlloc(unsigned num, size_t size);
+
+/**
+ * @brief		Is there one or more buffers currently available on the free list
+ * @return		TRUE if there are buffers in the free list
+ *
+ * @api
+ * @{
+ */
+bool_t gfxBufferIsAvailable(void);
+/* @} */
+
+/**
+ * @brief		Get a buffer from the free list
+ * @return		A GDataBuffer pointer or NULL if the timeout is exceeded
+ *
+ * @params[in] ms	The maximum amount of time in milliseconds to wait for a buffer if one is not available.
+ *
+ * @api
+ * @{
+ */
+GDataBuffer *gfxBufferGet(delaytime_t ms);
+GDataBuffer *gfxBufferGetI(void);
+/* @} */
+
+/**
+ * @brief		Release a buffer back to the free list
+ *
+ * @param[in] pd		The buffer to put (back) on the free-list.
+ *
+ * @note		This call should be used to return any buffers that were taken from
+ * 				the free-list once they have been finished with. It can also be used
+ * 				to put new buffers onto the free-list. Just make sure the "size" field
+ * 				of the GDataBuffer structure has been filled in first.
+ *
+ * @api
+ * @{
+ */
+void gfxBufferRelease(GDataBuffer *pd);
+void gfxBufferReleaseI(GDataBuffer *pd);
+/* @} */
+
 
 #ifdef __cplusplus
 }

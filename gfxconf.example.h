@@ -175,7 +175,7 @@
 #define GQUEUE_NEED_ASYNC                            FALSE
 #define GQUEUE_NEED_GSYNC                            FALSE
 #define GQUEUE_NEED_FSYNC                            FALSE
-
+#define GQUEUE_NEED_BUFFERS                          FALSE
 
 ///////////////////////////////////////////////////////////////////////////
 // GINPUT                                                                //

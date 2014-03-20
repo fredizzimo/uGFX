@@ -14,6 +14,21 @@
 
 #if GFX_USE_GQUEUE
 
+#if GQUEUE_NEED_BUFFERS
+	static gfxQueueGSync	bufferFreeList;
+#endif
+
+void _gqueueInit(void)
+{
+	#if GQUEUE_NEED_BUFFERS
+		gfxQueueGSyncInit(&bufferFreeList);
+	#endif
+}
+
+void _gqueueDeinit(void)
+{
+}
+
 #if GQUEUE_NEED_ASYNC
 	void gfxQueueASyncInit(gfxQueueASync *pqueue) {
 		pqueue->head = pqueue->tail = 0;
@@ -122,6 +137,10 @@
 	void gfxQueueGSyncInit(gfxQueueGSync *pqueue) {
 		pqueue->head = pqueue->tail = 0;
 		gfxSemInit(&pqueue->sem, 0, MAX_SEMAPHORE_COUNT);
+	}
+	void gfxQueueGSyncDeinit(gfxQueueGSync *pqueue) {
+		pqueue->head = pqueue->tail = 0;
+		gfxSemDestroy(&pqueue->sem);
 	}
 
 	gfxQueueGSyncItem *gfxQueueGSyncGet(gfxQueueGSync *pqueue, delaytime_t ms) {
@@ -232,6 +251,11 @@
 		pqueue->head = pqueue->tail = 0;
 		gfxSemInit(&pqueue->sem, 0, MAX_SEMAPHORE_COUNT);
 	}
+	void gfxQueueFSyncDeinit(gfxQueueGSync *pqueue) {
+		while(gfxQueueFSyncGet(pqueue, TIME_IMMEDIATE));
+		pqueue->head = pqueue->tail = 0;
+		gfxSemDestroy(&pqueue->sem);
+	}
 
 	gfxQueueFSyncItem *gfxQueueFSyncGet(gfxQueueFSync *pqueue, delaytime_t ms) {
 		gfxQueueFSyncItem	*pi;
@@ -332,5 +356,37 @@
 		return FALSE;
 	}
 #endif
+
+#if GQUEUE_NEED_BUFFERS
+	bool_t gfxBufferAlloc(unsigned num, size_t size) {
+		GDataBuffer *pd;
+
+		if (num < 1)
+			return FALSE;
+
+		// Round up to a multiple of 4 to prevent problems with structure alignment
+		size = (size + 3) & ~0x03;
+
+		// Allocate the memory
+		if (!(pd = gfxAlloc((size+sizeof(GDataBuffer)) * num)))
+			return FALSE;
+
+		// Add each of them to our free list
+		for(;num--; pd = (GDataBuffer *)((char *)(pd+1)+size)) {
+			pd->size = size;
+			gfxBufferRelease(pd);
+		}
+
+		return TRUE;
+	}
+
+	void gfxBufferRelease(GDataBuffer *pd)		{ gfxQueueGSyncPut(&bufferFreeList, (gfxQueueGSyncItem *)pd); }
+	void gfxBufferReleaseI(GDataBuffer *pd)		{ gfxQueueGSyncPutI(&bufferFreeList, (gfxQueueGSyncItem *)pd); }
+	GDataBuffer *gfxBufferGet(delaytime_t ms)	{ return (GDataBuffer *)gfxQueueGSyncGet(&bufferFreeList, ms); }
+	GDataBuffer *gfxBufferGetI(void)			{ return (GDataBuffer *)gfxQueueGSyncGetI(&bufferFreeList); }
+	bool_t gfxBufferIsAvailable(void)			{ return bufferFreeList.head != 0; }
+
+#endif
+
 
 #endif /* GFX_USE_GQUEUE */

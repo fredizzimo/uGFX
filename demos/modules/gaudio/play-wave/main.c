@@ -64,7 +64,7 @@ int main(void) {
 	// Allocate audio buffers - 4 x 512 byte buffers.
 	//	You may need to increase this for slower cpu's.
 	//	You may be able to decrease this for low latency operating systems.
-	if (!gaudioAllocBuffers(4, 512)) {
+	if (!gfxBufferAlloc(4, 512)) {
 		errmsg = "Err: No Memory";
 		goto theend;
 	}
@@ -164,7 +164,7 @@ int main(void) {
 	gdispDrawString(0, gdispGetHeight()/2, "Playing...", font, Yellow);
 	while(toplay) {
 		// Get a buffer to put the data into
-		paud = gaudioGetBuffer(TIME_INFINITE);		// This should never fail as we are waiting forever
+		paud = gfxBufferGet(TIME_INFINITE);		// This should never fail as we are waiting forever
 
 		// How much data can we put in
 		len = toplay > paud->size ? paud->size : toplay;

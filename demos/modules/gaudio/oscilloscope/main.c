@@ -58,7 +58,7 @@ int main(void) {
 	// Allocate audio buffers - 4 x 128 byte buffers.
 	//	You may need to increase this for slower cpu's.
 	//	You may be able to decrease this for low latency operating systems.
-	gaudioAllocBuffers(4, 128);
+	gfxBufferAlloc(4, 128);
 
 	/* Get the screen dimensions */
 	swidth = gdispGetWidth();

@@ -47,7 +47,7 @@ static DWORD		threadID;
  *************************************************************************/
 
 static bool_t senddata(WAVEHDR *pwh) {
-	GAudioData *paud;
+	GDataBuffer *paud;
 
 	// Get the next data block to send
 	gfxSystemLock();
@@ -94,7 +94,7 @@ static DWORD WINAPI waveProc(LPVOID arg) {
 
 				// Give the buffer back to the Audio Free List
 				gfxSystemLock();
-				gaudioPlayReleaseDataBlockI((GAudioData *)pwh->dwUser);
+				gaudioPlayReleaseDataBlockI((GDataBuffer *)pwh->dwUser);
 				gfxSystemUnlock();
 				pwh->lpData = 0;
 				nQueuedBuffers--;
