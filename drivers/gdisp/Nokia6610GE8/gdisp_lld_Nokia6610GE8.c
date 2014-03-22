@@ -138,27 +138,27 @@
 
 #if GDISP_HARDWARE_DRAWPIXEL
 	static inline void set_viewpoint(GDisplay* g) {
-	#if GDISP_NOKIA_ORIENTATION && GDISP_NEED_CONTROL
-		switch(g->g.Orientation) {
-		default:
-		case GDISP_ROTATE_0:
-			write_cmd2(g, CASET, GDISP_RAM_X_OFFSET+g->p.x, GDISP_RAM_X_OFFSET+g->p.x);			// Column address set
-			write_cmd2(g, PASET, GDISP_RAM_Y_OFFSET+g->p.y, GDISP_RAM_Y_OFFSET+g->p.y);			// Page address set
-			break;
-		case GDISP_ROTATE_90:
-			write_cmd2(g, CASET, GDISP_RAM_X_OFFSET+g->p.y, GDISP_RAM_X_OFFSET+g->p.y);
-			write_cmd2(g, PASET, GDISP_RAM_Y_OFFSET-1+g->g.Width-g->p.x, GDISP_RAM_Y_OFFSET-1+g->g.Width-g->p.x);
-			break;
-		case GDISP_ROTATE_180:
-			write_cmd2(g, CASET, GDISP_RAM_X_OFFSET-1+g->g.Width-g->p.x, GDISP_RAM_X_OFFSET-1+g->g.Width-g->p.x);
-			write_cmd2(g, PASET, GDISP_RAM_Y_OFFSET-1+g->g.Height-g->p.y, GDISP_RAM_Y_OFFSET-1+g->g.Height-g->p.y);
-			break;
-		case GDISP_ROTATE_270:
-			write_cmd2(g, CASET, GDISP_RAM_X_OFFSET-1+g->g.Height-g->p.y, GDISP_RAM_X_OFFSET-1+g->g.Height-g->p.y);
-			write_cmd2(g, PASET, GDISP_RAM_Y_OFFSET+g->p.x, GDISP_RAM_Y_OFFSET+g->p.x);
-			break;
-		}
-	#else
+		#if GDISP_NOKIA_ORIENTATION && GDISP_NEED_CONTROL
+			switch(g->g.Orientation) {
+			default:
+			case GDISP_ROTATE_0:
+				write_cmd2(g, CASET, GDISP_RAM_X_OFFSET+g->p.x, GDISP_RAM_X_OFFSET+g->p.x);			// Column address set
+				write_cmd2(g, PASET, GDISP_RAM_Y_OFFSET+g->p.y, GDISP_RAM_Y_OFFSET+g->p.y);			// Page address set
+				break;
+			case GDISP_ROTATE_90:
+				write_cmd2(g, CASET, GDISP_RAM_X_OFFSET+g->p.y, GDISP_RAM_X_OFFSET+g->p.y);
+				write_cmd2(g, PASET, GDISP_RAM_Y_OFFSET-1+g->g.Width-g->p.x, GDISP_RAM_Y_OFFSET-1+g->g.Width-g->p.x);
+				break;
+			case GDISP_ROTATE_180:
+				write_cmd2(g, CASET, GDISP_RAM_X_OFFSET-1+g->g.Width-g->p.x, GDISP_RAM_X_OFFSET-1+g->g.Width-g->p.x);
+				write_cmd2(g, PASET, GDISP_RAM_Y_OFFSET-1+g->g.Height-g->p.y, GDISP_RAM_Y_OFFSET-1+g->g.Height-g->p.y);
+				break;
+			case GDISP_ROTATE_270:
+				write_cmd2(g, CASET, GDISP_RAM_X_OFFSET-1+g->g.Height-g->p.y, GDISP_RAM_X_OFFSET-1+g->g.Height-g->p.y);
+				write_cmd2(g, PASET, GDISP_RAM_Y_OFFSET+g->p.x, GDISP_RAM_Y_OFFSET+g->p.x);
+				break;
+			}
+		#else
 			write_cmd2(g, CASET, GDISP_RAM_X_OFFSET+g->p.x, GDISP_RAM_X_OFFSET+g->p.x);			// Column address set
 			write_cmd2(g, PASET, GDISP_RAM_Y_OFFSET+g->p.y, GDISP_RAM_Y_OFFSET+g->p.y);			// Page address set
 		#endif
