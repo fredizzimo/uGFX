@@ -81,12 +81,11 @@ void gfxSemDestroy(gfxSem *psem) {
 }
 
 bool_t gfxSemWait(gfxSem *psem, delaytime_t ms) {
-	if (ms == TIME_INFINITE) {
-		chSemWait(&psem->sem);
-		return TRUE;
+	switch(ms) {
+	case TIME_IMMEDIATE:	return chSemWaitTimeout(&psem->sem, TIME_IMMEDIATE) != RDY_TIMEOUT;
+	case TIME_INFINITE:		chSemWait(&psem->sem);	return TRUE;
+	default:				return chSemWaitTimeout(&psem->sem, MS2ST(ms)) != RDY_TIMEOUT;
 	}
-
-	return chSemWaitTimeout(&psem->sem, MS2ST(ms)) != RDY_TIMEOUT;
 }
 
 bool_t gfxSemWaitI(gfxSem *psem) {
