@@ -144,10 +144,10 @@ void gwinScopeWaitForTrace(GHandle gh) {
 		scopemin = 0;
 	#endif
 
-	for(i = paud->len/(gfxSampleFormatBits(gs->format)/8); i; i--) {
+	for(i = paud->len/((gfxSampleFormatBits(gs->format)+7)/8); i; i--) {
 
 		/* Calculate the new scope value - re-scale using simple shifts for efficiency, re-center and y-invert */
-		if (gs->format <= 8)
+		if (gfxSampleFormatBits(gs->format) <= 8)
 			y = yoffset - (((coord_t)(*pa8++ ) << shr) >> (16-SCOPE_Y_BITS));
 		else
 			y = yoffset - (((coord_t)(*pa16++) << shr) >> (16-SCOPE_Y_BITS));
