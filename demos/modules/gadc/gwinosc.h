@@ -43,7 +43,7 @@
 
 /* The extent of scaling for our audio data - fixed scale at the moment */
 #ifndef SCOPE_Y_BITS
-	#define SCOPE_Y_BITS			7					// 7 bits = 0..128
+	#define SCOPE_Y_BITS		7					// 7 bits = 0..128
 #endif
 
 /* Trigger methods */

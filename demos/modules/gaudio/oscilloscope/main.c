@@ -59,11 +59,11 @@ int main(void) {
 	 * Allocate audio buffers - eg. 4 x 128 byte buffers.
 	 *	You may need to increase this for slower cpu's.
 	 *	You may be able to decrease this for low latency operating systems.
-	 *	16 x 256 seems to work on the really slow Olimex SAM7EX256 board (display speed limitation) @8kHz
+	 *	8 x 256 seems to work on the really slow Olimex SAM7EX256 board (display speed limitation) @8kHz
 	 * If your oscilloscope display stops then it is likely that your driver has stalled due to running
 	 *  out of free buffers. Increase the number of buffers..
 	 */
-	gfxBufferAlloc(16, 256);
+	gfxBufferAlloc(8, 256);
 
 	/* Get the screen dimensions */
 	swidth = gdispGetWidth();
