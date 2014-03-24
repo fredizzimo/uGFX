@@ -167,10 +167,19 @@ int main(void) {
 		gtimerStart(&lsTimer, LowSpeedTimer, ghText, TRUE, MY_LS_DELAY);
 	#endif
 
-	// Allocate buffers for the high speed GADC device - 4 x 128 byte buffers.
-	//	You may need to increase this for slower cpu's.
-	//	You may be able to decrease this for low latency operating systems.
-	gfxBufferAlloc(4, 128);
+	/**
+	 * Allocate buffers for the high speed GADC device - eg. 4 x 128 byte buffers.
+	 *	You may need to increase this for slower cpu's.
+	 *	You may be able to decrease this for low latency operating systems.
+	 *	10 x 128 seems to work on the really slow Olimex SAM7EX256 board (display speed limitation)
+	 * If your oscilloscope display stops but the low speed reading keep going then it is likely that
+	 * 	your high speed timer has stalled due to running out of free buffers. Increase the number
+	 * 	of buffers..
+	 * If you make the buffers too large with a slow sample rate you may not allow enough time for all
+	 * 	the low speed items to occur in which case your memory will fill up with low speed requests until
+	 * 	you run out of memory.
+	 */
+	gfxBufferAlloc(10, 128);
 
 	/* Set up the scope window in the top right on the screen */
 	{

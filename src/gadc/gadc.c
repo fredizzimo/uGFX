@@ -23,206 +23,151 @@
 	#error "GADC: GADC_MAX_HIGH_SPEED_SAMPLERATE has been set too high. It must be less than half the maximum CPU rate"
 #endif
 
-#define GADC_MAX_LOWSPEED_DEVICES	((GADC_MAX_SAMPLE_FREQUENCY/GADC_MAX_HIGH_SPEED_SAMPLERATE)-1)
-#if GADC_MAX_LOWSPEED_DEVICES > 4
-	#undef GADC_MAX_LOWSPEED_DEVICES
-	#define GADC_MAX_LOWSPEED_DEVICES	4
-#endif
+#define GADC_HSADC_GTIMER		0x8000
+#define GADC_ADC_RUNNING		0x4000
+#define GADC_HSADC_CONVERTION	0x2000
 
-volatile bool_t GADC_Timer_Missed;
+typedef struct NonTimerData_t {
+	gfxQueueGSyncItem		next;
+	GADCCallbackFunction	callback;
+	union {
+		void				*param;
+		gfxSem				sigdone;
+	};
+	GadcNonTimerJob			job;
+	} NonTimerData;
 
-static bool_t			gadcRunning;
-static gfxSem			LowSpeedSlotSem;
-static gfxMutex			LowSpeedMutex;
-static GTimer			LowSpeedGTimer;
-static gfxQueueGSync	HighSpeedBuffers;
-
+static volatile uint16_t		hsFlags;
+static size_t					hsBytesPerConv;
+static GadcTimerJob				hsJob;
+static GDataBuffer				*hsData;
+static gfxQueueGSync			hsListDone;
+static GADCISRCallbackFunction	hsISRcallback;
 #if GFX_USE_GEVENT
-	static GTimer		HighSpeedGTimer;
+	static GTimer				hsGTimer;
 #endif
 
+static GTimer					lsGTimer;
+static gfxQueueGSync			lsListToDo;
+static gfxQueueGSync			lsListDone;
+static NonTimerData				*lsData;
 
-#define GADC_FLG_ISACTIVE	0x0001
-#define GADC_FLG_ISDONE		0x0002
-#define GADC_FLG_ERROR		0x0004
-#define GADC_FLG_GTIMER		0x0008
-#define GADC_FLG_STALLED	0x0010
+void gadcGotDataI(size_t n) {
+	if ((hsFlags & GADC_HSADC_CONVERTION)) {
 
-static struct hsdev {
-	// Our status flags
-	uint16_t				flags;
+		// A set of timer conversions is done - add them
+		hsJob.done += n;
 
-	// Other stuff we need to track progress and for signaling
-	GadcLldTimerData		lld;
-	uint16_t				eventflags;
-	GADCISRCallbackFunction	isrfn;
-	} hs;
-
-static struct lsdev {
-	// Our status flags
-	uint16_t				flags;
-
-	// What we started with
-	GadcLldNonTimerData		lld;
-	GADCCallbackFunction	fn;
-	void					*param;
-	} ls[GADC_MAX_LOWSPEED_DEVICES];
-
-static struct lsdev *curlsdev;
-
-/* Find the next conversion to activate */
-static inline void FindNextConversionI(void) {
-	if (curlsdev) {
-		/**
-		 * Now we have done a low speed conversion - start looking for the next conversion
-		 * We only look forward to ensure we get a high speed conversion at least once
-		 * every GADC_MAX_LOWSPEED_DEVICES conversions.
-		 */
-		curlsdev++;
-
-	} else {
-
-		/* Now we have done a high speed conversion - start looking for low speed conversions */
-		curlsdev = ls;
-	}
-
-	/**
-	 * Look for the next thing to do.
-	 */
-	gadcRunning = TRUE;
-	for(; curlsdev < &ls[GADC_MAX_LOWSPEED_DEVICES]; curlsdev++) {
-		if ((curlsdev->flags & (GADC_FLG_ISACTIVE|GADC_FLG_ISDONE)) == GADC_FLG_ISACTIVE) {
-			gadc_lld_adc_nontimerI(&curlsdev->lld);
-			return;
-		}
-	}
-	curlsdev = 0;
-
-	/* No more low speed devices - do a high speed conversion */
-	if (hs.flags & GADC_FLG_ISACTIVE) {
-		hs.lld.pdata = gfxBufferGetI();
-		if (hs.lld.pdata) {
-			hs.lld.now = GADC_Timer_Missed || (hs.flags & GADC_FLG_STALLED);
-			hs.flags &= ~GADC_FLG_STALLED;
-			GADC_Timer_Missed = 0;
-			gadc_lld_adc_timerI(&hs.lld);
-			return;
-		}
-
-		// Oops - no free buffers - mark stalled and go back to low speed devices
-		hs.flags |= GADC_FLG_STALLED;
-		hs.eventflags &= ~GADC_HSADC_RUNNING;
-		for(curlsdev = ls; curlsdev < &ls[GADC_MAX_LOWSPEED_DEVICES]; curlsdev++) {
-			if ((curlsdev->flags & (GADC_FLG_ISACTIVE|GADC_FLG_ISDONE)) == GADC_FLG_ISACTIVE) {
-				gadc_lld_adc_nontimerI(&curlsdev->lld);
-				return;
-			}
-		}
-		curlsdev = 0;
-	}
-
-	/* Nothing more to do */
-	gadcRunning = FALSE;
-}
-
-void gadcDataReadyI(void) {
-
-	if (curlsdev) {
-		/* This interrupt must be in relation to the low speed device */
-
-		if (curlsdev->flags & GADC_FLG_ISACTIVE) {
-			curlsdev->flags |= GADC_FLG_ISDONE;
-			gtimerJabI(&LowSpeedGTimer);
-		}
-
-		#if GFX_USE_OS_CHIBIOS && CHIBIOS_ADC_ISR_FULL_CODE_BUG
-			/**
-			 * Oops - We have just finished a low speed conversion but a bug prevents us
-			 * restarting the ADC here. Other code will restart it in the thread based
-			 * ADC handler.
-			 */
-			gadcRunning = FALSE;
+		// Are we finished yet? (or driver signalled complete now)
+		if (n && hsJob.done < hsJob.todo)
 			return;
 
+		// Clear event flags we might set
+		hsFlags &= ~(GADC_HSADC_GOTBUFFER|GADC_HSADC_STALL);
+
+		// Is there any data in it
+		if (!hsJob.done) {
+
+			// Oops - no data in this buffer. Just return it to the free-list
+			gfxBufferReleaseI(hsData);
+			goto starttimerjob;					// Restart the timer job
+		}
+
+		// Save the buffer on the hsListDone list
+		hsData->len = hsJob.done * hsBytesPerConv;
+		gfxQueueGSyncPutI(&hsListDone, (gfxQueueGSyncItem *)hsData);
+		hsFlags |= GADC_HSADC_GOTBUFFER;
+
+		/* Signal a buffer completion */
+		if (hsISRcallback)
+			hsISRcallback();
+		#if GFX_USE_GEVENT
+			if (hsFlags & GADC_HSADC_GTIMER)
+				gtimerJabI(&hsGTimer);
 		#endif
 
-	} else {
-		/* This interrupt must be in relation to the high speed device */
+		// Stop if we have been told to
+		if (!(hsFlags & GADC_HSADC_RUNNING)) {
+			gadc_lld_stop_timerI();
 
-		if (hs.flags & GADC_FLG_ISACTIVE) {
-			if (hs.lld.pdata->len) {
-				/* Save the current buffer on the HighSpeedBuffers */
-				gfxQueueGSyncPutI(&HighSpeedBuffers, (gfxQueueGSyncItem *)hs.lld.pdata);
-				hs.lld.pdata = 0;
+		// Get the next free buffer
+		} else if (!(hsData = gfxBufferGetI())) {
 
-				/* Save the details */
-				hs.eventflags = GADC_HSADC_RUNNING|GADC_HSADC_GOTBUFFER;
-				if (GADC_Timer_Missed)
-					hs.eventflags |= GADC_HSADC_LOSTEVENT;
-				if (hs.flags & GADC_FLG_STALLED)
-					hs.eventflags |= GADC_HSADC_STALL;
+			// Oops - no free buffers. Stall
+			hsFlags &= ~GADC_HSADC_RUNNING;
+			hsFlags |= GADC_HSADC_STALL;
+			gadc_lld_stop_timerI();
 
-				/* Our signalling mechanisms */
-				if (hs.isrfn)
-					hs.isrfn();
+		// Prepare the next job
+		} else {
 
-				#if GFX_USE_GEVENT
-					if (hs.flags & GADC_FLG_GTIMER)
-						gtimerJabI(&HighSpeedGTimer);
-				#endif
-			} else {
-				// Oops - no data in this buffer. Just return it to the free-list
-				gfxBufferRelease(hs.lld.pdata);
-				hs.lld.pdata = 0;
-			}
+			// Return this new job
+			#if GFX_USE_OS_CHIBIOS
+				// ChibiOS api bug - samples must be even
+				hsJob.todo = (hsData->size / hsBytesPerConv) & ~1;
+			#else
+				hsJob.todo = hsData->size / hsBytesPerConv;
+			#endif
+			hsJob.done = 0;
+			hsJob.buffer = (adcsample_t *)(hsData+1);
 		}
-	}
 
-	/**
-	 * Look for the next thing to do.
-	 */
-	FindNextConversionI();
-}
-
-void gadcDataFailI(void) {
-	if (curlsdev) {
-		if ((curlsdev->flags & (GADC_FLG_ISACTIVE|GADC_FLG_ISDONE)) == GADC_FLG_ISACTIVE)
-			/* Mark the error then try to repeat it */
-			curlsdev->flags |= GADC_FLG_ERROR;
-
-		#if GFX_USE_OS_CHIBIOS && CHIBIOS_ADC_ISR_FULL_CODE_BUG
-			/**
-			 * Oops - We have just finished a low speed conversion but a bug prevents us
-			 * restarting the ADC here. Other code will restart it in the thread based
-			 * ADC handler.
-			 */
-			gadcRunning = FALSE;
-			gtimerJabI(&LowSpeedGTimer);
-			return;
-
-		#endif
+		// Start a job preferring a non-timer job
+		if ((lsData = (NonTimerData *)gfxQueueGSyncGetI(&lsListToDo))) {
+			hsFlags &= ~GADC_HSADC_CONVERTION;
+			gadc_lld_nontimerjobI(&lsData->job);
+		} else if ((hsFlags & GADC_HSADC_RUNNING)) {
+			hsFlags |= GADC_HSADC_CONVERTION;
+			gadc_lld_timerjobI(&hsJob);
+		} else
+			hsFlags &= ~GADC_ADC_RUNNING;
 
 	} else {
-		if (hs.flags & GADC_FLG_ISACTIVE)
-			/* Mark the error and then try to repeat it */
-			hs.flags |= GADC_FLG_ERROR;
-	}
 
-	/* Start the next conversion */
-	FindNextConversionI();
+		// Did it fail
+		if (!n) {
+			// Push it back on the head of the queue - it didn't actually get done
+			gfxQueueGSyncPushI(&lsListToDo, (gfxQueueGSyncItem *)lsData);
+			lsData = 0;
+			goto starttimerjob;
+		}
+
+		// A non-timer job completed - signal
+		if (lsData->callback) {
+			// Put it on the completed list and signal the timer to do the call-backs
+			gfxQueueGSyncPutI(&lsListDone, (gfxQueueGSyncItem *)lsData);
+			gtimerJabI(&lsGTimer);
+		} else {
+			// Signal the thread directly
+			gfxSemSignalI(&lsData->sigdone);
+		}
+		lsData = 0;
+
+		// Start a job preferring a timer job
+starttimerjob:
+		if ((hsFlags & GADC_HSADC_RUNNING)) {
+			hsFlags |= GADC_HSADC_CONVERTION;
+			gadc_lld_timerjobI(&hsJob);
+		} else if ((lsData = (NonTimerData *)gfxQueueGSyncGetI(&lsListToDo))) {
+			hsFlags &= ~GADC_HSADC_CONVERTION;
+			gadc_lld_nontimerjobI(&lsData->job);
+		} else
+			hsFlags &= ~GADC_ADC_RUNNING;
+	}
 }
 
 /* Our module initialiser */
 void _gadcInit(void)
 {
 	gadc_lld_init();
-	gfxQueueGSyncInit(&HighSpeedBuffers);
-	gfxSemInit(&LowSpeedSlotSem, GADC_MAX_LOWSPEED_DEVICES, GADC_MAX_LOWSPEED_DEVICES);
-	gfxMutexInit(&LowSpeedMutex);
-	gtimerInit(&LowSpeedGTimer);
+
+	gfxQueueGSyncInit(&hsListDone);
 	#if GFX_USE_GEVENT
-		gtimerInit(&HighSpeedGTimer);
+		gtimerInit(&hsGTimer);
 	#endif
+	gtimerInit(&lsGTimer);
+	gfxQueueGSyncInit(&lsListToDo);
+	gfxQueueGSyncInit(&lsListDone);
 }
 
 void _gadcDeinit(void)
@@ -230,27 +175,13 @@ void _gadcDeinit(void)
 	/* commented stuff is ToDo */
 
 	// gadc_lld_deinit();
-	gfxQueueGSyncDeinit(&HighSpeedBuffers);
-	gfxSemDestroy(&LowSpeedSlotSem);
-	gfxMutexDestroy(&LowSpeedMutex);
-	gtimerDeinit(&LowSpeedGTimer);
+	gfxQueueGSyncDeinit(&hsListDone);
 	#if GFX_USE_GEVENT
-		gtimerDeinit(&HighSpeedGTimer);
+		gtimerDeinit(&hsGTimer);
 	#endif	
-}
-
-static inline void StartADC(bool_t onNoHS) {
-	gfxSystemLock();
-	if (!gadcRunning || (onNoHS && !curlsdev))
-		FindNextConversionI();
-	gfxSystemUnlock();
-}
-
-static void BSemSignalCallback(adcsample_t *buffer, void *param) {
-	(void) buffer;
-
-	/* Signal the BinarySemaphore parameter */
-	gfxSemSignal((gfxSem *)param);
+	gtimerDeinit(&lsGTimer);
+	gfxQueueGSyncDeinit(&lsListToDo);
+	gfxQueueGSyncDeinit(&lsListDone);
 }
 
 #if GFX_USE_GEVENT
@@ -260,7 +191,7 @@ static void BSemSignalCallback(adcsample_t *buffer, void *param) {
 		GEventADC		*pe;
 
 		psl = 0;
-		while ((psl = geventGetSourceListener((GSourceHandle)(&HighSpeedGTimer), psl))) {
+		while ((psl = geventGetSourceListener((GSourceHandle)(&hsGTimer), psl))) {
 			if (!(pe = (GEventADC *)geventGetEventBuffer(psl))) {
 				// This listener is missing - save this.
 				psl->srcflags |= GADC_HSADC_LOSTEVENT;
@@ -268,175 +199,162 @@ static void BSemSignalCallback(adcsample_t *buffer, void *param) {
 			}
 
 			pe->type = GEVENT_ADC;
-			pe->flags = hs.eventflags | psl->srcflags;
+			pe->flags = (hsFlags & (GADC_HSADC_RUNNING|GADC_HSADC_GOTBUFFER|GADC_HSADC_STALL)) | psl->srcflags;
 			psl->srcflags = 0;
 			geventSendEvent(psl);
 		}
 	}
 #endif
 
-static void LowSpeedGTimerCallback(void *param) {
-	(void) param;
-	GADCCallbackFunction	fn;
-	void					*prm;
-	adcsample_t				*buffer;
-	struct lsdev			*p;
-
-	#if GFX_USE_OS_CHIBIOS && CHIBIOS_ADC_ISR_FULL_CODE_BUG
-		/* Ensure the ADC is running if it needs to be - Bugfix HACK */
-		StartADC(FALSE);
-	#endif
-
-	/**
-	 * Look for completed low speed timers.
-	 * We don't need to take the mutex as we are the only place that things are freed and we
-	 * do that atomically.
-	 */
-	for(p=ls; p < &ls[GADC_MAX_LOWSPEED_DEVICES]; p++) {
-		if ((p->flags & (GADC_FLG_ISACTIVE|GADC_FLG_ISDONE)) == (GADC_FLG_ISACTIVE|GADC_FLG_ISDONE)) {
-			/* This item is done - perform its callback */
-			fn = p->fn;				// Save the callback details
-			prm = p->param;
-			buffer = p->lld.buffer;
-			p->fn = 0;				// Needed to prevent the compiler removing the local variables
-			p->param = 0;			// Needed to prevent the compiler removing the local variables
-			p->lld.buffer = 0;		// Needed to prevent the compiler removing the local variables
-			p->flags = 0;			// The slot is available (indivisible operation)
-			gfxSemSignal(&LowSpeedSlotSem);	// Tell everyone
-			fn(buffer, prm);		// Perform the callback
-		}
-	}
-
-}
-
 void gadcHighSpeedInit(uint32_t physdev, uint32_t frequency)
 {
-	gadcHighSpeedStop();		/* This does the init for us */
+	if ((hsFlags & GADC_HSADC_RUNNING))
+		gadcHighSpeedStop();
 
 	/* Just save the details and reset everything for now */
-	hs.lld.physdev = physdev;
-	hs.lld.frequency = frequency;
-	hs.lld.pdata = 0;
-	hs.lld.now = FALSE;
-	hs.isrfn = 0;
+	hsJob.physdev = physdev;
+	hsJob.frequency = frequency;
+	hsISRcallback = 0;
+	hsBytesPerConv = gadc_lld_samplesperconversion(physdev) * sizeof(adcsample_t);
 }
 
 #if GFX_USE_GEVENT
 	GSourceHandle gadcHighSpeedGetSource(void) {
-		if (!gtimerIsActive(&HighSpeedGTimer))
-			gtimerStart(&HighSpeedGTimer, HighSpeedGTimerCallback, 0, TRUE, TIME_INFINITE);
-		hs.flags |= GADC_FLG_GTIMER;
-		return (GSourceHandle)&HighSpeedGTimer;
+		if (!gtimerIsActive(&hsGTimer))
+			gtimerStart(&hsGTimer, HighSpeedGTimerCallback, 0, TRUE, TIME_INFINITE);
+		hsFlags |= GADC_HSADC_GTIMER;
+		return (GSourceHandle)&hsGTimer;
 	}
 #endif
 
 void gadcHighSpeedSetISRCallback(GADCISRCallbackFunction isrfn) {
-	hs.isrfn = isrfn;
+	hsISRcallback = isrfn;
 }
 
 GDataBuffer *gadcHighSpeedGetData(delaytime_t ms) {
-	return (GDataBuffer *)gfxQueueGSyncGet(&HighSpeedBuffers, ms);
+	return (GDataBuffer *)gfxQueueGSyncGet(&hsListDone, ms);
 }
 
 GDataBuffer *gadcHighSpeedGetDataI(void) {
-	return (GDataBuffer *)gfxQueueGSyncGetI(&HighSpeedBuffers);
+	return (GDataBuffer *)gfxQueueGSyncGetI(&hsListDone);
 }
 
 void gadcHighSpeedStart(void) {
-	/* If its already going we don't need to do anything */
-	if (hs.flags & GADC_FLG_ISACTIVE)
+	// Safety first
+	if (!hsJob.frequency || !hsBytesPerConv)
 		return;
 
-	hs.flags = GADC_FLG_ISACTIVE;
-	gadc_lld_start_timer(&hs.lld);
-	StartADC(FALSE);
+	gfxSystemLock();
+	if (!(hsFlags & GADC_HSADC_RUNNING)) {
+		if (!(hsData = gfxBufferGetI())) {
+			// Oops - no free buffers. Stall
+			hsFlags |= GADC_HSADC_STALL;
+			#if GFX_USE_GEVENT
+				if (hsFlags & GADC_HSADC_GTIMER)
+					gtimerJabI(&hsGTimer);
+			#endif
+
+		// Prepare the next job
+		} else {
+
+			#if GFX_USE_OS_CHIBIOS
+				// ChibiOS api bug - samples must be even
+				hsJob.todo = (hsData->size / hsBytesPerConv) & ~1;
+			#else
+				hsJob.todo = hsData->size / hsBytesPerConv;
+			#endif
+			hsJob.done = 0;
+			hsJob.buffer = (adcsample_t *)(hsData+1);
+			hsFlags |= GADC_HSADC_RUNNING;
+
+			// Start the timer
+			gadc_lld_start_timerI(hsJob.frequency);
+
+			// If nothing is running start the job
+			if (!(hsFlags & GADC_ADC_RUNNING)) {
+				hsFlags |= (GADC_HSADC_CONVERTION|GADC_ADC_RUNNING);
+				gadc_lld_timerjobI(&hsJob);
+			}
+		}
+	}
+	gfxSystemUnlock();
 }
 
 void gadcHighSpeedStop(void) {
-	if (hs.flags & GADC_FLG_ISACTIVE) {
-		/* No more from us */
-		hs.flags = 0;
-		gadc_lld_stop_timer(&hs.lld);
-		/*
-		 * There might be a buffer still locked up by the driver - if so release it.
-		 */
-		if (hs.lld.pdata) {
-			gfxBufferRelease(hs.lld.pdata);
-			hs.lld.pdata = 0;
-		}
+	// Stop it and wait for completion
+	hsFlags &= ~GADC_HSADC_RUNNING;
+	while ((hsFlags & GADC_HSADC_CONVERTION))
+		gfxYield();
+}
 
-		/*
-		 * We have to pass TRUE to StartADC() as we might have the ADC marked as active when it isn't
-		 * due to stopping the timer while it was converting.
-		 */
-		StartADC(TRUE);
+static void LowSpeedGTimerCallback(void *param) {
+	(void) param;
+	NonTimerData		*pdata;
+
+	// Look for completed non-timer jobs and call the call-backs for each
+	while ((pdata = (NonTimerData *)gfxQueueGSyncGet(&lsListDone, TIME_IMMEDIATE))) {
+		pdata->callback(pdata->job.buffer, pdata->param);
+		gfxFree(pdata);
 	}
 }
 
 void gadcLowSpeedGet(uint32_t physdev, adcsample_t *buffer) {
-	struct lsdev	*p;
-	gfxSem			mysem;
+	NonTimerData ndata;
 
-	/* Start the Low Speed Timer */
-	gfxSemInit(&mysem, 1, 1);
-	gfxMutexEnter(&LowSpeedMutex);
-	if (!gtimerIsActive(&LowSpeedGTimer))
-		gtimerStart(&LowSpeedGTimer, LowSpeedGTimerCallback, 0, TRUE, TIME_INFINITE);
-	gfxMutexExit(&LowSpeedMutex);
+	// Prepare the job
+	gfxSemInit(&ndata.sigdone, 0, 1);
+	ndata.job.physdev = physdev;
+	ndata.job.buffer = buffer;
+	ndata.callback = 0;
 
-	while(1) {
-		/* Wait for an available slot */
-		gfxSemWait(&LowSpeedSlotSem, TIME_INFINITE);
-
-		/* Find a slot */
-		gfxMutexEnter(&LowSpeedMutex);
-		for(p = ls; p < &ls[GADC_MAX_LOWSPEED_DEVICES]; p++) {
-			if (!(p->flags & GADC_FLG_ISACTIVE)) {
-				p->lld.physdev = physdev;
-				p->lld.buffer = buffer;
-				p->fn = BSemSignalCallback;
-				p->param = &mysem;
-				p->flags = GADC_FLG_ISACTIVE;
-				gfxMutexExit(&LowSpeedMutex);
-				StartADC(FALSE);
-				gfxSemWait(&mysem, TIME_INFINITE);
-				return;
-			}
-		}
-		gfxMutexExit(&LowSpeedMutex);
-
-		/**
-		 *  We should never get here - the count semaphore must be wrong.
-		 *  Decrement it and try again.
-		 */
+	// Activate it
+	gfxSystemLock();
+	if (!(hsFlags & GADC_ADC_RUNNING)) {
+		// Nothing is running - start the job
+		lsData = &ndata;
+		hsFlags |= GADC_ADC_RUNNING;
+		hsFlags &= ~GADC_HSADC_CONVERTION;
+		gadc_lld_nontimerjobI(&ndata.job);
+	} else {
+		// Just put it on the queue
+		gfxQueueGSyncPutI(&lsListToDo, (gfxQueueGSyncItem *)&ndata);
 	}
+	gfxSystemUnlock();
+
+	// Wait for it to complete
+	gfxSemWait(&ndata.sigdone, TIME_INFINITE);
+	gfxSemDestroy(&ndata.sigdone);
 }
 
 bool_t gadcLowSpeedStart(uint32_t physdev, adcsample_t *buffer, GADCCallbackFunction fn, void *param) {
-	struct lsdev *p;
+	NonTimerData *pdata;
 
 	/* Start the Low Speed Timer */
-	gfxMutexEnter(&LowSpeedMutex);
-	if (!gtimerIsActive(&LowSpeedGTimer))
-		gtimerStart(&LowSpeedGTimer, LowSpeedGTimerCallback, 0, TRUE, TIME_INFINITE);
+	if (!gtimerIsActive(&lsGTimer))
+		gtimerStart(&lsGTimer, LowSpeedGTimerCallback, 0, TRUE, TIME_INFINITE);
 
-	/* Find a slot */
-	for(p = ls; p < &ls[GADC_MAX_LOWSPEED_DEVICES]; p++) {
-		if (!(p->flags & GADC_FLG_ISACTIVE)) {
-			/* We know we have a slot - this should never wait anyway */
-			gfxSemWait(&LowSpeedSlotSem, TIME_IMMEDIATE);
-			p->lld.physdev = physdev;
-			p->lld.buffer = buffer;
-			p->fn = fn;
-			p->param = param;
-			p->flags = GADC_FLG_ISACTIVE;
-			gfxMutexExit(&LowSpeedMutex);
-			StartADC(FALSE);
-			return TRUE;
-		}
+	// Prepare the job
+	if (!(pdata = gfxAlloc(sizeof(NonTimerData))))
+		return FALSE;
+	pdata->job.physdev = physdev;
+	pdata->job.buffer = buffer;
+	pdata->callback = fn;
+	pdata->param = param;
+
+	// Activate it
+	gfxSystemLock();
+	if (!(hsFlags & GADC_ADC_RUNNING)) {
+		// Nothing is running - start the job
+		lsData = pdata;
+		hsFlags |= GADC_ADC_RUNNING;
+		hsFlags &= ~GADC_HSADC_CONVERTION;
+		gadc_lld_nontimerjobI(&pdata->job);
+	} else {
+		// Just put it on the queue
+		gfxQueueGSyncPutI(&lsListToDo, (gfxQueueGSyncItem *)pdata);
 	}
-	gfxMutexExit(&LowSpeedMutex);
-	return FALSE;
+	gfxSystemUnlock();
+	return TRUE;
 }
 
 #endif /* GFX_USE_GADC */

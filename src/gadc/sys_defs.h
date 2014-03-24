@@ -209,12 +209,9 @@ void gadcHighSpeedStop(void);
  * 			completion.
  * @note	The result buffer must be large enough to store one sample per device
  * 			described by the 'physdev' parameter.
- * @note	If calling this routine would exceed @p GADC_MAX_LOWSPEED_DEVICES simultaneous low
- * 			speed devices, the routine will wait for an available slot to complete the
- * 			conversion.
  * @note	Specifying more than one device in physdev is possible but discouraged as the
  * 			calculations to ensure the high speed ADC correctness will be incorrect. Symptoms
- * 			from over-running the high speed ADC include high speed samples being lost.
+ * 			from over-running the high speed ADC include high speed device stalling or samples being lost.
  *
  * @api
  */
@@ -222,7 +219,7 @@ void gadcLowSpeedGet(uint32_t physdev, adcsample_t *buffer);
 
 /**
  * @brief	Perform a low speed ADC conversion with callback (in a thread context)
- * @details	Returns FALSE if there are no free low speed ADC slots. See @p GADC_MAX_LOWSPEED_DEVICES for details.
+ * @details	Returns FALSE if internal memory allocation fails
  *
  * @param[in] physdev		A value passed to describe which physical ADC devices/channels to use.
  * @param[in] buffer		The static buffer to put the ADC samples into.
@@ -237,8 +234,6 @@ void gadcLowSpeedGet(uint32_t physdev, adcsample_t *buffer);
  * 			completion.
  * @note	The result buffer must be large enough to store one sample per device
  * 			described by the 'physdev' parameter.
- * @note	As this routine uses a low speed ADC, it asserts if you try to run more than @p GADC_MAX_LOWSPEED_DEVICES
- * 			at the same time.
  * @note	Specifying more than one device in physdev is possible but discouraged as the
  * 			calculations to ensure the high speed ADC correctness will be incorrect. Symptoms
  * 			from over-running the high speed ADC include high speed samples being lost.
@@ -255,4 +250,3 @@ bool_t gadcLowSpeedStart(uint32_t physdev, adcsample_t *buffer, GADCCallbackFunc
 
 #endif /* _GADC_H */
 /** @} */
-
