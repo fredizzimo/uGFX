@@ -5,8 +5,10 @@
  *              http://ugfx.org/license.html
  */
 
-/* Board interface definitions for ED060SC4 PrimeView E-ink panel.
- * 
+/**
+ * @file    boards/addons/gdisp/board_ED060SC4_example.h
+ * @brief   GDISP Graphic Driver subsystem board interface for the ED060SC4 display.
+ *
  * This file corresponds to the connections shown in example_schematics.png,
  * and is designed to interface with ChibiOS/RT.
  * 

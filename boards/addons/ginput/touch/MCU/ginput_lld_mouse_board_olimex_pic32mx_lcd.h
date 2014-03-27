@@ -6,13 +6,11 @@
  */
 
 /**
- * @file    drivers/ginput/touch/MCU/ginput_lld_mouse_board_olimex_stm32_lcd.h
+ * @file    boards/addons/ginput/touch/MCU/ginput_lld_mouse_board_olimex_stm32_lcd.h
  * @brief   GINPUT Touch low level driver source for the MCU on the example board.
  *
- * @defgroup Mouse Mouse
- * @ingroup GINPUT
- *
- * @{
+ * @note	This file contains a mix of hardware specific and operating system specific
+ *			code. You will need to change it for your CPU and/or operating system.
  */
 
 #ifndef _GINPUT_LLD_MOUSE_BOARD_H
