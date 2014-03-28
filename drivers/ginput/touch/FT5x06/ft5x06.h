@@ -5,14 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    drivers/ginput/touch/FT5x06/ft5x06.h
- * @brief   Register definition header for the STMPE811 touch controller.
- *
- * @addtogroup GINPUT
- * @{
- */
-
 #ifndef _FT5x06_H
 #define _FT5x06_H
 
@@ -78,5 +70,3 @@
 #define FT5x06_ID_G_ERR                  0xA9
 
 #endif /* _FT5x06_H */
-/** @} */
-

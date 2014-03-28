@@ -5,16 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    drivers/multiple/Win32/ginput_lld_toggle_config.h
- * @brief   GINPUT Toggle Driver configuration header.
- *
- * @defgroup Toggle Toggle
- * @ingroup GINPUT
- *
- * @{
- */
-
 #ifndef _GINPUT_LLD_TOGGLE_CONFIG_H
 #define _GINPUT_LLD_TOGGLE_CONFIG_H
 
@@ -46,5 +36,3 @@
 #endif	/* GFX_USE_GDISP && GINPUT_NEED_TOGGLE */
 
 #endif	/* _GINPUT_LLD_TOGGLE_CONFIG_H */
-/** @} */
-

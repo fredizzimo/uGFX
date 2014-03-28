@@ -5,19 +5,11 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    drivers/gdisp/Nokia6610GE8/gdisp_lld.c
- * @brief   GDISP Graphics Driver subsystem low level driver source for the Nokia6610 GE8 display.
- *
- * @addtogroup GDISP
- * @{
- */
-
 #include "gfx.h"
 
 #if GFX_USE_GDISP
 
-/**
+/*
  * This is for the EPSON (GE8) controller driving a Nokia6610 color LCD display.
  * Note that there is also a PHILIPS (GE12) controller for the same display that this code
  * does not support.
@@ -599,4 +591,3 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 #endif
 
 #endif /* GFX_USE_GDISP */
-/** @} */

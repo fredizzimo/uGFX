@@ -5,11 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    drivers/gaudio/Win32/gaudio_play_lld.c
- * @brief   GAUDIO - Play Driver file for Win32.
- */
-
 #include "gfx.h"
 
 #if GFX_USE_GAUDIO && GAUDIO_NEED_PLAY

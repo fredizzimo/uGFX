@@ -5,15 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    drivers/ginput/dial/GADC/ginput_lld_dial.c
- * @brief   GINPUT Dial low level driver source for GADC hardware.
- *
- * @defgroup Dial Dial
- * @ingroup GINPUT
- * @{
- */
-
 #include "gfx.h"
 
 #if GFX_USE_GINPUT && GINPUT_NEED_DIAL
@@ -83,4 +74,3 @@ void ginput_lld_dial_poll(DialCallbackFn fn) {
 }
 
 #endif /* GFX_USE_GINPUT && GINPUT_NEED_DIAL */
-/** @} */

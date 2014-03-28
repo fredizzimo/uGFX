@@ -5,15 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    drivers/gaudio/gadc/gaudio_record_lld.c
- * @brief   GAUDIO - Record Driver file for using the cpu ADC (via GADC).
- */
-
-/**
- * We are now implementing the driver - pull in our channel table
- * from the board definitions.
- */
 #define GAUDIO_RECORD_IMPLEMENTATION
 #include "gfx.h"
 

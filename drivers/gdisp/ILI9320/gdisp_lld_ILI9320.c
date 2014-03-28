@@ -5,11 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    drivers/gdisp/ILI9320/gdisp_lld.c
- * @brief   GDISP Graphics Driver subsystem low level driver source for the ILI9320 display.
- */
-
 #include "gfx.h"
 
 #if GFX_USE_GDISP

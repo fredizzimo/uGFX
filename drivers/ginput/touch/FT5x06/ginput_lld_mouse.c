@@ -5,15 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    drivers/ginput/touch/STMPE811/ginput_lld_mouse.c
- * @brief   GINPUT Touch low level driver source for the STMPE811.
- *
- * @defgroup Mouse Mouse
- * @ingroup GINPUT
- * @{
- */
-
 #include "gfx.h"
 
 #if (GFX_USE_GINPUT && GINPUT_NEED_MOUSE) /*|| defined(__DOXYGEN__)*/
@@ -28,11 +19,6 @@
 static coord_t x, y, z;
 static uint8_t touched;
 
-/**
- * @brief   Initialise the mouse/touch.
- *
- * @notapi
- */
 void ginput_lld_mouse_init(void) {
 	init_board();
 
@@ -65,20 +51,6 @@ void ginput_lld_mouse_init(void) {
 	write_reg(FT5x06_ID_G_PERIODMONITOR, 1, 0x28);
 }
 
-/**
- * @brief   Read the mouse/touch position.
- *
- * @param[in] pt	A pointer to the structure to fill
- *
- * @note			For drivers that don't support returning a position
- *					when the touch is up (most touch devices), it should
- *					return the previous position with the new Z value.
- *					The z value is the pressure for those touch devices
- *					that support it (-100 to 100 where > 0 is touched)
- *					or, 0 or 100 for those drivers that don't.
- *
- * @notapi
- */
 void ginput_lld_mouse_get_reading(MouseReading *pt) {
 	// Poll to get the touched status
 	uint8_t		last_touched;
@@ -114,5 +86,3 @@ void ginput_lld_mouse_get_reading(MouseReading *pt) {
 }
 
 #endif /* GFX_USE_GINPUT && GINPUT_NEED_MOUSE */
-/** @} */
-

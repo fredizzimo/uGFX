@@ -5,15 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    drivers/ginput/dial/GADC/ginput_lld_dial_config.h
- * @brief   GINPUT Dial Driver configuration header.
- *
- * @defgroup Dial Dial
- * @ingroup GINPUT
- * @{
- */
-
 #ifndef _GINPUT_LLD_DIAL_CONFIG_H
 #define _GINPUT_LLD_DIAL_CONFIG_H
 
@@ -27,4 +18,3 @@
 #endif	/* GFX_USE_GDISP && GINPUT_NEED_DIAL */
 
 #endif	/* _GINPUT_LLD_DIAL_CONFIG_H */
-/** @} */

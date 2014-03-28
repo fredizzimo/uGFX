@@ -5,11 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    drivers/gdisp/ST7565/gdisp_lld.c
- * @brief   GDISP Graphics Driver subsystem low level driver source for the ST7565 display.
- */
-
 #include "gfx.h"
 
 #if GFX_USE_GDISP
@@ -77,7 +72,7 @@
 /* Driver exported functions.                                                */
 /*===========================================================================*/
 
-/**
+/*
  * As this controller can't update on a pixel boundary we need to maintain the
  * the entire display surface in memory so that we can do the necessary bit
  * operations. Fortunately it is a small display in monochrome.

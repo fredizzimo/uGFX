@@ -35,5 +35,3 @@
 #define ST7565_POWER_CONTROL        0x28
 
 #endif /* _ST7565_H */
-/** @} */
-
