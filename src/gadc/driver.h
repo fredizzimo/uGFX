@@ -89,6 +89,8 @@ void gadc_lld_init(void);
  *
  * @param[in] physdev	The hardware dependent physical device descriptor
  *
+ * @return				ToDo
+ *
  * @api
  */
 size_t gadc_lld_samplesperconversion(uint32_t physdev);
@@ -122,6 +124,8 @@ void gadc_lld_stop_timerI(void);
  * @note				This will only be called if the timer is currently running and the ADC should be ready for
  * 						a new job.
  *
+ * @param[in] pjob		ToDo
+ *
  * @api
  * @iclass
  */
@@ -131,6 +135,8 @@ void gadc_lld_timerjobI(GadcTimerJob *pjob);
  * @brief				Start a non-timer conversion.
  *
  * @note				This will only be called if the ADC should be ready for a new job.
+ *
+ * @param[in] pjob		ToDo
  *
  * @api
  * @iclass

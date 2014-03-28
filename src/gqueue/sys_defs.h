@@ -333,7 +333,9 @@ bool_t gfxBufferIsAvailable(void);
  * @brief		Get a buffer from the free list
  * @return		A GDataBuffer pointer or NULL if the timeout is exceeded
  *
- * @params[in] ms	The maximum amount of time in milliseconds to wait for a buffer if one is not available.
+ * @param[in] ms	The maximum amount of time in milliseconds to wait for a buffer if one is not available.
+ *
+ * @return		ToDo
  *
  * @api
  * @{

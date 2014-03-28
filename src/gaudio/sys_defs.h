@@ -161,7 +161,7 @@ extern "C" {
 	 * @brief				Set the output volume.
 	 * @return				TRUE if successful.
 	 *
-	 * @param[in]			0->255 (0 = muted)
+	 * @param[in] vol		0->255 (0 = muted)
 	 *
 	 * @note				Some drivers may not support this. They will return FALSE.
 	 * @note				For stereo devices, both channels are set to the same volume.
@@ -193,7 +193,9 @@ extern "C" {
 	 * @brief		Wait for any currently playing sounds to complete
 	 * @return		TRUE if there is now nothing playing or FALSE if the timeout is exceeded
 	 *
-	 * @params[in] ms	The maximum amount of time in milliseconds to wait for playing to complete.
+	 * @param[in] ms	The maximum amount of time in milliseconds to wait for playing to complete.
+	 *
+	 * @return		ToDo
 	 *
 	 * @api
 	 */
@@ -252,7 +254,7 @@ extern "C" {
 	 * @brief		Get a filled audio buffer from the recording list
 	 * @return		A GDataBuffer pointer or NULL if the timeout is exceeded
 	 *
-	 * @params[in] ms	The maximum amount of time in milliseconds to wait for data if some is not currently available.
+	 * @param[in] ms	The maximum amount of time in milliseconds to wait for data if some is not currently available.
 	 *
 	 * @note		After processing the audio data, your application must return the buffer to the free-list so that
 	 * 				it can be used to record more audio into. This can be done via the play list using @p gaudioPlay() or
@@ -261,6 +263,9 @@ extern "C" {
 	 * 				processing it before GADC re-uses it. This is useful when RAM usage is critical to reduce the number
 	 * 				of buffers required. It works before the free list is a FIFO queue and therefore buffers are kept
 	 * 				in the queue as long as possible before they are re-used.
+	 *
+	 * @return		ToDo
+	 *
 	 * @api
 	 */
 	GDataBuffer *gaudioRecordGetData(delaytime_t ms);

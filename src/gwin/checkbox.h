@@ -6,7 +6,7 @@
  */
 
 /**
- * @file    include/gwin/checkbox.h
+ * @file    src/gwin/checkbox.h
  * @brief   GWIN Graphic window subsystem header file.
  *
  * @defgroup Checkbox Checkbox

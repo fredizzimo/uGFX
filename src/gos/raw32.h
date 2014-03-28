@@ -6,7 +6,7 @@
  */
 
 /**
- * @file    include/gos/raw32.h
+ * @file    src/gos/raw32.h
  * @brief   GOS - Operating System Support header file for any 32 bit processor in bare-metal mode
  */
 

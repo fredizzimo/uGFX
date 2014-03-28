@@ -164,7 +164,7 @@ void gadcHighSpeedSetISRCallback(GADCISRCallbackFunction isrfn);
  * @brief		Get a filled buffer from the ADC
  * @return		A GDataBuffer pointer or NULL if the timeout is exceeded
  *
- * @params[in] ms	The maximum amount of time in milliseconds to wait for data if some is not currently available.
+ * @param[in] ms	The maximum amount of time in milliseconds to wait for data if some is not currently available.
  *
  * @note		After processing the data, your application must return the buffer to the free-list so that
  * 				it can be used again. This can be done using @p gfxBufferRelease().

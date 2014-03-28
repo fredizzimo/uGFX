@@ -107,7 +107,7 @@ void gaudio_play_lld_stop(void);
  * @brief				Set the output volume.
  * @return				TRUE if successful.
  *
- * @param[in]			0->255 (0 = muted)
+ * @param[in] vol		0->255 (0 = muted)
  *
  * @note				Some drivers may not support this. They will return FALSE.
  * @note				For stereo devices, both channels are set to the same volume.

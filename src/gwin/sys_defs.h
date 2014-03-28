@@ -439,6 +439,8 @@ extern "C" {
 		 *
 		 * @param[in] gh				The window
 		 *
+		 * @return	ToDo
+		 *
 		 * @api
 		 */
 		GWindowMinMax gwinGetMinMax(GHandle gh);

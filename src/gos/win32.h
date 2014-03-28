@@ -6,7 +6,7 @@
  */
 
 /**
- * @file    include/gos/win32.h
+ * @file    src/gos/win32.h
  * @brief   GOS - Operating System Support header file for WIN32.
  */
 

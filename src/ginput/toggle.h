@@ -6,7 +6,7 @@
  */
 
 /**
- * @file    include/ginput/toggle.h
+ * @file    src/ginput/toggle.h
  * @brief   GINPUT GFX User Input subsystem header file.
  *
  * @defgroup Toggle Toggle

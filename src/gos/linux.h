@@ -6,7 +6,7 @@
  */
 
 /**
- * @file    include/gos/linux.h
+ * @file    src/gos/linux.h
  * @brief   GOS - Operating System Support header file for LINUX.
  */
 
