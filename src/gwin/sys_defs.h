@@ -439,7 +439,7 @@ extern "C" {
 		 *
 		 * @param[in] gh				The window
 		 *
-		 * @return	ToDo
+		 * @return	GWIN_NORMAL, GWIN_MAXIMIZE or GWIN_MINIMIZE
 		 *
 		 * @api
 		 */

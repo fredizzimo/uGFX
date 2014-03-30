@@ -85,11 +85,11 @@ extern "C" {
 void gadc_lld_init(void);
 
 /**
- * @brief				Return the number of samples per conversion
+ * @brief				Using the hardware dependant "physdev", return the number of samples for each conversion
  *
  * @param[in] physdev	The hardware dependent physical device descriptor
  *
- * @return				ToDo
+ * @return				The number of samples per conversion
  *
  * @api
  */
@@ -124,7 +124,7 @@ void gadc_lld_stop_timerI(void);
  * @note				This will only be called if the timer is currently running and the ADC should be ready for
  * 						a new job.
  *
- * @param[in] pjob		ToDo
+ * @param[in] pjob		The job to be started.
  *
  * @api
  * @iclass
@@ -136,7 +136,7 @@ void gadc_lld_timerjobI(GadcTimerJob *pjob);
  *
  * @note				This will only be called if the ADC should be ready for a new job.
  *
- * @param[in] pjob		ToDo
+ * @param[in] pjob		The job to be started
  *
  * @api
  * @iclass
