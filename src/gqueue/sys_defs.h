@@ -335,8 +335,6 @@ bool_t gfxBufferIsAvailable(void);
  *
  * @param[in] ms	The maximum amount of time in milliseconds to wait for a buffer if one is not available.
  *
- * @return		ToDo
- *
  * @api
  * @{
  */
