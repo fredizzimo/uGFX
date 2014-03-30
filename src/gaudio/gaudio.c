@@ -102,8 +102,8 @@ void _gaudioDeinit(void)
 			return;
 		}
 
-		if (paud)
-			gfxQueueASyncPut(&playList, (gfxQueueASyncItem *)paud);
+		if (pd)
+			gfxQueueASyncPut(&playList, (gfxQueueASyncItem *)pd);
 		playFlags |= PLAYFLG_PLAYING;
 		gaudio_play_lld_start();
 	}
