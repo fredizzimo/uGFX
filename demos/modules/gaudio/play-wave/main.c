@@ -52,7 +52,7 @@ int main(void) {
 	uint32_t		frequency;
 	ArrayDataFormat datafmt;
 	uint32_t		len;
-	GAudioData		*paud;
+	GDataBuffer		*pd;
 
 	// Initialise everything
 	gfxInit();
@@ -69,6 +69,7 @@ int main(void) {
 		goto theend;
 	}
 
+repeatplay:
 	// Open the wave file
 	if (!(f = gfileOpen("allwrong.wav", "r"))) {
 		errmsg = "Err: Open WAV";
@@ -164,26 +165,31 @@ int main(void) {
 	gdispDrawString(0, gdispGetHeight()/2, "Playing...", font, Yellow);
 	while(toplay) {
 		// Get a buffer to put the data into
-		paud = gfxBufferGet(TIME_INFINITE);		// This should never fail as we are waiting forever
+		pd = gfxBufferGet(TIME_INFINITE);		// This should never fail as we are waiting forever
 
 		// How much data can we put in
-		len = toplay > paud->size ? paud->size : toplay;
-		paud->len = len;
+		len = toplay > pd->size ? pd->size : toplay;
+		pd->len = len;
 		toplay -= len;
 
 		// Read the data
-		if (gfileRead(f, paud+1, len) != len) {
+		if (gfileRead(f, pd+1, len) != len) {
 			errmsg = "Err: Read fail";
 			goto theend;
 		}
 
-		gaudioPlay(paud);
+		gaudioPlay(pd);
 	}
 	gfileClose(f);
 
 	// Wait for the play to finish
 	gaudioPlayWait(TIME_INFINITE);
 	gdispDrawString(0, gdispGetHeight()/2+10, "Done", font, Green);
+
+	// Repeat the whole thing
+	gfxSleepMilliseconds(1500);
+	gdispClear(Black);
+	goto repeatplay;
 
 	// The end
 theend:
