@@ -195,8 +195,6 @@ extern "C" {
 	 *
 	 * @param[in] ms	The maximum amount of time in milliseconds to wait for playing to complete.
 	 *
-	 * @return		ToDo
-	 *
 	 * @api
 	 */
 	bool_t gaudioPlayWait(delaytime_t ms);
@@ -263,8 +261,6 @@ extern "C" {
 	 * 				processing it before GADC re-uses it. This is useful when RAM usage is critical to reduce the number
 	 * 				of buffers required. It works before the free list is a FIFO queue and therefore buffers are kept
 	 * 				in the queue as long as possible before they are re-used.
-	 *
-	 * @return		ToDo
 	 *
 	 * @api
 	 */
