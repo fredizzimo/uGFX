@@ -19,6 +19,7 @@ FEATURE:	New GFILE module to abstract File IO.
 FEATURE:	Image file handling changed to use new GFILE module.
 DEPRECTATE:	Old image opening functions deprecated.
 FEATURE:	Restructure and simplify the include path for GFX
+FEATURE:	Added LGDP4532 driver by user shilow
 
 
 *** changes after 1.9 ***
