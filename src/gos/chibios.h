@@ -8,6 +8,7 @@
 /**
  * @file    src/gos/chibios.h
  * @brief   GOS - Operating System Support header file for ChibiOS.
+ * @details Supports both, ChibiOS/RT 2.x and 3.x
  */
 
 #ifndef _GOS_CHIBIOS_H
@@ -47,13 +48,27 @@ typedef tprio_t		threadpriority_t;
 #define DECLARE_THREAD_STACK(name, sz)			WORKING_AREA(name, sz)
 #define DECLARE_THREAD_FUNCTION(fnName, param)	threadreturn_t fnName(void *param)
 
-typedef struct {
-	Semaphore	sem;
-	semcount_t	limit;
+#if CH_KERNEL_MAJOR == 2
+	typedef struct {
+		Semaphore	sem;
+		semcount_t	limit;
 	} gfxSem;
 
-typedef Mutex		gfxMutex;
-typedef Thread *	gfxThreadHandle;
+	typedef Mutex		gfxMutex;
+	typedef Thread*		gfxThreadHandle;
+#elif CH_KERNEL_MAJOR == 3
+	#undef DECLARE_THREAD_STACK
+	#define DECLARE_THREAD_STACK(a, b)  THD_WORKING_AREA(a, b)
+	
+	typedef struct {
+		semaphore_t	sem;
+		semcount_t	limit;
+	} gfxSem;
+
+	typedef mutex_t		gfxMutex;
+	typedef thread_t*	gfxThreadHandle;
+#endif
+
 
 /*===========================================================================*/
 /* Function declarations.                                                    */
@@ -63,19 +78,27 @@ typedef Thread *	gfxThreadHandle;
 extern "C" {
 #endif
 
+// First the kernel version specific ones
+#if CH_KERNEL_MAJOR == 2
+	#define gfxSystemTicks()			chTimeNow()
+	#define gfxMutexInit(pmutex)		chMtxInit(pmutex)
+	#define gfxMutexExit(pmutex)		chMtxUnlock()
+#elif CH_KERNEL_MAJOR == 3
+	#define gfxSystemTicks()			chVTGetSystemTimeX()
+	#define gfxMutexInit(pmutex)		chMtxObjectInit(pmutex)
+	#define gfxMutexExit(pmutex)		chMtxUnlock(pmutex)
+#endif
+
 #define gfxHalt(msg)				{ chDbgPanic(msg); chSysHalt(); }
 #define gfxExit()					chSysHalt()
 #define gfxAlloc(sz)				chHeapAlloc(0, sz)
 #define gfxFree(ptr)				chHeapFree(ptr)
 #define gfxYield()					chThdYield()
-#define gfxSystemTicks()			chTimeNow()
 #define gfxMillisecondsToTicks(ms)	MS2ST(ms)
 #define gfxSystemLock()				chSysLock()
 #define gfxSystemUnlock()			chSysUnlock()
-#define gfxMutexInit(pmutex)		chMtxInit(pmutex)
 #define gfxMutexDestroy(pmutex)		(void)pmutex
 #define gfxMutexEnter(pmutex)		chMtxLock(pmutex)
-#define gfxMutexExit(pmutex)		chMtxUnlock()
 void *gfxRealloc(void *ptr, size_t oldsz, size_t newsz);
 void gfxSleepMilliseconds(delaytime_t ms);
 void gfxSleepMicroseconds(delaytime_t ms);
@@ -98,4 +121,3 @@ gfxThreadHandle gfxThreadCreate(void *stackarea, size_t stacksz, threadpriority_
 
 #endif /* GFX_USE_OS_CHIBIOS */
 #endif /* _GOS_CHIBIOS_H */
-
