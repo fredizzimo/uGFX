@@ -56,7 +56,8 @@ static const GFILEVMT FsROMVMT = {
 #undef GFILE_CHAINHEAD
 #define GFILE_CHAINHEAD		&FsROMVMT
 
-static const ROMFS_DIRENTRY *ROMFindFile(const char *fname) {
+static const ROMFS_DIRENTRY *ROMFindFile(const char *fname)
+{
 	const ROMFS_DIRENTRY *p;
 
 	for(p = FsROMHead; p; p = p->next) {
@@ -65,22 +66,36 @@ static const ROMFS_DIRENTRY *ROMFindFile(const char *fname) {
 	}
 	return p;
 }
-static bool_t ROMExists(const char *fname) { return ROMFindFile(fname) != 0; }
-static long int	ROMFilesize(const char *fname) {
+
+static bool_t ROMExists(const char *fname)
+{
+	return ROMFindFile(fname) != 0;
+}
+
+static long int	ROMFilesize(const char *fname)
+{
 	const ROMFS_DIRENTRY *p;
 
 	if (!(p = ROMFindFile(fname))) return -1;
 	return p->size;
 }
-static bool_t ROMOpen(GFILE *f, const char *fname) {
+
+static bool_t ROMOpen(GFILE *f, const char *fname)
+{
 	const ROMFS_DIRENTRY *p;
 
 	if (!(p = ROMFindFile(fname))) return FALSE;
 	f->obj = (void *)p;
 	return TRUE;
 }
-static void ROMClose(GFILE *f) { (void)f; }
-static int ROMRead(GFILE *f, void *buf, int size) {
+
+static void ROMClose(GFILE *f)
+{
+	(void)f;
+}
+
+static int ROMRead(GFILE *f, void *buf, int size)
+{
 	const ROMFS_DIRENTRY *p;
 
 	p = (const ROMFS_DIRENTRY *)f->obj;
@@ -90,6 +105,18 @@ static int ROMRead(GFILE *f, void *buf, int size) {
 	memcpy(buf, p->file+f->pos, size);
 	return size;
 }
-static bool_t ROMSetpos(GFILE *f, long int pos) { return pos <= ((const ROMFS_DIRENTRY *)f->obj)->size; }
-static long int ROMGetsize(GFILE *f) { return ((const ROMFS_DIRENTRY *)f->obj)->size; }
-static bool_t ROMEof(GFILE *f) { return f->pos >= ((const ROMFS_DIRENTRY *)f->obj)->size; }
+
+static bool_t ROMSetpos(GFILE *f, long int pos)
+{
+	return pos <= ((const ROMFS_DIRENTRY *)f->obj)->size;
+}
+
+static long int ROMGetsize(GFILE *f)
+{
+	return ((const ROMFS_DIRENTRY *)f->obj)->size;
+}
+
+static bool_t ROMEof(GFILE *f)
+{
+	return f->pos >= ((const ROMFS_DIRENTRY *)f->obj)->size;
+}
