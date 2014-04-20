@@ -45,7 +45,6 @@
 #define GFX_USE_GDISP			TRUE
 #define GFX_USE_GWIN			TRUE
 #define GFX_USE_GTIMER			TRUE
-//#define GFX_USE_GADC			TRUE
 #define GFX_USE_GAUDIO			TRUE
 
 /* Features for the GDISP sub-system. */

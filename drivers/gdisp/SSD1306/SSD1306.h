@@ -53,5 +53,3 @@
 #define SSD1306_SCROLL_VERTICAL_AND_HORIZONTAL_LEFT		0x2A
 
 #endif /* _SSD1306_H */
-/** @} */
-

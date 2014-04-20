@@ -5,10 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    drivers/multiple/Win32/gdisp_lld.c
- * @brief   GDISP Graphics Driver subsystem low level driver source for Win32.
- */
 #include "gfx.h"
 
 #if GFX_USE_GDISP
@@ -1177,4 +1173,3 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 #endif /* GINPUT_NEED_TOGGLE */
 
 #endif /* GFX_USE_GDISP */
-

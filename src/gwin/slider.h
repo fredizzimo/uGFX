@@ -6,7 +6,7 @@
  */
 
 /**
- * @file    include/gwin/slider.h
+ * @file    src/gwin/slider.h
  * @brief   GWIN Graphic window subsystem header file.
  *
  * @defgroup Slider Slider

@@ -5,11 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    drivers/multiple/uGFXnet/uGFXnetProtocol.h
- * @brief   GDISP uGFXnet protocol header.
- */
-
 #define GNETCODE_VERSION			GNETCODE_VERSION_1_0		// The current protocol version
 
 // The list of possible protocol version numbers

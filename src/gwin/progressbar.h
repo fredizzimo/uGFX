@@ -6,7 +6,7 @@
  */
 
 /**
- * @file    include/gwin/progressbar.h
+ * @file    src/gwin/progressbar.h
  * @brief   GWIN Graphic window subsystem header file.
  *
  * @defgroup Progressbar Progressbar

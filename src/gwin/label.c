@@ -6,7 +6,7 @@
  */
 
 /**
- * @file	include/gwin/label.h
+ * @file	src/gwin/label.c
  * @brief	GWIN label widget header file.
  *
  * @defgroup Label Label

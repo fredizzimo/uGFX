@@ -6,7 +6,7 @@
  */
 
 /**
- * @file    include/gwin/button.h
+ * @file    src/gwin/button.h
  * @brief   GWIN Graphic window subsystem header file.
  *
  * @defgroup Button Button

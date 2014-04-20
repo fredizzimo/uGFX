@@ -24,5 +24,3 @@
 #endif	/* GFX_USE_GDISP */
 
 #endif	/* _GDISP_LLD_CONFIG_H */
-/** @} */
-

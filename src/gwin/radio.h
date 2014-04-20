@@ -6,7 +6,7 @@
  */
 
 /**
- * @file    include/gwin/radio.h
+ * @file    src/gwin/radio.h
  * @brief   GWIN Graphic window subsystem header file.
  *
  * @defgroup RadioButton RadioButton

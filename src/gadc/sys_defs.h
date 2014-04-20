@@ -73,15 +73,10 @@ typedef struct GEventADC_t {
 		 * @{
 		 */
 		#define	GADC_HSADC_LOSTEVENT		0x0001		/**< @brief The last GEVENT_HSDADC event was lost */
+		#define	GADC_HSADC_RUNNING			0x0002		/**< @brief The High Speed ADC is currently running */
+		#define	GADC_HSADC_GOTBUFFER		0x0004		/**< @brief A buffer is ready for processing */
+		#define	GADC_HSADC_STALL			0x0008		/**< @brief The High Speed ADC has stalled due to no free buffers */
 		/** @} */
-	/**
-	 * @brief The number of conversions in the buffer
-	 */
-	size_t			count;
-	/**
-	 * @brief The buffer containing the conversion samples
-	 */
-	adcsample_t		*buffer;
 } GEventADC;
 /** @} */
 
@@ -93,7 +88,7 @@ typedef void (*GADCCallbackFunction)(adcsample_t *buffer, void *param);
 /**
  * @brief A callback function (executed in an ISR context) for a high speed conversion
  */
-typedef void (*GADCISRCallbackFunction)(adcsample_t *buffer, size_t size);
+typedef void (*GADCISRCallbackFunction)(void);
 
 /*===========================================================================*/
 /* External declarations.                                                    */
@@ -109,40 +104,28 @@ extern "C" {
  *
  * @param[in] physdev			A value passed to describe which physical ADC devices/channels to use.
  * @param[in] frequency			The frequency to create ADC conversions
- * @param[in] buffer			The static buffer to put the ADC samples into.
- * @param[in] bufcount			The total number of conversions that will fit in the buffer.
- * @param[in] samplesPerEvent	The number of conversions to do before returning an event.
  *
  * @note				If the high speed ADC is running it will be stopped. The Event subsystem is
  * 						disconnected from the high speed ADC and any binary semaphore event is forgotten.
- * @note				bufcount must be greater than countPerEvent (usually 2 or more times) otherwise
- * 						the buffer will be overwritten with new data while the application is still trying
- * 						to process the old data.
- * @note				Due to a bug/feature in Chibi-OS countPerEvent must be even. If bufcount is not
- * 						evenly divisable by countPerEvent, the remainder must also be even.
+ * @note				ChibiOS ONLY: Due to a bug in ChibiOS each buffer on the free-list must contain an even number of
+ * 						samples and for multi-channel devices it must hold a number of samples that is evenly divisible
+ * 						by 2 times the number of active channels.
  * @note				The physdev parameter may be used to turn on more than one ADC channel.
- * 						Each channel is then interleaved into the provided buffer. Note 'bufcount'
- * 						and 'countPerEvent' parameters describe the number of conversions not the
- * 						number of samples.
+ * 						Each channel is then interleaved into the provided buffer. Make sure your buffers all hold
+ * 						a number of samples evenly divisible by the number of active channels.
  * 						As an example, if physdev turns on 2 devices then the buffer contains
- * 						alternate device samples and the buffer must contain 2 * bufcount samples.
+ * 						alternate device samples and the buffer must contain multiples of 2 samples.
  * 						The exact meaning of physdev is hardware dependent.
- * @note				The buffer is circular. When the end of the buffer is reached it will start
- * 						putting data into the beginning of the buffer again.
- * @note				The event listener must process the event (and the data in it) before the
- * 						next event occurs. If not, the following event will be lost.
- * @note				If bufcount is evenly divisable by countPerEvent, then every event will return
- * 						countPerEvent conversions. If bufcount is not evenly divisable, it will return
- * 						a block of samples containing less than countPerEvent samples when it reaches the
- * 						end of the buffer.
  * @note				While the high speed ADC is running, low speed conversions can only occur at
  * 						the frequency of the high speed events. Thus if high speed events are
- * 						being created at 50Hz (eg countPerEvent = 100, frequency = 5kHz) then the maximum
+ * 						being created at 50Hz (eg 100 samples/buffer, frequency = 5kHz) then the maximum
  * 						frequency for low speed conversions will be 50Hz.
+ * @note				Only a single sample format is supported - that provided by the GADC driver. That sample
+ * 						format applies to both high speed and low speed sampling.
  *
  * @api
  */
-void gadcHighSpeedInit(uint32_t physdev, uint32_t frequency, adcsample_t *buffer, size_t bufcount, size_t samplesPerEvent);
+void gadcHighSpeedInit(uint32_t physdev, uint32_t frequency);
 
 #if GFX_USE_GEVENT || defined(__DOXYGEN__)
 	/**
@@ -170,7 +153,7 @@ void gadcHighSpeedInit(uint32_t physdev, uint32_t frequency, adcsample_t *buffer
  *
  * @note				Passing a NULL for isrfn will turn off signalling via this method as will calling
  * 						@p gadcHighSpeedInit().
- * @note				The high speed ADC is capable of signalling via this method, a binary semaphore and the GEVENT
+ * @note				The high speed ADC is capable of signalling via this method, a blocked thread and the GEVENT
  * 						sub-system at the same time.
  *
  * @api
@@ -178,19 +161,24 @@ void gadcHighSpeedInit(uint32_t physdev, uint32_t frequency, adcsample_t *buffer
 void gadcHighSpeedSetISRCallback(GADCISRCallbackFunction isrfn);
 
 /**
- * @brief				Allow retrieving of results from the high speed ADC using a Binary Semaphore and a static event buffer.
+ * @brief		Get a filled buffer from the ADC
+ * @return		A GDataBuffer pointer or NULL if the timeout is exceeded
  *
- * @param[in] pbsem			The semaphore is signaled when data is available.
- * @param[in] pEvent		The static event buffer to place the result information.
+ * @param[in] ms	The maximum amount of time in milliseconds to wait for data if some is not currently available.
  *
- * @note				Passing a NULL for pbsem or pEvent will turn off signalling via this method as will calling
- * 						@p gadcHighSpeedInit().
- * @note				The high speed ADC is capable of signalling via this method, an ISR callback and the GEVENT
- * 						sub-system at the same time.
- *
+ * @note		After processing the data, your application must return the buffer to the free-list so that
+ * 				it can be used again. This can be done using @p gfxBufferRelease().
+ * @note		A buffer may be returned to the free-list before you have finished processing it provided you finish
+ * 				processing it before GADC re-uses it. This is useful when RAM usage is critical to reduce the number
+ * 				of buffers required. It works before the free list is a FIFO queue and therefore buffers are kept
+ * 				in the queue as long as possible before they are re-used.
+ * @note		The function ending with "I" is the interrupt class function.
  * @api
+ * @{
  */
-void gadcHighSpeedSetBSem(gfxSem *pbsem, GEventADC *pEvent);
+GDataBuffer *gadcHighSpeedGetData(delaytime_t ms);
+GDataBuffer *gadcHighSpeedGetDataI(void);
+/* @} */
 
 /**
  * @brief   Start the high speed ADC conversions.
@@ -221,12 +209,9 @@ void gadcHighSpeedStop(void);
  * 			completion.
  * @note	The result buffer must be large enough to store one sample per device
  * 			described by the 'physdev' parameter.
- * @note	If calling this routine would exceed @p GADC_MAX_LOWSPEED_DEVICES simultaneous low
- * 			speed devices, the routine will wait for an available slot to complete the
- * 			conversion.
  * @note	Specifying more than one device in physdev is possible but discouraged as the
  * 			calculations to ensure the high speed ADC correctness will be incorrect. Symptoms
- * 			from over-running the high speed ADC include high speed samples being lost.
+ * 			from over-running the high speed ADC include high speed device stalling or samples being lost.
  *
  * @api
  */
@@ -234,7 +219,7 @@ void gadcLowSpeedGet(uint32_t physdev, adcsample_t *buffer);
 
 /**
  * @brief	Perform a low speed ADC conversion with callback (in a thread context)
- * @details	Returns FALSE if there are no free low speed ADC slots. See @p GADC_MAX_LOWSPEED_DEVICES for details.
+ * @details	Returns FALSE if internal memory allocation fails
  *
  * @param[in] physdev		A value passed to describe which physical ADC devices/channels to use.
  * @param[in] buffer		The static buffer to put the ADC samples into.
@@ -249,8 +234,6 @@ void gadcLowSpeedGet(uint32_t physdev, adcsample_t *buffer);
  * 			completion.
  * @note	The result buffer must be large enough to store one sample per device
  * 			described by the 'physdev' parameter.
- * @note	As this routine uses a low speed ADC, it asserts if you try to run more than @p GADC_MAX_LOWSPEED_DEVICES
- * 			at the same time.
  * @note	Specifying more than one device in physdev is possible but discouraged as the
  * 			calculations to ensure the high speed ADC correctness will be incorrect. Symptoms
  * 			from over-running the high speed ADC include high speed samples being lost.
@@ -267,4 +250,3 @@ bool_t gadcLowSpeedStart(uint32_t physdev, adcsample_t *buffer, GADCCallbackFunc
 
 #endif /* _GADC_H */
 /** @} */
-

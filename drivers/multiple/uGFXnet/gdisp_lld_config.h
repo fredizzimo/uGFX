@@ -5,14 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    drivers/multiple/uGFXnet/gdisp_lld_config.h
- * @brief   GDISP Graphic Driver subsystem low level driver header for uGFXnet.
- *
- * @addtogroup GDISP
- * @{
- */
-
 #ifndef _GDISP_LLD_CONFIG_H
 #define _GDISP_LLD_CONFIG_H
 
@@ -38,5 +30,3 @@
 #endif	/* GFX_USE_GDISP */
 
 #endif	/* _GDISP_LLD_CONFIG_H */
-/** @} */
-

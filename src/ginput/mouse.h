@@ -6,7 +6,7 @@
  */
 
 /**
- * @file    include/ginput/mouse.h
+ * @file    src/ginput/mouse.h
  * @brief   GINPUT GFX User Input subsystem header file for mouse and touch.
  *
  * @defgroup Mouse Mouse

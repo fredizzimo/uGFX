@@ -6,8 +6,11 @@
  */
 
 /**
- * @file    drivers/gdisp/SSD1289/board_SSD1289_stm32f4discovery.h
+ * @file    boards/addons/gdisp/board_SSD1289_stm32f4discovery.h
  * @brief   GDISP Graphic Driver subsystem board interface for the SSD1289 display.
+ *
+ * @note	This file contains a mix of hardware specific and operating system specific
+ *			code. You will need to change it for your CPU and/or operating system.
  */
 
 #ifndef _GDISP_LLD_BOARD_H

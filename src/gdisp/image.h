@@ -6,7 +6,7 @@
  */
 
 /**
- * @file    include/gdisp/image.h
+ * @file    src/gdisp/image.h
  * @brief   GDISP image header file.
  *
  * @defgroup Image Image

@@ -80,7 +80,7 @@
  * @brief   Enables the GPT subsystem.
  */
 #if !defined(HAL_USE_GPT) || defined(__DOXYGEN__)
-#define HAL_USE_GPT                 FALSE
+#define HAL_USE_GPT                 TRUE
 #endif
 
 /**
@@ -116,10 +116,6 @@
  */
 #if !defined(HAL_USE_PWM) || defined(__DOXYGEN__)
 #define HAL_USE_PWM                 TRUE
-#define PWM_USE_PWM1				FALSE
-#define PWM_USE_PWM2				TRUE
-#define PWM_USE_PWM3				FALSE
-#define PWM_USE_PWM4				FALSE
 #endif
 
 /**

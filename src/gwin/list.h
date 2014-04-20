@@ -6,7 +6,7 @@
  */
 
 /**
- * @file	include/gwin/list.h
+ * @file	src/gwin/list.h
  * @brief	GWIN list widget header file
  *
  * @defgroup List List

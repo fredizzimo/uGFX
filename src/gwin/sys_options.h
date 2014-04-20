@@ -6,7 +6,7 @@
  */
 
 /**
- * @file    include/gwin/sys_options.h
+ * @file    src/gwin/sys_options.h
  * @brief   GWIN sub-system options header file.
  *
  * @addtogroup GWIN

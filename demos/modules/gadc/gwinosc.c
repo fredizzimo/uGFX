@@ -38,9 +38,6 @@
 /* Include internal GWIN routines so we can build our own superset class */
 #include "src/gwin/class_gwin.h"
 
-/* The size of our dynamically allocated audio buffer */
-#define AUDIOBUFSZ				64*2
-
 /* How many flat-line sample before we trigger */
 #define FLATLINE_SAMPLES		8
 
@@ -49,10 +46,6 @@ static void _destroy(GHandle gh) {
 	if (((GScopeObject *)gh)->lastscopetrace) {
 		gfxFree(((GScopeObject *)gh)->lastscopetrace);
 		((GScopeObject *)gh)->lastscopetrace = 0;
-	}
-	if (((GScopeObject *)gh)->audiobuf) {
-		gfxFree(((GScopeObject *)gh)->audiobuf);
-		((GScopeObject *)gh)->audiobuf = 0;
 	}
 }
 
@@ -68,11 +61,8 @@ GHandle gwinGScopeCreate(GDisplay *g, GScopeObject *gs, GWindowInit *pInit, uint
 	/* Initialise the base class GWIN */
 	if (!(gs = (GScopeObject *)_gwindowCreate(g, &gs->g, pInit, &scopeVMT, 0)))
 		return 0;
-	gfxSemInit(&gs->bsem, 0, 1);
 	gs->nextx = 0;
 	if (!(gs->lastscopetrace = gfxAlloc(gs->g.width * sizeof(coord_t))))
-		return 0;
-	if (!(gs->audiobuf = gfxAlloc(AUDIOBUFSZ * sizeof(adcsample_t))))
 		return 0;
 #if TRIGGER_METHOD == TRIGGER_POSITIVERAMP
 	gs->lasty = gs->g.height/2;
@@ -82,8 +72,7 @@ GHandle gwinGScopeCreate(GDisplay *g, GScopeObject *gs, GWindowInit *pInit, uint
 #endif
 
 	/* Start the GADC high speed converter */
-	gadcHighSpeedInit(physdev, frequency, gs->audiobuf, AUDIOBUFSZ, AUDIOBUFSZ/2);
-	gadcHighSpeedSetBSem(&gs->bsem, &gs->myEvent);
+	gadcHighSpeedInit(physdev, frequency);
 	gadcHighSpeedStart();
 
 	gwinSetVisible((GHandle)gs, pInit->show);
@@ -97,6 +86,8 @@ void gwinScopeWaitForTrace(GHandle gh) {
 	coord_t			yoffset;
 	adcsample_t		*pa;
 	coord_t			*pc;
+	GDataBuffer		*pd;
+	uint8_t			shr;
 #if TRIGGER_METHOD == TRIGGER_POSITIVERAMP
 	bool_t			rdytrigger;
 	int				flsamples;
@@ -109,20 +100,21 @@ void gwinScopeWaitForTrace(GHandle gh) {
 	if (gh->vmt != &scopeVMT)
 		return;
 
-	/* Wait for a set of audio conversions */
-	gfxSemWait(&gs->bsem, TIME_INFINITE);
+	/* Wait for a set of conversions */
+	pd = gadcHighSpeedGetData(TIME_INFINITE);
 
 	/* Ensure we are drawing in the right area */
 	#if GDISP_NEED_CLIP
 		gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 	#endif
 
+	shr = 16 - gfxSampleFormatBits(GADC_SAMPLE_FORMAT);
 	yoffset = gh->height/2;
-	if (!(GADC_SAMPLE_FORMAT & 1))
+	if (!gfxSampleFormatIsSigned(GADC_SAMPLE_FORMAT))
 		yoffset += (1<<SCOPE_Y_BITS)/2;
 	x = gs->nextx;
 	pc = gs->lastscopetrace+x;
-	pa = gs->myEvent.buffer;
+	pa = (adcsample_t *)(pd+1);
 #if TRIGGER_METHOD == TRIGGER_POSITIVERAMP
 	rdytrigger = FALSE;
 	flsamples = 0;
@@ -132,14 +124,10 @@ void gwinScopeWaitForTrace(GHandle gh) {
 	scopemin = 0;
 #endif
 
-	for(i = gs->myEvent.count; i; i--) {
+	for(i = pd->len/sizeof(adcsample_t); i; i--) {
 
 		/* Calculate the new scope value - re-scale using simple shifts for efficiency, re-center and y-invert */
-		#if GADC_BITS_PER_SAMPLE > SCOPE_Y_BITS
-			y = yoffset - (*pa++ >> (GADC_BITS_PER_SAMPLE - SCOPE_Y_BITS));
-		#else
-			y = yoffset - (*pa++ << (SCOPE_Y_BITS - GADC_BITS_PER_SAMPLE));
-		#endif
+		y = yoffset - (((coord_t)(*pa++) << shr) >> (16-SCOPE_Y_BITS));
 
 #if TRIGGER_METHOD == TRIGGER_MINVALUE
 		/* Calculate the scopemin ready for the next trace */
@@ -204,6 +192,8 @@ void gwinScopeWaitForTrace(GHandle gh) {
 #if TRIGGER_METHOD == TRIGGER_MINVALUE
 	gs->scopemin = scopemin;
 #endif
+
+	gfxBufferRelease(pd);
 
 	#undef gs
 }

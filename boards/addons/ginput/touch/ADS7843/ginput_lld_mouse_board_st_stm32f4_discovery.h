@@ -5,6 +5,14 @@
  *              http://ugfx.org/license.html
  */
 
+/**
+ * @file    boards/addons/ginput/touch/ADS7843/ginput_lld_mouse_board_st_stm32f4_discovery.h
+ * @brief   GINPUT Touch low level driver source for the ADS7843 on an st_stm32f4_discovery.
+ *
+ * @note	This file contains a mix of hardware specific and operating system specific
+ *			code. You will need to change it for your CPU and/or operating system.
+ */
+
 #ifndef _GINPUT_LLD_MOUSE_BOARD_H
 #define _GINPUT_LLD_MOUSE_BOARD_H
 

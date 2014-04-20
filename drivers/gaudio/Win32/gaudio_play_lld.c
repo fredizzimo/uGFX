@@ -5,11 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    drivers/gaudio/Win32/gaudio_play_lld.c
- * @brief   GAUDIO - Play Driver file for Win32.
- */
-
 #include "gfx.h"
 
 #if GFX_USE_GAUDIO && GAUDIO_NEED_PLAY
@@ -47,7 +42,7 @@ static DWORD		threadID;
  *************************************************************************/
 
 static bool_t senddata(WAVEHDR *pwh) {
-	GAudioData *paud;
+	GDataBuffer *paud;
 
 	// Get the next data block to send
 	gfxSystemLock();
@@ -94,7 +89,7 @@ static DWORD WINAPI waveProc(LPVOID arg) {
 
 				// Give the buffer back to the Audio Free List
 				gfxSystemLock();
-				gaudioPlayReleaseDataBlockI((GAudioData *)pwh->dwUser);
+				gaudioPlayReleaseDataBlockI((GDataBuffer *)pwh->dwUser);
 				gfxSystemUnlock();
 				pwh->lpData = 0;
 				nQueuedBuffers--;

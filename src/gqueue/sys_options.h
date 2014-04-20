@@ -41,6 +41,12 @@
 	#ifndef GQUEUE_NEED_FSYNC
 		#define GQUEUE_NEED_FSYNC		FALSE
 	#endif
+	/**
+	 * @brief	Enable Queue-able Data Buffers
+	 */
+	#ifndef GQUEUE_NEED_BUFFERS
+		#define GQUEUE_NEED_BUFFERS		FALSE
+	#endif
 /**
  * @}
  *

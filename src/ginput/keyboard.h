@@ -6,7 +6,7 @@
  */
 
 /**
- * @file    include/ginput/keyboard.h
+ * @file    src/ginput/keyboard.h
  * @brief   GINPUT GFX User Input subsystem header file.
  *
  * @defgroup Keyboard Keyboard

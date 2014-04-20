@@ -333,7 +333,6 @@
 	 * @return	FALSE if the wait would occur occurred otherwise TRUE
 	 *
 	 * @param[in] psem		A pointer to the semaphore
-	 * @param[in] ms		The maximum time to wait for the semaphore
 	 *
 	 * @iclass
 	 * @api

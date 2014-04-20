@@ -57,9 +57,9 @@
     #define GDISP_INCLUDE_FONT_DEJAVUSANS24          FALSE
     #define GDISP_INCLUDE_FONT_DEJAVUSANS32          FALSE
     #define GDISP_INCLUDE_FONT_DEJAVUSANSBOLD12      FALSE
-    #define GDISP_INCLUDE_FONT_FIXED_10x20           FALSE
-    #define GDISP_INCLUDE_FONT_FIXED_7x14            FALSE
-    #define GDISP_INCLUDE_FONT_FIXED_5x8             FALSE
+    #define GDISP_INCLUDE_FONT_FIXED_10X20           FALSE
+    #define GDISP_INCLUDE_FONT_FIXED_7X14            FALSE
+    #define GDISP_INCLUDE_FONT_FIXED_5X8             FALSE
     #define GDISP_INCLUDE_FONT_DEJAVUSANS12_AA       FALSE
     #define GDISP_INCLUDE_FONT_DEJAVUSANS16_AA       FALSE
     #define GDISP_INCLUDE_FONT_DEJAVUSANS24_AA       FALSE
@@ -176,7 +176,7 @@
 #define GQUEUE_NEED_ASYNC                            FALSE
 #define GQUEUE_NEED_GSYNC                            FALSE
 #define GQUEUE_NEED_FSYNC                            FALSE
-
+#define GQUEUE_NEED_BUFFERS                          FALSE
 
 ///////////////////////////////////////////////////////////////////////////
 // GINPUT                                                                //

@@ -34,19 +34,6 @@
 /* Type definitions                                                          */
 /*===========================================================================*/
 
-/**
- * @brief	Contains Audio Data Samples
- * @note	This structure is followed immediately by the sample data itself.
- * 			When allocating the buffers for the sample data put this structure
- * 			at the beginning of the buffer.
- */
-typedef struct GAudioData {
-	gfxQueueASyncItem	next;		// @< Used for queuing the buffers
-	size_t				size;		// @< The size of the buffer area following this structure (in bytes)
-	size_t				len;		// @< The length of the data in the buffer area (in bytes)
-} GAudioData;
-
-
 // Event types for GAUDIO
 #define GEVENT_AUDIO_PLAY			(GEVENT_GAUDIO_FIRST+0)
 #define GEVENT_AUDIO_RECORD			(GEVENT_GAUDIO_FIRST+1)
@@ -95,7 +82,7 @@ typedef struct GAudioData {
 			 */
 			#define	GAUDIO_RECORD_LOSTEVENT		0x0001		/**< @brief The last GEVENT_AUDIO_IN event was lost */
 			#define	GAUDIO_RECORD_RECORDING		0x0002		/**< @brief The audio recording system is currently recording */
-			#define	GAUDIO_RECORD_GOTBLOCK		0x0004		/**< @brief An audio buffer is ready for processing */
+			#define	GAUDIO_RECORD_GOTBUFFER		0x0004		/**< @brief An audio buffer is ready for processing */
 			#define	GAUDIO_RECORD_STALL			0x0008		/**< @brief The recording process has stalled due to no free buffers */
 			/** @} */
 	} GEventAudioRecord;
@@ -109,41 +96,6 @@ typedef struct GAudioData {
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/**
- * @brief		Allocate some audio buffers and put them on the free list
- * @return		TRUE is it succeeded. FALSE on allocation failure.
- *
- * @param[in] num	The number of buffers to allocate
- * @param[in] size	The size (in bytes) of each buffer
- *
- * @api
- */
-bool_t gaudioAllocBuffers(unsigned num, size_t size);
-
-/**
- * @brief		Get an audio buffer from the free list
- * @return		A GAudioData pointer or NULL if the timeout is exceeded
- *
- * @params[in] ms	The maximum amount of time in milliseconds to wait for a buffer if one is not available.
- *
- * @api
- */
-GAudioData *gaudioGetBuffer(delaytime_t ms);
-
-/**
- * @brief		Release a buffer back to the free list
- *
- * @param[in] paud		The buffer to put (back) on the free-list.
- *
- * @note		This call should be used to return any buffers that were taken from
- * 				the free-list once they have been finished with. It can also be used
- * 				to put new buffers onto the free-list. Just make sure the "size" field
- * 				of the GAudioData structure has been filled in first.
- *
- * @api
- */
-void gaudioReleaseBuffer(GAudioData *paud);
 
 #if GAUDIO_NEED_PLAY || defined(__DOXYGEN__)
 	/**
@@ -172,7 +124,7 @@ void gaudioReleaseBuffer(GAudioData *paud);
 	 * @param[in] paud	The audio sample buffer to play. It can be NULL (used to restart paused audio)
 	 *
 	 * @note		Calling this will cancel any pause.
-	 * @note		Before calling this function the len field of the GAudioData structure must be
+	 * @note		Before calling this function the len field of the GDataBuffer structure must be
 	 * 				specified (in bytes).
 	 * @note		For stereo channels the sample data is interleaved in the buffer.
 	 * @note		This call returns before the data has completed playing. Subject to available buffers (which
@@ -182,7 +134,7 @@ void gaudioReleaseBuffer(GAudioData *paud);
 	 *
 	 * @api
 	 */
-	void gaudioPlay(GAudioData *paud);
+	void gaudioPlay(GDataBuffer *paud);
 
 	/**
 	 * @brief		Pause any currently playing sounds.
@@ -209,7 +161,7 @@ void gaudioReleaseBuffer(GAudioData *paud);
 	 * @brief				Set the output volume.
 	 * @return				TRUE if successful.
 	 *
-	 * @param[in]			0->255 (0 = muted)
+	 * @param[in] vol		0->255 (0 = muted)
 	 *
 	 * @note				Some drivers may not support this. They will return FALSE.
 	 * @note				For stereo devices, both channels are set to the same volume.
@@ -241,7 +193,7 @@ void gaudioReleaseBuffer(GAudioData *paud);
 	 * @brief		Wait for any currently playing sounds to complete
 	 * @return		TRUE if there is now nothing playing or FALSE if the timeout is exceeded
 	 *
-	 * @params[in] ms	The maximum amount of time in milliseconds to wait for playing to complete.
+	 * @param[in] ms	The maximum amount of time in milliseconds to wait for playing to complete.
 	 *
 	 * @api
 	 */
@@ -298,16 +250,21 @@ void gaudioReleaseBuffer(GAudioData *paud);
 
 	/**
 	 * @brief		Get a filled audio buffer from the recording list
-	 * @return		A GAudioData pointer or NULL if the timeout is exceeded
+	 * @return		A GDataBuffer pointer or NULL if the timeout is exceeded
 	 *
-	 * @params[in] ms	The maximum amount of time in milliseconds to wait for data if some is not currently available.
+	 * @param[in] ms	The maximum amount of time in milliseconds to wait for data if some is not currently available.
 	 *
 	 * @note		After processing the audio data, your application must return the buffer to the free-list so that
 	 * 				it can be used to record more audio into. This can be done via the play list using @p gaudioPlay() or
-	 * 				directly using @p gaudioReleaseBuffer().
+	 * 				directly using @p gfxBufferRelease().
+	 * @note		A buffer may be returned to the free-list before you have finished processing it provided you finish
+	 * 				processing it before GADC re-uses it. This is useful when RAM usage is critical to reduce the number
+	 * 				of buffers required. It works before the free list is a FIFO queue and therefore buffers are kept
+	 * 				in the queue as long as possible before they are re-used.
+	 *
 	 * @api
 	 */
-	GAudioData *gaudioRecordGetData(delaytime_t ms);
+	GDataBuffer *gaudioRecordGetData(delaytime_t ms);
 
 	#if GFX_USE_GEVENT || defined(__DOXYGEN__)
 		/**

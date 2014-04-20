@@ -5,11 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    drivers/gdisp/SSD1306/gdisp_lld.c
- * @brief   GDISP Graphics Driver subsystem low level driver source for the SSD1306 display.
- */
-
 #include "gfx.h"
 
 #if GFX_USE_GDISP
@@ -279,4 +274,3 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 #endif // GDISP_NEED_CONTROL
 
 #endif // GFX_USE_GDISP
-

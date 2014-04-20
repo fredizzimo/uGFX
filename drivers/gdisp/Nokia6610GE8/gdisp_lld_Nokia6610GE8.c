@@ -5,19 +5,11 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    drivers/gdisp/Nokia6610GE8/gdisp_lld.c
- * @brief   GDISP Graphics Driver subsystem low level driver source for the Nokia6610 GE8 display.
- *
- * @addtogroup GDISP
- * @{
- */
-
 #include "gfx.h"
 
 #if GFX_USE_GDISP
 
-/**
+/*
  * This is for the EPSON (GE8) controller driving a Nokia6610 color LCD display.
  * Note that there is also a PHILIPS (GE12) controller for the same display that this code
  * does not support.
@@ -136,25 +128,55 @@
 #define write_cmd3(g, cmd, d1, d2, d3)		{ write_index(g, cmd); write_data3(g, d1, d2, d3); }
 #define write_cmd4(g, cmd, d1, d2, d3, d4)	{ write_index(g, cmd); write_data4(g, d1, d2, d3, d4); }
 
+#if GDISP_HARDWARE_DRAWPIXEL
+	static inline void set_viewpoint(GDisplay* g) {
+		#if GDISP_NOKIA_ORIENTATION && GDISP_NEED_CONTROL
+			switch(g->g.Orientation) {
+			default:
+			case GDISP_ROTATE_0:
+				write_cmd2(g, CASET, GDISP_RAM_X_OFFSET+g->p.x, GDISP_RAM_X_OFFSET+g->p.x);			// Column address set
+				write_cmd2(g, PASET, GDISP_RAM_Y_OFFSET+g->p.y, GDISP_RAM_Y_OFFSET+g->p.y);			// Page address set
+				break;
+			case GDISP_ROTATE_90:
+				write_cmd2(g, CASET, GDISP_RAM_X_OFFSET+g->p.y, GDISP_RAM_X_OFFSET+g->p.y);
+				write_cmd2(g, PASET, GDISP_RAM_Y_OFFSET-1+g->g.Width-g->p.x, GDISP_RAM_Y_OFFSET-1+g->g.Width-g->p.x);
+				break;
+			case GDISP_ROTATE_180:
+				write_cmd2(g, CASET, GDISP_RAM_X_OFFSET-1+g->g.Width-g->p.x, GDISP_RAM_X_OFFSET-1+g->g.Width-g->p.x);
+				write_cmd2(g, PASET, GDISP_RAM_Y_OFFSET-1+g->g.Height-g->p.y, GDISP_RAM_Y_OFFSET-1+g->g.Height-g->p.y);
+				break;
+			case GDISP_ROTATE_270:
+				write_cmd2(g, CASET, GDISP_RAM_X_OFFSET-1+g->g.Height-g->p.y, GDISP_RAM_X_OFFSET-1+g->g.Height-g->p.y);
+				write_cmd2(g, PASET, GDISP_RAM_Y_OFFSET+g->p.x, GDISP_RAM_Y_OFFSET+g->p.x);
+				break;
+			}
+		#else
+			write_cmd2(g, CASET, GDISP_RAM_X_OFFSET+g->p.x, GDISP_RAM_X_OFFSET+g->p.x);			// Column address set
+			write_cmd2(g, PASET, GDISP_RAM_Y_OFFSET+g->p.y, GDISP_RAM_Y_OFFSET+g->p.y);			// Page address set
+		#endif
+		write_index(g, RAMWR);
+	}
+#endif
+
 static inline void set_viewport(GDisplay* g) {
 	#if GDISP_NOKIA_ORIENTATION && GDISP_NEED_CONTROL
 		switch(g->g.Orientation) {
 		default:
 		case GDISP_ROTATE_0:
-			write_cmd2(g, CASET, GDISP_RAM_X_OFFSET+g->p.x, GDISP_RAM_X_OFFSET+g->p.x);			// Column address set
-			write_cmd2(g, PASET, GDISP_RAM_Y_OFFSET+g->p.y, GDISP_RAM_Y_OFFSET+g->p.y);			// Page address set
+			write_cmd2(g, CASET, GDISP_RAM_X_OFFSET+g->p.x, GDISP_RAM_X_OFFSET+g->p.x+g->p.cx-1);			// Column address set
+			write_cmd2(g, PASET, GDISP_RAM_Y_OFFSET+g->p.y, GDISP_RAM_Y_OFFSET+g->p.y+g->p.cy-1);			// Page address set
 			break;
 		case GDISP_ROTATE_90:
-			write_cmd2(g, CASET, GDISP_RAM_X_OFFSET+g->p.y, GDISP_RAM_X_OFFSET+g->p.y);
-			write_cmd2(g, PASET, GDISP_RAM_Y_OFFSET-1+g->g.Width-g->p.x, GDISP_RAM_Y_OFFSET-1+g->g.Width-g->p.x);
+			write_cmd2(g, CASET, GDISP_RAM_X_OFFSET+g->p.y, GDISP_RAM_X_OFFSET+g->p.y+g->p.cy-1);
+			write_cmd2(g, PASET, GDISP_RAM_Y_OFFSET+g->g.Width-g->p.x-g->p.cx, GDISP_RAM_Y_OFFSET-1+g->g.Width-g->p.x);
 			break;
 		case GDISP_ROTATE_180:
-			write_cmd2(g, CASET, GDISP_RAM_X_OFFSET-1+g->g.Width-g->p.x, GDISP_RAM_X_OFFSET-1+g->g.Width-g->p.x);
-			write_cmd2(g, PASET, GDISP_RAM_Y_OFFSET-1+g->g.Height-g->p.y, GDISP_RAM_Y_OFFSET-1+g->g.Height-g->p.y);
+			write_cmd2(g, CASET, GDISP_RAM_X_OFFSET+g->g.Width-g->p.x-g->p.cx, GDISP_RAM_X_OFFSET-1+g->g.Width-g->p.x);
+			write_cmd2(g, PASET, GDISP_RAM_Y_OFFSET+g->g.Height-g->p.y-g->p.cy, GDISP_RAM_Y_OFFSET-1+g->g.Height-g->p.y);
 			break;
 		case GDISP_ROTATE_270:
-			write_cmd2(g, CASET, GDISP_RAM_X_OFFSET-1+g->g.Height-g->p.y, GDISP_RAM_X_OFFSET-1+g->g.Height-g->p.y);
-			write_cmd2(g, PASET, GDISP_RAM_Y_OFFSET+g->p.x, GDISP_RAM_Y_OFFSET+g->p.x);
+			write_cmd2(g, CASET, GDISP_RAM_X_OFFSET+g->g.Height-g->p.y-g->p.cy, GDISP_RAM_X_OFFSET-1+g->g.Height-g->p.y);
+			write_cmd2(g, PASET, GDISP_RAM_Y_OFFSET+g->p.x, GDISP_RAM_Y_OFFSET+g->p.x+g->p.cx-1);
 			break;
 		}
 	#else
@@ -292,8 +314,8 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 		c = gdispColor2Native(g->p.color);
 		acquire_bus(g);
-		set_viewport(g);
-		write_data3(g, 0, (c>>8) & 0x0F, c & 0xFF);
+		set_viewpoint(g);
+		write_data3(g, 0, ((c>>8) & 0x0F), (c & 0xFF));
 		release_bus(g);
 	}
 #endif
@@ -569,4 +591,3 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 #endif
 
 #endif /* GFX_USE_GDISP */
-/** @} */

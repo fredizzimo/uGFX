@@ -48,6 +48,10 @@ extern void _gosDeinit(void);
 	extern void _gaudioInit(void);
 	extern void _gaudioDeinit(void);
 #endif
+#if GFX_USE_GQUEUE
+	extern void _gqueueInit(void);
+	extern void _gqueueDeinit(void);
+#endif
 #if GFX_USE_GMISC
 	extern void _gmiscInit(void);
 	extern void _gmiscDeinit(void);
@@ -63,6 +67,9 @@ void gfxInit(void)
 	// These must be initialised in the order of their dependancies
 
 	_gosInit();
+	#if GFX_USE_GQUEUE
+		_gqueueInit();
+	#endif
 	#if GFX_USE_GMISC
 		_gmiscInit();
 	#endif
@@ -118,7 +125,10 @@ void gfxDeinit(void)
 		_geventDeinit();
 	#endif
 	#if GFX_USE_GMISC
-		_gmiscInit();
+		_gmiscDeinit();
+	#endif
+	#if GFX_USE_GQUEUE
+		_gqueueDeinit();
 	#endif
 	_gosDeinit();
 }

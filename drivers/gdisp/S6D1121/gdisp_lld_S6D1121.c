@@ -5,14 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    drivers/gdisp/S6D1121/gdisp_lld.c
- * @brief   GDISP Graphics Driver subsystem low level driver source for the S6d1121 display.
- *
- * @addtogroup GDISP
- * @{
- */
-
 #include "gfx.h"
 
 #if GFX_USE_GDISP
@@ -336,5 +328,3 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 #endif
 
 #endif /* GFX_USE_GDISP */
-/** @} */
-

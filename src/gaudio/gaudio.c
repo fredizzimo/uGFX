@@ -16,8 +16,6 @@
 
 #if GFX_USE_GAUDIO
 
-static gfxQueueGSync	freeList;
-
 #if GAUDIO_NEED_PLAY
 	#include "src/gaudio/driver_play.h"
 
@@ -51,7 +49,6 @@ static gfxQueueGSync	freeList;
 
 void _gaudioInit(void)
 {
-	gfxQueueGSyncInit(&freeList);
 	#if GAUDIO_NEED_PLAY
 		gfxQueueASyncInit(&playList);
 		#if GFX_USE_GEVENT
@@ -70,46 +67,18 @@ void _gaudioInit(void)
 void _gaudioDeinit(void)
 {
 	#if GAUDIO_NEED_PLAY
+		gfxQueueASyncDeinit(&playList);
 		#if GFX_USE_GEVENT
 			gtimerDeinit(&playTimer);
 		#endif
 		gfxSemDestroy(&playComplete);
 	#endif
 	#if GAUDIO_NEED_RECORD
+		gfxQueueGSyncDeinit(&recordList);
 		#if GFX_USE_GEVENT
 			gtimerDeinit(&recordTimer);
 		#endif
 	#endif
-}
-
-bool_t gaudioAllocBuffers(unsigned num, size_t size) {
-	GAudioData *paud;
-
-	if (num < 1)
-		return FALSE;
-
-	// Round up to a multiple of 4 to prevent problems with structure alignment
-	size = (size + 3) & ~0x03;
-
-	// Allocate the memory
-	if (!(paud = gfxAlloc((size+sizeof(GAudioData)) * num)))
-		return FALSE;
-
-	// Add each of them to our free list
-	for(;num--; paud = (GAudioData *)((char *)(paud+1)+size)) {
-		paud->size = size;
-		gfxQueueGSyncPut(&freeList, (gfxQueueGSyncItem *)paud);
-	}
-
-	return TRUE;
-}
-
-void gaudioReleaseBuffer(GAudioData *paud) {
-	gfxQueueGSyncPut(&freeList, (gfxQueueGSyncItem *)paud);
-}
-
-GAudioData *gaudioGetBuffer(delaytime_t ms) {
-	return (GAudioData *)gfxQueueGSyncGet(&freeList, ms);
 }
 
 #if GAUDIO_NEED_PLAY
@@ -123,18 +92,18 @@ GAudioData *gaudioGetBuffer(delaytime_t ms) {
 		return TRUE;
 	}
 
-	void gaudioPlay(GAudioData *paud) {
+	void gaudioPlay(GDataBuffer *pd) {
 		if (!(playFlags & PLAYFLG_ISINIT)) {
 			// Oops - init failed - return it directly to the free-list
-			if (paud) {
-				gfxQueueGSyncPut(&freeList, (gfxQueueGSyncItem *)paud);
+			if (pd) {
+				gfxBufferRelease(pd);
 				gfxYield();				// Make sure we get no endless cpu hogging loops
 			}
 			return;
 		}
 
-		if (paud)
-			gfxQueueASyncPut(&playList, (gfxQueueASyncItem *)paud);
+		if (pd)
+			gfxQueueASyncPut(&playList, (gfxQueueASyncItem *)pd);
 		playFlags |= PLAYFLG_PLAYING;
 		gaudio_play_lld_start();
 	}
@@ -145,12 +114,12 @@ GAudioData *gaudioGetBuffer(delaytime_t ms) {
 	}
 
 	void gaudioPlayStop(void) {
-		GAudioData	*paud;
+		GDataBuffer	*pd;
 
 		if (playFlags & PLAYFLG_PLAYING)
 			gaudio_play_lld_stop();
-		while((paud = (GAudioData *)gfxQueueASyncGet(&playList)))
-			gfxQueueGSyncPut(&freeList, (gfxQueueGSyncItem *)paud);
+		while((pd = (GDataBuffer *)gfxQueueASyncGet(&playList)))
+			gfxBufferRelease(pd);
 	}
 
 	bool_t gaudioPlaySetVolume(uint8_t vol) {
@@ -182,7 +151,7 @@ GAudioData *gaudioGetBuffer(delaytime_t ms) {
 				psl->srcflags = 0;
 				if ((playFlags & PLAYFLG_PLAYING))
 					pe->flags |= GAUDIO_PLAY_PLAYING;
-				if (!gfxQueueGSyncIsEmpty(&freeList))
+				if (gfxBufferIsAvailable())
 					pe->flags |= GAUDIO_PLAY_FREEBLOCK;
 				geventSendEvent(psl);
 			}
@@ -200,12 +169,12 @@ GAudioData *gaudioGetBuffer(delaytime_t ms) {
 	 * Routines provided for use by drivers.
 	 */
 
-	GAudioData *gaudioPlayGetDataBlockI(void) {
-		return (GAudioData *)gfxQueueASyncGetI(&playList);
+	GDataBuffer *gaudioPlayGetDataBlockI(void) {
+		return (GDataBuffer *)gfxQueueASyncGetI(&playList);
 	}
 
-	void gaudioPlayReleaseDataBlockI(GAudioData *paud) {
-		gfxQueueGSyncPutI(&freeList, (gfxQueueGSyncItem *)paud);
+	void gaudioPlayReleaseDataBlockI(GDataBuffer *pd) {
+		gfxBufferReleaseI(pd);
 		#if GFX_USE_GEVENT
 			if (playFlags & PLAYFLG_USEEVENTS)
 				gtimerJabI(&playTimer);
@@ -242,17 +211,17 @@ GAudioData *gaudioGetBuffer(delaytime_t ms) {
 	}
 
 	void gaudioRecordStop(void) {
-		GAudioData	*paud;
+		GDataBuffer	*pd;
 
 		if ((recordFlags & (RECORDFLG_RECORDING|RECORDFLG_STALLED)) == RECORDFLG_RECORDING)
 			gaudio_record_lld_stop();
 		recordFlags &= ~(RECORDFLG_RECORDING|RECORDFLG_STALLED);
-		while((paud = (GAudioData *)gfxQueueGSyncGet(&recordList, TIME_IMMEDIATE)))
-			gfxQueueGSyncPut(&freeList, (gfxQueueGSyncItem *)paud);
+		while((pd = (GDataBuffer *)gfxQueueGSyncGet(&recordList, TIME_IMMEDIATE)))
+			gfxBufferRelease(pd);
 	}
 
-	GAudioData *gaudioRecordGetData(delaytime_t ms) {
-		return (GAudioData *)gfxQueueGSyncGet(&recordList, ms);
+	GDataBuffer *gaudioRecordGetData(delaytime_t ms) {
+		return (GDataBuffer *)gfxQueueGSyncGet(&recordList, ms);
 	}
 
 	#if GFX_USE_GEVENT
@@ -276,7 +245,7 @@ GAudioData *gaudioGetBuffer(delaytime_t ms) {
 				if ((recordFlags & RECORDFLG_STALLED))
 					pe->flags |= GAUDIO_RECORD_STALL;
 				if (!gfxQueueGSyncIsEmpty(&recordList))
-					pe->flags |= GAUDIO_RECORD_GOTBLOCK;
+					pe->flags |= GAUDIO_RECORD_GOTBUFFER;
 				geventSendEvent(psl);
 			}
 		}
@@ -293,11 +262,7 @@ GAudioData *gaudioGetBuffer(delaytime_t ms) {
 	 * Routines provided for use by drivers.
 	 */
 
-	GAudioData *gaudioRecordGetFreeBlockI(void) {
-		return (GAudioData *)gfxQueueGSyncGetI(&freeList);
-	}
-
-	void gaudioRecordSaveDataBlockI(GAudioData *paud) {
+	void gaudioRecordSaveDataBlockI(GDataBuffer *paud) {
 		gfxQueueGSyncPutI(&recordList, (gfxQueueGSyncItem *)paud);
 		#if GFX_USE_GEVENT
 			if (recordFlags & RECORDFLG_USEEVENTS)
