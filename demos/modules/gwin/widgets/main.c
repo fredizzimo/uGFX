@@ -80,7 +80,7 @@ static GHandle		ghCheckbox1, ghCheckbox2, ghCheckDisableAll;
 static GHandle		ghLabel1;
 static GHandle		ghRadio1, ghRadio2;
 static GHandle		ghRadioBlack, ghRadioWhite, ghRadioYellow;
-static GHandle		ghList1, ghList2, ghList3;
+static GHandle		ghList1, ghList2, ghList3, ghList4;
 static GHandle		ghImage1;
 static gdispImage	imgYesNo;
 
@@ -192,7 +192,7 @@ static void createWidgets(void) {
 	// Lists
 	wi.g.show = FALSE; wi.customDraw = 0;
 	wi.g.width = LIST_WIDTH; wi.g.height = LIST_HEIGHT; wi.g.y = TAB_HEIGHT+5;
-	wi.g.x = 0+0*(LIST_WIDTH+1); wi.text = "L1";
+	wi.g.x = 0+0*(LIST_WIDTH+5); wi.text = "L1";
 	ghList1 = gwinListCreate(0, &wi, FALSE);
 	gwinListAddItem(ghList1, "Item 0", FALSE);
 	gwinListAddItem(ghList1, "Item 1", FALSE);
@@ -208,7 +208,7 @@ static void createWidgets(void) {
 	gwinListAddItem(ghList1, "Item 11", FALSE);
 	gwinListAddItem(ghList1, "Item 12", FALSE);
 	gwinListAddItem(ghList1, "Item 13", FALSE);
-	wi.g.x = 0+1*(LIST_WIDTH+1); wi.text = "L2";
+	wi.g.x = 0+1*(LIST_WIDTH+5); wi.text = "L2";
 	ghList2 = gwinListCreate(0, &wi, TRUE);
 	gwinListAddItem(ghList2, "Item 0", FALSE);
 	gwinListAddItem(ghList2, "Item 1", FALSE);
@@ -224,7 +224,7 @@ static void createWidgets(void) {
 	gwinListAddItem(ghList2, "Item 11", FALSE);
 	gwinListAddItem(ghList2, "Item 12", FALSE);
 	gwinListAddItem(ghList2, "Item 13", FALSE);
-	wi.g.x = 0+2*(LIST_WIDTH+1); wi.text = "L3";
+	wi.g.x = 0+2*(LIST_WIDTH+5); wi.text = "L3";
 	ghList3 = gwinListCreate(0, &wi, TRUE);
 	gwinListAddItem(ghList3, "Item 0", FALSE);
 	gwinListAddItem(ghList3, "Item 1", FALSE);
@@ -233,6 +233,23 @@ static void createWidgets(void) {
 	gdispImageOpenFile(&imgYesNo, "image_yesno.gif");
 	gwinListItemSetImage(ghList3, 1, &imgYesNo);
 	gwinListItemSetImage(ghList3, 3, &imgYesNo);
+	wi.g.x = 0+3*(LIST_WIDTH+5); wi.text = "L2";
+	ghList4 = gwinListCreate(0, &wi, TRUE);
+	gwinListAddItem(ghList4, "Item 0", FALSE);
+	gwinListAddItem(ghList4, "Item 1", FALSE);
+	gwinListAddItem(ghList4, "Item 2", FALSE);
+	gwinListAddItem(ghList4, "Item 3", FALSE);
+	gwinListAddItem(ghList4, "Item 4", FALSE);
+	gwinListAddItem(ghList4, "Item 5", FALSE);
+	gwinListAddItem(ghList4, "Item 6", FALSE);
+	gwinListAddItem(ghList4, "Item 7", FALSE);
+	gwinListAddItem(ghList4, "Item 8", FALSE);
+	gwinListAddItem(ghList4, "Item 9", FALSE);
+	gwinListAddItem(ghList4, "Item 10", FALSE);
+	gwinListAddItem(ghList4, "Item 11", FALSE);
+	gwinListAddItem(ghList4, "Item 12", FALSE);
+	gwinListAddItem(ghList4, "Item 13", FALSE);
+	gwinListSetScroll(ghList4, scrollSmooth);
 
 	// Image
 	wi.g.x = ScrWidth-210; wi.g.y = TAB_HEIGHT + 10; wi.g.width = 200; wi.g.height = 200;
@@ -273,6 +290,7 @@ static void setTab(GHandle tab) {
 	gwinSetVisible(ghList1, FALSE);
 	gwinSetVisible(ghList2, FALSE);
 	gwinSetVisible(ghList3, FALSE);
+	gwinSetVisible(ghList4, FALSE);
 	gwinSetVisible(ghImage1, FALSE);
 
 	/* Turn on widgets depending on the tab selected */
@@ -302,6 +320,7 @@ static void setTab(GHandle tab) {
 		gwinSetVisible(ghList1, TRUE);
 		gwinSetVisible(ghList2, TRUE);
 		gwinSetVisible(ghList3, TRUE);
+		gwinSetVisible(ghList4, TRUE);
 	} else if (tab == ghTabImages) {
 		gwinSetVisible(ghImage1, TRUE);
 	}
@@ -328,6 +347,7 @@ static void setEnabled(bool_t ena) {
 	gwinSetEnabled(ghList1, ena);
 	gwinSetEnabled(ghList2, ena);
 	gwinSetEnabled(ghList3, ena);
+	gwinSetEnabled(ghList4, ena);
 	gwinSetEnabled(ghRadioWhite, ena);
 	gwinSetEnabled(ghRadioBlack, ena);
 	gwinSetEnabled(ghRadioYellow, ena);
