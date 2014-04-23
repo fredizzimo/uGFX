@@ -29,12 +29,21 @@ static void ResetDisplayPos(GProgressbarObject *gsw) {
 		gsw->dpos = ((gsw->w.g.width-1)*(gsw->pos-gsw->min))/(gsw->max-gsw->min);
 }
 
+// We have to deinitialize the timer which auto updates the progressbar if any
+static void _destroy(GHandle gh) {
+	#if GFX_USE_GTIMER
+		gtimerDeinit( &((GProgressbarObject *)gh)->gt );
+	#endif
+
+	_gwidgetDestroy(gh);
+}
+
 // The progressbar VMT table
 static const gwidgetVMT progressbarVMT = {
 	{
 		"Progressbar",				// The classname
 		sizeof(GProgressbarObject),	// The object size
-		_gwidgetDestroy,		// The destroy routine
+		_destroy,		// The destroy routine
 		_gwidgetRedraw,			// The redraw routine
 		0,						// The after-clear routine
 	},
