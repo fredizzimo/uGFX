@@ -267,7 +267,6 @@ static void createWidgets(void) {
 	wi.g.x = 20; wi.text = "Progressbar 1";
 	ghProgressbar1 = gwinProgressbarCreate(0, &wi);
 	gwinProgressbarSetResolution(ghProgressbar1, 10);
-	gwinProgressbarStart(ghProgressbar1, 500);
 
 	// Console - we apply some special colors before making it visible
 	wi.g.width = ScrWidth/2-1; wi.g.height = ScrHeight/2-1;
@@ -306,6 +305,10 @@ static void setTab(GHandle tab) {
 	gwinSetVisible(ghImage1, FALSE);
 	gwinSetVisible(ghProgressbar1, FALSE);
 
+	// Stop the progress bar
+	gwinProgressbarStop(ghProgressbar1);
+	gwinProgressbarReset(ghProgressbar1);
+
 	/* Turn on widgets depending on the tab selected */
 	if (tab == ghTabButtons) {
 		gwinSetVisible(ghButton1, TRUE);
@@ -338,6 +341,9 @@ static void setTab(GHandle tab) {
 		gwinSetVisible(ghImage1, TRUE);
 	} else if (tab == ghTabProgressbar) {
 		gwinSetVisible(ghProgressbar1, TRUE);
+
+		// Start the progress bar
+		gwinProgressbarStart(ghProgressbar1, 500);
 	}
 }
 
