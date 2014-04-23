@@ -78,6 +78,7 @@
 #define GWIN_NEED_IMAGE			TRUE
 #define GWIN_NEED_RADIO			TRUE
 #define GWIN_NEED_LIST			TRUE
+#define GWIN_NEED_PROGRESSBAR	TRUE
 
 /* Features for the GFILE subsystem. */
 #define GFX_USE_GFILE				TRUE

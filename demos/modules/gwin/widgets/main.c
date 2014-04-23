@@ -73,7 +73,7 @@ static const GWidgetStyle YellowWidgetStyle = {
 /* The variables we need */
 static GListener	gl;
 static GHandle		ghConsole;
-static GHandle		ghTabButtons, ghTabSliders, ghTabCheckboxes, ghTabLabels, ghTabRadios, ghTabLists, ghTabImages;
+static GHandle		ghTabButtons, ghTabSliders, ghTabCheckboxes, ghTabLabels, ghTabRadios, ghTabLists, ghTabImages, ghTabProgressbar;
 static GHandle		ghButton1, ghButton2, ghButton3, ghButton4;
 static GHandle		ghSlider1, ghSlider2, ghSlider3, ghSlider4;
 static GHandle		ghCheckbox1, ghCheckbox2, ghCheckDisableAll;
@@ -82,6 +82,7 @@ static GHandle		ghRadio1, ghRadio2;
 static GHandle		ghRadioBlack, ghRadioWhite, ghRadioYellow;
 static GHandle		ghList1, ghList2, ghList3, ghList4;
 static GHandle		ghImage1;
+static GHandle		ghProgressbar1;
 static gdispImage	imgYesNo;
 
 /* Some useful macros */
@@ -118,23 +119,26 @@ static void createWidgets(void) {
 	wi.g.show = TRUE; wi.customDraw = gwinRadioDraw_Tab;
 	wi.g.width = ScrWidth/7; wi.g.height = TAB_HEIGHT; wi.g.y = 0;
 	wi.g.x = 0*wi.g.width; wi.text = "Buttons";
-	ghTabButtons	= gwinRadioCreate(0, &wi, GROUP_TABS);
+	ghTabButtons     = gwinRadioCreate(0, &wi, GROUP_TABS);
 	wi.g.x = 1*wi.g.width; wi.text = "Sliders";
-	ghTabSliders	= gwinRadioCreate(0, &wi, GROUP_TABS);
+	ghTabSliders     = gwinRadioCreate(0, &wi, GROUP_TABS);
 	wi.g.x = 2*wi.g.width; wi.text = "Checkbox";
-	ghTabCheckboxes	= gwinRadioCreate(0, &wi, GROUP_TABS);
+	ghTabCheckboxes  = gwinRadioCreate(0, &wi, GROUP_TABS);
 	wi.g.x = 3*wi.g.width; wi.text = "Radios";
-	ghTabRadios		= gwinRadioCreate(0, &wi, GROUP_TABS);
+	ghTabRadios      = gwinRadioCreate(0, &wi, GROUP_TABS);
 	wi.g.x = 4*wi.g.width; wi.text = "Lists";
-	ghTabLists		= gwinRadioCreate(0, &wi, GROUP_TABS);
+	ghTabLists       = gwinRadioCreate(0, &wi, GROUP_TABS);
 	wi.g.x = 5*wi.g.width; wi.text = "Labels";
-	ghTabLabels		= gwinRadioCreate(0, &wi, GROUP_TABS);
+	ghTabLabels      = gwinRadioCreate(0, &wi, GROUP_TABS);
 	wi.g.x = 6*wi.g.width; wi.text = "Images";
-	ghTabImages		= gwinRadioCreate(0, &wi, GROUP_TABS);
+	ghTabImages      = gwinRadioCreate(0, &wi, GROUP_TABS);
+	wi.g.y = TAB_HEIGHT;
+	wi.g.x = 0*wi.g.width; wi.text = "Progressbar";
+	ghTabProgressbar = gwinRadioCreate(0, &wi, GROUP_TABS);
 
 	// Buttons
 	wi.g.show = FALSE; wi.customDraw = 0;
-	wi.g.width = BUTTON_WIDTH; wi.g.height = BUTTON_HEIGHT; wi.g.y = TAB_HEIGHT+5;
+	wi.g.width = BUTTON_WIDTH; wi.g.height = BUTTON_HEIGHT; wi.g.y = 2*TAB_HEIGHT+10;
 	wi.g.x = 0+0*(BUTTON_WIDTH+1); wi.text = "B1";
 	ghButton1 = gwinButtonCreate(0, &wi);
 	wi.g.x = 0+1*(BUTTON_WIDTH+1); wi.text = "B2";
@@ -160,22 +164,22 @@ static void createWidgets(void) {
 
 	// Checkboxes - for the 2nd checkbox we apply special drawing before making it visible
 	wi.g.width = CHECKBOX_WIDTH; wi.g.height = CHECKBOX_HEIGHT; wi.g.x = 0;
-	wi.g.y = TAB_HEIGHT+5+0*(CHECKBOX_HEIGHT+1); wi.text = "C1";
+	wi.g.y = 2*TAB_HEIGHT+10+0*(CHECKBOX_HEIGHT+1); wi.text = "C1";
 	ghCheckbox1 = gwinCheckboxCreate(0, &wi);
 	wi.customDraw = gwinCheckboxDraw_CheckOnRight;
-	wi.g.y = TAB_HEIGHT+5+1*(CHECKBOX_HEIGHT+1); wi.text = "C2";
+	wi.g.y = 2*TAB_HEIGHT+10+1*(CHECKBOX_HEIGHT+1); wi.text = "C2";
 	ghCheckbox2 = gwinCheckboxCreate(0, &wi);
 	wi.customDraw = 0; wi.g.width = DISABLEALL_WIDTH;
-	wi.g.y = TAB_HEIGHT+5+2*(CHECKBOX_HEIGHT+1); wi.text = "Disable All";
+	wi.g.y = 2*TAB_HEIGHT+10+2*(CHECKBOX_HEIGHT+1); wi.text = "Disable All";
 	ghCheckDisableAll = gwinCheckboxCreate(0, &wi);
 
     // Labels
 	wi.g.width = 0;	wi.g.height = LABEL_HEIGHT;	// dynamic width, fixed height
-	wi.g.y = TAB_HEIGHT+5+2*(CHECKBOX_HEIGHT+1); wi.text = "Label";
+	wi.g.y = 2*TAB_HEIGHT+10+2*(CHECKBOX_HEIGHT+1); wi.text = "Label";
 	ghLabel1 = gwinLabelCreate(0, &wi);
 
 	// Radio Buttons
-	wi.g.width = RADIO_WIDTH; wi.g.height = RADIO_HEIGHT; wi.g.y = TAB_HEIGHT+5;
+	wi.g.width = RADIO_WIDTH; wi.g.height = RADIO_HEIGHT; wi.g.y = 2*TAB_HEIGHT+10;
 	wi.g.x = 0*wi.g.width; wi.text = "Yes";
 	ghRadio1 = gwinRadioCreate(0, &wi, GROUP_YESNO);
 	wi.g.x = 1*wi.g.width; wi.text = "No";
@@ -191,7 +195,7 @@ static void createWidgets(void) {
 
 	// Lists
 	wi.g.show = FALSE; wi.customDraw = 0;
-	wi.g.width = LIST_WIDTH; wi.g.height = LIST_HEIGHT; wi.g.y = TAB_HEIGHT+5;
+	wi.g.width = LIST_WIDTH; wi.g.height = LIST_HEIGHT; wi.g.y = 2*TAB_HEIGHT+10;
 	wi.g.x = 0+0*(LIST_WIDTH+5); wi.text = "L1";
 	ghList1 = gwinListCreate(0, &wi, FALSE);
 	gwinListAddItem(ghList1, "Item 0", FALSE);
@@ -252,10 +256,18 @@ static void createWidgets(void) {
 	gwinListSetScroll(ghList4, scrollSmooth);
 
 	// Image
-	wi.g.x = ScrWidth-210; wi.g.y = TAB_HEIGHT + 10; wi.g.width = 200; wi.g.height = 200;
+	wi.g.x = ScrWidth-210; wi.g.y = 2*TAB_HEIGHT + 10; wi.g.width = 200; wi.g.height = 200;
 	ghImage1 = gwinImageCreate(0, &wi.g);
 	gwinImageOpenFile(ghImage1, "chibios.bmp");
 	gwinImageCache(ghImage1);
+
+	// Progressbar
+	wi.g.show = FALSE; wi.customDraw = 0;
+	wi.g.width = 200; wi.g.height = 20; wi.g.y = 2*TAB_HEIGHT+10;
+	wi.g.x = 20; wi.text = "Progressbar 1";
+	ghProgressbar1 = gwinProgressbarCreate(0, &wi);
+	gwinProgressbarSetResolution(ghProgressbar1, 10);
+	gwinProgressbarStart(ghProgressbar1, 500);
 
 	// Console - we apply some special colors before making it visible
 	wi.g.width = ScrWidth/2-1; wi.g.height = ScrHeight/2-1;
@@ -292,6 +304,7 @@ static void setTab(GHandle tab) {
 	gwinSetVisible(ghList3, FALSE);
 	gwinSetVisible(ghList4, FALSE);
 	gwinSetVisible(ghImage1, FALSE);
+	gwinSetVisible(ghProgressbar1, FALSE);
 
 	/* Turn on widgets depending on the tab selected */
 	if (tab == ghTabButtons) {
@@ -323,6 +336,8 @@ static void setTab(GHandle tab) {
 		gwinSetVisible(ghList4, TRUE);
 	} else if (tab == ghTabImages) {
 		gwinSetVisible(ghImage1, TRUE);
+	} else if (tab == ghTabProgressbar) {
+		gwinSetVisible(ghProgressbar1, TRUE);
 	}
 }
 
