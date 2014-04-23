@@ -21,7 +21,7 @@ DEPRECTATE:	Old image opening functions deprecated.
 FEATURE:	Restructure and simplify the include path for GFX
 FEATURE:	Added LGDP4532 driver by user shilow
 FEATURE:	Support for ChibiOS/RT 3.x
-FEATURE:	Added gwinProgressbarStop()
+FEATURE:	Added gwinProgressbarStop() and gwinProgressbarReset()
 
 
 *** changes after 1.9 ***

@@ -138,6 +138,15 @@ void gwinProgressbarDecrement(GHandle gh);
  */
 #define gwinProgressbarGetPosition(gh)		(((GProgressbarObject *)(gh))->pos)
 
+ /**
+  * @brief	Reset the progressbar to the minimum position
+  *
+  * @param[in] gh		The window handle (must be a progressbar window)
+  *
+  * @api
+  */
+#define gwinProgressbarReset(gh)			gwinProgressbarSetPosition(gh, ((GProgressbarObject *)(gh))->min)
+
 /**
  * @brief	Automatically increments the progress bar
  *
