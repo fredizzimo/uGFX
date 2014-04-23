@@ -200,6 +200,17 @@ void gwinProgressbarStart(GHandle gh, delaytime_t delay) {
 	#undef gsw
 }
 
+void gwinProgressbarStop(GHandle gh) {
+	#define gsw		((GProgressbarObject *)gh)
+
+	if (gh->vmt != (gwinVMT *)&progressbarVMT)
+		return;
+
+	gtimerStop(&(gsw->gt));
+
+	#undef gsw
+}
+
 /*----------------------------------------------------------
  * Custom Draw Routines
  *----------------------------------------------------------*/

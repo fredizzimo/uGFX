@@ -156,6 +156,15 @@ void gwinProgressbarDecrement(GHandle gh);
 void gwinProgressbarStart(GHandle gh, delaytime_t delay);
 
 /**
+ * @brief	Stop the timer which is started by @p gwinProgressbarStart()
+ *
+ * @param[in] gh		The window handle (must be a progressbar window)
+ *
+ * @api
+ */		
+void gwinProgressbarStop(GHandle gh);
+
+/**
  * @brief	Some custom progressbar drawing routines
  * @details	These function may be passed to @p gwinSetCustomDraw() to get different progressbar drawing styles
  *
