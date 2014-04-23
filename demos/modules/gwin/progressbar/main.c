@@ -26,6 +26,9 @@ int main(void) {
 	gwinProgressbarSetResolution(ghProgressbar, 10);
 	gwinProgressbarStart(ghProgressbar, 500);
 
+	gfxSleepMilliseconds(3000);
+	gwinProgressbarReset(ghProgressbar);
+
 	//gwinProgressbarSetPosition(ghProgressbar, 42);
 	//gwinProgressbarIncrement(ghProgressbar);
 	//gwinProgressbarDecrement(ghProgressbar);
