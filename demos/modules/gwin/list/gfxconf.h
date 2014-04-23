@@ -45,7 +45,7 @@
 #define GWIN_NEED_WIDGET                             TRUE
     #define GWIN_NEED_LABEL                          TRUE
     #define GWIN_NEED_LIST                           TRUE
-        #define GWIN_NEED_LIST_IMAGES                TRUE
+        #define GWIN_NEED_LIST_IMAGES                FALSE
 
 
 ///////////////////////////////////////////////////////////////////////////
@@ -91,4 +91,3 @@
 #define GFX_USE_GMISC                                FALSE
 
 #endif /* _GFXCONF_H */
-
