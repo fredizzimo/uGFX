@@ -49,17 +49,152 @@ extern GFILE *gfileStdOut;
 extern "C" {
 #endif
 
+	/**
+	 * @brief					Check if file exists
+	 * 
+	 * @param[in] fname			The file name
+	 * 
+	 * @return					TRUE if file exists, FALSE otherwise
+	 * 
+	 * @api
+	 */
 	bool_t		gfileExists(const char *fname);
+
+	/**
+	 * @brief					Delete file
+	 * 
+	 * @param[in] fname			The file name
+	 * 
+	 * @return					TRUE on success, FALSE otherwise
+	 * 
+	 * @api
+	 */
 	bool_t		gfileDelete(const char *fname);
+
+	/**
+	 * @brief					Get the size of a file
+	 * @note					Please use @p gfileGetSize() if the file is not opened
+	 * 
+	 * @param[in] fname			The file name
+	 * 
+	 * @return					File size on success, -1 on error
+	 * 
+	 * @api
+	 */
 	long int	gfileGetFilesize(const char *fname);
+
+	/**
+	 * @brief					Rename file
+	 *
+	 * @param[in] oldname		The current file name
+	 * @param[in] newname		The new name of the file
+	 *
+	 * @return					TRUE on success, FALSE otherwise
+	 *
+	 * @api
+	 */
 	bool_t		gfileRename(const char *oldname, const char *newname);
+
+	/**
+	 * @brief					Open file
+	 * @details					A file must be opened before it can be accessed
+	 * @details					ToDo (document possible modes)
+	 * @details					The resulting GFILE will be used for all functions that access the file.
+	 *
+	 * @param[in] fname			The file name
+	 * @param[in] mode			The mode
+	 *
+	 * @return					Valid GFILE on success, 0 otherwise
+	 *
+	 * @api
+	 */	
 	GFILE *		gfileOpen(const char *fname, const char *mode);
+
+	/**
+	 * @brief					Close file
+	 * @details					Closes a file after is has been opened using @p gfileOpen()
+	 *
+	 * @param[in] f				The file
+	 *
+	 * @api
+	 */
 	void		gfileClose(GFILE *f);
+
+	/**
+	 * @brief					Read from file
+	 * @details					Reads a given amount of bytes from the file
+	 * @details					The read/write cursor will not be reset when calling this function
+	 *
+	 * @param[in] f				The file
+	 * @param[out] buf			The buffer in which to save the content that has been read from the file
+	 * @param[in] len			Amount of bytes to read
+	 *
+	 * @return					Amount of bytes read
+	 *
+	 * @api
+	 */
 	size_t		gfileRead(GFILE *f, void *buf, size_t len);
+
+	/**
+	 * @brief					Write to file
+	 * @details					Write a given amount of bytes to the file
+	 * @details					The read/write cursor will not be reset when calling this function
+	 *
+	 * @param[in] f				The file
+	 * @param[in] buf			The buffer which contains the content that will be written to the file
+	 * @param[in] len			Amount of bytes to write
+	 *
+	 * @return					Amount of bytes written
+	 *
+	 * @api
+	 */
 	size_t		gfileWrite(GFILE *f, const void *buf, size_t len);
+
+	/**
+	 * @brief					Get the current position of the read/write cursor
+	 *
+	 * @param[in] f				The file
+	 *
+	 * @return					The current position in the file
+	 *
+	 * @api
+	 */
 	long int	gfileGetPos(GFILE *f);
+
+	/**
+	 * @brief					Set the position of the read/write cursor
+	 *
+	 * @param[in] f				The file
+	 * @param[in] pos			The position to which the cursor will be set
+	 *
+	 * @return					TRUE on success, FALSE otherwise
+	 *
+	 * @api
+	 */
 	bool_t		gfileSetPos(GFILE *f, long int pos);
+
+	/**
+	 * @brief					Get the size of file
+	 * @note					Please use @p gfileGetFilesize() if the file is not opened
+	 *
+	 * @param[in] f				The file
+	 *
+	 * @return					The size of the file
+	 *
+	 * @api
+	 */
 	long int	gfileGetSize(GFILE *f);
+
+	/**
+	 * @brief					Check for EOF
+	 * @details					Checks if the cursor is at the end of the file
+	 *
+	 * @param[in] f				The file
+	 *
+	 * @return					TRUE if EOF, FALSE otherwise
+	 *
+	 * @api
+	 */
 	bool_t		gfileEOF(GFILE *f);
 
 	#if GFILE_NEED_CHIBIOSFS && GFX_USE_OS_CHIBIOS
