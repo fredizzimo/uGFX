@@ -52,10 +52,6 @@ static void createWidgets(void) {
 	wi.text = "List 2: Smooth scrolling";
 	ghLabel1 = gwinLabelCreate(NULL, &wi);
 
-	// Make list widgets invisible by default as they would issue
-	// a re-render at every time an item is added
-	wi.g.show = FALSE;
-
 	// The first list widget
 	wi.g.width = 150;
 	wi.g.height = 100;
@@ -112,6 +108,9 @@ int main(void) {
 	gwinListAddItem(ghList1, "Item 13", FALSE);
 
 	// Add some items to the second list widget
+	// This time we will disable the render until
+	// all the items have been added
+	gwinListEnableRender(ghList2, FALSE);
 	gwinListAddItem(ghList2, "Item 0", FALSE);
 	gwinListAddItem(ghList2, "Item 1", FALSE);
 	gwinListAddItem(ghList2, "Item 2", FALSE);
@@ -126,10 +125,7 @@ int main(void) {
 	gwinListAddItem(ghList2, "Item 11", FALSE);
 	gwinListAddItem(ghList2, "Item 12", FALSE);
 	gwinListAddItem(ghList2, "Item 13", FALSE);
-	
-	// Make all the lists visible
-	gwinSetVisible(ghList1, TRUE);
-	gwinSetVisible(ghList2, TRUE);
+	gwinListEnableRender(ghList2, TRUE);
 
 	while(1) {
 		// Get an Event
