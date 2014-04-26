@@ -372,6 +372,7 @@ static void setEnabled(bool_t ena) {
 	gwinSetEnabled(ghRadioBlack, ena);
 	gwinSetEnabled(ghRadioYellow, ena);
 	gwinSetEnabled(ghImage1, ena);
+	gwinSetEnabled(ghProgressbar1, ena);
 }
 
 int main(void) {
