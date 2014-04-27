@@ -85,7 +85,7 @@ static HANDLE			drawMutex;
 	#define WIN32_BUTTON_AREA		0
 #endif
 
-#define APP_NAME "uGFX"
+#define APP_NAME "uGFX Simulator"
 
 typedef struct winPriv {
 	HWND			hwnd;
