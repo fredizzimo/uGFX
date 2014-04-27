@@ -41,6 +41,7 @@
 #define GLIST_FLG_HASIMAGES			(GWIN_FIRST_CONTROL_FLAG << 1)
 #define GLIST_FLG_SCROLLALWAYS		(GWIN_FIRST_CONTROL_FLAG << 2)
 #define GLIST_FLG_SCROLLSMOOTH      (GWIN_FIRST_CONTROL_FLAG << 3)
+#define GLIST_FLG_ENABLERENDER      (GWIN_FIRST_CONTROL_FLAG << 4)
 
 // Flags on a ListItem.
 #define GLIST_FLG_SELECTED			0x0001
@@ -91,6 +92,11 @@ static void gwinListDefaultDraw(GWidgetObject* gw, void* param) {
 	#if GWIN_NEED_LIST_IMAGES
 		coord_t					sy;
 	#endif
+
+	// dont render if render has been disabled
+	if (!(gw->g.flags & GLIST_FLG_ENABLERENDER)) {
+		return;
+	}
 
 	ps = (gw->g.flags & GWIN_FLG_ENABLED) ? &gw->pstyle->enabled : &gw->pstyle->disabled;
 	iheight = gdispGetFontMetric(gw->g.font, fontHeight) + VERTICAL_PADDING;
@@ -401,10 +407,24 @@ GHandle gwinGListCreate(GDisplay *g, GListObject* gobj, GWidgetInit* pInit, bool
 	if (multiselect)
 		gobj->w.g.flags |= GLIST_FLG_MULTISELECT;
 	gobj->w.g.flags |= GLIST_FLG_SCROLLALWAYS;
+	gobj->w.g.flags |= GLIST_FLG_ENABLERENDER;
 
 	gwinSetVisible(&gobj->w.g, pInit->g.show);
 
 	return (GHandle)gobj;
+}
+
+void gwinListEnableRender(GHandle gh, bool_t ena) {
+	// is it a valid handle?
+	if (gh->vmt != (gwinVMT *)&listVMT)
+		return;
+
+	if (ena) {
+		gh->flags |= GLIST_FLG_ENABLERENDER;
+		gwinRedraw(gh);
+	} else {
+		gh->flags &=~ GLIST_FLG_ENABLERENDER;
+	}
 }
 
 void gwinListSetScroll(GHandle gh, scroll_t flag) {

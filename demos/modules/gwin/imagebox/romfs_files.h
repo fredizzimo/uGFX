@@ -4,5 +4,4 @@
  * The files have been converted using...
  * 		file2c -dbcs infile outfile
  */
-#include "romfs_img_ugfx.h"
-#include "romfs_img_yesno.h"
+#include "ugfx_logo_banner.h"

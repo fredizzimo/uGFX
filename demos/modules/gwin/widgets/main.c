@@ -256,10 +256,9 @@ static void createWidgets(void) {
 	gwinListSetScroll(ghList4, scrollSmooth);
 
 	// Image
-	wi.g.x = ScrWidth-210; wi.g.y = 2*TAB_HEIGHT + 10; wi.g.width = 200; wi.g.height = 200;
+	wi.g.x = 20; wi.g.y = 2*TAB_HEIGHT+20; wi.g.width = 200; wi.g.height = 100;
 	ghImage1 = gwinImageCreate(0, &wi.g);
-	gwinImageOpenFile(ghImage1, "chibios.bmp");
-	gwinImageCache(ghImage1);
+	gwinImageOpenFile(ghImage1, "romfs_img_ugfx.bmp");
 
 	// Progressbar
 	wi.g.show = FALSE; wi.customDraw = 0;
@@ -373,6 +372,7 @@ static void setEnabled(bool_t ena) {
 	gwinSetEnabled(ghRadioBlack, ena);
 	gwinSetEnabled(ghRadioYellow, ena);
 	gwinSetEnabled(ghImage1, ena);
+	gwinSetEnabled(ghProgressbar1, ena);
 }
 
 int main(void) {

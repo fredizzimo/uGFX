@@ -22,6 +22,8 @@ FEATURE:	Restructure and simplify the include path for GFX
 FEATURE:	Added LGDP4532 driver by user shilow
 FEATURE:	Support for ChibiOS/RT 3.x
 FEATURE:	Added gwinProgressbarStop() and gwinProgressbarReset()
+FEATURE:	Added generic ILI93xx driver by xlh1460
+FEATURE:	Added gwinListEnableRender()
 
 
 *** changes after 1.9 ***

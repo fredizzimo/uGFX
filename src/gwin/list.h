@@ -103,6 +103,20 @@ GHandle gwinGListCreate(GDisplay *g, GListObject *widget, GWidgetInit *pInit, bo
 #define gwinListCreate(w, pInit, m)			gwinGListCreate(GDISP, w, pInit, m)
 
 /**
+ * @brief				Enable or disable the rendering of the list
+ *
+ * @details				Usually the list is being re-rendered when an item is added to the list. This can cause
+ * 						flickering and performance issues when many items are added at once. This can be prevented
+ *						by temporarely disabling the render using this function.
+ *
+ * @param[in] gh		The widget handle (must be a list handle)
+ * @param[in] ena		TRUE or FALSE
+ *
+ * @api
+ */
+void gwinListEnableRender(GHandle gh, bool_t ena);
+
+/**
  * @brief				Change the behaviour of the scroll bar
  *
  * @note				Current possible values: @p scrollAlways, @p scrollAuto and  @p scrollSmooth

@@ -34,20 +34,20 @@
 #define GDISP_NEED_TIMERFLUSH                        FALSE
 #define GDISP_NEED_VALIDATION                        TRUE
 #define GDISP_NEED_CLIP                              TRUE
-#define GDISP_NEED_CIRCLE                            TRUE
+#define GDISP_NEED_CIRCLE                            FALSE
 #define GDISP_NEED_ELLIPSE                           FALSE
 #define GDISP_NEED_ARC                               FALSE
-#define GDISP_NEED_CONVEX_POLYGON                    TRUE
+#define GDISP_NEED_CONVEX_POLYGON                    FALSE
 #define GDISP_NEED_SCROLL                            FALSE
 #define GDISP_NEED_PIXELREAD                         FALSE
-#define GDISP_NEED_CONTROL                           TRUE
+#define GDISP_NEED_CONTROL                           FALSE
 #define GDISP_NEED_QUERY                             FALSE
 #define GDISP_NEED_MULTITHREAD                       FALSE
 #define GDISP_NEED_STREAMING                         FALSE
 #define GDISP_NEED_TEXT                              TRUE
-    #define GDISP_NEED_ANTIALIAS                     TRUE
-    #define GDISP_NEED_UTF8                          TRUE
-    #define GDISP_NEED_TEXT_KERNING                  TRUE
+    #define GDISP_NEED_ANTIALIAS                     FALSE
+    #define GDISP_NEED_UTF8                          FALSE
+    #define GDISP_NEED_TEXT_KERNING                  FALSE
     #define GDISP_INCLUDE_FONT_UI1                   FALSE
     #define GDISP_INCLUDE_FONT_UI2                   TRUE
     #define GDISP_INCLUDE_FONT_LARGENUMBERS          FALSE
@@ -83,7 +83,7 @@
     #define GDISP_NEED_IMAGE_PNG                     FALSE
     #define GDISP_NEED_IMAGE_ACCOUNTING              FALSE
 
-#define GDISP_NEED_STARTUP_LOGO                      FALSE
+#define GDISP_NEED_STARTUP_LOGO                      TRUE
 
 #define GDISP_DEFAULT_ORIENTATION                    GDISP_ROTATE_LANDSCAPE
 #define GDISP_LINEBUF_SIZE                           128
@@ -125,27 +125,27 @@
 
 #define GWIN_NEED_WINDOWMANAGER                      TRUE
 
-#define GWIN_NEED_CONSOLE                            TRUE
+#define GWIN_NEED_CONSOLE                            FALSE
     #define GWIN_CONSOLE_USE_HISTORY                 FALSE
         #define GWIN_CONSOLE_HISTORY_AVERAGING       FALSE
         #define GWIN_CONSOLE_HISTORY_ATCREATE        FALSE
     #define GWIN_CONSOLE_ESCSEQ                      FALSE
 	#define GWIN_CONSOLE_USE_BASESTREAM              FALSE
     #define GWIN_CONSOLE_USE_FLOAT                   FALSE
-#define GWIN_NEED_GRAPH                              TRUE
+#define GWIN_NEED_GRAPH                              FALSE
 
 #define GWIN_NEED_WIDGET                             TRUE
-    #define GWIN_NEED_LABEL                          TRUE
-    #define GWIN_NEED_BUTTON                         TRUE
+    #define GWIN_NEED_LABEL                          FALSE
+    #define GWIN_NEED_BUTTON                         FALSE
         #define GWIN_BUTTON_LAZY_RELEASE             FALSE
-    #define GWIN_NEED_SLIDER                         TRUE
-    #define GWIN_NEED_CHECKBOX                       TRUE
+    #define GWIN_NEED_SLIDER                         FALSE
+    #define GWIN_NEED_CHECKBOX                       FALSE
     #define GWIN_NEED_IMAGE                          TRUE
         #define GWIN_NEED_IMAGE_ANIMATION            TRUE
-    #define GWIN_NEED_RADIO                          TRUE
-    #define GWIN_NEED_LIST                           TRUE
-        #define GWIN_NEED_LIST_IMAGES                TRUE
-    #define GWIN_NEED_PROGRESSBAR                    TRUE
+    #define GWIN_NEED_RADIO                          FALSE
+    #define GWIN_NEED_LIST                           FALSE
+        #define GWIN_NEED_LIST_IMAGES                FALSE
+    #define GWIN_NEED_PROGRESSBAR                    FALSE
 
 
 ///////////////////////////////////////////////////////////////////////////
