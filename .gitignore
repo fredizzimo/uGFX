@@ -4,6 +4,7 @@ build
 .dep
 .cproject
 .project
+*.sublime*
 *.stackdump
 *.lst
 *.o
