@@ -73,7 +73,7 @@ void gwinLabelSetBorder(GHandle gh, bool_t border);
 	 * @brief               Add an attribute in front of the actualy label text
 	 * @detail              Often you want to display a text like this:
 	 *                          Current IP: 192.168.1.42
-	 *                      In that case, one the actual IP will be variable, the text in front of it
+	 *                      In that case, the actual IP will be variable, the text in front of it
 	 *                      always remains the same. The static text is called the attribute and can be
 	 *                      set using this function.
 	 *                      Furthermore, the tab can be set in order to vertically align multiple labels.
