@@ -135,7 +135,9 @@
 #define GWIN_NEED_GRAPH                              FALSE
 
 #define GWIN_NEED_WIDGET                             FALSE
+    #define GWIN_NEED_HIERARCHY                      FALSE
     #define GWIN_NEED_LABEL                          FALSE
+        #define GWIN_LABEL_ATTRIBUTE                 FALSE
     #define GWIN_NEED_BUTTON                         FALSE
         #define GWIN_BUTTON_LAZY_RELEASE             FALSE
     #define GWIN_NEED_SLIDER                         FALSE
@@ -146,6 +148,7 @@
     #define GWIN_NEED_LIST                           FALSE
         #define GWIN_NEED_LIST_IMAGES                FALSE
     #define GWIN_NEED_PROGRESSBAR                    FALSE
+    #define GWIN_NEED_FRAME                          FALSE
 
 
 ///////////////////////////////////////////////////////////////////////////
