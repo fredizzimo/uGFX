@@ -164,7 +164,7 @@ void gwinLabelSetBorder(GHandle gh, bool_t border) {
 }
 
 #if GWIN_LABEL_ATTRIBUTE
-	void gwinLabelSetAttribute(GHandle gh, coord_t tab, char* attr) {
+	void gwinLabelSetAttribute(GHandle gh, coord_t tab, const char* attr) {
 		// is it a valid handle?
 		if (gh->vmt != (gwinVMT *)&labelVMT)
 			return;

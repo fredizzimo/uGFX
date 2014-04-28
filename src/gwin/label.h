@@ -35,7 +35,7 @@ typedef struct GLabelObject {
 
 	#if GWIN_LABEL_ATTRIBUTE
 		coord_t         tab;
-		char*			attr;
+		const char*		attr;
 	#endif
 } GLabelObject;
 
@@ -70,7 +70,7 @@ void gwinLabelSetBorder(GHandle gh, bool_t border);
 
 #if GWIN_LABEL_ATTRIBUTE
 	/**
-	 * @brief               Add an attribute in front of the actualy label text
+	 * @brief               Add an text attribute in front of the normal label text
 	 * @detail              Often you want to display a text like this:
 	 *                          Current IP: 192.168.1.42
 	 *                      In that case, the actual IP will be variable, the text in front of it
@@ -80,7 +80,11 @@ void gwinLabelSetBorder(GHandle gh, bool_t border);
 	 *                      Please check out the website for further explanation, illustraions and usage
 	 *                      examples.
 	 *
-	 * @note                The attribute text is currently not being allocated
+	 * @note                The attribute text is not copied into private memory and so it
+	 *						must be a constant string, not one allocated in a stack buffer.
+	 * @note				Use of this construct is discouraged. The appropriate way is to
+	 *						create two labels - one for the static text and one for the
+	 *						dynamic text.
 	 *
 	 * @param[in] gh        The widget handle (must be a label handle)
 	 * @param[in] tab       The distance of the label text from the left widget edge
@@ -88,7 +92,7 @@ void gwinLabelSetBorder(GHandle gh, bool_t border);
 	 *
 	 * @api
 	 */
-	void gwinLabelSetAttribute(GHandle gh, coord_t tab, char* attr);
+	void gwinLabelSetAttribute(GHandle gh, coord_t tab, const char* attr);
 #endif 
 
 #ifdef __cplusplus
