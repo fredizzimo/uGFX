@@ -68,10 +68,10 @@ GHandle gwinGLabelCreate(GDisplay *g, GLabelObject *widget, GWidgetInit *pInit);
  */
 void gwinLabelSetBorder(GHandle gh, bool_t border);
 
-#if GWIN_LABEL_ATTRIBUTE
+#if GWIN_LABEL_ATTRIBUTE || defined(__DOXYGEN__)
 	/**
 	 * @brief               Add an text attribute in front of the normal label text
-	 * @detail              Often you want to display a text like this:
+	 * @details              Often you want to display a text like this:
 	 *                          Current IP: 192.168.1.42
 	 *                      In that case, the actual IP will be variable, the text in front of it
 	 *                      always remains the same. The static text is called the attribute and can be
