@@ -3,7 +3,8 @@ running under ChibiOS with the ILI9341 display.
 
 On this board uGFX currently supports:
 	- GDISP via the ILI9341 display
-	- GINPUT-touch via the MCU driver 
+	- GINPUT-touch via the MCU driver
+	- GAUDIO (play only) via the vs1053 driver 
 
 Note there are two variants of this board - one with the ILI9341 display
 	and an older one with a different display. This one is for the ILI9341 display.
