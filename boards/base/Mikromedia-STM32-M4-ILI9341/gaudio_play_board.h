@@ -28,7 +28,7 @@ static const SPIConfig spicfg = {
     0,
 	GPIOC,
 	GPIOC_MP3_CS,
-    0,
+	SPI_CR1_BR_0,
 };
 
 // Initialise the board
