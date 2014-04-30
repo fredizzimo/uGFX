@@ -10,7 +10,7 @@ FEATURE:	Added gdispGDrawThickLine() by user jpa-
 DEPRECATE:	TDISP module removed
 FIX:		Console does not execute gwinPrintf() anymore if not visible
 FEATURE:	Added gwinGetColor() and gwinGetBgColor()
-FEATURE:	Console does now have an optional buffer (GWIN_CONSOLE_USE_HISTORY)
+FEATURE:	Console now has an optional backing store buffer (GWIN_CONSOLE_USE_HISTORY)
 FEATURE:	Added smooth scrolling to list widget
 FEATURE:	Increased performance of gwinListAddItem()
 FEATURE:	Added FreeRTOS port
@@ -20,6 +20,19 @@ FEATURE:	New GFILE module to abstract File IO.
 FEATURE:	Image file handling changed to use new GFILE module.
 DEPRECTATE:	Old image opening functions deprecated.
 FEATURE:	Restructure and simplify the include path for GFX
+FEATURE:	Added LGDP4532 driver by user shilow
+FIX:		Updated board files to support api changes in ChibiOS/RT 2.6.4
+FEATURE:	Support for ChibiOS/RT 3.x
+FEATURE:	Added gwinProgressbarStop() and gwinProgressbarReset()
+FEATURE:	Added generic ILI93xx driver by xlh1460
+FEATURE:	Added gwinListEnableRender()
+FEATURE:	Added gwinLabelSetAttribute()
+FEATURE:	Complete restructure of the GAUDIN and GAUDOUT into a common GAUDIO module
+FEATURE:	Added a PWM audio play driver
+FEATURE:	Update GADC audio recording driver to new GAUDIO format
+FEATURE:	Added vs1053 audio play driver
+FEATURE:	Added GAUDIO wave-play demo
+FEATURE:	Added many GWIN simple demo's and updated the combined widget demo
 
 
 *** changes after 1.9 ***

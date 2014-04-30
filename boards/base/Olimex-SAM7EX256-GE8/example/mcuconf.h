@@ -52,6 +52,10 @@
 /*
  * PWM driver system settings.
  */
+#define PWM_USE_PWM1				TRUE		// used by audio-out
+#define PWM_USE_PWM2				TRUE		// used by back-light
+#define PWM_USE_PWM3				FALSE
+#define PWM_USE_PWM4				FALSE
 
 /*
  * SERIAL driver system settings.
@@ -69,3 +73,10 @@
 #define AT91SAM7_SPI_USE_SPI1       FALSE
 #define AT91SAM7_SPI0_PRIORITY      (AT91C_AIC_PRIOR_HIGHEST - 1)
 #define AT91SAM7_SPI1_PRIORITY      (AT91C_AIC_PRIOR_HIGHEST - 1)
+
+/*
+ * GPT driver system settings.
+ */
+#define AT91_GPT_USE_TC0                  FALSE			// used internally by ADC driver
+#define AT91_GPT_USE_TC1                  TRUE			// uGFX used for audio-out
+#define AT91_GPT_USE_TC2                  FALSE

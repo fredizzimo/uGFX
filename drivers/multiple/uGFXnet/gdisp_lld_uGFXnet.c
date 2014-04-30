@@ -5,10 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    drivers/multiple/Win32/gdisp_lld.c
- * @brief   GDISP Graphics Driver subsystem low level driver source for uGFX network display.
- */
 #include "gfx.h"
 
 #if GFX_USE_GDISP

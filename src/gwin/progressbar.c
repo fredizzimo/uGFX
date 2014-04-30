@@ -29,12 +29,21 @@ static void ResetDisplayPos(GProgressbarObject *gsw) {
 		gsw->dpos = ((gsw->w.g.width-1)*(gsw->pos-gsw->min))/(gsw->max-gsw->min);
 }
 
+// We have to deinitialize the timer which auto updates the progressbar if any
+static void _destroy(GHandle gh) {
+	#if GFX_USE_GTIMER
+		gtimerDeinit( &((GProgressbarObject *)gh)->gt );
+	#endif
+
+	_gwidgetDestroy(gh);
+}
+
 // The progressbar VMT table
 static const gwidgetVMT progressbarVMT = {
 	{
 		"Progressbar",				// The classname
 		sizeof(GProgressbarObject),	// The object size
-		_gwidgetDestroy,		// The destroy routine
+		_destroy,		// The destroy routine
 		_gwidgetRedraw,			// The redraw routine
 		0,						// The after-clear routine
 	},
@@ -197,6 +206,23 @@ void gwinProgressbarStart(GHandle gh, delaytime_t delay) {
 	gtimerInit(&(gsw->gt));
 	gtimerStart(&(gsw->gt), _progressbarCallback, gh, FALSE, gsw->delay);
 
+	// if this is not made, the progressbar will not start when the it's already visible
+	if (gsw->w.g.flags & GWIN_FLG_VISIBLE) {
+		gwinSetVisible(gh, FALSE);
+		gwinSetVisible(gh, TRUE);
+	}
+
+	#undef gsw
+}
+
+void gwinProgressbarStop(GHandle gh) {
+	#define gsw		((GProgressbarObject *)gh)
+
+	if (gh->vmt != (gwinVMT *)&progressbarVMT)
+		return;
+
+	gtimerStop(&(gsw->gt));
+
 	#undef gsw
 }
 
@@ -206,33 +232,43 @@ void gwinProgressbarStart(GHandle gh, delaytime_t delay) {
 
 void gwinProgressbarDraw_Std(GWidgetObject *gw, void *param) {
 	#define gsw			((GProgressbarObject *)gw)
+	
 	const GColorSet *	pcol;
 	(void)				param;
 
 	if (gw->g.vmt != (gwinVMT *)&progressbarVMT)
 		return;
 
-	if ((gw->g.flags & GWIN_FLG_ENABLED))
+	// disable the auto-update timer if any
+	#if GFX_USE_GTIMER
+		if (gtimerIsActive(&(gsw->gt)) && !(gw->g.flags & GWIN_FLG_ENABLED)) {
+			gtimerStop(&(gsw->gt));
+		}
+	#endif
+
+	// get the colors right
+	if ((gw->g.flags & GWIN_FLG_ENABLED)) 
 		pcol = &gw->pstyle->pressed;
 	else
 		pcol = &gw->pstyle->disabled;
 
-	if (gw->g.width < gw->g.height) {			// Vertical progressbar
+	// Vertical progressbar
+	if (gw->g.width < gw->g.height) {
 		if (gsw->dpos != gw->g.height-1)
-			gdispGFillArea(gw->g.display, gw->g.x, gw->g.y+gsw->dpos, gw->g.width, gw->g.height - gsw->dpos, pcol->progress);	// Active Area
+			gdispGFillArea(gw->g.display, gw->g.x, gw->g.y+gsw->dpos, gw->g.width, gw->g.height - gsw->dpos, pcol->progress);				// Active Area
 		if (gsw->dpos != 0)
-			gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gsw->dpos, gw->pstyle->enabled.progress);			// Inactive area
-		gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, pcol->edge);								// Edge
-		gdispGDrawLine(gw->g.display, gw->g.x, gw->g.y+gsw->dpos, gw->g.x+gw->g.width-1, gw->g.y+gsw->dpos, pcol->edge);	// Thumb
+			gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gsw->dpos, gw->pstyle->enabled.progress);							// Inactive area
+		gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, pcol->edge);												// Edge
+		gdispGDrawLine(gw->g.display, gw->g.x, gw->g.y+gsw->dpos, gw->g.x+gw->g.width-1, gw->g.y+gsw->dpos, pcol->edge);					// Thumb
 
 	// Horizontal progressbar
 	} else {
 		if (gsw->dpos != gw->g.width-1)
 			gdispGFillArea(gw->g.display, gw->g.x+gsw->dpos, gw->g.y, gw->g.width-gsw->dpos, gw->g.height, gw->pstyle->enabled.progress);	// Inactive area
 		if (gsw->dpos != 0)
-			gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gsw->dpos, gw->g.height, pcol->progress);	// Active Area
-		gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, pcol->edge);								// Edge
-		gdispGDrawLine(gw->g.display, gw->g.x+gsw->dpos, gw->g.y, gw->g.x+gsw->dpos, gw->g.y+gw->g.height-1, pcol->edge);	// Thumb
+			gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gsw->dpos, gw->g.height, pcol->progress);										// Active Area
+		gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, pcol->edge);												// Edge
+		gdispGDrawLine(gw->g.display, gw->g.x+gsw->dpos, gw->g.y, gw->g.x+gsw->dpos, gw->g.y+gw->g.height-1, pcol->edge);					// Thumb
 	}
 	gdispGDrawStringBox(gw->g.display, gw->g.x+1, gw->g.y+1, gw->g.width-2, gw->g.height-2, gw->text, gw->g.font, pcol->text, justifyCenter);
 

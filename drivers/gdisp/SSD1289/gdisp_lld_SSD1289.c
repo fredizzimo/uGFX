@@ -5,11 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    drivers/gdisp/SSD1289/gdisp_lld.c
- * @brief   GDISP Graphics Driver subsystem low level driver source for the SSD1289 display.
- */
-
 #include "gfx.h"
 
 #if GFX_USE_GDISP

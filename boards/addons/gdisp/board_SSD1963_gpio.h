@@ -6,8 +6,11 @@
  */
 
 /**
- * @file    drivers/gdisp/SSD1963/board_SSD1963_gpio.h
+ * @file    boards/addons/gdisp/board_SSD1963_gpio.h
  * @brief   GDISP Graphic Driver subsystem board interface for the SSD1963 display.
+ *
+ * @note	This file contains a mix of hardware specific and operating system specific
+ *			code. You will need to change it for your CPU and/or operating system.
  */
 
 #ifndef _GDISP_LLD_BOARD_H

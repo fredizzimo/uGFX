@@ -6,7 +6,7 @@
  */
 
 /**
- * @file    include/gwin/progressbar.h
+ * @file    src/gwin/progressbar.h
  * @brief   GWIN Graphic window subsystem header file.
  *
  * @defgroup Progressbar Progressbar
@@ -138,6 +138,15 @@ void gwinProgressbarDecrement(GHandle gh);
  */
 #define gwinProgressbarGetPosition(gh)		(((GProgressbarObject *)(gh))->pos)
 
+ /**
+  * @brief	Reset the progressbar to the minimum position
+  *
+  * @param[in] gh		The window handle (must be a progressbar window)
+  *
+  * @api
+  */
+#define gwinProgressbarReset(gh)			gwinProgressbarSetPosition(gh, ((GProgressbarObject *)(gh))->min)
+
 /**
  * @brief	Automatically increments the progress bar
  *
@@ -154,6 +163,15 @@ void gwinProgressbarDecrement(GHandle gh);
  * @api
  */
 void gwinProgressbarStart(GHandle gh, delaytime_t delay);
+
+/**
+ * @brief	Stop the timer which is started by @p gwinProgressbarStart()
+ *
+ * @param[in] gh		The window handle (must be a progressbar window)
+ *
+ * @api
+ */		
+void gwinProgressbarStop(GHandle gh);
 
 /**
  * @brief	Some custom progressbar drawing routines

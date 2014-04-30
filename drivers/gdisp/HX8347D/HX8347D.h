@@ -5,14 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    drivers/gdisp/HX8347D/HX8347D.h
- * @brief   GDISP Graphic Driver support header for the HX8347D display.
- *
- * @addtogroup GDISP
- * @{
- */
-
 #ifndef _HX8347D_H
 #define _HX8347D_H
 
@@ -140,4 +132,3 @@
 #define HX8347D_REG_PGSEL               0xff    /* Page select */
 
 #endif /* _HX8347D_H */
-/** @} */

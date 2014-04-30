@@ -5,12 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    drivers/gdisp/ILI9341/gdisp_lld.c
- * @brief   GDISP Graphics Driver subsystem low level driver source for
- * 			the ILI9341 and compatible HVGA display
- */
-
 #include "gfx.h"
 
 #if GFX_USE_GDISP

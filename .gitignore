@@ -8,4 +8,5 @@ build
 *.lst
 *.o
 *.map
+*.sublime-*
 src/gdisp/fonts/*.dat

@@ -5,19 +5,10 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    drivers/gdisp/SSD2119/ssd2119.h
- * @brief   GDISP Graphic Driver support header for the SSD2119 display.
- *
- * @addtogroup GDISP
- * @{
- */
-
 #ifndef _SSD2119_H
 #define _SSD2119_H
 
 /* SSD2119 registers */
-
 #define SSD2119_REG_DEVICE_CODE_READ  0x00
 #define SSD2119_REG_OSC_START         0x00
 #define SSD2119_REG_OUTPUT_CTRL       0x01
@@ -65,4 +56,3 @@
 #define SSD2119_REG_Y_RAM_ADDR        0x4F
 
 #endif /* _SSD2119_H */
-/** @} */

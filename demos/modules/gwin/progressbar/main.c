@@ -23,12 +23,20 @@ int main(void) {
 
 	_createWidget();
 
+#if 1
 	gwinProgressbarSetResolution(ghProgressbar, 10);
 	gwinProgressbarStart(ghProgressbar, 500);
 
-	//gwinProgressbarSetPosition(ghProgressbar, 42);
-	//gwinProgressbarIncrement(ghProgressbar);
-	//gwinProgressbarDecrement(ghProgressbar);
+	gfxSleepMilliseconds(3000);
+	gwinProgressbarReset(ghProgressbar);
+
+	gfxSleepMilliseconds(3000);
+	gwinDestroy(ghProgressbar);
+#else
+	gwinProgressbarSetPosition(ghProgressbar, 42);
+	gwinProgressbarIncrement(ghProgressbar);
+	gwinProgressbarDecrement(ghProgressbar);
+#endif
 
 	while (1) {
 		gfxSleepMilliseconds(500);

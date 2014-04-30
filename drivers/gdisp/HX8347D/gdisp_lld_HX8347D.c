@@ -5,11 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    drivers/gdisp/HX8347D/gdisp_lld.c
- * @brief   GDISP Graphics Driver subsystem low level driver source for the HX8347D display.
- */
-
 #include "gfx.h"
 
 #if GFX_USE_GDISP

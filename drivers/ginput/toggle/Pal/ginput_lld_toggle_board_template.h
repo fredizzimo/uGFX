@@ -5,15 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    drivers/ginput/toggle/Pal/ginput_lld_toggle_board_template.h
- * @brief   GINPUT Toggle low level driver source for the ChibiOS PAL hardware on the example board.
- *
- * @defgroup Toggle Toggle
- * @ingroup GINPUT
- * @{
- */
-
 #ifndef _GDISP_LLD_TOGGLE_BOARD_H
 #define _GDISP_LLD_TOGGLE_BOARD_H
 
@@ -45,4 +36,3 @@
 	}
 
 #endif /* _GDISP_LLD_TOGGLE_BOARD_H */
-/** @} */

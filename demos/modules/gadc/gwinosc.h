@@ -43,7 +43,7 @@
 
 /* The extent of scaling for our audio data - fixed scale at the moment */
 #ifndef SCOPE_Y_BITS
-	#define SCOPE_Y_BITS			7					// 7 bits = 0..128
+	#define SCOPE_Y_BITS		7					// 7 bits = 0..128
 #endif
 
 /* Trigger methods */
@@ -64,9 +64,6 @@ typedef struct GScopeObject_t {
 	GWindowObject		g;						// Base Class
 
 	coord_t				*lastscopetrace;		// To store last scope trace
-	gfxSem				bsem;					// We get signalled on this
-	adcsample_t			*audiobuf;				// To store audio samples
-	GEventADC			myEvent;				// Information on received samples
 	coord_t				nextx;					// Where we are up to
 #if TRIGGER_METHOD == TRIGGER_POSITIVERAMP
 	coord_t				lasty;					// The last y value - used for trigger slope detection

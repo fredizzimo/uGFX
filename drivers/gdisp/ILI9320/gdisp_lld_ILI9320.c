@@ -5,11 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    drivers/gdisp/ILI9320/gdisp_lld.c
- * @brief   GDISP Graphics Driver subsystem low level driver source for the ILI9320 display.
- */
-
 #include "gfx.h"
 
 #if GFX_USE_GDISP
@@ -330,7 +325,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 				case GDISP_ROTATE_90:
 					acquire_bus(g);
-					write_reg(g, 0x01, 0x0100);
+					write_reg(g, 0x01, 0x0000);
 					write_reg(g, 0x03, 0x1030);
 					write_reg(g, 0x60, 0x2700);
 					release_bus(g);
@@ -352,7 +347,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 				case GDISP_ROTATE_270:
 					acquire_bus(g);
-					write_reg(g, 0x01, 0x0000);
+					write_reg(g, 0x01, 0x0100);
 					write_reg(g, 0x03, 0x1038);
 					write_reg(g, 0x60, 0xA700);
 					release_bus(g);

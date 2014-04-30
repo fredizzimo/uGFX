@@ -34,19 +34,19 @@
  * @iclass
  * @notapi
  */
-GAudioData *gaudioRecordGetFreeBlockI(void);
+#define gaudioRecordGetFreeBlockI()		gfxBufferGetI()
 
 /**
  * @brief				Save a block of recorded audio data ready for the application
  *
- * @param[in] paud		The GAudioData block with data.
+ * @param[in] paud		The GDataBuffer block with data.
  *
  * @note				Defined in the high level GAUDIO code for use by the GAUDIO record drivers.
  *
  * @iclass
  * @notapi
  */
-void gaudioRecordSaveDataBlockI(GAudioData *paud);
+void gaudioRecordSaveDataBlockI(GDataBuffer *paud);
 
 /**
  * @brief				Signal that all recording has now stopped

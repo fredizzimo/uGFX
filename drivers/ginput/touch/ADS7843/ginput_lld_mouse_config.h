@@ -5,16 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    drivers/ginput/touch/ADS7843/ginput_lld_mouse_config.h
- * @brief   GINPUT LLD header file for mouse/touch driver.
- *
- * @defgroup Mouse Mouse
- * @ingroup GINPUT 
- *
- * @{
- */
-
 #ifndef _LLD_GINPUT_MOUSE_CONFIG_H
 #define _LLD_GINPUT_MOUSE_CONFIG_H
 
@@ -29,4 +19,3 @@
 #define GINPUT_MOUSE_CLICK_TIME					500
 
 #endif /* _LLD_GINPUT_MOUSE_CONFIG_H */
-/** @} */

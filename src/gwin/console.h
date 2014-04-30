@@ -6,7 +6,7 @@
  */
 
 /**
- * @file    include/gwin/console.h
+ * @file    src/gwin/console.h
  * @brief   GWIN Graphic window subsystem header file.
  *
  * @defgroup Console Console

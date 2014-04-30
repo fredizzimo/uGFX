@@ -6,7 +6,7 @@
  */
 
 /**
- * @file	include/gwin/graph.h
+ * @file	src/gwin/graph.h
  * @brief	GWIN GRAPH module header file.
  *
  * @defgroup Graph Graph

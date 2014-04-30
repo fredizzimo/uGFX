@@ -6,7 +6,7 @@
  */
 
 /**
- * @file    include/gos/osx.h
+ * @file    src/gos/osx.h
  * @brief   GOS - Operating System Support header file for Mac OS-X.
  */
 

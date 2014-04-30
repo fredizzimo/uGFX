@@ -6,7 +6,7 @@
  */
 
 /**
- * @file	include/gwin/label.h
+ * @file	src/gwin/label.c
  * @brief	GWIN label widget header file.
  *
  * @defgroup Label Label
@@ -23,6 +23,7 @@
 
 // macros to assist in data type conversions
 #define gh2obj					((GLabelObject *)gh)
+#define gw2obj					((GLabelObject *)gw)
 
 // flags for the GLabelObject
 #define GLABEL_FLG_WAUTO		(GWIN_FIRST_CONTROL_FLAG << 0)
@@ -57,10 +58,26 @@ static void gwinLabelDefaultDraw(GWidgetObject *gw, void *param) {
 		return;
 	}
 
-	// render the text
-	gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->text, gw->g.font,
-			(gw->g.flags & GWIN_FLG_ENABLED) ? gw->pstyle->enabled.text : gw->pstyle->disabled.text, gw->pstyle->background,
-			justifyLeft);
+	#if GWIN_LABEL_ATTRIBUTE
+		if (gw2obj->attr != 0) {
+			gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw2obj->attr, gw->g.font,
+					(gw->g.flags & GWIN_FLG_ENABLED) ? gw->pstyle->enabled.text : gw->pstyle->disabled.text, gw->pstyle->background,
+					justifyLeft);
+
+			gdispGFillStringBox(gw->g.display, gw->g.x + gw2obj->tab, gw->g.y, gw->g.width, gw->g.height, gw->text, gw->g.font,
+					(gw->g.flags & GWIN_FLG_ENABLED) ? gw->pstyle->enabled.text : gw->pstyle->disabled.text, gw->pstyle->background,
+					justifyLeft);
+		} else {
+			gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->text, gw->g.font,
+					(gw->g.flags & GWIN_FLG_ENABLED) ? gw->pstyle->enabled.text : gw->pstyle->disabled.text, gw->pstyle->background,
+				 	justifyLeft);
+
+		}
+	#else
+		gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->text, gw->g.font,
+				(gw->g.flags & GWIN_FLG_ENABLED) ? gw->pstyle->enabled.text : gw->pstyle->disabled.text, gw->pstyle->background,
+				justifyLeft);
+	#endif
 
 	// render the border (if any)
 	if (gw->g.flags & GLABEL_FLG_BORDER)
@@ -124,6 +141,11 @@ GHandle gwinGLabelCreate(GDisplay *g, GLabelObject *widget, GWidgetInit *pInit) 
 	// no borders by default
 	flags &=~ GLABEL_FLG_BORDER;
 
+	#if GWIN_LABEL_ATTRIBUTE
+		widget->tab = 0;
+		widget->attr = 0;
+	#endif
+
 	widget->w.g.flags |= flags;	
 	gwinSetVisible(&widget->w.g, pInit->g.show);
 
@@ -140,6 +162,19 @@ void gwinLabelSetBorder(GHandle gh, bool_t border) {
 	else
 		gh2obj->w.g.flags &=~ GLABEL_FLG_BORDER;
 }
+
+#if GWIN_LABEL_ATTRIBUTE
+	void gwinLabelSetAttribute(GHandle gh, coord_t tab, const char* attr) {
+		// is it a valid handle?
+		if (gh->vmt != (gwinVMT *)&labelVMT)
+			return;
+	
+		gh2obj->tab = tab;
+		gh2obj->attr = attr;
+
+		gwinRedraw(gh); 
+	}
+#endif // GWIN_LABEL_ATTRIBUTE
 
 #endif // GFX_USE_GWIN && GFX_NEED_LABEL
 /** @} */

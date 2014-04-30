@@ -5,16 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    drivers/ginput/touch/MCU/ginput_lld_mouse.c
- * @brief   GINPUT Touch low level driver source for the MCU.
- *
- * @defgroup Mouse Mouse
- * @ingroup GINPUT
- *
- * @{
- */
-
 #include "gfx.h"
 
 #if (GFX_USE_GINPUT && GINPUT_NEED_MOUSE) /*|| defined(__DOXYGEN__)*/
@@ -25,13 +15,6 @@
 
 static uint16_t sampleBuf[7];
 
-/**
- * @brief   7-point median filtering code for touchscreen samples
- *
- * @note    This is an internally used routine only.
- *
- * @notapi
- */
 static void filter(void) {
 	uint16_t temp;
 	int i,j;
@@ -48,31 +31,10 @@ static void filter(void) {
 	}
 }
 
-/**
- * @brief   Initialise the mouse/touch.
- *
- * @notapi
- */
 void ginput_lld_mouse_init(void) {
 	init_board();
 }
 
-/**
- * @brief   Read the mouse/touch position.
- *
- * @param[in] pt	A pointer to the structure to fill
- *
- * @note			We use a 7 sample medium filter on each coordinate to remove analogue noise.
- * @note			During touch transition the ADC can return some very strange
- * 					results. To fix this behaviour we don't return until
- * 					we have tested the touch is in the same state at both the beginning
- * 					and the end of the reading.
- * @note			Whilst x and y can return readings in any range so long as it fits in 16 bits,
- * 					the z value must be ranged by the board file to be a rough percentage. Anything
- * 					greater than 80% pressure is a touch.
- *
- * @notapi
- */
 void ginput_lld_mouse_get_reading(MouseReading *pt) {
 	uint16_t i;
 
@@ -116,4 +78,3 @@ void ginput_lld_mouse_get_reading(MouseReading *pt) {
 }
 
 #endif /* GFX_USE_GINPUT && GINPUT_NEED_MOUSE */
-/** @} */

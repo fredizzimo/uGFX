@@ -5,14 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    drivers/ginput/touch/STMPE811/stmpe811.h
- * @brief   Register definition header for the STMPE811 touch controller.
- *
- * @addtogroup GINPUT
- * @{
- */
-
 #ifndef _STMPE811_H
 #define _STMPE811_H
 
@@ -89,4 +81,3 @@
 #define STMPE811_REG_TEMP_TH        0x62
 
 #endif /* _STMPE811_H */
-/** @} */

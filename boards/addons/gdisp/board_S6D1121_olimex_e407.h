@@ -6,8 +6,11 @@
  */
 
 /**
- * @file    drivers/gdisp/S6D1121/board_S6D1121_olimex_e407.h
- * @brief   GDISP Graphic Driver subsystem board interface for the S6D1121 display
+ * @file    boards/addons/gdisp/board_S6D1121_olimex_e407.h
+ * @brief   GDISP Graphic Driver subsystem board interface for the S6D1121 display.
+ *
+ * @note	This file contains a mix of hardware specific and operating system specific
+ *			code. You will need to change it for your CPU and/or operating system.
  */
 
 #ifndef _GDISP_LLD_BOARD_H

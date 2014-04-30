@@ -5,11 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    drivers/multiple/X/gdisp_lld.c
- * @brief   GDISP Graphics Driver subsystem low level driver source for X.
- */
-
 #include "gfx.h"
 
 #if GFX_USE_GDISP
@@ -18,13 +13,6 @@
 #include "drivers/multiple/X/gdisp_lld_config.h"
 #include "src/gdisp/driver.h"
 
-/**
- * Our color model - Default or 24 bit only.
- *
- * At present we don't define this as we don't need to.
- * It may however be useful later if we implement bitblits.
- * As this may be dead code we don't include it in gdisp/options.h
- */
 #ifndef GDISP_FORCE_24BIT	
 	#define GDISP_FORCE_24BIT	FALSE
 #endif
@@ -336,5 +324,3 @@ LLDSPEC void gdisp_lld_draw_pixel(GDisplay *g)
 #endif /* GINPUT_NEED_MOUSE */
 
 #endif /* GFX_USE_GDISP */
-/** @} */
-

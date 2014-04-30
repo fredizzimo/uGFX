@@ -6,7 +6,7 @@
  */
 
 /**
- * @file    include/gwin/gwidget.h
+ * @file    src/gwin/gwidget.h
  * @brief   GWIN Widgets header file.
  */
 

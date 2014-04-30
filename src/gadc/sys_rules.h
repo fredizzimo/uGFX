@@ -24,6 +24,17 @@
 		#undef GFX_USE_GTIMER
 		#define	GFX_USE_GTIMER		TRUE
 	#endif
+	#if !GFX_USE_GQUEUE || !GQUEUE_NEED_GSYNC || !GQUEUE_NEED_BUFFERS
+		#if GFX_DISPLAY_RULE_WARNINGS
+			#warning "GADC: GFX_USE_GQUEUE, GQUEUE_NEED_BUFFERS and GQUEUE_NEED_GSYNC are required if GFX_USE_GADC is TRUE. They have been turned on for you."
+		#endif
+		#undef GFX_USE_GQUEUE
+		#define	GFX_USE_GQUEUE		TRUE
+		#undef GQUEUE_NEED_BUFFERS
+		#define	GQUEUE_NEED_BUFFERS		TRUE
+		#undef GQUEUE_NEED_GSYNC
+		#define	GQUEUE_NEED_GSYNC		TRUE
+	#endif
 #endif
 
 #endif /* _GADC_RULES_H */

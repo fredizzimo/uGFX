@@ -6,7 +6,7 @@
  */
 
 /**
- * @file    include/gwin/class_gwin.h
+ * @file    src/gwin/class_gwin.h
  * @brief   GWIN Graphic window subsystem header file.
  *
  * @defgroup Internal Internal

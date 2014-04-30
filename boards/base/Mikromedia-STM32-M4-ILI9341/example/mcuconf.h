@@ -29,6 +29,10 @@
  */
 
 #define STM32F4xx_MCUCONF
+#define STM32F40_41xxx
+
+// Define this if you are using an older ChibiOS version
+//#define STM32_VOS                          STM32_VOS_HIGH
 
 /*
  * HAL driver system settings.
@@ -57,7 +61,6 @@
 #define STM32_I2SSRC                        STM32_I2SSRC_CKIN
 #define STM32_PLLI2SN_VALUE                 192
 #define STM32_PLLI2SR_VALUE                 5
-#define STM32_VOS                           STM32_VOS_HIGH
 #define STM32_PVD_ENABLE                    FALSE
 #define STM32_PLS                           STM32_PLS_LEV0
 #define STM32_BKPRAM_ENABLE                 FALSE

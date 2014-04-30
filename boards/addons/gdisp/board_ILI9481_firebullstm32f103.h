@@ -6,9 +6,11 @@
  */
 
 /**
- * @file    drivers/gdisp/ILI9481/board_ILI9481_firebullstm32f103.h
- * @brief   GDISP Graphics Driver subsystem low level driver source for
- * 			the ILI9481 and compatible HVGA display
+ * @file    boards/addons/gdisp/board_ILI9481_firebullstm32f103.h
+ * @brief   GDISP Graphics Driver subsystem low level driver source for the ILI9481 and compatible HVGA display
+ *
+ * @note	This file contains a mix of hardware specific and operating system specific
+ *			code. You will need to change it for your CPU and/or operating system.
  */
 
 #ifndef _GDISP_LLD_BOARD_H

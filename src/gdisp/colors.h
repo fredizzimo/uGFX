@@ -6,7 +6,7 @@
  */
 
 /**
- * @file    include/gdisp/colors.h
+ * @file    src/gdisp/colors.h
  * @brief   GDISP color definitions header file.
  *
  * @defgroup Colors Colors

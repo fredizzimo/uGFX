@@ -6,7 +6,7 @@
  */
 
 /**
- * @file    include/ginput/dial.h
+ * @file    src/ginput/dial.h
  * @brief   GINPUT GFX User Input subsystem header file.
  *
  * @defgroup Dial Dial

@@ -27,17 +27,19 @@
 		#undef GFX_USE_GQUEUE
 		#define	GFX_USE_GQUEUE		TRUE
 	#endif
-	#if !GQUEUE_NEED_ASYNC
+	#if GAUDIO_NEED_PLAY && !GQUEUE_NEED_ASYNC
 		#if GFX_DISPLAY_RULE_WARNINGS
-			#warning "GAUDIO: GQUEUE_NEED_ASYNC is required if GFX_USE_GAUDIO is TRUE. It has been turned on for you."
+			#warning "GAUDIO: GQUEUE_NEED_ASYNC is required if GAUDIO_NEED_PLAY is TRUE. It has been turned on for you."
 		#endif
 		#undef GQUEUE_NEED_ASYNC
 		#define	GQUEUE_NEED_ASYNC		TRUE
 	#endif
-	#if !GQUEUE_NEED_GSYNC
+	#if !GQUEUE_NEED_GSYNC || !GQUEUE_NEED_BUFFERS
 		#if GFX_DISPLAY_RULE_WARNINGS
-			#warning "GAUDIO: GQUEUE_NEED_GSYNC is required if GFX_USE_GAUDIO is TRUE. It has been turned on for you."
+			#warning "GAUDIO: GQUEUE_NEED_BUFFERS and GQUEUE_NEED_GSYNC are required if GFX_USE_GAUDIO is TRUE. They have been turned on for you."
 		#endif
+		#undef GQUEUE_NEED_BUFFERS
+		#define	GQUEUE_NEED_BUFFERS		TRUE
 		#undef GQUEUE_NEED_GSYNC
 		#define	GQUEUE_NEED_GSYNC		TRUE
 	#endif

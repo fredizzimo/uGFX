@@ -19,8 +19,11 @@
 
 
 /**
- * @file    drivers/gdisp/ILI9325/board_ILI9325_hy_stm32_100p.h
- * @brief   GDISP Graphic Driver subsystem board interface for the ILI9325 display.
+ * @file    boards/addons/gdisp/board_ILI9325_hy_stm32_100p.h
+ * @brief   GDISP Graphic Driver subsystem board SPI interface for the ILI9325 display.
+ *
+ * @note	This file contains a mix of hardware specific and operating system specific
+ *			code. You will need to change it for your CPU and/or operating system.
  */
 
 #ifndef GDISP_LLD_BOARD_H

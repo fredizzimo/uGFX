@@ -439,6 +439,8 @@ extern "C" {
 		 *
 		 * @param[in] gh				The window
 		 *
+		 * @return	GWIN_NORMAL, GWIN_MAXIMIZE or GWIN_MINIMIZE
+		 *
 		 * @api
 		 */
 		GWindowMinMax gwinGetMinMax(GHandle gh);

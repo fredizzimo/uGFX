@@ -5,11 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    drivers/gdisp/ED060SC4/gdisp_lld.c
- * @brief   GDISP Graphics Driver for the E-ink panel ED060SC4.
- */
-
 #include "gfx.h"
 
 #if GFX_USE_GDISP
@@ -83,7 +78,7 @@
 
 #define PRIV(g)		((drvPriv *)g->priv)
 
-/** Delay between signal changes, to give time for IO pins to change state. */
+/* Delay between signal changes, to give time for IO pins to change state. */
 static inline void clockdelay(void)
 {
 	#if EINK_CLOCKDELAY & 1
@@ -111,7 +106,7 @@ static inline void clockdelay(void)
 	#endif
 }
 
-/** Fast vertical clock pulse for gate driver, used during initializations */
+/* Fast vertical clock pulse for gate driver, used during initializations */
 static void vclock_quick(GDisplay *g)
 {
 	setpin_ckv(g, TRUE);
@@ -120,7 +115,7 @@ static void vclock_quick(GDisplay *g)
 	eink_delay(4);
 }
 
-/** Horizontal clock pulse for clocking data into source driver */
+/* Horizontal clock pulse for clocking data into source driver */
 static void hclock(GDisplay *g)
 {
 	clockdelay();
@@ -129,7 +124,7 @@ static void hclock(GDisplay *g)
 	setpin_cl(g, FALSE);
 }
 
-/** Start a new vertical gate driver scan from top.
+/* Start a new vertical gate driver scan from top.
  * Note: Does not clear any previous bits in the shift register,
  *       so you should always scan through the whole display before
  *       starting a new scan.
@@ -144,7 +139,7 @@ static void vscan_start(GDisplay *g)
 	vclock_quick(g);
 }
 
-/** Waveform for strobing a row of data onto the display.
+/* Waveform for strobing a row of data onto the display.
  * Attempts to minimize the leaking of color to other rows by having
  * a long idle period after a medium-length strobe period.
  */
@@ -158,7 +153,7 @@ static void vscan_write(GDisplay *g)
 	eink_delay(200);
 }
 
-/** Waveform used when clearing the display. Strobes a row of data to the
+/* Waveform used when clearing the display. Strobes a row of data to the
  * screen, but does not mind some of it leaking to other rows.
  */
 static void vscan_bulkwrite(GDisplay *g)
@@ -169,7 +164,7 @@ static void vscan_bulkwrite(GDisplay *g)
 	eink_delay(200);
 }
 
-/** Waveform for skipping a vertical row without writing anything.
+/* Waveform for skipping a vertical row without writing anything.
  * Attempts to minimize the amount of change in any row.
  */
 static void vscan_skip(GDisplay *g)
@@ -180,7 +175,7 @@ static void vscan_skip(GDisplay *g)
 	eink_delay(100);
 }
 
-/** Stop the vertical scan. The significance of this escapes me, but it seems
+/* Stop the vertical scan. The significance of this escapes me, but it seems
  * necessary or the next vertical scan may be corrupted.
  */
 static void vscan_stop(GDisplay *g)
@@ -193,7 +188,7 @@ static void vscan_stop(GDisplay *g)
 	vclock_quick(g);
 }
 
-/** Start updating the source driver data (from left to right). */
+/* Start updating the source driver data (from left to right). */
 static void hscan_start(GDisplay *g)
 {
 	/* Disable latching and output enable while we are modifying the row. */
@@ -204,7 +199,7 @@ static void hscan_start(GDisplay *g)
 	setpin_sph(g, FALSE);
 }
 
-/** Write data to the horizontal row. */
+/* Write data to the horizontal row. */
 static void hscan_write(GDisplay *g, const uint8_t *data, int count)
 {
 	while (count--)
@@ -217,7 +212,7 @@ static void hscan_write(GDisplay *g, const uint8_t *data, int count)
 	}
 }
 
-/** Finish and transfer the row to the source drivers.
+/* Finish and transfer the row to the source drivers.
  * Does not set the output enable, so the drivers are not yet active. */
 static void hscan_stop(GDisplay *g)
 {
@@ -231,7 +226,7 @@ static void hscan_stop(GDisplay *g)
 	setpin_le(g, FALSE);
 }
 
-/** Turn on the power to the E-Ink panel, observing proper power sequencing. */
+/* Turn on the power to the E-Ink panel, observing proper power sequencing. */
 static void power_on(GDisplay *g)
 {
 	unsigned i;
@@ -264,7 +259,7 @@ static void power_on(GDisplay *g)
 	vscan_stop(g);
 }
 
-/** Turn off the power, observing proper power sequencing. */
+/* Turn off the power, observing proper power sequencing. */
 static void power_off(GDisplay *g)
 {
 	/* First the high voltages */
@@ -289,7 +284,7 @@ static void power_off(GDisplay *g)
 /* ====================================
  *      Framebuffer emulation layer
  * ==================================== */
-
+ 
 #if EINK_PPB == 4
 	#define PIXELMASK 3
 	#define PIXEL_WHITE 2
@@ -336,7 +331,7 @@ typedef struct drvPriv {
 	uint8_t g_blockmap[BLOCKS_Y][BLOCKS_X];
 } drvPriv;
 
-/** Check if the row contains any allocated blocks. */
+/* Check if the row contains any allocated blocks. */
 static bool_t blocks_on_row(GDisplay *g, unsigned by)
 {
 	unsigned bx;
@@ -350,7 +345,7 @@ static bool_t blocks_on_row(GDisplay *g, unsigned by)
 	return FALSE;
 }
 
-/** Write out a block row. */
+/* Write out a block row. */
 static void write_block_row(GDisplay *g, unsigned by)
 {
 	unsigned bx, dy, dx;
@@ -379,7 +374,7 @@ static void write_block_row(GDisplay *g, unsigned by)
 	}
 }
 
-/** Clear the block map, i.e. deallocate all blocks */
+/* Clear the block map, i.e. deallocate all blocks */
 static void clear_block_map(GDisplay *g)
 {
 	unsigned bx, by;
@@ -394,7 +389,7 @@ static void clear_block_map(GDisplay *g)
 	PRIV(g)->g_next_block = 0;
 }
 
-/** Initialize a newly allocated block. */
+/* Initialize a newly allocated block. */
 static void zero_block(block_t *block)
 {
 	unsigned dx, dy;
@@ -407,7 +402,7 @@ static void zero_block(block_t *block)
 	}
 }
 
-/** Allocate a buffer
+/* Allocate a buffer
  * Automatically flushes if all buffers are full. */
 static block_t *alloc_buffer(GDisplay *g, unsigned bx, unsigned by)
 {

@@ -9,7 +9,6 @@
 #define SSD1963_H
 
 /* SSD1963 commands */
-
 #define SSD1963_NOP						0x0000
 #define SSD1963_SOFT_RESET  			0x0001
 #define SSD1963_GET_POWER_MODE 			0x000A
@@ -95,4 +94,3 @@
 #define SSD1963_GET_PIXEL_DATA_INTERFACE 0x00F1
 
 #endif
-

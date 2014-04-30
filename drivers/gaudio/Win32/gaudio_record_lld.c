@@ -5,11 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    drivers/gaudio/Win32/gaudio_record_lld.c
- * @brief   GAUDIO - Record Driver file for Win32.
- */
-
 #include "gfx.h"
 
 #if GFX_USE_GAUDIO && GAUDIO_NEED_RECORD
@@ -47,7 +42,7 @@ static DWORD		threadID;
  *************************************************************************/
 
 static bool_t getbuffer(WAVEHDR *pwh) {
-	GAudioData *paud;
+	GDataBuffer *paud;
 
 	// Get the next data block to send
 	gfxSystemLock();
@@ -81,7 +76,7 @@ static bool_t getbuffer(WAVEHDR *pwh) {
 static DWORD WINAPI waveProc(LPVOID arg) {
 	MSG			msg;
 	WAVEHDR		*pwh;
-	GAudioData	*paud;
+	GDataBuffer	*paud;
 	(void)		arg;
 
 	while (GetMessage(&msg, 0, 0, 0)) {
@@ -93,7 +88,7 @@ static DWORD WINAPI waveProc(LPVOID arg) {
 				waveInUnprepareHeader(ah, pwh, sizeof(WAVEHDR));
 
 				// Save the buffer in the audio record list
-				paud = (GAudioData *)pwh->dwUser;
+				paud = (GDataBuffer *)pwh->dwUser;
 				paud->len = pwh->dwBytesRecorded;
 				gfxSystemLock();
 				gaudioRecordSaveDataBlockI(paud);
