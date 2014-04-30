@@ -262,6 +262,10 @@ void gwinSliderSetPosition(GHandle gh, int pos) {
 	if (gh->vmt != (gwinVMT *)&sliderVMT)
 		return;
 
+	// do not change the position if disabled
+	if (!gwinGetEnabled(gh))
+		return;
+
 	if (gsw->min <= gsw->max) {
 		if (pos < gsw->min) gsw->pos = gsw->min;
 		else if (pos > gsw->max) gsw->pos = gsw->max;
