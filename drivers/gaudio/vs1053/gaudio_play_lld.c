@@ -188,7 +188,7 @@ static void FeedData(void *param) {
 	(void)		param;
 
 	// While there is data space
-	while (!board_dreq()) {
+	while (board_dreq()) {
 
 		// Send up to 32 bytes
 		len = playlen;

@@ -60,10 +60,10 @@ static inline void board_startcmdwrite(void) {
 
 // End a command write
 static inline void board_endcmdwrite(void) {
+	SET_CS;
 	#if SPI_USE_MUTUAL_EXCLUSION
 		spiReleaseBus(SPI_PORT);
 	#endif
-	SET_CS;
 }
 
 // Start a command read
