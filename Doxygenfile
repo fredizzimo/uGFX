@@ -32,7 +32,7 @@ DOXYFILE_ENCODING      = UTF-8
 # title of most generated pages and in a few other places.
 # The default value is: My Project.
 
-PROJECT_NAME           = uGFX
+PROJECT_NAME           = 
 
 # The PROJECT_NUMBER tag can be used to enter a project or revision number. This
 # could be handy for archiving the generated documentation or if some version
@@ -44,14 +44,14 @@ PROJECT_NUMBER         = 2.0
 # for a project that appears at the top of each page and should give viewer a
 # quick idea about the purpose of the project. Keep the description short.
 
-PROJECT_BRIEF          = 
+PROJECT_BRIEF          = "version 2.0"
 
 # With the PROJECT_LOGO tag one can specify an logo or icon that is included in
 # the documentation. The maximum height of the logo should not exceed 55 pixels
 # and the maximum width should not exceed 200 pixels. Doxygen will copy the logo
 # to the output directory.
 
-PROJECT_LOGO           = 
+PROJECT_LOGO           = docs/rsc/ugfx_logo_doxygen.png
 
 # The OUTPUT_DIRECTORY tag is used to specify the (relative or absolute) path
 # into which the generated documentation will be written. If a relative path is
@@ -230,13 +230,11 @@ TAB_SIZE               = 2
 # "Side Effects:". You can put \n's in the value part of an alias to insert
 # newlines.
 
-ALIASES                = "iclass=@par Function Class:\n This is an                           <b>I-Class</b> API, this function can be                           invoked from within a system lock zone by both                           threads and interrupt handlers." \
-                         "sclass=@par Function Class:\n This is an                           <b>S-Class</b> API, this function can be                           invoked from within a system lock zone by threads                           only." \
-                         "api=@par Function Class:\n Normal API, this                           function can be invoked by regular system threads                           but not from within a lock zone." \
-                         "notapi=@par Function Class:\n Not an API, this                           function is for internal use only." \
-                         "isr=@par Function Class:\n Interrupt handler,                           this function should not be directly invoked." \
-                         "init=@par Function Class:\n Initializer, this                           function just initializes an object and can be                           invoked before the kernel is initialized." \
-                         "special=@par Function Class:\n Special function,                           this function has special requirements see the                           notes."
+ALIASES                = "iclass=@par Function Class:\n This is an <b>I-Class</b> API, this function can be invoked from within a system lock zone by both threads and interrupt handlers." \
+                         "sclass=@par Function Class:\n This is an <b>S-Class</b> API, this function can be invoked from within a system lock zone by threads only." \
+                         "api=@par Function Class:\n Normal API, this function can be invoked by regular system threads." \
+                         "notapi=@par Function Class:\n Not an API, this function is for internal use only." \
+                         "isr=@par Function Class:\n Interrupt handler, this function should not be directly invoked."
 
 # This tag can be used to specify a number of word-keyword mappings (TCL only).
 # A mapping has the form "name=value". For example adding "class=itcl::class"
@@ -755,7 +753,7 @@ WARN_LOGFILE           =
 # spaces.
 # Note: If this tag is empty the current directory is searched.
 
-INPUT                  = 
+INPUT                  = .
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses
@@ -2051,7 +2049,7 @@ PERL_PATH              = /usr/bin/perl
 # powerful graphs.
 # The default value is: YES.
 
-CLASS_DIAGRAMS         = YES
+CLASS_DIAGRAMS         = NO
 
 # You can define message sequence charts within doxygen comments using the \msc
 # command. Doxygen will then run the mscgen tool (see:
@@ -2124,7 +2122,7 @@ DOT_FONTPATH           =
 # The default value is: YES.
 # This tag requires that the tag HAVE_DOT is set to YES.
 
-CLASS_GRAPH            = YES
+CLASS_GRAPH            = NO
 
 # If the COLLABORATION_GRAPH tag is set to YES then doxygen will generate a
 # graph for each documented class showing the direct and indirect implementation
@@ -2198,7 +2196,7 @@ INCLUDED_BY_GRAPH      = NO
 # The default value is: NO.
 # This tag requires that the tag HAVE_DOT is set to YES.
 
-CALL_GRAPH             = YES
+CALL_GRAPH             = NO
 
 # If the CALLER_GRAPH tag is set to YES then doxygen will generate a caller
 # dependency graph for every global function or class method.

@@ -111,7 +111,7 @@ bool_t gwinButtonIsPressed(GHandle gh);
  * @api
  * @{
  */
-void gwinButtonDraw_3D(GWidgetObject *gw, void *param);					// @< A standard 3D button
+void gwinButtonDraw_Normal(GWidgetObject *gw, void *param);				// @< A standard button
 #if GDISP_NEED_ARC || defined(__DOXYGEN__)
 	void gwinButtonDraw_Rounded(GWidgetObject *gw, void *param);		// @< A rounded rectangle button
 #endif

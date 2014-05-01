@@ -32,6 +32,11 @@
 // An label window
 typedef struct GLabelObject {
 	GWidgetObject	w;
+
+	#if GWIN_LABEL_ATTRIBUTE
+		coord_t         tab;
+		const char*		attr;
+	#endif
 } GLabelObject;
 
 #ifdef __cplusplus
@@ -62,6 +67,33 @@ GHandle gwinGLabelCreate(GDisplay *g, GLabelObject *widget, GWidgetInit *pInit);
  * @api
  */
 void gwinLabelSetBorder(GHandle gh, bool_t border);
+
+#if GWIN_LABEL_ATTRIBUTE || defined(__DOXYGEN__)
+	/**
+	 * @brief               Add an text attribute in front of the normal label text
+	 * @details              Often you want to display a text like this:
+	 *                          Current IP: 192.168.1.42
+	 *                      In that case, the actual IP will be variable, the text in front of it
+	 *                      always remains the same. The static text is called the attribute and can be
+	 *                      set using this function.
+	 *                      Furthermore, the tab can be set in order to vertically align multiple labels.
+	 *                      Please check out the website for further explanation, illustraions and usage
+	 *                      examples.
+	 *
+	 * @note                The attribute text is not copied into private memory and so it
+	 *						must be a constant string, not one allocated in a stack buffer.
+	 * @note				Use of this construct is discouraged. The appropriate way is to
+	 *						create two labels - one for the static text and one for the
+	 *						dynamic text.
+	 *
+	 * @param[in] gh        The widget handle (must be a label handle)
+	 * @param[in] tab       The distance of the label text from the left widget edge
+	 * @param[in] attr      The attribute to be displayed
+	 *
+	 * @api
+	 */
+	void gwinLabelSetAttribute(GHandle gh, coord_t tab, const char* attr);
+#endif 
 
 #ifdef __cplusplus
 }

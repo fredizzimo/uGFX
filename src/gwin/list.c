@@ -76,102 +76,7 @@ static void sendListEvent(GWidgetObject *gw, int item) {
 	}
 }
 
-static void gwinListDefaultDraw(GWidgetObject* gw, void* param) {
-	(void)param;
-
-	#if GDISP_NEED_CONVEX_POLYGON
-		static const point upArrow[] = { {0, ARROW}, {ARROW, ARROW}, {ARROW/2, 0} };
-		static const point downArrow[] = { {0, 0}, {ARROW, 0}, {ARROW/2, ARROW} };
-	#endif
-
-	const gfxQueueASyncItem*	qi;
-	int							i;
-	coord_t						x, y, iheight, iwidth;
-	color_t						fill;
-	const GColorSet *			ps;
-	#if GWIN_NEED_LIST_IMAGES
-		coord_t					sy;
-	#endif
-
-	// dont render if render has been disabled
-	if (!(gw->g.flags & GLIST_FLG_ENABLERENDER)) {
-		return;
-	}
-
-	ps = (gw->g.flags & GWIN_FLG_ENABLED) ? &gw->pstyle->enabled : &gw->pstyle->disabled;
-	iheight = gdispGetFontMetric(gw->g.font, fontHeight) + VERTICAL_PADDING;
-	x = 1;
-
-	// the scroll area
-	if (gw->g.flags & GLIST_FLG_SCROLLSMOOTH) {
-	    iwidth = gw->g.width - 2 - 4;
-	    if (gw2obj->cnt > 0) {
-	        int max_scroll_value = gw2obj->cnt * iheight - gw->g.height-2;
-	        if (max_scroll_value > 0) {
-                int bar_height = (gw->g.height-2) * (gw->g.height-2) / (gw2obj->cnt * iheight);
-                gdispGFillArea(gw->g.display, gw->g.x + gw->g.width-4, gw->g.y + 1, 2, gw->g.height-1, gw->pstyle->background);
-                gdispGFillArea(gw->g.display, gw->g.x + gw->g.width-4, gw->g.y + gw2obj->top * ((gw->g.height-2)-bar_height) / max_scroll_value, 2, bar_height, ps->edge);
-	        }
-	    }
-	} else if ((gw2obj->cnt > (gw->g.height-2) / iheight) || (gw->g.flags & GLIST_FLG_SCROLLALWAYS)) {
-		iwidth = gw->g.width - (SCROLLWIDTH+3);
-		gdispGFillArea(gw->g.display, gw->g.x+iwidth+2, gw->g.y+1, SCROLLWIDTH, gw->g.height-2, gdispBlendColor(ps->fill, gw->pstyle->background, 128));
-		gdispGDrawLine(gw->g.display, gw->g.x+iwidth+1, gw->g.y+1, gw->g.x+iwidth+1, gw->g.y+gw->g.height-2, ps->edge);
-		#if GDISP_NEED_CONVEX_POLYGON
-			gdispGFillConvexPoly(gw->g.display, gw->g.x+iwidth+((SCROLLWIDTH-ARROW)/2+2), gw->g.y+(ARROW/2+1), upArrow, 3, ps->fill);
-			gdispGFillConvexPoly(gw->g.display, gw->g.x+iwidth+((SCROLLWIDTH-ARROW)/2+2), gw->g.y+gw->g.height-(ARROW+ARROW/2+1), downArrow, 3, ps->fill);
-		#else
-			#warning "GWIN: Lists display better when GDISP_NEED_CONVEX_POLGON is turned on"
-			gdispGFillArea(gw->g.display, gw->g.x+iwidth+((SCROLLWIDTH-ARROW)/2+2), gw->g.y+(ARROW/2+1), ARROW, ARROW, ps->fill);
-			gdispGFillArea(gw->g.display, gw->g.x+iwidth+((SCROLLWIDTH-ARROW)/2+2), gw->g.y+gw->g.height-(ARROW+ARROW/2+1), ARROW, ARROW, ps->fill);
-		#endif
-	} else
-		iwidth = gw->g.width - 2;
-
-	#if GWIN_NEED_LIST_IMAGES
-		if ((gw->g.flags & GLIST_FLG_HASIMAGES)) {
-			x += iheight;
-			iwidth -= iheight;
-		}
-	#endif
-
-
-	// Find the top item
-	for (qi = gfxQueueASyncPeek(&gw2obj->list_head), i = iheight - 1; i < gw2obj->top && qi; qi = gfxQueueASyncNext(qi), i+=iheight);
-
-    // the list frame
-    gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, ps->edge);
-
-	// Set the clipping region so we do not override the frame.
-    gdispGSetClip(gw->g.display, gw->g.x+1, gw->g.y+1, gw->g.width-2, gw->g.height-2);
-
-	// Draw until we run out of room or items
-	for (y = 1-(gw2obj->top%iheight); y < gw->g.height-2 && qi; qi = gfxQueueASyncNext(qi), y += iheight) {
-		fill = (qi2li->flags & GLIST_FLG_SELECTED) ? ps->fill : gw->pstyle->background;
-		gdispGFillArea(gw->g.display, gw->g.x+1, gw->g.y+y, iwidth, iheight, fill);
-		#if GWIN_NEED_LIST_IMAGES
-			if ((gw->g.flags & GLIST_FLG_HASIMAGES)) {
-				// Clear the image area
-				if (qi2li->pimg && gdispImageIsOpen(qi2li->pimg)) {
-					// Calculate which image
-					sy = (qi2li->flags & GLIST_FLG_SELECTED) ? 0 : (iheight-VERTICAL_PADDING);
-					if (!(gw->g.flags & GWIN_FLG_ENABLED))
-						sy += 2*(iheight-VERTICAL_PADDING);
-					while (sy > qi2li->pimg->height)
-						sy -= iheight-VERTICAL_PADDING;
-					// Draw the image
-					gdispImageSetBgColor(qi2li->pimg, fill);
-					gdispGImageDraw(gw->g.display, qi2li->pimg, gw->g.x+1, gw->g.y+y, iheight-VERTICAL_PADDING, iheight-VERTICAL_PADDING, 0, sy);
-				}
-			}
-		#endif
-		gdispGFillStringBox(gw->g.display, gw->g.x+x+HORIZONTAL_PADDING, gw->g.y+y, iwidth-HORIZONTAL_PADDING, iheight, qi2li->text, gw->g.font, ps->text, fill, justifyLeft);
-	}
-
-	// Fill any remaining item space
-	if (y < gw->g.height-1)
-		gdispGFillArea(gw->g.display, gw->g.x+1, gw->g.y+y, iwidth, gw->g.height-1-y, gw->pstyle->background);
-}
+static void gwinListDefaultDraw(GWidgetObject* gw, void* param);
 
 #if GINPUT_NEED_MOUSE
     static void MouseSelect(GWidgetObject* gw, coord_t x, coord_t y) {
@@ -209,24 +114,23 @@ static void gwinListDefaultDraw(GWidgetObject* gw, void* param) {
 
 	// a mouse down has occurred over the list area
 	static void MouseDown(GWidgetObject* gw, coord_t x, coord_t y) {
-		int							pgsz;
-		coord_t						iheight;
-		(void)						x;
+		coord_t		iheight, pgsz;
 
+		// Save our mouse start position
         gw2obj->start_mouse_x = x;
         gw2obj->start_mouse_y = y;
 		gw2obj->last_mouse_y = y;
-
-		iheight = gdispGetFontMetric(gw->g.font, fontHeight) + VERTICAL_PADDING;
-		pgsz = (gw->g.height-2);
-		if (pgsz < 1) pgsz = 1;
 
 		// For smooth scrolling, scrolling is done in the MouseMove and selection is done on MouseUp
 		if (gw->g.flags & GLIST_FLG_SCROLLSMOOTH)
 		    return;
 
+		// Some initial stuff
+		iheight = gdispGetFontMetric(gw->g.font, fontHeight) + VERTICAL_PADDING;
+		pgsz = gw->g.height-2;
+
 		// Handle click over the scroll bar
-		if (gw2obj->cnt > (pgsz / iheight) && x >= gw->g.width-(SCROLLWIDTH+2)) {
+		if (x >= gw->g.width-(SCROLLWIDTH+2) && (gw2obj->cnt > pgsz/iheight || (gw->g.flags & GLIST_FLG_SCROLLALWAYS))) {
 			if (y < 2*ARROW) {
 				if (gw2obj->top > 0) {
 					gw2obj->top -= iheight;
@@ -449,6 +353,10 @@ void gwinListSetScroll(GHandle gh, scroll_t flag) {
 
 int gwinListAddItem(GHandle gh, const char* item_name, bool_t useAlloc) {
 	ListItem	*newItem;
+
+	// is it a valid handle?
+	if (gh->vmt != (gwinVMT *)&listVMT)
+		return -1;
 
 	if (useAlloc) {
 		size_t len = strlen(item_name)+1;
@@ -686,6 +594,106 @@ const char* gwinListGetSelectedText(GHandle gh) {
 		}
 	}
 #endif
+
+static void gwinListDefaultDraw(GWidgetObject* gw, void* param) {
+	(void)param;
+
+	#if GDISP_NEED_CONVEX_POLYGON
+		static const point upArrow[] = { {0, ARROW}, {ARROW, ARROW}, {ARROW/2, 0} };
+		static const point downArrow[] = { {0, 0}, {ARROW, 0}, {ARROW/2, ARROW} };
+	#endif
+
+	const gfxQueueASyncItem*	qi;
+	int							i;
+	coord_t						x, y, iheight, iwidth;
+	color_t						fill;
+	const GColorSet *			ps;
+	#if GWIN_NEED_LIST_IMAGES
+		coord_t					sy;
+	#endif
+
+	// is it a valid handle?
+	if (gw->g.vmt != (gwinVMT *)&listVMT)
+		return;
+
+	// don't render if render has been disabled
+	if (!(gw->g.flags & GLIST_FLG_ENABLERENDER))
+		return;
+
+	ps = (gw->g.flags & GWIN_FLG_ENABLED) ? &gw->pstyle->enabled : &gw->pstyle->disabled;
+	iheight = gdispGetFontMetric(gw->g.font, fontHeight) + VERTICAL_PADDING;
+	x = 1;
+
+	// the scroll area
+	if (gw->g.flags & GLIST_FLG_SCROLLSMOOTH) {
+		iwidth = gw->g.width - 2 - 4;
+		if (gw2obj->cnt > 0) {
+			int max_scroll_value = gw2obj->cnt * iheight - gw->g.height-2;
+			if (max_scroll_value > 0) {
+				int bar_height = (gw->g.height-2) * (gw->g.height-2) / (gw2obj->cnt * iheight);
+				gdispGFillArea(gw->g.display, gw->g.x + gw->g.width-4, gw->g.y + 1, 2, gw->g.height-1, gw->pstyle->background);
+				gdispGFillArea(gw->g.display, gw->g.x + gw->g.width-4, gw->g.y + gw2obj->top * ((gw->g.height-2)-bar_height) / max_scroll_value, 2, bar_height, ps->edge);
+			}
+		}
+	} else if ((gw2obj->cnt > (gw->g.height-2) / iheight) || (gw->g.flags & GLIST_FLG_SCROLLALWAYS)) {
+		iwidth = gw->g.width - (SCROLLWIDTH+3);
+		gdispGFillArea(gw->g.display, gw->g.x+iwidth+2, gw->g.y+1, SCROLLWIDTH, gw->g.height-2, gdispBlendColor(ps->fill, gw->pstyle->background, 128));
+		gdispGDrawLine(gw->g.display, gw->g.x+iwidth+1, gw->g.y+1, gw->g.x+iwidth+1, gw->g.y+gw->g.height-2, ps->edge);
+		#if GDISP_NEED_CONVEX_POLYGON
+			gdispGFillConvexPoly(gw->g.display, gw->g.x+iwidth+((SCROLLWIDTH-ARROW)/2+2), gw->g.y+(ARROW/2+1), upArrow, 3, ps->fill);
+			gdispGFillConvexPoly(gw->g.display, gw->g.x+iwidth+((SCROLLWIDTH-ARROW)/2+2), gw->g.y+gw->g.height-(ARROW+ARROW/2+1), downArrow, 3, ps->fill);
+		#else
+			#warning "GWIN: Lists display better when GDISP_NEED_CONVEX_POLGON is turned on"
+			gdispGFillArea(gw->g.display, gw->g.x+iwidth+((SCROLLWIDTH-ARROW)/2+2), gw->g.y+(ARROW/2+1), ARROW, ARROW, ps->fill);
+			gdispGFillArea(gw->g.display, gw->g.x+iwidth+((SCROLLWIDTH-ARROW)/2+2), gw->g.y+gw->g.height-(ARROW+ARROW/2+1), ARROW, ARROW, ps->fill);
+		#endif
+	} else
+		iwidth = gw->g.width - 2;
+
+	#if GWIN_NEED_LIST_IMAGES
+		if ((gw->g.flags & GLIST_FLG_HASIMAGES)) {
+			x += iheight;
+			iwidth -= iheight;
+		}
+	#endif
+
+
+	// Find the top item
+	for (qi = gfxQueueASyncPeek(&gw2obj->list_head), i = iheight - 1; i < gw2obj->top && qi; qi = gfxQueueASyncNext(qi), i+=iheight);
+
+	// the list frame
+	gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, ps->edge);
+
+	// Set the clipping region so we do not override the frame.
+	gdispGSetClip(gw->g.display, gw->g.x+1, gw->g.y+1, gw->g.width-2, gw->g.height-2);
+
+	// Draw until we run out of room or items
+	for (y = 1-(gw2obj->top%iheight); y < gw->g.height-2 && qi; qi = gfxQueueASyncNext(qi), y += iheight) {
+		fill = (qi2li->flags & GLIST_FLG_SELECTED) ? ps->fill : gw->pstyle->background;
+		gdispGFillArea(gw->g.display, gw->g.x+1, gw->g.y+y, iwidth, iheight, fill);
+		#if GWIN_NEED_LIST_IMAGES
+			if ((gw->g.flags & GLIST_FLG_HASIMAGES)) {
+				// Clear the image area
+				if (qi2li->pimg && gdispImageIsOpen(qi2li->pimg)) {
+					// Calculate which image
+					sy = (qi2li->flags & GLIST_FLG_SELECTED) ? 0 : (iheight-VERTICAL_PADDING);
+					if (!(gw->g.flags & GWIN_FLG_ENABLED))
+						sy += 2*(iheight-VERTICAL_PADDING);
+					while (sy > qi2li->pimg->height)
+						sy -= iheight-VERTICAL_PADDING;
+					// Draw the image
+					gdispImageSetBgColor(qi2li->pimg, fill);
+					gdispGImageDraw(gw->g.display, qi2li->pimg, gw->g.x+1, gw->g.y+y, iheight-VERTICAL_PADDING, iheight-VERTICAL_PADDING, 0, sy);
+				}
+			}
+		#endif
+		gdispGFillStringBox(gw->g.display, gw->g.x+x+HORIZONTAL_PADDING, gw->g.y+y, iwidth-HORIZONTAL_PADDING, iheight, qi2li->text, gw->g.font, ps->text, fill, justifyLeft);
+	}
+
+	// Fill any remaining item space
+	if (y < gw->g.height-1)
+		gdispGFillArea(gw->g.display, gw->g.x+1, gw->g.y+y, iwidth, gw->g.height-1-y, gw->pstyle->background);
+}
 
 #endif // GFX_USE_GWIN && GWIN_NEED_LIST
 /** @} */
