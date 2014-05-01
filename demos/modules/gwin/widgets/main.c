@@ -237,7 +237,7 @@ static void createWidgets(void) {
 	gdispImageOpenFile(&imgYesNo, "image_yesno.gif");
 	gwinListItemSetImage(ghList3, 1, &imgYesNo);
 	gwinListItemSetImage(ghList3, 3, &imgYesNo);
-	wi.g.x = 0+3*(LIST_WIDTH+5); wi.text = "L2";
+	wi.g.x = 0+3*(LIST_WIDTH+5); wi.text = "L4";
 	ghList4 = gwinListCreate(0, &wi, TRUE);
 	gwinListAddItem(ghList4, "Item 0", FALSE);
 	gwinListAddItem(ghList4, "Item 1", FALSE);
