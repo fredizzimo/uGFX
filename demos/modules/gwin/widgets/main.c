@@ -258,7 +258,7 @@ static void createWidgets(void) {
 	// Image
 	wi.g.x = 20; wi.g.y = 2*TAB_HEIGHT+20; wi.g.width = 200; wi.g.height = 100;
 	ghImage1 = gwinImageCreate(0, &wi.g);
-	gwinImageOpenFile(ghImage1, "romfs_img_ugfx.bmp");
+	gwinImageOpenFile(ghImage1, "romfs_img_ugfx.gif");
 
 	// Progressbar
 	wi.g.show = FALSE; wi.customDraw = 0;
@@ -381,15 +381,15 @@ int main(void) {
 	// Initialize the display
 	gfxInit();
 
-	// Set the widget defaults
-	gwinSetDefaultFont(gdispOpenFont("*"));
-	gwinSetDefaultStyle(&WhiteWidgetStyle, FALSE);
-	gdispClear(White);
-
 	// Connect the mouse
 	#if GINPUT_NEED_MOUSE
 		gwinAttachMouse(0);
 	#endif
+
+	// Set the widget defaults
+	gwinSetDefaultFont(gdispOpenFont("*"));
+	gwinSetDefaultStyle(&WhiteWidgetStyle, FALSE);
+	gdispClear(White);
 
 	// Create the gwin windows/widgets
 	createWidgets();
