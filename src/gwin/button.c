@@ -109,7 +109,7 @@ static const gwidgetVMT buttonVMT = {
 		_gwidgetRedraw,			// The redraw routine
 		0,						// The after-clear routine
 	},
-	gwinButtonDraw_3D,			// The default drawing routine
+	gwinButtonDraw_Normal,			// The default drawing routine
 	#if GINPUT_NEED_MOUSE
 		{
 			MouseDown,				// Process mouse down events
@@ -164,17 +164,42 @@ static const GColorSet *getDrawColors(GWidgetObject *gw) {
 	return &gw->pstyle->enabled;
 }
 
-void gwinButtonDraw_3D(GWidgetObject *gw, void *param) {
-	const GColorSet *	pcol;
-	(void)				param;
+#if GWIN_FLAT_STYLING
+	void gwinButtonDraw_Normal(GWidgetObject *gw, void *param) {
+		const GColorSet *	pcol;
+		(void)				param;
 
-	if (gw->g.vmt != (gwinVMT *)&buttonVMT)	return;
-	pcol = getDrawColors(gw);
+		if (gw->g.vmt != (gwinVMT *)&buttonVMT)	return;
+		pcol = getDrawColors(gw);
+
+		gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width-1, gw->g.height-1, gw->text, gw->g.font, pcol->text, pcol->fill, justifyCenter);
+		gdispGDrawLine(gw->g.display, gw->g.x+gw->g.width-1, gw->g.y, gw->g.x+gw->g.width-1, gw->g.y+gw->g.height-1, pcol->edge);
+		gdispGDrawLine(gw->g.display, gw->g.x, gw->g.y+gw->g.height-1, gw->g.x+gw->g.width-2, gw->g.y+gw->g.height-1, pcol->edge);
+	}
+#else
+	void gwinButtonDraw_Normal(GWidgetObject *gw, void *param) {
+		const GColorSet *	pcol;
+		fixed				alpha;
+		fixed				dalpha;
+		coord_t				i;
+		color_t				tcol, bcol;
+		(void)				param;
+
+		if (gw->g.vmt != (gwinVMT *)&buttonVMT)	return;
+		pcol = getDrawColors(gw);
 	
-	gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width-1, gw->g.height-1, gw->text, gw->g.font, pcol->text, pcol->fill, justifyCenter);
-	gdispGDrawLine(gw->g.display, gw->g.x+gw->g.width-1, gw->g.y, gw->g.x+gw->g.width-1, gw->g.y+gw->g.height-1, pcol->edge);
-	gdispGDrawLine(gw->g.display, gw->g.x, gw->g.y+gw->g.height-1, gw->g.x+gw->g.width-2, gw->g.y+gw->g.height-1, pcol->edge);
-}
+		/* Fill the box blended from variants of the fill color */
+		tcol = gdispBlendColor(White, pcol->fill, 50);
+		bcol = gdispBlendColor(Black, pcol->fill, 25);
+		dalpha = FIXED(255)/gw->g.height;
+		for(alpha = 0, i = 0; i < gw->g.height; i++, alpha += dalpha)
+			gdispGDrawLine(gw->g.display, gw->g.x, gw->g.y+i, gw->g.x+gw->g.width-2, gw->g.y+i, gdispBlendColor(bcol, tcol, NONFIXED(alpha)));
+
+		gdispGDrawStringBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width-1, gw->g.height-1, gw->text, gw->g.font, pcol->text, justifyCenter);
+		gdispGDrawLine(gw->g.display, gw->g.x+gw->g.width-1, gw->g.y, gw->g.x+gw->g.width-1, gw->g.y+gw->g.height-1, pcol->edge);
+		gdispGDrawLine(gw->g.display, gw->g.x, gw->g.y+gw->g.height-1, gw->g.x+gw->g.width-2, gw->g.y+gw->g.height-1, pcol->edge);
+	}
+#endif
 
 #if GDISP_NEED_ARC
 	void gwinButtonDraw_Rounded(GWidgetObject *gw, void *param) {

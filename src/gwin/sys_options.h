@@ -99,6 +99,15 @@
  * @{
  */
 	/**
+	 * @brief   Use flat styling for controls rather than a 3D look
+	 * @details	Defaults to FALSE
+	 * @note	This may appear better on color-restricted displays
+	 * @note	Flat styling is less graphics and cpu intensive (marginally) than the default 3D look.
+	 */
+	#ifndef GWIN_FLAT_STYLING
+		#define GWIN_FLAT_STYLING		FALSE
+	#endif
+	/**
 	 * @brief   Buttons should not insist the mouse is over the button on mouse release
 	 * @details	Defaults to FALSE
 	 */
