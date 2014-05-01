@@ -371,6 +371,9 @@ void gwinSetStyle(GHandle gh, const GWidgetStyle *pstyle) {
 }
 
 const GWidgetStyle *gwinGetStyle(GHandle gh) {
+	if (!(gh->flags & GWIN_FLG_WIDGET))
+		return 0;
+
 	return gw->pstyle;
 }
 
