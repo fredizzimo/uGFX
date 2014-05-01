@@ -25,6 +25,8 @@
 #define RND_CNR_SIZE			5		// Rounded corner size for rounded buttons
 #define ARROWHEAD_DIVIDER		4		// A quarter of the height for the arrow head
 #define ARROWBODY_DIVIDER		4		// A quarter of the width for the arrow body
+#define TOP_FADE				50		// (TOP_FADE/255)% fade to white for top of button
+#define BOTTOM_FADE				25		// (BOTTOM_FADE/255)% fade to black for bottom of button
 
 // Our pressed state
 #define GBUTTON_FLG_PRESSED		(GWIN_FIRST_CONTROL_FLAG<<0)
@@ -189,8 +191,8 @@ static const GColorSet *getDrawColors(GWidgetObject *gw) {
 		pcol = getDrawColors(gw);
 	
 		/* Fill the box blended from variants of the fill color */
-		tcol = gdispBlendColor(White, pcol->fill, 50);
-		bcol = gdispBlendColor(Black, pcol->fill, 25);
+		tcol = gdispBlendColor(White, pcol->fill, TOP_FADE);
+		bcol = gdispBlendColor(Black, pcol->fill, BOTTOM_FADE);
 		dalpha = FIXED(255)/gw->g.height;
 		for(alpha = 0, i = 0; i < gw->g.height; i++, alpha += dalpha)
 			gdispGDrawLine(gw->g.display, gw->g.x, gw->g.y+i, gw->g.x+gw->g.width-2, gw->g.y+i, gdispBlendColor(bcol, tcol, NONFIXED(alpha)));

@@ -21,7 +21,10 @@
 
 #include "src/gwin/class_gwin.h"
 
-#define GRADIO_TAB_CNR			3
+#define GRADIO_TAB_CNR			3		// Diagonal corner on active tab
+#define GRADIO_TOP_FADE			50		// (GRADIO_TOP_FADE/255)% fade to white for top of tab/button
+#define GRADIO_BOTTOM_FADE		25		// (GRADIO_BOTTOM_FADE/255)% fade to black for bottom of tab/button
+#define GRADIO_OUTLINE_FADE		128		// (GRADIO_OUTLINE_FADE/255)% fade to background for active tab edge
 
 // Our pressed state
 #define GRADIO_FLG_PRESSED		(GWIN_FIRST_CONTROL_FLAG<<0)
@@ -238,8 +241,8 @@ void gwinRadioDraw_Radio(GWidgetObject *gw, void *param) {
 		pcol = getDrawColors(gw);
 	
 		/* Fill the box blended from variants of the fill color */
-		tcol = gdispBlendColor(White, pcol->fill, 50);
-		bcol = gdispBlendColor(Black, pcol->fill, 25);
+		tcol = gdispBlendColor(White, pcol->fill, GRADIO_TOP_FADE);
+		bcol = gdispBlendColor(Black, pcol->fill, GRADIO_BOTTOM_FADE);
 		dalpha = FIXED(255)/gw->g.height;
 		for(alpha = 0, i = 0; i < gw->g.height; i++, alpha += dalpha)
 			gdispGDrawLine(gw->g.display, gw->g.x, gw->g.y+i, gw->g.x+gw->g.width-2, gw->g.y+i, gdispBlendColor(bcol, tcol, NONFIXED(alpha)));
@@ -260,15 +263,15 @@ void gwinRadioDraw_Radio(GWidgetObject *gw, void *param) {
 		pcol = getDrawColors(gw);
 
 		if ((gw->g.flags & GRADIO_FLG_PRESSED)) {
-			tcol = gdispBlendColor(pcol->edge, gw->pstyle->background, 128);
+			tcol = gdispBlendColor(pcol->edge, gw->pstyle->background, GRADIO_OUTLINE_FADE);
 			gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->text, gw->g.font, pcol->text, gw->g.bgcolor, justifyCenter);
 			gdispGDrawLine(gw->g.display, gw->g.x, gw->g.y, gw->g.x+gw->g.width-(GRADIO_TAB_CNR+1), gw->g.y, tcol);
 			gdispGDrawLine(gw->g.display, gw->g.x+gw->g.width-(GRADIO_TAB_CNR+1), gw->g.y, gw->g.x+gw->g.width-1, gw->g.y+GRADIO_TAB_CNR, tcol);
 			gdispGDrawLine(gw->g.display, gw->g.x+gw->g.width-1, gw->g.y+GRADIO_TAB_CNR, gw->g.x+gw->g.width-1, gw->g.y+gw->g.height-1, tcol);
 		} else {
 			/* Fill the box blended from variants of the fill color */
-			tcol = gdispBlendColor(White, pcol->fill, 50);
-			bcol = gdispBlendColor(Black, pcol->fill, 25);
+			tcol = gdispBlendColor(White, pcol->fill, GRADIO_TOP_FADE);
+			bcol = gdispBlendColor(Black, pcol->fill, GRADIO_BOTTOM_FADE);
 			dalpha = FIXED(255)/gw->g.height;
 			for(alpha = 0, i = 0; i < gw->g.height; i++, alpha += dalpha)
 				gdispGDrawLine(gw->g.display, gw->g.x, gw->g.y+i, gw->g.x+gw->g.width-2, gw->g.y+i, gdispBlendColor(bcol, tcol, NONFIXED(alpha)));
