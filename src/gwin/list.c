@@ -93,10 +93,9 @@ static void gwinListDefaultDraw(GWidgetObject* gw, void* param) {
 		coord_t					sy;
 	#endif
 
-	// dont render if render has been disabled
-	if (!(gw->g.flags & GLIST_FLG_ENABLERENDER)) {
+	// don't render if render has been disabled
+	if (!(gw->g.flags & GLIST_FLG_ENABLERENDER))
 		return;
-	}
 
 	ps = (gw->g.flags & GWIN_FLG_ENABLED) ? &gw->pstyle->enabled : &gw->pstyle->disabled;
 	iheight = gdispGetFontMetric(gw->g.font, fontHeight) + VERTICAL_PADDING;
@@ -209,24 +208,23 @@ static void gwinListDefaultDraw(GWidgetObject* gw, void* param) {
 
 	// a mouse down has occurred over the list area
 	static void MouseDown(GWidgetObject* gw, coord_t x, coord_t y) {
-		int							pgsz;
-		coord_t						iheight;
-		(void)						x;
+		coord_t		iheight, pgsz;
 
+		// Save our mouse start position
         gw2obj->start_mouse_x = x;
         gw2obj->start_mouse_y = y;
 		gw2obj->last_mouse_y = y;
-
-		iheight = gdispGetFontMetric(gw->g.font, fontHeight) + VERTICAL_PADDING;
-		pgsz = (gw->g.height-2);
-		if (pgsz < 1) pgsz = 1;
 
 		// For smooth scrolling, scrolling is done in the MouseMove and selection is done on MouseUp
 		if (gw->g.flags & GLIST_FLG_SCROLLSMOOTH)
 		    return;
 
+		// Some initial stuff
+		iheight = gdispGetFontMetric(gw->g.font, fontHeight) + VERTICAL_PADDING;
+		pgsz = gw->g.height-2;
+
 		// Handle click over the scroll bar
-		if (gw2obj->cnt > (pgsz / iheight) && x >= gw->g.width-(SCROLLWIDTH+2)) {
+		if (x >= gw->g.width-(SCROLLWIDTH+2) && (gw2obj->cnt > pgsz/iheight || (gw->g.flags & GLIST_FLG_SCROLLALWAYS))) {
 			if (y < 2*ARROW) {
 				if (gw2obj->top > 0) {
 					gw2obj->top -= iheight;
