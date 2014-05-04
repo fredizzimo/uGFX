@@ -28,7 +28,11 @@
 
 void _gosInit(void)
 {
-	// The user must call vTaskStartScheduler() himself before he calls gfxInit(). 
+	// The user must call vTaskStartScheduler() himself before he calls gfxInit().
+}
+
+void _gosDeinit(void)
+{
 }
 
 void* gfxRealloc(void *ptr, size_t oldsz, size_t newsz)
@@ -52,30 +56,24 @@ void* gfxRealloc(void *ptr, size_t oldsz, size_t newsz)
 
 void gfxSleepMilliseconds(delaytime_t ms)
 {
-	// Implement this
+	const portTickType ticks = ms / portTICK_PERIOD_MS;
+	vTaskDelay(ticks);
 }
 
 void gfxSleepMicroseconds(delaytime_t ms)
 {
-	// Implement this
+	const portTickType ticks = (ms / 1000) / portTICK_PERIOD_MS;
+
+	// delay milli seconds
+	vTaskDelay(ticks);
+
+	// microsecond resolution delay is not supported in FreeRTOS
+	// vUsDelay(ms%1000);
 }
 
 portTickType MS2ST(portTickType ms)
 {
-	// Verify this
-
-	uint64_t	val;
-
-	if (configTICK_RATE_HZ == 1000) {	// gain time because no test to do in most case
-		return ms;
-	}
-
-	val = ms;
-	val *= configTICK_RATE_HZ;
-	val += 999;
-	val /= 1000;
-
-	return val;
+	return (ms / portTICK_PERIOD_MS);
 }
 
 void gfxSemInit(gfxSem* psem, semcount_t val, semcount_t limit)
@@ -152,7 +150,7 @@ gfxThreadHandle gfxThreadCreate(void *stackarea, size_t stacksz, threadpriority_
 	if (stacksz < configMINIMAL_STACK_SIZE)
 		stacksz = configMINIMAL_STACK_SIZE;
 
-	if (xTaskCreate(fn, (signed char*)"uGFX_TASK", stacksz, param, prio, &task )!= pdPASS) {
+	if (xTaskCreate(fn, "uGFX_TASK", stacksz, param, prio, &task )!= pdPASS) {
 		for (;;);
 	}
 
@@ -161,4 +159,3 @@ gfxThreadHandle gfxThreadCreate(void *stackarea, size_t stacksz, threadpriority_
 
 #endif /* GFX_USE_OS_FREERTOS */
 /** @} */
-

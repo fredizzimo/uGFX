@@ -59,7 +59,7 @@ typedef struct {
 } gfxSem;
 
 typedef xSemaphoreHandle		gfxMutex;
-typedef xTaskHandl*				gfxThreadHandle;
+typedef xTaskHandle*				gfxThreadHandle;
 
 /*===========================================================================*/
 /* Function declarations.                                                    */
@@ -111,4 +111,3 @@ gfxThreadHandle gfxThreadCreate(void *stackarea, size_t stacksz, threadpriority_
 
 #endif /* GFX_USE_OS_FREERTOS */
 #endif /* _GOS_CHIBIOS_H */
-
