@@ -140,6 +140,10 @@ GHandle gwinGImageCreate(GDisplay *g, GImageObject *gobj, GWindowInit *pInit) {
 }
 
 bool_t gwinImageOpenGFile(GHandle gh, GFILE *f) {
+	// is it a valid handle?
+	if (gh->vmt != (gwinVMT *)&imageVMT)
+		return FALSE;
+
 	if (gdispImageIsOpen(&widget(gh)->image))
 		gdispImageClose(&widget(gh)->image);
 
@@ -159,6 +163,10 @@ bool_t gwinImageOpenGFile(GHandle gh, GFILE *f) {
 }
 
 gdispImageError gwinImageCache(GHandle gh) {
+	// is it a valid handle?
+	if (gh->vmt != (gwinVMT *)&imageVMT)
+		return GDISP_IMAGE_ERR_BADFORMAT;
+
 	return gdispImageCache(&widget(gh)->image);
 }
 

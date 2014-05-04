@@ -33,6 +33,7 @@ FEATURE:	Update GADC audio recording driver to new GAUDIO format
 FEATURE:	Added vs1053 audio play driver
 FEATURE:	Added GAUDIO wave-play demo
 FEATURE:	Added many GWIN simple demo's and updated the combined widget demo
+FEATURE:	Added gwinEnable() and gwinDisable()
 
 
 *** changes after 1.9 ***

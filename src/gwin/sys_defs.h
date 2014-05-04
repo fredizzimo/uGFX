@@ -337,6 +337,24 @@ extern "C" {
 	void gwinSetEnabled(GHandle gh, bool_t enabled);
 
 	/**
+	 * @brief	Enables a widget
+	 *
+	 * @param[in] gh		The window handle
+	 *
+	 * @api
+	 */
+	#define gwinEnable(gh)		gwinSetEnabled(gh, TRUE);
+
+	/**
+	 * @brief	Disables a widget
+	 *
+	 * @param[in] gh		The window handle
+	 *
+	 * @api
+	 */
+	#define gwinDisable(gh)		gwinSetEnabled(gh, FALSE);
+
+	/**
 	 * @brief	Gets the enabled state of a window
 	 * @return	TRUE if enabled
 	 *

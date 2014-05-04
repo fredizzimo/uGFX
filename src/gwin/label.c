@@ -45,44 +45,7 @@ static coord_t getheight(const char *text, font_t font, coord_t maxwidth) {
 	return gdispGetFontMetric(font, fontHeight);
 }
 
-static void gwinLabelDefaultDraw(GWidgetObject *gw, void *param) {
-	coord_t				w, h;
-	(void)				param;
-
-	w = (gw->g.flags & GLABEL_FLG_WAUTO) ? getwidth(gw->text, gw->g.font, gdispGGetWidth(gw->g.display) - gw->g.x) : gw->g.width;
-	h = (gw->g.flags & GLABEL_FLG_HAUTO) ? getheight(gw->text, gw->g.font, gdispGGetWidth(gw->g.display) - gw->g.x) : gw->g.height;
-
-	if (gw->g.width != w || gw->g.height != h) {
-		gwinResize(&gw->g, w, h);
-
-		return;
-	}
-
-	#if GWIN_LABEL_ATTRIBUTE
-		if (gw2obj->attr != 0) {
-			gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw2obj->attr, gw->g.font,
-					(gw->g.flags & GWIN_FLG_ENABLED) ? gw->pstyle->enabled.text : gw->pstyle->disabled.text, gw->pstyle->background,
-					justifyLeft);
-
-			gdispGFillStringBox(gw->g.display, gw->g.x + gw2obj->tab, gw->g.y, gw->g.width, gw->g.height, gw->text, gw->g.font,
-					(gw->g.flags & GWIN_FLG_ENABLED) ? gw->pstyle->enabled.text : gw->pstyle->disabled.text, gw->pstyle->background,
-					justifyLeft);
-		} else {
-			gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->text, gw->g.font,
-					(gw->g.flags & GWIN_FLG_ENABLED) ? gw->pstyle->enabled.text : gw->pstyle->disabled.text, gw->pstyle->background,
-				 	justifyLeft);
-
-		}
-	#else
-		gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->text, gw->g.font,
-				(gw->g.flags & GWIN_FLG_ENABLED) ? gw->pstyle->enabled.text : gw->pstyle->disabled.text, gw->pstyle->background,
-				justifyLeft);
-	#endif
-
-	// render the border (if any)
-	if (gw->g.flags & GLABEL_FLG_BORDER)
-		gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, (gw->g.flags & GWIN_FLG_ENABLED) ? gw->pstyle->enabled.edge : gw->pstyle->disabled.edge);
-}
+static void gwinLabelDefaultDraw(GWidgetObject *gw, void *param);
 
 static const gwidgetVMT labelVMT = {
 	{
@@ -138,9 +101,6 @@ GHandle gwinGLabelCreate(GDisplay *g, GLabelObject *widget, GWidgetInit *pInit) 
 	if (!(widget = (GLabelObject *)_gwidgetCreate(g, &widget->w, pInit, &labelVMT)))
 		return 0;
 
-	// no borders by default
-	flags &=~ GLABEL_FLG_BORDER;
-
 	#if GWIN_LABEL_ATTRIBUTE
 		widget->tab = 0;
 		widget->attr = 0;
@@ -175,6 +135,49 @@ void gwinLabelSetBorder(GHandle gh, bool_t border) {
 		gwinRedraw(gh); 
 	}
 #endif // GWIN_LABEL_ATTRIBUTE
+
+static void gwinLabelDefaultDraw(GWidgetObject *gw, void *param) {
+	coord_t				w, h;
+	(void)				param;
+
+	// is it a valid handle?
+	if (gw->g.vmt != (gwinVMT *)&labelVMT)
+		return;
+
+	w = (gw->g.flags & GLABEL_FLG_WAUTO) ? getwidth(gw->text, gw->g.font, gdispGGetWidth(gw->g.display) - gw->g.x) : gw->g.width;
+	h = (gw->g.flags & GLABEL_FLG_HAUTO) ? getheight(gw->text, gw->g.font, gdispGGetWidth(gw->g.display) - gw->g.x) : gw->g.height;
+
+	if (gw->g.width != w || gw->g.height != h) {
+		gwinResize(&gw->g, w, h);
+
+		return;
+	}
+
+	#if GWIN_LABEL_ATTRIBUTE
+		if (gw2obj->attr != 0) {
+			gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw2obj->attr, gw->g.font,
+					(gw->g.flags & GWIN_FLG_ENABLED) ? gw->pstyle->enabled.text : gw->pstyle->disabled.text, gw->pstyle->background,
+					justifyLeft);
+
+			gdispGFillStringBox(gw->g.display, gw->g.x + gw2obj->tab, gw->g.y, gw->g.width, gw->g.height, gw->text, gw->g.font,
+					(gw->g.flags & GWIN_FLG_ENABLED) ? gw->pstyle->enabled.text : gw->pstyle->disabled.text, gw->pstyle->background,
+					justifyLeft);
+		} else {
+			gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->text, gw->g.font,
+					(gw->g.flags & GWIN_FLG_ENABLED) ? gw->pstyle->enabled.text : gw->pstyle->disabled.text, gw->pstyle->background,
+					justifyLeft);
+
+		}
+	#else
+		gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->text, gw->g.font,
+				(gw->g.flags & GWIN_FLG_ENABLED) ? gw->pstyle->enabled.text : gw->pstyle->disabled.text, gw->pstyle->background,
+				justifyLeft);
+	#endif
+
+	// render the border (if any)
+	if (gw->g.flags & GLABEL_FLG_BORDER)
+		gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, (gw->g.flags & GWIN_FLG_ENABLED) ? gw->pstyle->enabled.edge : gw->pstyle->disabled.edge);
+}
 
 #endif // GFX_USE_GWIN && GFX_NEED_LABEL
 /** @} */

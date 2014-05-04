@@ -43,7 +43,7 @@ static const gwidgetVMT progressbarVMT = {
 	{
 		"Progressbar",				// The classname
 		sizeof(GProgressbarObject),	// The object size
-		_destroy,		// The destroy routine
+		_destroy,				// The destroy routine
 		_gwidgetRedraw,			// The redraw routine
 		0,						// The after-clear routine
 	},
@@ -180,7 +180,7 @@ void gwinProgressbarDecrement(GHandle gh) {
 }
 
 // used by gwinProgressbarStart();
-void _progressbarCallback(void *param) {
+static void _progressbarCallback(void *param) {
 	#define gsw		((GProgressbarObject *)gh)
 	GHandle gh = (GHandle)param;
 
@@ -206,11 +206,13 @@ void gwinProgressbarStart(GHandle gh, delaytime_t delay) {
 	gtimerInit(&(gsw->gt));
 	gtimerStart(&(gsw->gt), _progressbarCallback, gh, FALSE, gsw->delay);
 
-	// if this is not made, the progressbar will not start when the it's already visible
-	if (gsw->w.g.flags & GWIN_FLG_VISIBLE) {
-		gwinSetVisible(gh, FALSE);
-		gwinSetVisible(gh, TRUE);
-	}
+	#if 0
+		// if this is not made, the progressbar will not start when it's already visible
+		if (gsw->w.g.flags & GWIN_FLG_VISIBLE) {
+			gwinSetVisible(gh, FALSE);
+			gwinSetVisible(gh, TRUE);
+		}
+	#endif
 
 	#undef gsw
 }
@@ -238,13 +240,6 @@ void gwinProgressbarDraw_Std(GWidgetObject *gw, void *param) {
 
 	if (gw->g.vmt != (gwinVMT *)&progressbarVMT)
 		return;
-
-	// disable the auto-update timer if any
-	#if GFX_USE_GTIMER
-		if (gtimerIsActive(&(gsw->gt)) && !(gw->g.flags & GWIN_FLG_ENABLED)) {
-			gtimerStop(&(gsw->gt));
-		}
-	#endif
 
 	// get the colors right
 	if ((gw->g.flags & GWIN_FLG_ENABLED)) 
