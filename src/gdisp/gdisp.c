@@ -1415,7 +1415,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 			if (full & 0x30) { g->p.x = x-a; g->p.y = y+b; drawpixel_clip(g); }
 			if (full == 0xFF) {
 				autoflush(g);
-				MUTEX_EXIT();
+				MUTEX_EXIT(g);
 				return;
 			}
 		}
