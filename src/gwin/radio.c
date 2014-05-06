@@ -21,7 +21,7 @@
 
 #include "src/gwin/class_gwin.h"
 
-#define GRADIO_TAB_CNR			3		// Diagonal corner on active tab
+#define GRADIO_TAB_CNR			8		// Diagonal corner on active tab
 #define GRADIO_TOP_FADE			50		// (GRADIO_TOP_FADE/255)% fade to white for top of tab/button
 #define GRADIO_BOTTOM_FADE		25		// (GRADIO_BOTTOM_FADE/255)% fade to black for bottom of tab/button
 #define GRADIO_OUTLINE_FADE		128		// (GRADIO_OUTLINE_FADE/255)% fade to background for active tab edge
