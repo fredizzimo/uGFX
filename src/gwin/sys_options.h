@@ -58,6 +58,13 @@
 		#define GWIN_NEED_BUTTON	FALSE
 	#endif
 	/**
+	 * @brief   Should progressbar functions be included.
+	 * @details	Defaults to FALSE
+	 */
+	#ifndef GWIN_NEED_PROGRESSBAR
+		#define GWIN_NEED_PROGRESSBAR	FALSE
+	#endif
+	/**
 	 * @brief   Should slider functions be included.
 	 * @details	Defaults to FALSE
 	 */
