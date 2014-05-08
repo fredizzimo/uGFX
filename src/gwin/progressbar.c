@@ -84,6 +84,10 @@ GHandle gwinGProgressbarCreate(GDisplay *g, GProgressbarObject *gs, const GWidge
 	gs->pos = 0;
 	gs->delay = 0;
 
+	#if GWIN_PROGRESSBAR_AUTO
+		gtimerInit(&gs->gt);
+	#endif
+
 	ResetDisplayPos(gs);
 	gwinSetVisible((GHandle)gs, pInit->g.show);
 	
@@ -179,54 +183,48 @@ void gwinProgressbarDecrement(GHandle gh) {
 	#undef gsw
 }
 
-// used by gwinProgressbarStart();
-static void _progressbarCallback(void *param) {
-	#define gsw		((GProgressbarObject *)gh)
-	GHandle gh = (GHandle)param;
-
-	if (gh->vmt != (gwinVMT *)&progressbarVMT)
-		return;
-
-	gwinProgressbarIncrement(gh);
-
-	if (gsw->pos < gsw->max)
+#if GWIN_PROGRESSBAR_AUTO
+	// used by gwinProgressbarStart();
+	static void _progressbarCallback(void *param) {
+		#define gsw		((GProgressbarObject *)gh)
+		GHandle gh = (GHandle)param;
+	
+		if (gh->vmt != (gwinVMT *)&progressbarVMT)
+			return;
+	
+		gwinProgressbarIncrement(gh);
+	
+		if (gsw->pos < gsw->max)
+			gtimerStart(&(gsw->gt), _progressbarCallback, gh, FALSE, gsw->delay);
+	
+		#undef gsw	
+	}
+	
+	void gwinProgressbarStart(GHandle gh, delaytime_t delay) {
+		#define gsw		((GProgressbarObject *)gh)
+	
+		if (gh->vmt != (gwinVMT *)&progressbarVMT)
+			return;
+	
+		gsw->delay = delay;
+	
+		gtimerInit(&(gsw->gt));
 		gtimerStart(&(gsw->gt), _progressbarCallback, gh, FALSE, gsw->delay);
-
-	#undef gsw	
-}
-
-void gwinProgressbarStart(GHandle gh, delaytime_t delay) {
-	#define gsw		((GProgressbarObject *)gh)
-
-	if (gh->vmt != (gwinVMT *)&progressbarVMT)
-		return;
-
-	gsw->delay = delay;
-
-	gtimerInit(&(gsw->gt));
-	gtimerStart(&(gsw->gt), _progressbarCallback, gh, FALSE, gsw->delay);
-
-	#if 0
-		// if this is not made, the progressbar will not start when it's already visible
-		if (gsw->w.g.flags & GWIN_FLG_VISIBLE) {
-			gwinSetVisible(gh, FALSE);
-			gwinSetVisible(gh, TRUE);
-		}
-	#endif
-
-	#undef gsw
-}
-
-void gwinProgressbarStop(GHandle gh) {
-	#define gsw		((GProgressbarObject *)gh)
-
-	if (gh->vmt != (gwinVMT *)&progressbarVMT)
-		return;
-
-	gtimerStop(&(gsw->gt));
-
-	#undef gsw
-}
+	
+		#undef gsw
+	}
+	
+	void gwinProgressbarStop(GHandle gh) {
+		#define gsw		((GProgressbarObject *)gh)
+	
+		if (gh->vmt != (gwinVMT *)&progressbarVMT)
+			return;
+	
+		gtimerStop(&(gsw->gt));
+	
+		#undef gsw
+	}
+#endif /* GWIN_PROGRESSBAR_AUTO */
 
 /*----------------------------------------------------------
  * Custom Draw Routines

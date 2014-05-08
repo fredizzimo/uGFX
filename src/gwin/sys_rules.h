@@ -93,6 +93,11 @@
 	#endif
 	#if GWIN_NEED_GRAPH
 	#endif
+	#if GWIN_PROGRESSBAR_AUTO
+		#if !GFX_USE_GTIMER
+			#error "GWIN: GFX_USE_GTIMER is required if GWIN_PROGRESSBAR_AUTO is TRUE."
+		#endif
+	#endif
 #endif
 
 #endif /* _GWIN_RULES_H */

@@ -148,6 +148,7 @@
     #define GWIN_NEED_LIST                           FALSE
         #define GWIN_NEED_LIST_IMAGES                FALSE
     #define GWIN_NEED_PROGRESSBAR                    FALSE
+        #define GWIN_PROGRESSBAR_AUTO                FALSE
     #define GWIN_NEED_FRAME                          FALSE
 	#define GWIN_FLAT_STYLING                        FALSE
 

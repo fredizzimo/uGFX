@@ -30,7 +30,7 @@ typedef struct GProgressbarObject {
 	int					max;
 	int					res;
 	int					pos;
-	#if GFX_USE_GTIMER
+	#if GWIN_PROGRESSBAR_AUTO
 		GTimer			gt;
 		delaytime_t		delay;
 	#endif
@@ -147,31 +147,33 @@ void gwinProgressbarDecrement(GHandle gh);
   */
 #define gwinProgressbarReset(gh)			gwinProgressbarSetPosition(gh, ((GProgressbarObject *)(gh))->min)
 
-/**
- * @brief	Automatically increments the progress bar
- *
- * @note	The delay is generated using the GTIMER module which is based on software/virtual timer.
- *			Therefore, the delay is totally unprecise.
- *
- * @note	The progressbar incrementation starts at the current level. It is not reset to the minimum value.
- *
- * @note	An event is generated once the maximum value has been reached (ToDo)
- *
- * @param[in] gh		The window handle (must be a progressbar window)
- * @param[in] delay		The incrementation delay (in milliseconds)
- *
- * @api
- */
-void gwinProgressbarStart(GHandle gh, delaytime_t delay);
-
-/**
- * @brief	Stop the timer which is started by @p gwinProgressbarStart()
- *
- * @param[in] gh		The window handle (must be a progressbar window)
- *
- * @api
- */		
-void gwinProgressbarStop(GHandle gh);
+#if GWIN_PROGRESSBAR_AUTO
+	/**
+	 * @brief	Automatically increments the progress bar
+	 *
+	 * @note	The delay is generated using the GTIMER module which is based on software/virtual timer.
+	 *			Therefore, the delay is totally unprecise.
+	 *
+	 * @note	The progressbar incrementation starts at the current level. It is not reset to the minimum value.
+	 *
+	 * @note	An event is generated once the maximum value has been reached (ToDo)
+	 *
+	 * @param[in] gh		The window handle (must be a progressbar window)
+	 * @param[in] delay		The incrementation delay (in milliseconds)
+	 *
+	 * @api
+	 */
+	void gwinProgressbarStart(GHandle gh, delaytime_t delay);
+	
+	/**
+	 * @brief	Stop the timer which is started by @p gwinProgressbarStart()
+	 *
+	 * @param[in] gh		The window handle (must be a progressbar window)
+	 *
+	 * @api
+	 */		
+	void gwinProgressbarStop(GHandle gh);
+#endif /* GWIN_PROGRESSBAR_AUTO */
 
 /**
  * @brief	Some custom progressbar drawing routines

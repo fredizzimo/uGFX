@@ -65,6 +65,7 @@
     #define GWIN_NEED_LIST                           TRUE
         #define GWIN_NEED_LIST_IMAGES                TRUE
     #define GWIN_NEED_PROGRESSBAR                    TRUE
+        #define GWIN_PROGRESSBAR_AUTO                TRUE
 
 ///////////////////////////////////////////////////////////////////////////
 // GEVENT                                                                //

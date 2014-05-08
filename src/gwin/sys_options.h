@@ -214,6 +214,13 @@
 	#ifndef GWIN_NEED_IMAGE_ANIMATION
 		#define GWIN_NEED_IMAGE_ANIMATION		FALSE
 	#endif
+	/**
+	 * @brief	Enable the API to automatically increment the progressbar over time
+	 * @details	Defaults to FALSE
+	 */
+	#ifndef GWIN_PROGRESSBAR_AUTO
+	 	#define GWIN_PROGRESSBAR_AUTO			FALSE
+	#endif
 /** @} */
 
 #endif /* _GWIN_OPTIONS_H */
