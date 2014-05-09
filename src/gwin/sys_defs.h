@@ -874,7 +874,7 @@ extern "C" {
 	#endif
 
 	#if GWIN_NEED_IMAGE || defined(__DOXYGEN__)
-		#include "src/gwin/imagebox.h"
+		#include "src/gwin/image.h"
 	#endif
 
 #endif /* GFX_USE_GWIN */
