@@ -114,7 +114,7 @@ void _gwinDeinit(void)
 
 // Internal routine for use by GWIN components only
 // Initialise a window creating it dynamically if required.
-GHandle _gwindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pInit, const gwinVMT *vmt, uint16_t flags) {
+GHandle _gwindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pInit, const gwinVMT *vmt, uint32_t flags) {
 	// Allocate the structure if necessary
 	if (!pgw) {
 		if (!(pgw = gfxAlloc(vmt->size)))
@@ -197,6 +197,9 @@ GHandle gwinGWindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pI
 }
 
 void gwinDestroy(GHandle gh) {
+	if (!gh)
+		return;
+
 	// Make the window invisible
 	gwinSetVisible(gh, FALSE);
 

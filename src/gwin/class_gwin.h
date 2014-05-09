@@ -170,7 +170,7 @@ extern "C" {
  *
  * @notapi
  */
-GHandle _gwindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pInit, const gwinVMT *vmt, uint16_t flags);
+GHandle _gwindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pInit, const gwinVMT *vmt, uint32_t flags);
 
 #if GWIN_NEED_WIDGET || defined(__DOXYGEN__)
 	/**
