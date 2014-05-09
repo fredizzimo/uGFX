@@ -55,14 +55,14 @@ static void SendButtonEvent(GWidgetObject *gw) {
 	static void MouseDown(GWidgetObject *gw, coord_t x, coord_t y) {
 		(void) x; (void) y;
 		gw->g.flags |= GBUTTON_FLG_PRESSED;
-		_gwidgetRedraw((GHandle)gw);
+		_gwidgetUpdate((GHandle)gw);
 	}
 
 	// A mouse up has occurred (it may or may not be over the button)
 	static void MouseUp(GWidgetObject *gw, coord_t x, coord_t y) {
 		(void) x; (void) y;
 		gw->g.flags &= ~GBUTTON_FLG_PRESSED;
-		_gwidgetRedraw((GHandle)gw);
+		_gwidgetUpdate((GHandle)gw);
 
 		#if !GWIN_BUTTON_LAZY_RELEASE
 			// If the mouse up was not over the button then cancel the event
@@ -79,14 +79,14 @@ static void SendButtonEvent(GWidgetObject *gw) {
 	static void ToggleOff(GWidgetObject *gw, uint16_t role) {
 		(void) role;
 		gw->g.flags &= ~GBUTTON_FLG_PRESSED;
-		_gwidgetRedraw((GHandle)gw);
+		_gwidgetUpdate((GHandle)gw);
 	}
 
 	// A toggle on has occurred
 	static void ToggleOn(GWidgetObject *gw, uint16_t role) {
 		(void) role;
 		gw->g.flags |= GBUTTON_FLG_PRESSED;
-		_gwidgetRedraw((GHandle)gw);
+		_gwidgetUpdate((GHandle)gw);
 		// Trigger the event on button down (different than for mouse/touch)
 		SendButtonEvent(gw);
 	}
@@ -161,7 +161,7 @@ bool_t gwinButtonIsPressed(GHandle gh) {
  *----------------------------------------------------------*/
 
 static const GColorSet *getDrawColors(GWidgetObject *gw) {
-	if (!(gw->g.flags & GWIN_FLG_ENABLED))		return &gw->pstyle->disabled;
+	if (!(gw->g.flags & GWIN_FLG_SYSENABLED))	return &gw->pstyle->disabled;
 	if ((gw->g.flags & GBUTTON_FLG_PRESSED))	return &gw->pstyle->pressed;
 	return &gw->pstyle->enabled;
 }
@@ -336,7 +336,7 @@ static const GColorSet *getDrawColors(GWidgetObject *gw) {
 		if (gw->g.vmt != (gwinVMT *)&buttonVMT)	return;
 		pcol = getDrawColors(gw);
 
-		if (!(gw->g.flags & GWIN_FLG_ENABLED)) {
+		if (!(gw->g.flags & GWIN_FLG_SYSENABLED)) {
 			sy = 2 * gw->g.height;
 		} else if ((gw->g.flags & GBUTTON_FLG_PRESSED)) {
 			sy = gw->g.height;

@@ -27,7 +27,7 @@
  * @{
  */
 
-/* Forward definition */
+// Forward definition
 struct GWidgetObject;
 
 /**
@@ -318,10 +318,6 @@ bool_t gwinAttachListener(GListener *pl);
 
 #if GWIN_NEED_PROGRESSBAR || defined(__DOXYGEN__)
 	#include "src/gwin/progressbar.h"
-#endif
-
-#if GWIN_NEED_FRAME || defined(__DOXYGEN__)
-	#include "gwin/frame.h"
 #endif
 
 #endif /* _GWIDGET_H */

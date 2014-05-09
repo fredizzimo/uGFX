@@ -28,22 +28,13 @@
 	#endif
 
 	// Objects require their super-class
-	#if GWIN_NEED_HIERARCHY
-		#if !GQUEUE_NEED_ASYNC
-			#if GFX_DISPLAY_RULE_WARNINGS
-				#warning "GWIN: GQUEUE_NEED_ASYNC is required when GWIN_NEED_HIERARCHY is enabled. It has been turned on for you."
-			#endif
-			#undef GQUEUE_NEED_ASYNC
-			#define GQUEUE_NEED_ASYNC	TRUE
-		#endif
-	#endif
 	#if GWIN_NEED_FRAME
-		#if !GWIN_NEED_HIERARCHY
+		#if !GWIN_NEED_CONTAINERS
 			#if GFX_DISPLAY_RULE_WARNINGS
-				#warning "GWIN: GWIN_NEED_HIERARCHY is required when GIWN_NEED_FRAME is enabled. It has been turned on for you."
+				#warning "GWIN: GWIN_NEED_CONTAINERS is required when GIWN_NEED_FRAME is enabled. It has been turned on for you."
 			#endif
-			#undef GWIN_NEED_HIERARCHY
-			#define GWIN_NEED_HIERARCHY	TRUE
+			#undef GWIN_NEED_CONTAINERS
+			#define GWIN_NEED_CONTAINERS	TRUE
 		#endif
 	#endif
 	#if GWIN_NEED_BUTTON || GWIN_NEED_SLIDER || GWIN_NEED_CHECKBOX || GWIN_NEED_LABEL || GWIN_NEED_RADIO || GWIN_NEED_LIST || \
@@ -58,6 +49,15 @@
 	#endif
 
 	// Rules for the super-classes
+	#if GWIN_NEED_CONTAINERS
+		#if !GWIN_NEED_WIDGET
+			#if GFX_DISPLAY_RULE_WARNINGS
+				#warning "GWIN: GWIN_NEED_WIDGET is required when GWIN_NEED_CONTAINERS is enabled. It has been turned on for you."
+			#endif
+			#undef GWIN_NEED_WIDGET
+			#define GWIN_NEED_WIDGET	TRUE
+		#endif
+	#endif
 	#if GWIN_NEED_WIDGET
 		#if !GDISP_NEED_TEXT
 			#error "GWIN: GDISP_NEED_TEXT is required if GWIN_NEED_WIDGET is TRUE."
@@ -116,12 +116,7 @@
 			#error "GWIN: GDISP_NEED_TEXT is required if GWIN_NEED_CONSOLE is TRUE."
 		#endif
 	#endif
-	#if GWIN_NEED_PROGRESSBAR
-		#if GWIN_PROGRESSBAR_AUTO
-			#if !GFX_USE_GTIMER
-				#error "GWIN: GFX_USE_GTIMER is required if GWIN_PROGRESSBAR_AUTO is TRUE."
-			#endif
-		#endif
+	#if GWIN_NEED_GRAPH
 	#endif
 #endif
 

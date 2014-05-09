@@ -190,7 +190,7 @@ static void _callbackBtn(void *param, GEvent *pe) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 static const GColorSet* _getDrawColors(GWidgetObject *gw) {
-	if (!(gw->g.flags & GWIN_FLG_ENABLED))
+	if (!(gw->g.flags & GWIN_FLG_SYSENABLED))
 		return &gw->pstyle->disabled;
 	//if ((gw->g.flags & GBUTTON_FLG_PRESSED))
 	//	return &gw->pstyle->pressed;
@@ -212,10 +212,6 @@ void gwinFrameDraw_Std(GWidgetObject *gw, void *param) {
 	// do some magic to make the background lighter than the widgets. Fix this somewhen.
 	border = HTML2COLOR(0x2698DE);
 	background = HTML2COLOR(0xEEEEEE);
-
-	#if GDISP_NEED_CLIP
-		gdispGSetClip(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height);
-	#endif 
 
 	// Render the actual frame (with border, if any)
 	if (gw->g.flags & GWIN_FRAME_BORDER) {

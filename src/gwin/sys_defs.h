@@ -42,17 +42,15 @@ typedef struct GWindowObject {
 	#endif
 	const struct gwinVMT	*vmt;				// @< The VMT for this GWIN
 	GDisplay *				display;			// @< The display this window is on.
-	coord_t					x, y;				// @< Position relative to parent
+	coord_t					x, y;				// @< Screen relative position
 	coord_t					width, height;		// @< Dimensions of this window
 	color_t					color, bgcolor;		// @< The current drawing colors
 	uint32_t				flags;				// @< Window flags (the meaning is private to the GWIN class)
 	#if GDISP_NEED_TEXT
 		font_t				font;				// @< The current font
 	#endif
-	#if GWIN_NEED_HIERARCHY
-		GHandle				parent;				// @< The parent widget
-		GHandle				sibling;			// @< The widget to its left (add right later as well)
-		GHandle				child;				// @< The child widget
+	#if GWIN_NEED_CONTAINERS
+		GHandle				parent;				// @< The parent window
 	#endif
 } GWindowObject, * GHandle;
 /* @} */
@@ -70,9 +68,12 @@ typedef struct GWindowObject {
  * @{
  */
 typedef struct GWindowInit {
-	coord_t			x, y;							// @< The initial screen position
+	coord_t			x, y;							// @< The initial position relative to its parent
 	coord_t			width, height;					// @< The initial dimension
 	bool_t			show;							// @< Should the window be visible initially
+	#if GWIN_NEED_CONTAINERS
+		GHandle		parent;							// @< The parent - must be a container or NULL
+	#endif
 } GWindowInit;
 /* @} */
 
@@ -332,6 +333,9 @@ extern "C" {
 	 * 			as not visible, nothing is done to remove the window from the screen.
 	 * 			When there is a window manager, it is up to the window manager to
 	 * 			handle what happens.
+	 * @note	Even when you mark a window as visible, it may still not be displayed
+	 * 			if it's parent is invisible. When the parent becomes visible this child
+	 * 			will automatically be shown because it is already marked as visible.
 	 *
 	 * @api
 	 */
@@ -340,6 +344,9 @@ extern "C" {
 	/**
 	 * @brief	Gets the visibility of a window
 	 * @return	TRUE if visible
+	 *
+	 * @note	It is possible for a child to be marked as visible by @p gwinSetVisible()
+	 * 			but for this call to return FALSE if one of its parents are not visible.
 	 *
 	 * @param[in] gh		The window
 	 *
@@ -353,8 +360,10 @@ extern "C" {
 	 * @param[in] gh		The window handle
 	 * @param[in] enabled	Enable or disable the window
 	 *
-	 * @note				The window is automatically redrawn if it
-	 * 						supports self-redrawing.
+	 * @note	The window is automatically redrawn if it supports self-redrawing.
+	 * @note	Even when you mark a window as enabled, it may still remain disabled
+	 * 			if it's parent is disabled. When the parent becomes enabled this child
+	 * 			will automatically be enabled because it is already marked as enabled.
 	 *
 	 * @api
 	 */
@@ -381,6 +390,9 @@ extern "C" {
 	/**
 	 * @brief	Gets the enabled state of a window
 	 * @return	TRUE if enabled
+	 *
+	 * @note	It is possible for a child to be marked as enabled by @p gwinSetEnabled()
+	 * 			but for this call to return FALSE if one of its parents are not enabled.
 	 *
 	 * @param[in] gh		The window
 	 *
@@ -436,65 +448,6 @@ extern "C" {
 	 * @api
 	 */
 	void gwinRedraw(GHandle gh);
-
-	#if GWIN_NEED_HIERARCHY
-		/**
-		 * @brief	Add a child widget to a parent one
-		 *
-		 * @param[in] parent	The parent window (does not need to be parent yet)
-		 * @param[in] child		The child window
-		 * @param[in] last		Should the child window be added to the front or the back of the list? 
-		 *
-		 * @api
-		 */
-		void gwinAddChild(GHandle parent, GHandle child, bool_t last);
-
-		/**
-		 * @brief	Remove a child from a parent
-		 *
-		 * @note	Other children of the same parent stay
-		 * @note	Children of the child are lost, they have to be reassigned manually if necessary.
-		 * 
-		 * @param[in] child		The child window
-		 *
-		 * @api
-		 */
-		void gwinRemoveChild(GHandle child);
-
-		/**
-		 * @brief	Redraw only the children of a parent but not the parent itself
-		 *
-	 	 * @details	This routine does exactly the same as @p gwinRedraw() but does not
-		 * 			issue a redraw of the passed widget but only of it's children.
-		 *
-		 * @param[in] gh		The widget
-		 *
-		 * @api
-		 */
-		void gwinRedrawChildren(GHandle gh);
-
-		/**
-		 * @brief	Get first child of a widget
-		 *
-		 * @return	The first child or NULL if the widget has no children
-		 *
-		 * @param[in] gh		The parent widget
-		 *
-		 * @api
-		 */
-		GHandle gwinGetFirstChild(GHandle gh);
-
-		/**
-		 * @brief	Get the next child of a widget
-		 *
-		 * @return	The next child or NULL if no more childs
-		 *
-		 * @param[in] gh		The parent widget
-		 *
-		 * @api
-		 */
-		GHandle gwinGetNextChild(GHandle gh);
-	#endif
 
 	#if GWIN_NEED_WINDOWMANAGER || defined (__DOXYGEN__)
 		/**
@@ -558,6 +511,24 @@ extern "C" {
 		 * @api
 		 */
 		void gwinRaise(GHandle gh);
+
+		/**
+		 * @brief	Get the next window in the z-order
+		 * @return	The next window or NULL if no more windows
+		 *
+		 * @param[in] gh		The previous window or NULL to get the first window
+		 *
+		 * @note	This returns the next window in the system from top to bottom.
+		 * @note	Where there are parent child relationships, this ignores them
+		 * 			and will list all windows in the system. There is no defined
+		 * 			order between children of siblings and they can in fact be mixed
+		 * 			in order. The only relationship honored is that parents will be
+		 * 			listed before their children.
+		 *
+		 * @api
+		 */
+		GHandle gwinGetNextWindow(GHandle gh);
+
 	#endif
 
 	#if GDISP_NEED_TEXT || defined(__DOXYGEN__)
@@ -947,7 +918,12 @@ extern "C" {
 		#include "src/gwin/gwidget.h"
 	#endif
 
-	/* Include extra window types */
+	/* Include containers */
+	#if GWIN_NEED_CONTAINERS || defined(__DOXYGEN__)
+		#include "src/gwin/gcontainer.h"
+	#endif
+
+	/* Include vanilla window objects */
 	#if GWIN_NEED_CONSOLE || defined(__DOXYGEN__)
 		#include "src/gwin/console.h"
 	#endif

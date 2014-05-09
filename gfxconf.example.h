@@ -133,6 +133,7 @@
 	#define GWIN_CONSOLE_USE_BASESTREAM              FALSE
     #define GWIN_CONSOLE_USE_FLOAT                   FALSE
 #define GWIN_NEED_GRAPH                              FALSE
+
 #define GWIN_NEED_WIDGET                             FALSE
     #define GWIN_NEED_LABEL                          FALSE
         #define GWIN_LABEL_ATTRIBUTE                 FALSE
@@ -148,6 +149,8 @@
     #define GWIN_NEED_PROGRESSBAR                    FALSE
         #define GWIN_PROGRESSBAR_AUTO                FALSE
 	#define GWIN_FLAT_STYLING                        FALSE
+#define GWIN_NEED_CONTAINERS                         FALSE
+    #define GWIN_NEED_FRAME                          FALSE
 
 
 ///////////////////////////////////////////////////////////////////////////

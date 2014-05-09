@@ -147,7 +147,7 @@ static void gwinLabelDefaultDraw(GWidgetObject *gw, void *param) {
 
 	w = (gw->g.flags & GLABEL_FLG_WAUTO) ? getwidth(gw->text, gw->g.font, gdispGGetWidth(gw->g.display) - gw->g.x) : gw->g.width;
 	h = (gw->g.flags & GLABEL_FLG_HAUTO) ? getheight(gw->text, gw->g.font, gdispGGetWidth(gw->g.display) - gw->g.x) : gw->g.height;
-	c = (gw->g.flags & GWIN_FLG_ENABLED) ? gw->pstyle->enabled.text : gw->pstyle->disabled.text;
+	c = (gw->g.flags & GWIN_FLG_SYSENABLED) ? gw->pstyle->enabled.text : gw->pstyle->disabled.text;
 
 	if (gw->g.width != w || gw->g.height != h) {
 		gwinResize(&gw->g, w, h);
@@ -167,7 +167,7 @@ static void gwinLabelDefaultDraw(GWidgetObject *gw, void *param) {
 
 	// render the border (if any)
 	if (gw->g.flags & GLABEL_FLG_BORDER)
-		gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, w, h, (gw->g.flags & GWIN_FLG_ENABLED) ? gw->pstyle->enabled.edge : gw->pstyle->disabled.edge);
+		gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, w, h, (gw->g.flags & GWIN_FLG_SYSENABLED) ? gw->pstyle->enabled.edge : gw->pstyle->disabled.edge);
 }
 
 #endif // GFX_USE_GWIN && GFX_NEED_LABEL

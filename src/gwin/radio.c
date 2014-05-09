@@ -133,10 +133,10 @@ void gwinRadioPress(GHandle gh) {
 
 	if ((gx = gwinRadioGetActive(((GRadioObject *)gh)->group))) {
 		gx->flags &= ~GRADIO_FLG_PRESSED;
-		_gwidgetRedraw(gx);
+		_gwidgetUpdate(gx);
 	}
 	gh->flags |= GRADIO_FLG_PRESSED;
-	_gwidgetRedraw(gh);
+	_gwidgetUpdate(gh);
 	SendRadioEvent((GWidgetObject *)gh);
 }
 
@@ -148,11 +148,9 @@ bool_t gwinRadioIsPressed(GHandle gh) {
 }
 
 GHandle gwinRadioGetActive(uint16_t group) {
-	const gfxQueueASyncItem *	qi;
-	GHandle						gh;
+	GHandle		gh;
 
-	for(qi = gfxQueueASyncPeek(&_GWINList); qi; qi = gfxQueueASyncNext(qi)) {
-		gh = QItem2GWindow(qi);
+	for(gh = gwinGetNextWindow(0); gh; gh = gwinGetNextWindow(gh)) {
 		if (gh->vmt == (gwinVMT *)&radioVMT && ((GRadioObject *)gh)->group == group && (gh->flags & GRADIO_FLG_PRESSED))
 			return gh;
 	}
@@ -164,7 +162,7 @@ GHandle gwinRadioGetActive(uint16_t group) {
  *----------------------------------------------------------*/
 
 static const GColorSet *getDrawColors(GWidgetObject *gw) {
-	if (!(gw->g.flags & GWIN_FLG_ENABLED))	return &gw->pstyle->disabled;
+	if (!(gw->g.flags & GWIN_FLG_SYSENABLED))	return &gw->pstyle->disabled;
 	if ((gw->g.flags & GRADIO_FLG_PRESSED))	return &gw->pstyle->pressed;
 	return &gw->pstyle->enabled;
 }

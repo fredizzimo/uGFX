@@ -48,7 +48,7 @@ static void SendCheckboxEvent(GWidgetObject *gw) {
 	static void MouseDown(GWidgetObject *gw, coord_t x, coord_t y) {
 		(void) x; (void) y;
 		gw->g.flags ^= GCHECKBOX_FLG_CHECKED;
-		_gwidgetRedraw((GHandle)gw);
+		_gwidgetUpdate((GHandle)gw);
 		SendCheckboxEvent(gw);
 	}
 #endif
@@ -57,7 +57,7 @@ static void SendCheckboxEvent(GWidgetObject *gw) {
 	static void ToggleOn(GWidgetObject *gw, uint16_t role) {
 		(void) role;
 		gw->g.flags ^= GCHECKBOX_FLG_CHECKED;
-		_gwidgetRedraw((GHandle)gw);
+		_gwidgetUpdate((GHandle)gw);
 		SendCheckboxEvent(gw);
 	}
 
@@ -130,7 +130,7 @@ void gwinCheckboxCheck(GHandle gh, bool_t isChecked) {
 		if (!(gh->flags & GCHECKBOX_FLG_CHECKED)) return;
 		gh->flags &= ~GCHECKBOX_FLG_CHECKED;
 	}
-	_gwidgetRedraw(gh);
+	_gwidgetUpdate(gh);
 	SendCheckboxEvent((GWidgetObject *)gh);
 }
 
@@ -146,7 +146,7 @@ bool_t gwinCheckboxIsChecked(GHandle gh) {
  *----------------------------------------------------------*/
 
 static const GColorSet *getDrawColors(GWidgetObject *gw) {
-	if (!(gw->g.flags & GWIN_FLG_ENABLED))		return &gw->pstyle->disabled;
+	if (!(gw->g.flags & GWIN_FLG_SYSENABLED))	return &gw->pstyle->disabled;
 	if ((gw->g.flags & GCHECKBOX_FLG_CHECKED))	return &gw->pstyle->pressed;
 	return &gw->pstyle->enabled;
 }

@@ -28,7 +28,8 @@ static void WM_DeInit(void);
 static bool_t WM_Add(GHandle gh, const GWindowInit *pInit);
 static void WM_Delete(GHandle gh);
 static void WM_Redraw(GHandle gh, int flags);
-static void WM_Redim(GHandle gh, coord_t x, coord_t y, coord_t w, coord_t h);
+static void WM_Size(GHandle gh, coord_t w, coord_t h);
+static void WM_Move(GHandle gh, coord_t x, coord_t y);
 static void WM_Raise(GHandle gh);
 static void WM_MinMax(GHandle gh, GWindowMinMax minmax);
 
@@ -38,7 +39,8 @@ static const gwmVMT GNullWindowManagerVMT = {
 	WM_Add,
 	WM_Delete,
 	WM_Redraw,
-	WM_Redim,
+	WM_Size,
+	WM_Move,
 	WM_Raise,
 	WM_MinMax,
 };
@@ -47,7 +49,7 @@ static const GWindowManager	GNullWindowManager = {
 	&GNullWindowManagerVMT,
 };
 
-gfxQueueASync			_GWINList;
+static gfxQueueASync	_GWINList;
 GWindowManager *		_GWINwm;
 #if GFX_USE_GTIMER
 	static GTimer		RedrawTimer;
@@ -114,11 +116,9 @@ void gwinRedrawDisplay(GDisplay *g, bool_t preserve) {
 			(void) param;
 	#endif
 
-	const gfxQueueASyncItem *	qi;
 	GHandle						gh;
 
-	for(qi = gfxQueueASyncPeek(&_GWINList); qi; qi = gfxQueueASyncNext(qi)) {
-		gh = QItem2GWindow(qi);
+	for(gh = gwinGetNextWindow(0); gh; gh = gwinGetNextWindow(gh)) {
 		if (!g || gh->display == g)
 			_GWINwm->vmt->Redraw(gh,
 					preserve ? (GWIN_WMFLG_PRESERVE|GWIN_WMFLG_NOBGCLEAR|GWIN_WMFLG_NOZORDER)
@@ -150,8 +150,11 @@ static bool_t WM_Add(GHandle gh, const GWindowInit *pInit) {
 	// Put it on the end of the queue
 	gfxQueueASyncPut(&_GWINList, &gh->wmq);
 
-	// Make sure the size is valid
-	WM_Redim(gh, pInit->x, pInit->y, pInit->width, pInit->height);
+	// Make sure the size/position is valid - prefer position over size.
+	gh->width = MIN_WIN_WIDTH; gh->height = MIN_WIN_HEIGHT;
+	gh->x = gh->y = 0;
+	WM_Move(gh, pInit->x, pInit->y);
+	WM_Size(gh, pInit->width, pInit->height);
 	return TRUE;
 }
 
@@ -161,15 +164,20 @@ static void WM_Delete(GHandle gh) {
 }
 
 static void WM_Redraw(GHandle gh, int flags) {
-	if ((gh->flags & GWIN_FLG_VISIBLE)) {
+	#if GWIN_NEED_CONTAINERS
+		redo_redraw:
+	#endif
+	if ((gh->flags & GWIN_FLG_SYSVISIBLE)) {
 		if (gh->vmt->Redraw) {
 			#if GDISP_NEED_CLIP
-				gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
+				if (!(flags & GWIN_WMFLG_KEEPCLIP))
+					gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 			#endif
 			gh->vmt->Redraw(gh);
 		} else if (!(flags & GWIN_WMFLG_PRESERVE)) {
 			#if GDISP_NEED_CLIP
-				gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
+				if (!(flags & GWIN_WMFLG_KEEPCLIP))
+					gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 			#endif
 			gdispGFillArea(gh->display, gh->x, gh->y, gh->width, gh->height, gh->bgcolor);
 			if (gh->vmt->AfterClear)
@@ -184,42 +192,77 @@ static void WM_Redraw(GHandle gh, int flags) {
 
 	} else if (!(flags & GWIN_WMFLG_NOBGCLEAR)) {
 		#if GDISP_NEED_CLIP
-			gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
+			if (!(flags & GWIN_WMFLG_KEEPCLIP))
+				gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
+		#endif
+		#if GWIN_NEED_CONTAINERS
+			if (gh->parent) {
+				// Get the parent to redraw the area
+				gh = gh->parent;
+				flags |= GWIN_WMFLG_KEEPCLIP;
+				goto redo_redraw;
+			}
 		#endif
 		gdispGFillArea(gh->display, gh->x, gh->y, gh->width, gh->height, gwinGetDefaultBgColor());
 	}
 }
 
-static void WM_Redim(GHandle gh, coord_t x, coord_t y, coord_t w, coord_t h) {
-	// This is the simplest way of doing it - just clip the the screen
-	// If it won't fit on the screen move it around until it does.
-	if (x < 0) { w += x; x = 0; }
-	if (y < 0) { h += y; y = 0; }
-	if (x > gdispGGetWidth(gh->display)-MIN_WIN_WIDTH)		x = gdispGGetWidth(gh->display)-MIN_WIN_WIDTH;
-	if (y > gdispGGetHeight(gh->display)-MIN_WIN_HEIGHT)	y = gdispGGetHeight(gh->display)-MIN_WIN_HEIGHT;
-	if (w < MIN_WIN_WIDTH) { w = MIN_WIN_WIDTH; }
-	if (h < MIN_WIN_HEIGHT) { h = MIN_WIN_HEIGHT; }
-	if (x+w > gdispGGetWidth(gh->display)) w = gdispGGetWidth(gh->display) - x;
-	if (y+h > gdispGGetHeight(gh->display)) h = gdispGGetHeight(gh->display) - y;
+static void WM_Size(GHandle gh, coord_t w, coord_t h) {
+	#if GWIN_NEED_CONTAINERS
+		// For a child window - convert to absolute size
+		if (gh->parent)
+			((const gcontainerVMT *)gh->parent->vmt)->Size2Screen(gh, &w, &h);
+	#endif
+
+	// Clip to the screen and give it a minimum size
+	if (w < MIN_WIN_WIDTH) w = MIN_WIN_WIDTH;
+	if (h < MIN_WIN_HEIGHT) h = MIN_WIN_HEIGHT;
+	if (gh->x+w > gdispGGetWidth(gh->display)) w = gdispGGetWidth(gh->display) - gh->x;
+	if (gh->y+h > gdispGGetHeight(gh->display)) h = gdispGGetHeight(gh->display) - gh->y;
 
 	// If there has been no resize just exit
-	if (gh->x == x && gh->y == y && gh->width == w && gh->height == h)
+	if (gh->width == w && gh->height == h)
 		return;
 
-	// Clear the old area
-	if ((gh->flags & GWIN_FLG_VISIBLE)) {
-		#if GDISP_NEED_CLIP
-			gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
-		#endif
-		gdispGFillArea(gh->display, gh->x, gh->y, gh->width, gh->height, gwinGetDefaultBgColor());
+	// Clear the old area and then redraw
+	if ((gh->flags & GWIN_FLG_SYSVISIBLE)) {
+		gh->flags &= ~GWIN_FLG_SYSVISIBLE;
+		WM_Redraw(gh, 0);
+		gh->width = w; gh->height = h;
+		gh->flags |= GWIN_FLG_SYSVISIBLE;
+		WM_Redraw(gh, 0);
+	} else {
+		gh->width = w; gh->height = h;
 	}
+}
 
-	// Set the new size
-	gh->x = x; gh->y = y;
-	gh->width = w; gh->height = h;
+static void WM_Move(GHandle gh, coord_t x, coord_t y) {
+	#if GWIN_NEED_CONTAINERS
+		// For a child window - convert to absolute position
+		if (gh->parent)
+			((const gcontainerVMT *)gh->parent->vmt)->Pos2Screen(gh, &x, &y);
+	#endif
 
-	// Redraw the window (if possible)
-	WM_Redraw(gh, GWIN_WMFLG_PRESERVE|GWIN_WMFLG_NOBGCLEAR);
+	// Clip to the screen
+	if (x < 0) x = 0;
+	if (y < 0) y = 0;
+	if (x > gdispGGetWidth(gh->display)-gh->width)		x = gdispGGetWidth(gh->display)-gh->width;
+	if (y > gdispGGetHeight(gh->display)-gh->height)	y = gdispGGetHeight(gh->display)-gh->height;
+
+	// If there has been no move just exit
+	if (gh->x == x && gh->y == y)
+		return;
+
+	// Clear the old area and then redraw
+	if ((gh->flags & GWIN_FLG_SYSVISIBLE)) {
+		gh->flags &= ~GWIN_FLG_SYSVISIBLE;
+		WM_Redraw(gh, 0);
+		gh->x = x; gh->y = y;
+		gh->flags |= GWIN_FLG_SYSVISIBLE;
+		WM_Redraw(gh, 0);
+	} else {
+		gh->x = x; gh->y = y;
+	}
 }
 
 static void WM_MinMax(GHandle gh, GWindowMinMax minmax) {
@@ -230,11 +273,16 @@ static void WM_MinMax(GHandle gh, GWindowMinMax minmax) {
 static void WM_Raise(GHandle gh) {
 	// Take it off the list and then put it back on top
 	// The order of the list then reflects the z-order.
+
 	gfxQueueASyncRemove(&_GWINList, &gh->wmq);
 	gfxQueueASyncPut(&_GWINList, &gh->wmq);
 
 	// Redraw the window
 	WM_Redraw(gh, GWIN_WMFLG_PRESERVE|GWIN_WMFLG_NOBGCLEAR);
+}
+
+GHandle gwinGetNextWindow(GHandle gh) {
+	return gh ? (GHandle)gfxQueueASyncNext(&gh->wmq) : (GHandle)gfxQueueASyncPeek(&_GWINList);
 }
 
 #endif /* GFX_USE_GWIN && GWIN_NEED_WINDOWMANAGER */

@@ -33,8 +33,8 @@
 	 * @brief	Should the widget hierarchy be included. This provides parent-child features.
 	 * @details	Defaults to FALSE
 	 */
-	#ifndef GWIN_NEED_HIERARCHY
-		#define GWIN_NEED_HIERARCHY	FALSE
+	#ifndef GWIN_NEED_CONTAINERS
+		#define GWIN_NEED_CONTAINERS	FALSE
 	#endif
 	/**
 	 * @brief   Should widget functions be included. Needed for any widget (eg Buttons, Sliders etc)

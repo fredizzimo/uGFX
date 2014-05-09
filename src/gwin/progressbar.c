@@ -128,7 +128,7 @@ void gwinProgressbarSetPosition(GHandle gh, int pos) {
 	}
 
 	ResetDisplayPos(gsw);
-	_gwidgetRedraw(gh);
+	_gwidgetUpdate(gh);
 
 	#undef gsw
 }
@@ -159,7 +159,7 @@ void gwinProgressbarIncrement(GHandle gh) {
 		gsw->pos = gsw->max;
 
 	ResetDisplayPos(gsw);
-	_gwidgetRedraw(gh);
+	_gwidgetUpdate(gh);
 
 	#undef gsw
 }
@@ -178,7 +178,7 @@ void gwinProgressbarDecrement(GHandle gh) {
 	gsw->pos -= gsw->res;
 
 	ResetDisplayPos(gsw);
-	_gwidgetRedraw(gh);
+	_gwidgetUpdate(gh);
 
 	#undef gsw
 }
@@ -239,7 +239,7 @@ void gwinProgressbarDraw_Std(GWidgetObject *gw, void *param) {
 		return;
 
 	// get the colors right
-	if ((gw->g.flags & GWIN_FLG_ENABLED)) 
+	if ((gw->g.flags & GWIN_FLG_SYSENABLED))
 		pcol = &gw->pstyle->pressed;
 	else
 		pcol = &gw->pstyle->disabled;
@@ -277,7 +277,7 @@ void gwinProgressbarDraw_Image(GWidgetObject *gw, void *param) {
 	if (gw->g.vmt != (gwinVMT *)&progressbarVMT)
 		return;
 
-	if ((gw->g.flags & GWIN_FLG_ENABLED))
+	if ((gw->g.flags & GWIN_FLG_SYSENABLED))
 		pcol = &gw->pstyle->pressed;
 	else
 		pcol = &gw->pstyle->disabled;

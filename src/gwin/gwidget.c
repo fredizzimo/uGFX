@@ -82,16 +82,15 @@ static const GWidgetStyle *	defaultStyle = &BlackWidgetStyle;
 
 /* Process an event */
 static void gwidgetEvent(void *param, GEvent *pe) {
-	#define gh		QItem2GWindow(qi)
 	#define pme		((GEventMouse *)pe)
 	#define pte		((GEventToggle *)pe)
 	#define pde		((GEventDial *)pe)
 
-	const gfxQueueASyncItem *	qi;
+	GHandle				gh;
 	#if GFX_USE_GINPUT && (GINPUT_NEED_TOGGLE || GINPUT_NEED_DIAL)
-		uint16_t				role;
+		uint16_t		role;
 	#endif
-	(void)						param;
+	(void)				param;
 
 	// Process various events
 	switch (pe->type) {
@@ -100,14 +99,14 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 	case GEVENT_MOUSE:
 	case GEVENT_TOUCH:
 		// Cycle through all windows
-		for(qi = gfxQueueASyncPeek(&_GWINList); qi; qi = gfxQueueASyncNext(qi)) {
+		for(gh = gwinGetNextWindow(0); gh; gh = gwinGetNextWindow(gh)) {
 
 			// check if the widget matches this display
 			if (gh->display != pme->display)
 				continue;
 
-			// check if it a widget that is enabled and visible
-			if ((gh->flags & (GWIN_FLG_WIDGET|GWIN_FLG_ENABLED|GWIN_FLG_VISIBLE)) != (GWIN_FLG_WIDGET|GWIN_FLG_ENABLED|GWIN_FLG_VISIBLE))
+			// check if it is a widget that is enabled and visible
+			if ((gh->flags & (GWIN_FLG_WIDGET|GWIN_FLG_SYSENABLED|GWIN_FLG_SYSVISIBLE)) != (GWIN_FLG_WIDGET|GWIN_FLG_SYSENABLED|GWIN_FLG_SYSVISIBLE))
 				continue;
 
 			// Are we captured?
@@ -134,10 +133,10 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 	#if GFX_USE_GINPUT && GINPUT_NEED_TOGGLE
 	case GEVENT_TOGGLE:
 		// Cycle through all windows
-		for(qi = gfxQueueASyncPeek(&_GWINList); qi; qi = gfxQueueASyncNext(qi)) {
+		for(gh = gwinGetNextWindow(0); gh; gh = gwinGetNextWindow(gh)) {
 
 			// check if it a widget that is enabled and visible
-			if ((gh->flags & (GWIN_FLG_WIDGET|GWIN_FLG_ENABLED|GWIN_FLG_VISIBLE)) != (GWIN_FLG_WIDGET|GWIN_FLG_ENABLED|GWIN_FLG_VISIBLE))
+			if ((gh->flags & (GWIN_FLG_WIDGET|GWIN_FLG_SYSENABLED|GWIN_FLG_SYSVISIBLE)) != (GWIN_FLG_WIDGET|GWIN_FLG_SYSENABLED|GWIN_FLG_SYSVISIBLE))
 				continue;
 
 			for(role = 0; role < wvmt->toggleroles; role++) {
@@ -158,10 +157,10 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 	#if GFX_USE_GINPUT && GINPUT_NEED_DIAL
 	case GEVENT_DIAL:
 		// Cycle through all windows
-		for(qi = gfxQueueASyncPeek(&_GWINList); qi; qi = gfxQueueASyncNext(qi)) {
+		for(gh = gwinGetNextWindow(0); gh; gh = gwinGetNextWindow(gh)) {
 
 			// check if it a widget that is enabled and visible
-			if ((gh->flags & (GWIN_FLG_WIDGET|GWIN_FLG_ENABLED|GWIN_FLG_VISIBLE)) != (GWIN_FLG_WIDGET|GWIN_FLG_ENABLED|GWIN_FLG_VISIBLE))
+			if ((gh->flags & (GWIN_FLG_WIDGET|GWIN_FLG_SYSENABLED|GWIN_FLG_SYSVISIBLE)) != (GWIN_FLG_WIDGET|GWIN_FLG_SYSENABLED|GWIN_FLG_SYSVISIBLE))
 				continue;
 
 			for(role = 0; role < wvmt->dialroles; role++) {
@@ -178,7 +177,6 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 		break;
 	}
 
-	#undef gh
 	#undef pme
 	#undef pte
 	#undef pde
@@ -186,11 +184,10 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 
 #if GFX_USE_GINPUT && GINPUT_NEED_TOGGLE
 	static GHandle FindToggleUser(uint16_t instance) {
-		#define gh					QItem2GWindow(qi)
-		const gfxQueueASyncItem *	qi;
-		uint16_t					role;
+		GHandle			gh;
+		uint16_t		role;
 
-		for(qi = gfxQueueASyncPeek(&_GWINList); qi; qi = gfxQueueASyncNext(qi)) {
+		for(gh = gwinGetNextWindow(0); gh; gh = gwinGetNextWindow(gh)) {
 			if (!(gh->flags & GWIN_FLG_WIDGET))		// check if it a widget
 				continue;
 
@@ -200,17 +197,15 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 			}
 		}
 		return 0;
-		#undef gh
 	}
 #endif
 
 #if GFX_USE_GINPUT && GINPUT_NEED_DIAL
 	static GHandle FindDialUser(uint16_t instance) {
-		#define gh					QItem2GWindow(qi)
-		const gfxQueueASyncItem *	qi;
-		uint16_t					role;
+		GHandle			gh;
+		uint16_t		role;
 
-		for(qi = gfxQueueASyncPeek(&_GWINList); qi; qi = gfxQueueASyncNext(qi)) {
+		for(gh = gwinGetNextWindow(0); gh; gh = gwinGetNextWindow(gh)) {
 			if (!(gh->flags & GWIN_FLG_WIDGET))		// check if it a widget
 				continue;
 
@@ -220,7 +215,6 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 			}
 		}
 		return 0;
-		#undef gh
 	}
 #endif
 
@@ -236,9 +230,14 @@ void _gwidgetDeinit(void)
 }
 
 GHandle _gwidgetCreate(GDisplay *g, GWidgetObject *pgw, const GWidgetInit *pInit, const gwidgetVMT *vmt) {
-	if (!(pgw = (GWidgetObject *)_gwindowCreate(g, &pgw->g, &pInit->g, &vmt->g, GWIN_FLG_WIDGET|GWIN_FLG_ENABLED)))
+	if (!(pgw = (GWidgetObject *)_gwindowCreate(g, &pgw->g, &pInit->g, &vmt->g, GWIN_FLG_WIDGET|GWIN_FLG_ENABLED|GWIN_FLG_SYSENABLED)))
 		return 0;
 
+	#if GWIN_NEED_COLLECTIONS
+		// This window can't be system enabled if the parent is not enabled
+		if (pgw->parent && !(pgw->parent->flags & GWIN_FLG_SYSENABLED))
+			pgw->g.flags &= ~GWIN_FLG_SYSENABLED;
+	#endif
 	pgw->text = pInit->text ? pInit->text : "";
 	pgw->fnDraw = pInit->customDraw ? pInit->customDraw : vmt->DefaultDraw;
 	pgw->fnParam = pInit->customParam;
@@ -287,13 +286,19 @@ void _gwidgetDestroy(GHandle gh) {
 }
 
 void _gwidgetRedraw(GHandle gh) {
-	if (!(gh->flags & GWIN_FLG_VISIBLE))
+	if (!(gh->flags & GWIN_FLG_SYSVISIBLE))
+		return;
+
+	gw->fnDraw(gw, gw->fnParam);
+}
+
+void _gwidgetUpdate(GHandle gh) {
+	if (!(gh->flags & GWIN_FLG_SYSVISIBLE))
 		return;
 
 	#if GDISP_NEED_CLIP
 		gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
 	#endif
-
 	gw->fnDraw(gw, gw->fnParam);
 }
 
@@ -310,11 +315,9 @@ void gwinSetDefaultStyle(const GWidgetStyle *pstyle, bool_t updateAll) {
 		pstyle = &BlackWidgetStyle;
 
 	if (updateAll) {
-		const gfxQueueASyncItem *	qi;
 		GHandle						gh;
 
-		for(qi = gfxQueueASyncPeek(&_GWINList); qi; qi = gfxQueueASyncNext(qi)) {
-			gh = QItem2GWindow(qi);
+		for(gh = gwinGetNextWindow(0); gh; gh = gwinGetNextWindow(gh)) {
 			if ((gh->flags & GWIN_FLG_WIDGET) && ((GWidgetObject *)gh)->pstyle == defaultStyle)
 				gwinSetStyle(gh, pstyle);
 		}
@@ -359,7 +362,7 @@ void gwinSetText(GHandle gh, const char *text, bool_t useAlloc) {
 		gw->text = (const char *)str;
 	} else
 		gw->text = text;
-	_gwidgetRedraw(gh);
+	_gwidgetUpdate(gh);
 }
 
 const char *gwinGetText(GHandle gh) {
@@ -375,7 +378,7 @@ void gwinSetStyle(GHandle gh, const GWidgetStyle *pstyle) {
 	gw->pstyle = pstyle ? pstyle : defaultStyle;
 	gh->bgcolor = pstyle->background;
 	gh->color = pstyle->enabled.text;
-	_gwidgetRedraw(gh);
+	_gwidgetUpdate(gh);
 }
 
 const GWidgetStyle *gwinGetStyle(GHandle gh) {
@@ -391,7 +394,7 @@ void gwinSetCustomDraw(GHandle gh, CustomWidgetDrawFunction fn, void *param) {
 
 	gw->fnDraw = fn ? fn : wvmt->DefaultDraw;
 	gw->fnParam = param;
-	_gwidgetRedraw(gh);
+	_gwidgetUpdate(gh);
 }
 
 bool_t gwinAttachListener(GListener *pl) {

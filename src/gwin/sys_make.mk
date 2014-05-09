@@ -11,5 +11,6 @@ GFXSRC +=   $(GFXLIB)/src/gwin/gwin.c \
 			$(GFXLIB)/src/gwin/radio.c \
 			$(GFXLIB)/src/gwin/list.c \
 			$(GFXLIB)/src/gwin/progressbar.c \
+			$(GFXLIB)/src/gwin/gcontainer.c \
 			$(GFXLIB)/src/gwin/frame.c \
 	

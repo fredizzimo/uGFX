@@ -74,7 +74,7 @@ static void ResetDisplayPos(GSliderObject *gsw) {
 			if (x < 0 || x >= gh->width || y < 0 || y >= gh->height) {
 				// No - restore the slider
 				ResetDisplayPos(gsw);
-				_gwidgetRedraw(gh);
+				_gwidgetUpdate(gh);
 				return;
 			}
 		#endif
@@ -97,7 +97,7 @@ static void ResetDisplayPos(GSliderObject *gsw) {
 		}
 
 		ResetDisplayPos(gsw);
-		_gwidgetRedraw(gh);
+		_gwidgetUpdate(gh);
 
 		// Generate the event
 		SendSliderEvent(gw);
@@ -127,7 +127,7 @@ static void ResetDisplayPos(GSliderObject *gsw) {
 		}
 
 		// Update the display
-		_gwidgetRedraw(&gw->g);
+		_gwidgetUpdate(&gw->g);
 		#undef gsw
 	}
 #endif
@@ -169,7 +169,7 @@ static void ResetDisplayPos(GSliderObject *gsw) {
 		gsw->pos = (uint16_t)((uint32_t)value*(gsw->max-gsw->min)/max + gsw->min);
 
 		ResetDisplayPos(gsw);
-		_gwidgetRedraw((GHandle)gw);
+		_gwidgetUpdate((GHandle)gw);
 
 		// Generate the event
 		SendSliderEvent(gw);
@@ -272,7 +272,7 @@ void gwinSliderSetPosition(GHandle gh, int pos) {
 		else gsw->pos = pos;
 	}
 	ResetDisplayPos(gsw);
-	_gwidgetRedraw(gh);
+	_gwidgetUpdate(gh);
 
 	#undef gsw
 }
@@ -289,7 +289,7 @@ void gwinSliderDraw_Std(GWidgetObject *gw, void *param) {
 	if (gw->g.vmt != (gwinVMT *)&sliderVMT)
 		return;
 
-	if ((gw->g.flags & GWIN_FLG_ENABLED))
+	if ((gw->g.flags & GWIN_FLG_SYSENABLED))
 		pcol = &gw->pstyle->pressed;
 	else
 		pcol = &gw->pstyle->disabled;
@@ -334,7 +334,7 @@ void gwinSliderDraw_Image(GWidgetObject *gw, void *param) {
 	if (gw->g.vmt != (gwinVMT *)&sliderVMT)
 		return;
 
-	if ((gw->g.flags & GWIN_FLG_ENABLED))
+	if ((gw->g.flags & GWIN_FLG_SYSENABLED))
 		pcol = &gw->pstyle->pressed;
 	else
 		pcol = &gw->pstyle->disabled;
