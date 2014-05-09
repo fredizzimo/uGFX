@@ -127,8 +127,7 @@ GHandle gwinGImageCreate(GDisplay *g, GImageObject *gobj, GWindowInit *pInit) {
 		return 0;
 
 	// Ensure the gdispImageIsOpen() gives valid results
-	gobj->image.type = 0;
-	gobj->image.fns = 0;
+	gdispImageInit(&gobj->image);
 
 	// Initialise the timer
 	#if GWIN_NEED_IMAGE_ANIMATION
