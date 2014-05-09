@@ -48,6 +48,7 @@ int main(void) {
 	{
 		GWindowInit		wi;
 
+		gwinClearInit(&wi);
 		wi.show = TRUE;
 		wi.x = 0; wi.y = 0; wi.width = gdispGetWidth(); wi.height = gdispGetHeight()/2;
 		GW1 = gwinConsoleCreate(0, &wi);

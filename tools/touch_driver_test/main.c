@@ -66,6 +66,7 @@ int main(void) {
 	{
 		GWindowInit				wi;
 
+		gwinClearInit(&wi);
 		wi.show = TRUE; wi.x = 0; wi.y = bHeight; wi.width = swidth; wi.height = sheight-bHeight;
 		ghc = gwinConsoleCreate(&gc, &wi);
 	}

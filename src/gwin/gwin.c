@@ -149,6 +149,14 @@ GHandle _gwindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pInit
  * Routines that affect all windows
  *-----------------------------------------------*/
 
+void gwinClearInit(GWindowInit *pwi) {
+	char		*p;
+	unsigned	len;
+
+	for(p = (char *)pwi, len = sizeof(GWindowInit); len; len--)
+		*p++ = 0;
+}
+
 void gwinSetDefaultColor(color_t clr) {
 	defaultFgColor = clr;
 }

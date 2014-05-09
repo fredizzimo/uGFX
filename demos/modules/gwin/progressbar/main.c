@@ -5,9 +5,7 @@ GHandle 	ghProgressbar;
 static void _createWidget(void) {
 	GWidgetInit	wi;
  
-	wi.customDraw = 0;
-	wi.customParam = 0;
-	wi.customStyle = 0;
+	gwinWidgetClearInit(&wi);
 	wi.g.show = TRUE;
  
 	wi.g.y = 10; wi.g.x = 10; wi.g.width = 200; wi.g.height = 20; wi.text = "Progress 1";

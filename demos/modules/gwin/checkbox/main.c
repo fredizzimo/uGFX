@@ -36,9 +36,7 @@ static void createWidgets(void) {
 	GWidgetInit	wi;
 
 	// Apply some default values for GWIN
-	wi.customDraw = 0;
-	wi.customParam = 0;
-	wi.customStyle = 0;
+	gwinWidgetClearInit(&wi);
 	wi.g.show = TRUE;
 
 	// Apply the checkbox parameters	
