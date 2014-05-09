@@ -208,7 +208,6 @@ void gwinProgressbarDecrement(GHandle gh) {
 	
 		gsw->delay = delay;
 	
-		gtimerInit(&(gsw->gt));
 		gtimerStart(&(gsw->gt), _progressbarCallback, gh, FALSE, gsw->delay);
 	
 		#undef gsw
