@@ -116,7 +116,12 @@
 			#error "GWIN: GDISP_NEED_TEXT is required if GWIN_NEED_CONSOLE is TRUE."
 		#endif
 	#endif
-	#if GWIN_NEED_GRAPH
+	#if GWIN_NEED_PROGRESSBAR
+		#if GWIN_PROGRESSBAR_AUTO
+			#if !GFX_USE_GTIMER
+				#error "GWIN: GFX_USE_GTIMER is required if GWIN_PROGRESSBAR_AUTO is TRUE."
+			#endif
+		#endif
 	#endif
 #endif
 
