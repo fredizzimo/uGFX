@@ -33,6 +33,7 @@ FEATURE:	Added vs1053 audio play driver
 FEATURE:	Added GAUDIO wave-play demo
 FEATURE:	Added many GWIN simple demo's and updated the combined widget demo
 FEATURE:	Added gwinEnable() and gwinDisable()
+FIX:		Imagebox widget bugfix that could cause gwinImageOpenFile() to crash
 
 
 *** changes after 1.9 ***
