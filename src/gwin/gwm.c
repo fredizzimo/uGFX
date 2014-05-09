@@ -127,7 +127,7 @@ void gwinRedrawDisplay(GDisplay *g, bool_t preserve) {
 }
 
 /*-----------------------------------------------
- * Window Manager Routines
+ * "Null" Window Manager Routines
  *-----------------------------------------------*/
 
 static void WM_Init(void) {
@@ -145,9 +145,9 @@ static void WM_DeInit(void) {
 }
 
 static bool_t WM_Add(GHandle gh, const GWindowInit *pInit) {
-	// Note the window will not be marked as visible yet
+	// Note the window will not currently be marked as visible
 
-	// Put it on the queue
+	// Put it on the end of the queue
 	gfxQueueASyncPut(&_GWINList, &gh->wmq);
 
 	// Make sure the size is valid
@@ -156,7 +156,7 @@ static bool_t WM_Add(GHandle gh, const GWindowInit *pInit) {
 }
 
 static void WM_Delete(GHandle gh) {
-	// Remove it from the queue
+	// Remove it from the window list
 	gfxQueueASyncRemove(&_GWINList, &gh->wmq);
 }
 
