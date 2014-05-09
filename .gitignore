@@ -4,9 +4,9 @@ build
 .dep
 .cproject
 .project
+*.sublime*
 *.stackdump
 *.lst
 *.o
 *.map
-*.sublime-*
 src/gdisp/fonts/*.dat
