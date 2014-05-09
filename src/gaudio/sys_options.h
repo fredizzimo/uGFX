@@ -14,7 +14,7 @@
  */
 
 #ifndef _GAUDIO_OPTIONS_H
-#define _GAUDOUT_OPTIONS_H
+#define _GAUDIO_OPTIONS_H
 
 /**
  * @name    GAUDIO Functionality to be included

@@ -72,6 +72,13 @@
 		#define GWIN_NEED_BUTTON	FALSE
 	#endif
 	/**
+	 * @brief   Should progressbar functions be included.
+	 * @details	Defaults to FALSE
+	 */
+	#ifndef GWIN_NEED_PROGRESSBAR
+		#define GWIN_NEED_PROGRESSBAR	FALSE
+	#endif
+	/**
 	 * @brief   Should slider functions be included.
 	 * @details	Defaults to FALSE
 	 */
@@ -220,6 +227,13 @@
 	 */
 	#ifndef GWIN_NEED_IMAGE_ANIMATION
 		#define GWIN_NEED_IMAGE_ANIMATION		FALSE
+	#endif
+	/**
+	 * @brief	Enable the API to automatically increment the progressbar over time
+	 * @details	Defaults to FALSE
+	 */
+	#ifndef GWIN_PROGRESSBAR_AUTO
+	 	#define GWIN_PROGRESSBAR_AUTO			FALSE
 	#endif
 /** @} */
 

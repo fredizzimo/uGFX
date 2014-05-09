@@ -131,6 +131,14 @@ extern "C" {
 	#endif
 
 	/**
+	 * @brief	Initialise a gdispImage object
+	 *
+	 * @param[in] img  		The image structure to initialise
+	 *
+	 */
+	void gdispImageInit(gdispImage *img);
+
+	/**
 	 * @brief	Open an image using an open GFILE and get it ready for drawing
 	 * @details	Determine the image format and get ready to decode the first image frame
 	 * @return	GDISP_IMAGE_ERR_OK (0) on success or an error code.

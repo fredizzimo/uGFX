@@ -199,6 +199,31 @@ bool_t gfxQueueFSyncPush(gfxQueueFSync *pqueue, gfxQueueFSyncItem *pitem, delayt
 /* @} */
 
 /**
+ * @brief	Insert an item on the queue after the specified item.
+ * @return	none for ASync and GSync queues; For FSync queues - FALSE on timeout, otherwise TRUE
+ *
+ * @param[in]	pqueue	A pointer to the queue
+ * @param[in]	pitem	A pointer to the queue item
+ * @param[in]	pafter	A pointer to the queue item this new item must be inserted after. If NULL or
+ * 							pafter can't be found in the queue, it puts the new item at the end of the queue.
+ * @param[in]	ms		The maxmimum time to wait for an item to be removed from the queue (only for FSync queues)
+ *
+ * @note		FSync: Use a delay time of TIME_IMMEDIATE if you don't want to wait until the
+ * 				item is removed from the queue. Note that even if the timeout occurs - the item
+ * 				remains in the queue.
+ * @note		The routines ending in "I" are interrupt/system/iclass level routines.
+ *
+ * @api
+ * @{
+ */
+void gfxQueueASyncInsert(gfxQueueASync *pqueue, gfxQueueASyncItem *pitem, gfxQueueASyncItem *pafter);
+void gfxQueueASyncInsertI(gfxQueueASync *pqueue, gfxQueueASyncItem *pitem, gfxQueueASyncItem *pafter);
+void gfxQueueGSyncInsert(gfxQueueGSync *pqueue, gfxQueueGSyncItem *pitem, gfxQueueASyncItem *pafter);
+void gfxQueueGSyncInsertI(gfxQueueGSync *pqueue, gfxQueueGSyncItem *pitem, gfxQueueASyncItem *pafter);
+bool_t gfxQueueFSyncInsert(gfxQueueFSync *pqueue, gfxQueueFSyncItem *pitem, gfxQueueASyncItem *pafter, delaytime_t ms);
+/* @} */
+
+/**
  * @brief	Remove an item from the queue.
  * @note	Removes the specified item from the queue where-ever it is in the queue
  *

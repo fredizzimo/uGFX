@@ -113,7 +113,7 @@ static gdispImage	imgYesNo;
 static void createWidgets(void) {
 	GWidgetInit		wi;
 
-	wi.customDraw = 0; wi.customParam = 0; wi.customStyle = 0;
+	gwinWidgetClearInit(&wi);
 
 	// Create the Tabs
 	wi.g.show = TRUE; wi.customDraw = gwinRadioDraw_Tab;

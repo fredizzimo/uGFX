@@ -78,6 +78,10 @@ typedef void (*CustomWidgetDrawFunction)(struct GWidgetObject *gw, void *param);
  * @brief	The structure to initialise a widget.
  *
  * @note	Some widgets may have extra parameters.
+ * @note	If you create this structure on the stack, you should always memset
+ * 			it to all zero's first in case a future version of the software
+ * 			add's extra fields. Alternatively you can use @p gwinWidgetClearInit()
+ * 			to clear it.
  * @note	The text element must be static string (not stack allocated). If you want to use
  * 			a dynamic string (eg a stack allocated string) use NULL for this member and then call
  * 			@p gwinSetText() with useAlloc set to TRUE.
@@ -125,6 +129,18 @@ typedef struct GWidgetObject {
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+ * @brief	Clear a GWidgetInit structure to all zero's
+ * @note	This function is provided just to prevent problems
+ * 			on operating systems where using memset() causes issues
+ * 			in the users application.
+ *
+ * @param[in] pwi	The GWidgetInit structure to clear
+ *
+ * @api
+ */
+void gwinWidgetClearInit(GWidgetInit *pwi);
 
 /**
  * @brief   Set the default style for widgets created hereafter.

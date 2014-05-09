@@ -69,6 +69,7 @@ int main(void) {
 	{
 		GWindowInit wi;
 
+		gwinClearInit(&wi);
 		wi.show = TRUE;
 		wi.x = wi.y = 0;
 		wi.width = gdispGetWidth();

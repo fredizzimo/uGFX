@@ -297,6 +297,14 @@ void _gwidgetRedraw(GHandle gh) {
 	gw->fnDraw(gw, gw->fnParam);
 }
 
+void gwinWidgetClearInit(GWidgetInit *pwi) {
+	char		*p;
+	unsigned	len;
+
+	for(p = (char *)pwi, len = sizeof(GWidgetInit); len; len--)
+		*p++ = 0;
+}
+
 void gwinSetDefaultStyle(const GWidgetStyle *pstyle, bool_t updateAll) {
 	if (!pstyle)
 		pstyle = &BlackWidgetStyle;

@@ -114,7 +114,7 @@ void _gwinDeinit(void)
 
 // Internal routine for use by GWIN components only
 // Initialise a window creating it dynamically if required.
-GHandle _gwindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pInit, const gwinVMT *vmt, uint16_t flags) {
+GHandle _gwindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pInit, const gwinVMT *vmt, uint32_t flags) {
 	// Allocate the structure if necessary
 	if (!pgw) {
 		if (!(pgw = gfxAlloc(vmt->size)))
@@ -154,6 +154,14 @@ GHandle _gwindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pInit
 /*-----------------------------------------------
  * Routines that affect all windows
  *-----------------------------------------------*/
+
+void gwinClearInit(GWindowInit *pwi) {
+	char		*p;
+	unsigned	len;
+
+	for(p = (char *)pwi, len = sizeof(GWindowInit); len; len--)
+		*p++ = 0;
+}
 
 void gwinSetDefaultColor(color_t clr) {
 	defaultFgColor = clr;
@@ -195,10 +203,8 @@ GHandle gwinGWindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pI
 }
 
 void gwinDestroy(GHandle gh) {
-	if (!gh) {
-		// should log a runtime error here
+	if (!gh)
 		return;
-	}
 
 	#if GWIN_NEED_HIERARCHY
 		GHandle tmp;
@@ -394,7 +400,7 @@ void gwinRedraw(GHandle gh) {
 void gwinClear(GHandle gh) {
 	/*
 	 * Don't render anything when the window is not visible but 
-	 * still call tthe AfterClear() routine as some widgets will
+	 * still call the AfterClear() routine as some widgets will
 	 * need this to clear internal buffers or similar
 	 */
 	if (!((gh->flags & GWIN_FLG_VISIBLE))) {

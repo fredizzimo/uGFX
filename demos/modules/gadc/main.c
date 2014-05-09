@@ -152,6 +152,8 @@ int main(void) {
 		gwinSetDefaultFont(font);
 		{
 			GWindowInit	wi;
+
+			gwinClearInit(&wi);
 			wi.show = TRUE;
 			wi.x = wi.y = 0;
 			wi.width = swidth-SCOPE_CX;
@@ -184,6 +186,8 @@ int main(void) {
 	/* Set up the scope window in the top right on the screen */
 	{
 		GWindowInit	wi;
+
+		gwinClearInit(&wi);
 		wi.show = TRUE;
 		wi.x = swidth-SCOPE_CX;
 		wi.y = 0;

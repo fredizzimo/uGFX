@@ -43,6 +43,7 @@ int main(void) {
     {
     	GWindowInit	wi;
 
+		gwinClearInit(&wi);
     	wi.show = TRUE; wi.x = 20; wi.y = 10; wi.width = 200; wi.height = 150;
         GW1 = gwinWindowCreate(0, &wi);
     	wi.show = TRUE; wi.x = 50; wi.y = 190; wi.width = 150; wi.height = 100;

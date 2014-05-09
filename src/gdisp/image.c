@@ -130,6 +130,10 @@ gdispImageError
 	}
 #endif
 
+void gdispImageInit(gdispImage *img) {
+	img->type = GDISP_IMAGE_TYPE_UNKNOWN;
+}
+
 gdispImageError gdispImageOpenGFile(gdispImage *img, GFILE *f) {
 	gdispImageError err;
 

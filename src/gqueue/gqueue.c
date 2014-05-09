@@ -87,6 +87,30 @@ void _gqueueDeinit(void)
 			pqueue->tail = pitem;
 	}
 
+	void gfxQueueASyncInsert(gfxQueueASync *pqueue, gfxQueueASyncItem *pitem, gfxQueueASyncItem *pafter) {
+		gfxSystemLock();
+		gfxQueueASyncInsertI(pqueue, pitem, pafter);
+		gfxSystemUnlock();
+	}
+	void gfxQueueASyncInsertI(gfxQueueASync *pqueue, gfxQueueASyncItem *pitem, gfxQueueASyncItem *pafter) {
+		if (!pitem) return;				// Safety
+
+		if (pafter && gfxQueueASyncIsInI(pqueue, pafter)) {
+			pitem->next = pafter->next;
+			pafter->next = pitem;
+			if (pqueue->tail == pafter)
+				pqueue->tail = pitem;
+		} else {
+			pitem->next = 0;
+			if (!pqueue->head) {
+				pqueue->head = pqueue->tail = pitem;
+			} else {
+				pqueue->tail->next = pitem;
+				pqueue->tail = pitem;
+			}
+		}
+	}
+
 	void gfxQueueASyncRemove(gfxQueueASync *pqueue, gfxQueueASyncItem *pitem) {
 		gfxSystemLock();
 		gfxQueueASyncRemoveI(pqueue, pitem);
@@ -201,6 +225,30 @@ void _gqueueDeinit(void)
 		gfxSemSignalI(&pqueue->sem);
 	}
 
+	void gfxQueueGSyncInsert(gfxQueueGSync *pqueue, gfxQueueGSyncItem *pitem, gfxQueueASyncItem *pafter) {
+		gfxSystemLock();
+		gfxQueueGSyncInsertI(pqueue, pitem, pafter);
+		gfxSystemUnlock();
+	}
+	void gfxQueueGSyncInsertI(gfxQueueGSync *pqueue, gfxQueueGSyncItem *pitem, gfxQueueASyncItem *pafter) {
+		if (!pitem) return;				// Safety
+
+		if (pafter && gfxQueueGSyncIsInI(pqueue, pafter)) {
+			pitem->next = pafter->next;
+			pafter->next = pitem;
+			if (pqueue->tail == pafter)
+				pqueue->tail = pitem;
+		} else {
+			pitem->next = 0;
+			if (!pqueue->head) {
+				pqueue->head = pqueue->tail = pitem;
+			} else {
+				pqueue->tail->next = pitem;
+				pqueue->tail = pitem;
+			}
+		}
+	}
+
 	void gfxQueueGSyncRemove(gfxQueueGSync *pqueue, gfxQueueGSyncItem *pitem) {
 		gfxSystemLock();
 		gfxQueueGSyncRemoveI(pqueue, pitem);
@@ -310,6 +358,33 @@ void _gqueueDeinit(void)
 		gfxSemSignal(&pqueue->sem);
 
 		return gfxSemWait(&pitem->sem, ms);
+	}
+
+	bool_t gfxQueueFSyncInsert(gfxQueueFSync *pqueue, gfxQueueFSyncItem *pitem, gfxQueueASyncItem *pafter, delaytime_t ms) {
+		if (!pitem) return;				// Safety
+		gfxSemInit(&pitem->sem, 0, 1);
+
+		gfxSystemLock();
+		if (pafter && gfxQueueGSyncIsInI(pqueue, pafter)) {
+			pitem->next = pafter->next;
+			pafter->next = pitem;
+			if (pqueue->tail == pafter)
+				pqueue->tail = pitem;
+		} else {
+			pitem->next = 0;
+			if (!pqueue->head) {
+				pqueue->head = pqueue->tail = pitem;
+			} else {
+				pqueue->tail->next = pitem;
+				pqueue->tail = pitem;
+			}
+		}
+		gfxSystemUnlock();
+
+		gfxSemSignal(&pqueue->sem);
+
+		return gfxSemWait(&pitem->sem, ms);
+
 	}
 
 	void gfxQueueFSyncRemove(gfxQueueFSync *pqueue, gfxQueueFSyncItem *pitem) {

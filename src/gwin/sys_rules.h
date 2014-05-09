@@ -17,6 +17,7 @@
 #define _GWIN_RULES_H
 
 #if GFX_USE_GWIN
+	// Sub-system rules
 	#if !GFX_USE_GDISP
 		#error "GWIN: GFX_USE_GDISP must be TRUE when using GWIN"
 	#endif
@@ -25,18 +26,8 @@
 			#warning "GWIN: Drawing can occur outside the defined windows as GDISP_NEED_CLIP is FALSE"
 		#endif
 	#endif
-	#if GWIN_NEED_IMAGE
-		#if !GDISP_NEED_IMAGE
-			#error "GWIN: GDISP_NEED_IMAGE is required when GWIN_NEED_IMAGE is TRUE."
-		#endif
-	#endif
-	#if GWIN_NEED_RADIO
-		#if !GDISP_NEED_CIRCLE
-			#if GFX_DISPLAY_RULE_WARNINGS
-				#warning "GWIN: GDISP_NEED_CIRCLE should be set to TRUE for much nicer radio button widgets."
-			#endif
-		#endif
-	#endif
+
+	// Objects require their super-class
 	#if GWIN_NEED_HIERARCHY
 		#if !GQUEUE_NEED_ASYNC
 			#if GFX_DISPLAY_RULE_WARNINGS
@@ -59,17 +50,14 @@
 		GWIN_NEED_IMAGE || GWIN_NEED_CHECKBOX || GWIN_NEED_PROGRESSBAR 
 		#if !GWIN_NEED_WIDGET
 			#if GFX_DISPLAY_RULE_WARNINGS
-				#warning "GWIN: GWIN_NEED_WIDGET is required when a Widget is used. It has been turned on for you."
+				#warning "GWIN: GWIN_NEED_WIDGET is required when a widget is used. It has been turned on for you."
 			#endif
 			#undef GWIN_NEED_WIDGET
 			#define GWIN_NEED_WIDGET	TRUE
 		#endif
 	#endif
-	#if GWIN_NEED_LIST
-		#if !GDISP_NEED_TEXT
-			#error "GWIN: GDISP_NEED_TEXT is required when GWIN_NEED_LIST is TRUE."
-		#endif
-	#endif
+
+	// Rules for the super-classes
 	#if GWIN_NEED_WIDGET
 		#if !GDISP_NEED_TEXT
 			#error "GWIN: GDISP_NEED_TEXT is required if GWIN_NEED_WIDGET is TRUE."
@@ -104,12 +92,36 @@
 			#define GQUEUE_NEED_ASYNC	TRUE
 		#endif
 	#endif
+
+	// Rules for individual objects
+	#if GWIN_NEED_LIST
+		#if !GDISP_NEED_TEXT
+			#error "GWIN: GDISP_NEED_TEXT is required when GWIN_NEED_LIST is TRUE."
+		#endif
+	#endif
+	#if GWIN_NEED_RADIO
+		#if !GDISP_NEED_CIRCLE
+			#if GFX_DISPLAY_RULE_WARNINGS
+				#warning "GWIN: GDISP_NEED_CIRCLE should be set to TRUE for much nicer radio button widgets."
+			#endif
+		#endif
+	#endif
+	#if GWIN_NEED_IMAGE
+		#if !GDISP_NEED_IMAGE
+			#error "GWIN: GDISP_NEED_IMAGE is required when GWIN_NEED_IMAGE is TRUE."
+		#endif
+	#endif
 	#if GWIN_NEED_CONSOLE
 		#if !GDISP_NEED_TEXT
 			#error "GWIN: GDISP_NEED_TEXT is required if GWIN_NEED_CONSOLE is TRUE."
 		#endif
 	#endif
-	#if GWIN_NEED_GRAPH
+	#if GWIN_NEED_PROGRESSBAR
+		#if GWIN_PROGRESSBAR_AUTO
+			#if !GFX_USE_GTIMER
+				#error "GWIN: GFX_USE_GTIMER is required if GWIN_PROGRESSBAR_AUTO is TRUE."
+			#endif
+		#endif
 	#endif
 #endif
 

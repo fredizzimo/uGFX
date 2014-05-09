@@ -37,7 +37,7 @@ typedef struct GWindowObject *GHandle;
  */
 typedef struct GWindowObject {
 	#if GWIN_NEED_WINDOWMANAGER
-		// This MUST be the first member of the struct
+		// This MUST be the first member of the structure
 		gfxQueueASyncItem	wmq;				// @< The next window (for the window manager)
 	#endif
 	const struct gwinVMT	*vmt;				// @< The VMT for this GWIN
@@ -62,6 +62,10 @@ typedef struct GWindowObject {
  *
  * @note	Some gwin's will need extra parameters.
  * @note	The dimensions and position may be changed to fit on the real screen.
+ * @note	If you create this structure on the stack, you should always memset
+ * 			it to all zero's first in case a future version of the software
+ * 			add's extra fields. Alternatively you can use @p gwinClearInit()
+ * 			to clear it.
  *
  * @{
  */
@@ -109,6 +113,18 @@ extern "C" {
 /*-------------------------------------------------
  * Functions that affect all windows
  *-------------------------------------------------*/
+
+	/**
+	 * @brief	Clear a GWindowInit structure to all zero's
+	 * @note	This function is provided just to prevent problems
+	 * 			on operating systems where using memset() causes issues
+	 * 			in the users application.
+	 *
+	 * @param[in] pwi	The GWindowInit structure to clear
+	 *
+	 * @api
+	 */
+	void gwinClearInit(GWindowInit *pwi);
 
 	/**
 	 * @brief	Set the default foreground color for all new GWIN windows
@@ -941,7 +957,7 @@ extern "C" {
 	#endif
 
 	#if GWIN_NEED_IMAGE || defined(__DOXYGEN__)
-		#include "src/gwin/image.h"
+		#include "src/gwin/gimage.h"
 	#endif
 
 #endif /* GFX_USE_GWIN */
