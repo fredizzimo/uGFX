@@ -441,6 +441,8 @@
  */
 #elif GFX_USE_OS_CHIBIOS
 	#include "src/gos/chibios.h"
+#elif GFX_USE_OS_FREERTOS
+	#include "src/gos/freertos.h"
 #elif GFX_USE_OS_WIN32
 	#include "src/gos/win32.h"
 #elif GFX_USE_OS_LINUX

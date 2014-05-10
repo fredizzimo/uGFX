@@ -5,10 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    src/gos/raw32.c
- * @brief   GOS Raw (bare metal) support.
- */
 #include "gfx.h"
 
 #if GFX_USE_OS_RAW32
@@ -735,4 +731,3 @@ threadreturn_t gfxThreadWait(gfxThreadHandle th) {
 }
 
 #endif /* GFX_USE_OS_RAW32 */
-

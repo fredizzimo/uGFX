@@ -5,11 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    src/gos/osx.h
- * @brief   GOS - Operating System Support header file for Mac OS-X.
- */
-
 #ifndef _GOS_OSX_H
 #define _GOS_OSX_H
 
@@ -90,6 +85,4 @@ threadreturn_t gfxThreadWait(gfxThreadHandle thread);
 #endif
 
 #endif /* GFX_USE_OS_OSX */
-
 #endif /* _GOS_OSX_H */
-

@@ -5,10 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    src/gos/linux.c
- * @brief   GOS ChibiOS Operating System support.
- */
 #include "gfx.h"
 
 #if GFX_USE_OS_LINUX
@@ -197,5 +193,3 @@ semcount_t gfxSemCounter(gfxSem *pSem) {
 }
 
 #endif /* GFX_USE_OS_LINUX */
-/** @} */
-
