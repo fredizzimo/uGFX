@@ -214,7 +214,7 @@ void gwinFrameDraw_Std(GWidgetObject *gw, void *param) {
 	// Render the actual frame (with border, if any)
 	if (gw->g.flags & GWIN_FRAME_BORDER) {
 		gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, border);
-		gdispGFillArea(gw->g.display, gw->g.x + BORDER_X, gw->g.y + BORDER_Y, gw->g.width - 2*BORDER_X, gw->g.width - BORDER_Y - BORDER_X, background);
+		gdispGFillArea(gw->g.display, gw->g.x + BORDER_X, gw->g.y + BORDER_Y, gw->g.width - 2*BORDER_X, gw->g.height - BORDER_Y - BORDER_X, background);
 	} else {
 		// This ensure that the actual frame content (it's children) render at the same spot, no mather whether the frame has a border or not
 		gdispGFillArea(gw->g.display, gw->g.x + BORDER_X, gw->g.y + BORDER_Y, gw->g.width, gw->g.height, background);
