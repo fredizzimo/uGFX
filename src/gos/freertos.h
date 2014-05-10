@@ -39,7 +39,7 @@ typedef int8_t				bool_t;
 typedef uint32_t			delaytime_t;
 typedef portTickType		systemticks_t;
 typedef int32_t				semcount_t;
-typedef void			threadreturn_t;
+typedef void				threadreturn_t;
 typedef portBASE_TYPE		threadpriority_t;
 
 #define MAX_SEMAPHORE_COUNT	((semcount_t)(((unsigned long)((semcount_t)(-1))) >> 1))
@@ -81,7 +81,9 @@ extern "C" {
 static inline void gfxMutexInit(xSemaphoreHandle *s)
 {
 	*s = xSemaphoreCreateMutex();
-	vTraceSetMutexName(*s,"uGFXMutex"); // for FreeRTOS+Trace debug
+	#if GFX_FREERTOS_USE_TRACE
+		vTraceSetMutexName(*s,"uGFXMutex"); // for FreeRTOS+Trace debug
+	#endif
 }
 #define gfxMutexDestroy(pmutex)		vSemaphoreDelete(*pmutex)
 #define gfxMutexEnter(pmutex)		xSemaphoreTake(*pmutex,portMAX_DELAY)

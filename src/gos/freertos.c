@@ -5,10 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    src/gos/freertos.c
- * @brief   GOS FreeRTOS Operating System support.
- */
 #include "gfx.h"
 #include <string.h>
 
@@ -85,7 +81,9 @@ void gfxSemInit(gfxSem* psem, semcount_t val, semcount_t limit)
 	psem->limit = limit;
 	psem->sem = xSemaphoreCreateCounting(limit,val);
 
-	vTraceSetSemaphoreName(psem->sem, "uGFXSema"); // for FreeRTOS+Trace debug
+	#if GFX_FREERTOS_USE_TRACE
+		vTraceSetSemaphoreName(psem->sem, "uGFXSema"); // for FreeRTOS+Trace debug
+	#endif
 }
 
 void gfxSemDestroy(gfxSem* psem)
@@ -158,4 +156,3 @@ gfxThreadHandle gfxThreadCreate(void *stackarea, size_t stacksz, threadpriority_
 }
 
 #endif /* GFX_USE_OS_FREERTOS */
-/** @} */

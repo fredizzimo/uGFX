@@ -65,9 +65,16 @@
 /**
  * @}
  *
- * @name    GOS Optional Sizing Parameters
+ * @name    GOS Optional Parameters
  * @{
  */
+ 	/**
+ 	 * @brief	Should uGFX stuff be added to the FreeRTOS+Tracer
+ 	 * @details	Defaults to FALSE
+ 	 */
+ 	#ifndef GFX_FREERTOS_USE_TRACE
+ 		#define GFX_FREERTOS_USE_TRACE	FALSE
+ 	#endif
 /** @} */
 
 #endif /* _GOS_OPTIONS_H */
