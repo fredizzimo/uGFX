@@ -5,11 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    src/gos/linux.h
- * @brief   GOS - Operating System Support header file for LINUX.
- */
-
 #ifndef _GOS_LINUX_H
 #define _GOS_LINUX_H
 

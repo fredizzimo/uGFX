@@ -5,11 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    src/gos/chibios.c
- * @brief   GOS ChibiOS Operating System support.
- * @details Supports both, ChibiOS/RT 2.x and 3.x
- */
 #include "gfx.h"
 
 #if GFX_USE_OS_CHIBIOS
@@ -168,4 +163,3 @@ gfxThreadHandle gfxThreadCreate(void *stackarea, size_t stacksz, threadpriority_
 }
 
 #endif /* GFX_USE_OS_CHIBIOS */
-/** @} */

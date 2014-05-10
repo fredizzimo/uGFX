@@ -5,12 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    src/gos/chibios.h
- * @brief   GOS - Operating System Support header file for ChibiOS.
- * @details Supports both, ChibiOS/RT 2.x and 3.x
- */
-
 #ifndef _GOS_CHIBIOS_H
 #define _GOS_CHIBIOS_H
 

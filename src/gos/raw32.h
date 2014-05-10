@@ -6,11 +6,6 @@
  */
 
 /**
- * @file    src/gos/raw32.h
- * @brief   GOS - Operating System Support header file for any 32 bit processor in bare-metal mode
- */
-
-/**
  * The raw32 GOS implementation supports any 32 bit processor with or without an
  * 	underlying operating system. It uses cooperative multi-tasking. Be careful
  * 	when writing device drivers not to disturb the assumptions this creates by performing
@@ -123,4 +118,3 @@ extern "C" {
 
 #endif /* GFX_USE_OS_RAW32 */
 #endif /* _GOS_RAW32_H */
-
