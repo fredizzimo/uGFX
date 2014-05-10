@@ -13,6 +13,7 @@ FEATURE:	Added gwinGetColor() and gwinGetBgColor()
 FEATURE:	Console now has an optional backing store buffer (GWIN_CONSOLE_USE_HISTORY)
 FEATURE:	Added smooth scrolling to list widget
 FEATURE:	Increased performance of gwinListAddItem()
+FEATURE:	Added FreeRTOS port
 FEATURE:	Added gfxDeinit()
 FEATURE:	Allow touch screen calibration in any display orientation
 FEATURE:	New GFILE module to abstract File IO.
