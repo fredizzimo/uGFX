@@ -72,6 +72,14 @@ portTickType MS2ST(portTickType ms)
 	return (ms / portTICK_PERIOD_MS);
 }
 
+void gfxMutexInit(xSemaphoreHandle *s)
+{
+	*s = xSemaphoreCreateMutex();
+	#if GFX_FREERTOS_USE_TRACE
+		vTraceSetMutexName(*s,"uGFXMutex"); // for FreeRTOS+Trace debug
+	#endif
+}
+
 void gfxSemInit(gfxSem* psem, semcount_t val, semcount_t limit)
 {
 	if (val > limit)

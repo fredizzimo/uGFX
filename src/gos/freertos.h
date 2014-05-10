@@ -78,13 +78,8 @@ extern "C" {
 #define gfxMillisecondsToTicks(ms)	MS2ST(ms)
 #define gfxSystemLock()				{}
 #define gfxSystemUnlock()			{}
-static inline void gfxMutexInit(xSemaphoreHandle *s)
-{
-	*s = xSemaphoreCreateMutex();
-	#if GFX_FREERTOS_USE_TRACE
-		vTraceSetMutexName(*s,"uGFXMutex"); // for FreeRTOS+Trace debug
-	#endif
-}
+
+void gfxMutexInit(xSemaphoreHandle* s);
 #define gfxMutexDestroy(pmutex)		vSemaphoreDelete(*pmutex)
 #define gfxMutexEnter(pmutex)		xSemaphoreTake(*pmutex,portMAX_DELAY)
 #define gfxMutexExit(pmutex)		xSemaphoreGive(*pmutex)
