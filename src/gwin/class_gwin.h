@@ -121,8 +121,8 @@ typedef struct gwinVMT {
 	 */
 	typedef struct gcontainerVMT {
 		gwidgetVMT	gw;
-		void (*Pos2Screen)			(GHandle gh, coord_t *px, coord_t *py);					// @< Translate client coords into absolute coords (mandatory)
-		void (*Size2Screen)			(GHandle gh, coord_t *pwidth, coord_t *pheight);		// @< Ensure a window fits in the parent client area (mandatory)
+		void (*AdjustPosition)		(GHandle gh, coord_t *px, coord_t *py);					// @< The container can adjust the relative position of a child (optional)
+		void (*AdjustSize)			(GHandle gh, coord_t *pwidth, coord_t *pheight);		// @< The container can adjust the size of a child (optional)
 		void (*NotifyAdd)			(GHandle gh, GHandle ghChild);							// @< Notification that a child has been added (optional)
 		void (*NotifyDelete)		(GHandle gh, GHandle ghChild);							// @< Notification that a child has been deleted (optional)
 	} gcontainerVMT;
@@ -274,7 +274,7 @@ GHandle _gwindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pInit
 	 *
 	 * @notapi
 	 */
-	#define _gcontainerRedraw(gh)	_gwidgetRedraw(gh)
+	void _gcontainerRedraw(GHandle gh);
 
 	/**
 	 * @brief	Redraw the Container object after a container status change.
@@ -285,7 +285,7 @@ GHandle _gwindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pInit
 	 *
 	 * @notapi
 	 */
-	#define _gcontainerUpdate(gh)	_gwidgetUpdate(gh)
+	void _gcontainerUpdate(GHandle gh);
 
 	/**
 	 * @brief	Apply the specified action to a window and its children.

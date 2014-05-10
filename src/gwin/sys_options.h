@@ -44,6 +44,13 @@
 		#define GWIN_NEED_WIDGET	FALSE
 	#endif
 	/**
+	 * @brief	Should the simple container be included.
+	 * @details	Defaults to FALSE
+	 */
+	#ifndef GWIN_NEED_CONTAINER
+		#define GWIN_NEED_CONTAINER		FALSE
+	#endif
+	/**
 	 * @brief	Should the frame widget be included.
 	 * @details	Defaults to FALSE
 	 */

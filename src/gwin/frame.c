@@ -17,7 +17,7 @@
 
 #include "gfx.h"
 
-#if (GFX_USE_GWIN && GWIN_NEED_FRAME) || defined(__DOXYGEN__)
+#if GFX_USE_GWIN && GWIN_NEED_FRAME
 
 /* Some values for the default render */
 #define BORDER_X		5
@@ -37,11 +37,11 @@ static void _frameDestroy(GHandle gh) {
 	geventRegisterCallback(&gh2obj->gl, NULL, NULL);
 	geventDetachSource(&gh2obj->gl, NULL);
 
-	/* call the gwidget standard destroy routine */
-	_gwidgetDestroy(gh);
+	/* call the gcontainer standard destroy routine */
+	_gcontainerDestroy(gh);
 }
 
-#if GINPUT_NEED_MOUSE
+#if 0 && GINPUT_NEED_MOUSE
 	static void _mouseDown(GWidgetObject *gw, coord_t x, coord_t y) {
 	
 	}
@@ -55,45 +55,49 @@ static void _frameDestroy(GHandle gh) {
 	}
 #endif
 
-static const gwidgetVMT frameVMT = {
+static const gcontainerVMT frameVMT = {
 	{
-		"Frame",					// The classname
-		sizeof(GFrameObject),		// The object size
-		_frameDestroy,				// The destroy routie
-		_gwidgetRedraw,				// The redraw routine
-		0,							// The after-clear routine
+		{
+			"Frame",					// The classname
+			sizeof(GFrameObject),		// The object size
+			_frameDestroy,				// The destroy routie
+			_gcontainerRedraw,			// The redraw routine
+			0,							// The after-clear routine
+		},
+		gwinFrameDraw_Std,				// The default drawing routine
+		#if GINPUT_NEED_MOUSE
+			{
+				0,//_mouseDown,				// Process mouse down event
+				0,//_mouseUp,				// Process mouse up events
+				0,//_mouseMove,				// Process mouse move events
+			},
+		#endif
+		#if GINPUT_NEED_TOGGLE
+			{
+				0,						// 1 toggle role
+				0,						// Assign Toggles
+				0,						// Get Toggles
+				0,						// Process toggle off events
+				0,						// Process toggle on events
+			},
+		#endif
+		#if GINPUT_NEED_DIAL
+			{
+				0,						// 1 dial roles
+				0,						// Assign Dials
+				0,						// Get Dials
+				0,						// Process dial move events
+			},
+		#endif
 	},
-	gwinFrameDraw_Std,				// The default drawing routine
-	#if GINPUT_NEED_MOUSE
-		{
-			_mouseDown,				// Process mouse down event
-			_mouseUp,				// Process mouse up events
-			_mouseMove,				// Process mouse move events
-		},
-	#endif
-	#if GINPUT_NEED_TOGGLE
-		{
-			0,						// 1 toggle role
-			0,						// Assign Toggles
-			0,						// Get Toggles
-			0,						// Process toggle off events
-			0,						// Process toggle on events
-		},
-	#endif
-	#if GINPUT_NEED_DIAL
-		{
-			0,						// 1 dial roles
-			0,						// Assign Dials
-			0,						// Get Dials
-			0,						// Process dial move events
-		},
-	#endif
+	0,									// Adjust the relative position of a child (optional)
+	0,									// Adjust the size of a child (optional)
+	0,									// A child has been added (optional)
+	0,									// A child has been deleted (optional)
 };
 
-GHandle gwinGFrameCreate(GDisplay *g, GFrameObject *fo, GWidgetInit *pInit, uint16_t flags) {
-	uint16_t tmp;
-
-	if (!(fo = (GFrameObject *)_gwidgetCreate(g, &fo->w, pInit, &frameVMT)))
+GHandle gwinGFrameCreate(GDisplay *g, GFrameObject *fo, GWidgetInit *pInit, uint32_t flags) {
+	if (!(fo = (GFrameObject *)_gcontainerCreate(g, &fo->gc, pInit, &frameVMT)))
 		return 0;
 
 	fo->btnClose = NULL;
@@ -101,68 +105,61 @@ GHandle gwinGFrameCreate(GDisplay *g, GFrameObject *fo, GWidgetInit *pInit, uint
 	fo->btnMax = NULL;
 
 	/* Buttons require a border */
-	tmp = flags;
-	if ((tmp & GWIN_FRAME_CLOSE_BTN || tmp & GWIN_FRAME_MINMAX_BTN) && !(tmp & GWIN_FRAME_BORDER)) {
-		tmp |= GWIN_FRAME_BORDER;
-	}
+	if ((flags & GWIN_FRAME_CLOSE_BTN || flags & GWIN_FRAME_MINMAX_BTN) && !(flags & GWIN_FRAME_BORDER))
+		flags |= GWIN_FRAME_BORDER;
 
 	/* apply flags */
-	fo->w.g.flags |= tmp;
+	fo->gc.g.flags |= flags;
 
 	/* create and initialize the listener if any button is present. */
-	if ((fo->w.g.flags & GWIN_FRAME_CLOSE_BTN) || (fo->w.g.flags & GWIN_FRAME_MINMAX_BTN)) {
+	if ((flags & GWIN_FRAME_CLOSE_BTN) || (flags & GWIN_FRAME_MINMAX_BTN)) {
 		geventListenerInit(&fo->gl);
 		gwinAttachListener(&fo->gl);
 		geventRegisterCallback(&fo->gl, _callbackBtn, (GHandle)fo);
 	}
 
 	/* create close button if necessary */
-	if (fo->w.g.flags & GWIN_FRAME_CLOSE_BTN) {
+	if (flags & GWIN_FRAME_CLOSE_BTN) {
 		GWidgetInit wi;
 
-		wi.customDraw = 0;
-		wi.customParam = 0;
-		wi.customStyle = 0;
+		gwinWidgetClearInit(&wi);
 		wi.g.show = TRUE;
+		wi.g.parent = &fo->gc.g;
 
-		wi.g.x = fo->w.g.width - BORDER_X - BUTTON_X;
+		wi.g.x = fo->gc.g.width - BORDER_X - BUTTON_X;
 		wi.g.y = (BORDER_Y - BUTTON_Y) / 2;
 		wi.g.width = BUTTON_X;
 		wi.g.height = BUTTON_Y;
 		wi.text = "X";
 		fo->btnClose = gwinButtonCreate(NULL, &wi);		
-		gwinAddChild((GHandle)fo, fo->btnClose, FALSE);
 	}
 
 	/* create minimize and maximize buttons if necessary */
-	if (fo->w.g.flags & GWIN_FRAME_MINMAX_BTN) {
+	if (flags & GWIN_FRAME_MINMAX_BTN) {
 		GWidgetInit wi;
 
-		wi.customDraw = 0;
-		wi.customParam = 0;
-		wi.customStyle = 0;
+		gwinWidgetClearInit(&wi);
 		wi.g.show = TRUE;
+		wi.g.parent = &fo->gc.g;
 
-		wi.g.x = (fo->w.g.flags & GWIN_FRAME_CLOSE_BTN) ? fo->w.g.width - 2*BORDER_X - 2*BUTTON_X : fo->w.g.width - BORDER_X - BUTTON_X;
+		wi.g.x = (flags & GWIN_FRAME_CLOSE_BTN) ? fo->gc.g.width - 2*BORDER_X - 2*BUTTON_X : fo->gc.g.width - BORDER_X - BUTTON_X;
 		wi.g.y = (BORDER_Y - BUTTON_Y) / 2;
 		wi.g.width = BUTTON_X;
 		wi.g.height = BUTTON_Y;
 		wi.text = "O";
 		fo->btnMin = gwinButtonCreate(NULL, &wi);		
-		gwinAddChild((GHandle)fo, fo->btnMin, FALSE);
 
-		wi.g.x = (fo->w.g.flags & GWIN_FRAME_CLOSE_BTN) ? fo->w.g.width - 3*BORDER_X - 3*BUTTON_X : fo->w.g.width - BORDER_X - BUTTON_X;
+		wi.g.x = (flags & GWIN_FRAME_CLOSE_BTN) ? fo->gc.g.width - 3*BORDER_X - 3*BUTTON_X : fo->gc.g.width - BORDER_X - BUTTON_X;
 		wi.g.y = (BORDER_Y - BUTTON_Y) / 2;
 		wi.g.width = BUTTON_X;
 		wi.g.height = BUTTON_Y;
 		wi.text = "_";
 		fo->btnMax = gwinButtonCreate(NULL, &wi);
-		gwinAddChild((GHandle)fo, fo->btnMax, FALSE);
 	}
 
-	gwinSetVisible(&fo->w.g, pInit->g.show);
+	gwinSetVisible(&fo->gc.g, pInit->g.show);
 
-	return (GHandle)fo;
+	return &fo->gc.g;
 }
 
 /* Process a button event */
@@ -172,11 +169,12 @@ static void _callbackBtn(void *param, GEvent *pe) {
 			if (((GEventGWinButton *)pe)->button == ((GFrameObject*)(GHandle)param)->btnClose)
 				gwinDestroy((GHandle)param);
 
-			else if (((GEventGWinButton *)pe)->button == ((GFrameObject*)(GHandle)param)->btnMin)
+			else if (((GEventGWinButton *)pe)->button == ((GFrameObject*)(GHandle)param)->btnMin) {
 				;/* ToDo */
 
-			else if (((GEventGWinButton *)pe)->button == ((GFrameObject*)(GHandle)param)->btnMax)
+			} else if (((GEventGWinButton *)pe)->button == ((GFrameObject*)(GHandle)param)->btnMax) {
 				;/* ToDo */
+			}
 
 			break;
 
@@ -199,7 +197,7 @@ static const GColorSet* _getDrawColors(GWidgetObject *gw) {
 }
 
 void gwinFrameDraw_Std(GWidgetObject *gw, void *param) {
-	GColorSet		*pcol;
+	const GColorSet		*pcol;
 	color_t			border;
 	color_t			background;
 	(void)param;
@@ -230,12 +228,6 @@ void gwinFrameDraw_Std(GWidgetObject *gw, void *param) {
 
 		gdispGDrawString(gw->g.display, gw->g.x + BORDER_X, gw->g.y + text_y, gw->text, gw->g.font, pcol->text);
 	}
-
-	#if GDISP_NEED_CLIP
-		gdispGUnsetClip(gw->g.display);
-	#endif
-
-	gwinRedrawChildren((GHandle)gw);
 }
 
 #endif  /* (GFX_USE_GWIN && GWIN_NEED_FRAME) || defined(__DOXYGEN__) */

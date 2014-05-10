@@ -28,10 +28,10 @@
 	#endif
 
 	// Objects require their super-class
-	#if GWIN_NEED_FRAME
+	#if GWIN_NEED_FRAME || GWIN_NEED_CONTAINER
 		#if !GWIN_NEED_CONTAINERS
 			#if GFX_DISPLAY_RULE_WARNINGS
-				#warning "GWIN: GWIN_NEED_CONTAINERS is required when GIWN_NEED_FRAME is enabled. It has been turned on for you."
+				#warning "GWIN: GWIN_NEED_CONTAINERS is required when a container is enabled. It has been turned on for you."
 			#endif
 			#undef GWIN_NEED_CONTAINERS
 			#define GWIN_NEED_CONTAINERS	TRUE

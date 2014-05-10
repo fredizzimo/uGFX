@@ -79,6 +79,20 @@ extern "C" {
 	 * @api
 	 */
 	GHandle gwinGetSibling(GHandle gh);
+
+	/**
+	 * @brief   Create a simple container.
+	 * @return  NULL if there is no resultant drawing area, otherwise a window handle.
+	 *
+	 * @param[in] g			The GDisplay to display this window on
+	 * @param[in] gb		The GContainerObject structure to initialise. If this is NULL the structure is dynamically allocated.
+	 * @param[in] pInit		The initialisation parameters
+	 *
+	 * @api
+	 */
+	GHandle gwinGContainerCreate(GDisplay *g, GContainerObject *gw, const GWidgetInit *pInit);
+	#define gwinContainerCreate(gc, pInit)			gwinGContainerCreate(GDISP, gc, pInit)
+
 #ifdef __cplusplus
 }
 #endif

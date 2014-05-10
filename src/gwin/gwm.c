@@ -208,15 +208,20 @@ static void WM_Redraw(GHandle gh, int flags) {
 }
 
 static void WM_Size(GHandle gh, coord_t w, coord_t h) {
-	#if GWIN_NEED_CONTAINERS
-		// For a child window - convert to absolute size
-		if (gh->parent)
-			((const gcontainerVMT *)gh->parent->vmt)->Size2Screen(gh, &w, &h);
-	#endif
-
-	// Clip to the screen and give it a minimum size
+	// Give it a minimum size
 	if (w < MIN_WIN_WIDTH) w = MIN_WIN_WIDTH;
 	if (h < MIN_WIN_HEIGHT) h = MIN_WIN_HEIGHT;
+
+	#if GWIN_NEED_CONTAINERS
+		if (gh->parent) {
+			// Clip to the container
+			if (gh->x+w > gh->parent->x+gh->parent->width) w = gh->parent->x + gh->parent->width - gh->x;
+			if (gh->y+h > gh->parent->y+gh->parent->height) h = gh->parent->y + gh->parent->height - gh->y;
+			((const gcontainerVMT *)gh->parent->vmt)->AdjustSize(gh, &w, &h);
+		}
+	#endif
+
+	// Clip to the screen
 	if (gh->x+w > gdispGGetWidth(gh->display)) w = gdispGGetWidth(gh->display) - gh->x;
 	if (gh->y+h > gdispGGetHeight(gh->display)) h = gdispGGetHeight(gh->display) - gh->y;
 
@@ -238,9 +243,20 @@ static void WM_Size(GHandle gh, coord_t w, coord_t h) {
 
 static void WM_Move(GHandle gh, coord_t x, coord_t y) {
 	#if GWIN_NEED_CONTAINERS
-		// For a child window - convert to absolute position
-		if (gh->parent)
-			((const gcontainerVMT *)gh->parent->vmt)->Pos2Screen(gh, &x, &y);
+		if (gh->parent) {
+			// Clip to the parent
+			if (x < 0) x = 0;
+			if (y < 0) y = 0;
+			if (x > gh->parent->width-gh->width)	x = gh->parent->width-gh->width;
+			if (y > gh->parent->height-gh->height)	y = gh->parent->height-gh->height;
+
+			// Allow the parent to adjust it
+			((const gcontainerVMT *)gh->parent->vmt)->AdjustPosition(gh, &x, &y);
+
+			// Convert to absolute position
+			x += gh->parent->x;
+			y += gh->parent->y;
+		}
 	#endif
 
 	// Clip to the screen
