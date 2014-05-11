@@ -342,6 +342,24 @@ extern "C" {
 	void gwinSetVisible(GHandle gh, bool_t visible);
 
 	/**
+	 * @brief	Makes a widget become visible
+	 *
+	 * @param[in] gh		The window handle
+	 *
+	 * @api
+	 */
+	#define gwinShow(gh)		gwinSetVisible(gh, TRUE);
+
+	/**
+	 * @brief	Makes a widget become invisible
+	 *
+	 * @param[in] gh		The window handle
+	 *
+	 * @api
+	 */
+	#define gwinHide(gh)		gwinSetVisible(gh, FALSE);
+
+	/**
 	 * @brief	Gets the visibility of a window
 	 * @return	TRUE if visible
 	 *
