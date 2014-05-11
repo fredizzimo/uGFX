@@ -37,6 +37,7 @@ FEATURE:	Added gwinEnable() and gwinDisable()
 FIX:		Progressbar widget bug fix that could gwinProgressbarStop() to crash
 FIX:		Imagebox widget bug fix that could cause gwinImageOpenFile() to crash
 FEATURE:	GWIN containers such as "container" and "frame"
+FEATURE:	Add gdispContrastColor()
 
 *** Release 2.0 ***
 FEATURE:	GDISP Streaming API and demos.
