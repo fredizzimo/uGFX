@@ -6,7 +6,7 @@
  */
 
 /**
- * @file	src/gwin/image.h
+ * @file	src/gwin/gimage.h
  * @brief	GWIN image widget header file.
  *
  * @defgroup Image Image
