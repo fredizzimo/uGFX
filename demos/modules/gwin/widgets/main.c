@@ -110,25 +110,44 @@ static gdispImage	imgYesNo;
 #define GROUP_COLORS		2
 
 // Wrap tabs onto the next line if they don't fit.
-static void setbtntext(GWidgetInit *pwi, coord_t maxwidth, char *txt) {
-	if (pwi->g.x >= maxwidth) {
+static void settabtext(GWidgetInit *pwi, char *txt) {
+	if (pwi->g.x >= ScrWidth) {
 		pwi->g.x = 0;
 		pwi->g.y += pwi->g.height;
 	}
 	pwi->text = txt;
 	pwi->g.width = gdispGetStringWidth(pwi->text, font) + BUTTON_PADDING;
-	if (pwi->g.x + pwi->g.width > maxwidth) {
+	if (pwi->g.x + pwi->g.width > ScrWidth) {
 		pwi->g.x = 0;
 		pwi->g.y += pwi->g.height;
 	}
 }
 
+// Wrap tabs onto the next line if they don't fit.
+static void setbtntext(GWidgetInit *pwi, coord_t maxwidth, char *txt) {
+	if (pwi->g.x >= maxwidth) {
+		pwi->g.x = 5;
+		pwi->g.y += pwi->g.height+1;
+	}
+	pwi->text = txt;
+	pwi->g.width = gdispGetStringWidth(pwi->text, font) + BUTTON_PADDING;
+	if (pwi->g.x + pwi->g.width > maxwidth) {
+		pwi->g.x = 5;
+		pwi->g.y += pwi->g.height+1;
+	}
+}
+
 /**
  * Create all the widgets.
- * With the exception of the Tabs they are all created invisible.
+ * With the exception of the Pages they are all initially visible.
+ *
+ * This routine is complicated by the fact that we want a dynamic
+ * layout so it looks good on small and large displays.
+ * It is tested to work on 320x272 as a minimum LCD size.
  */
 static void createWidgets(void) {
 	GWidgetInit		wi;
+	coord_t			border;
 
 	gwinWidgetClearInit(&wi);
 
@@ -137,27 +156,30 @@ static void createWidgets(void) {
 	wi.g.height = TAB_HEIGHT; wi.g.y = 0;
 	wi.g.x = 0; setbtntext(&wi, ScrWidth, "Buttons");
 	ghTabButtons     = gwinRadioCreate(0, &wi, GROUP_TABS);
-	wi.g.x += wi.g.width; setbtntext(&wi, ScrWidth, "Sliders");
+	wi.g.x += wi.g.width; settabtext(&wi, "Sliders");
 	ghTabSliders     = gwinRadioCreate(0, &wi, GROUP_TABS);
-	wi.g.x += wi.g.width; setbtntext(&wi, ScrWidth, "Checkbox");
+	wi.g.x += wi.g.width; settabtext(&wi, "Checkbox");
 	ghTabCheckboxes  = gwinRadioCreate(0, &wi, GROUP_TABS);
-	wi.g.x += wi.g.width; setbtntext(&wi, ScrWidth, "Radios");
+	wi.g.x += wi.g.width; settabtext(&wi, "Radios");
 	ghTabRadios      = gwinRadioCreate(0, &wi, GROUP_TABS);
-	wi.g.x += wi.g.width; setbtntext(&wi, ScrWidth, "Lists");
+	wi.g.x += wi.g.width; settabtext(&wi, "Lists");
 	ghTabLists       = gwinRadioCreate(0, &wi, GROUP_TABS);
-	wi.g.x += wi.g.width; setbtntext(&wi, ScrWidth, "Labels");
+	wi.g.x += wi.g.width; settabtext(&wi, "Labels");
 	ghTabLabels      = gwinRadioCreate(0, &wi, GROUP_TABS);
-	wi.g.x += wi.g.width; setbtntext(&wi, ScrWidth, "Images");
+	wi.g.x += wi.g.width; settabtext(&wi, "Images");
 	ghTabImages      = gwinRadioCreate(0, &wi, GROUP_TABS);
-	wi.g.x += wi.g.width; setbtntext(&wi, ScrWidth, "Progressbar");
+	wi.g.x += wi.g.width; settabtext(&wi, "Progressbar");
 	ghTabProgressbar = gwinRadioCreate(0, &wi, GROUP_TABS);
 	wi.g.y += wi.g.height;
 	wi.customDraw = 0;
 
+	// Calculate page borders based on screen size
+	border = ScrWidth < 450 ? 1 : 5;
+
 	// Create the Pages
 	wi.g.show = FALSE;
-	wi.g.x = 5; wi.g.y += 5;
-	wi.g.width = ScrWidth/2 - 10; wi.g.height = ScrHeight-wi.g.y-5;
+	wi.g.x = border; wi.g.y += border;
+	wi.g.width = ScrWidth/2 - border; wi.g.height = ScrHeight-wi.g.y-border;
 	ghPgButtons			= gwinContainerCreate(0, &wi, GWIN_CONTAINER_BORDER);
 	ghPgSliders			= gwinContainerCreate(0, &wi, GWIN_CONTAINER_BORDER);
 	ghPgCheckboxes		= gwinContainerCreate(0, &wi, GWIN_CONTAINER_BORDER);
@@ -169,11 +191,11 @@ static void createWidgets(void) {
 	wi.g.show = TRUE;
 
 	// Console - we apply some special colors before making it visible
-	wi.g.x = ScrWidth/2+1;
-	wi.g.width = ScrWidth/2 - 5;
+	wi.g.x = ScrWidth/2+border;
+	wi.g.width = ScrWidth/2 - 2*border;
 	ghConsole = gwinConsoleCreate(0, &wi.g);
     gwinSetColor(ghConsole, Black);
-    gwinSetBgColor(ghConsole, 0xE0E0E0);
+    gwinSetBgColor(ghConsole, 0xF0F0F0);
 
     // Buttons
 	wi.g.parent = ghPgButtons;
@@ -221,8 +243,8 @@ static void createWidgets(void) {
 
     // Labels
 	wi.g.parent = ghPgLabels;
-	wi.g.width = 200;	wi.g.height = LABEL_HEIGHT;
-	wi.g.x = wi.g.y = 5;wi.text = "N/A";
+	wi.g.width = gwinGetInnerWidth(ghPgLabels)-10;	wi.g.height = LABEL_HEIGHT;
+	wi.g.x = wi.g.y = 5; wi.text = "N/A";
 	ghLabelSlider1 = gwinLabelCreate(0, &wi);
 	gwinLabelSetAttribute(ghLabelSlider1, 100, "Slider 1:");
 	wi.g.y += LABEL_HEIGHT + 2;
@@ -244,22 +266,23 @@ static void createWidgets(void) {
 	wi.g.width = RADIO_WIDTH; wi.g.height = RADIO_HEIGHT; wi.g.y = 5;
 	wi.g.x = 5; wi.text = "Yes";
 	ghRadio1 = gwinRadioCreate(0, &wi, GROUP_YESNO);
-	wi.g.x += wi.g.width; wi.text = "No"; if (wi.g.x + wi.g.width > gwinGetInnerWidth(ghPgRadios)) { wi.g.x = 0; wi.g.y += RADIO_HEIGHT; }
+	wi.g.x += wi.g.width; wi.text = "No"; if (wi.g.x + wi.g.width > gwinGetInnerWidth(ghPgRadios)) { wi.g.x = 5; wi.g.y += RADIO_HEIGHT; }
 	ghRadio2 = gwinRadioCreate(0, &wi, GROUP_YESNO);
 	gwinRadioPress(ghRadio1);
 	wi.g.width = COLOR_WIDTH; wi.g.y += RADIO_HEIGHT+5;
 	wi.g.x = 5; wi.text = "Black";
 	ghRadioBlack = gwinRadioCreate(0, &wi, GROUP_COLORS);
-	wi.g.x += wi.g.width; wi.text = "White"; if (wi.g.x + wi.g.width > gwinGetInnerWidth(ghPgRadios)) { wi.g.x = 0; wi.g.y += RADIO_HEIGHT; }
+	wi.g.x += wi.g.width; wi.text = "White"; if (wi.g.x + wi.g.width > gwinGetInnerWidth(ghPgRadios)) { wi.g.x = 5; wi.g.y += RADIO_HEIGHT; }
 	ghRadioWhite = gwinRadioCreate(0, &wi, GROUP_COLORS);
-	wi.g.x += wi.g.width; wi.text = "Yellow"; if (wi.g.x + wi.g.width > gwinGetInnerWidth(ghPgRadios)) { wi.g.x = 0; wi.g.y += RADIO_HEIGHT; }
+	wi.g.x += wi.g.width; wi.text = "Yellow"; if (wi.g.x + wi.g.width > gwinGetInnerWidth(ghPgRadios)) { wi.g.x = 5; wi.g.y += RADIO_HEIGHT; }
 	ghRadioYellow = gwinRadioCreate(0, &wi, GROUP_COLORS);
 	gwinRadioPress(ghRadioWhite);
 
 	// Lists
+	border = gwinGetInnerWidth(ghPgLists) < 10+2*LIST_WIDTH ? 2 : 5;
 	wi.g.parent = ghPgLists;
-	wi.g.width = LIST_WIDTH; wi.g.height = LIST_HEIGHT; wi.g.y = 5;
-	wi.g.x = 5; wi.text = "L1";
+	wi.g.width = LIST_WIDTH; wi.g.height = LIST_HEIGHT; wi.g.y = border;
+	wi.g.x = border; wi.text = "L1";
 	ghList1 = gwinListCreate(0, &wi, FALSE);
 	gwinListAddItem(ghList1, "Item 0", FALSE);
 	gwinListAddItem(ghList1, "Item 1", FALSE);
@@ -275,7 +298,7 @@ static void createWidgets(void) {
 	gwinListAddItem(ghList1, "Item 11", FALSE);
 	gwinListAddItem(ghList1, "Item 12", FALSE);
 	gwinListAddItem(ghList1, "Item 13", FALSE);
-	wi.text = "L2"; wi.g.x += LIST_WIDTH+5; if (wi.g.x + LIST_WIDTH > gwinGetInnerWidth(ghPgLists)) { wi.g.x = 5; wi.g.y += LIST_HEIGHT+5; }
+	wi.text = "L2"; wi.g.x += LIST_WIDTH+border; if (wi.g.x + LIST_WIDTH > gwinGetInnerWidth(ghPgLists)) { wi.g.x = border; wi.g.y += LIST_HEIGHT+border; }
 	ghList2 = gwinListCreate(0, &wi, TRUE);
 	gwinListAddItem(ghList2, "Item 0", FALSE);
 	gwinListAddItem(ghList2, "Item 1", FALSE);
@@ -291,7 +314,7 @@ static void createWidgets(void) {
 	gwinListAddItem(ghList2, "Item 11", FALSE);
 	gwinListAddItem(ghList2, "Item 12", FALSE);
 	gwinListAddItem(ghList2, "Item 13", FALSE);
-	wi.text = "L3"; wi.g.x += LIST_WIDTH+5; if (wi.g.x + LIST_WIDTH > gwinGetInnerWidth(ghPgLists)) { wi.g.x = 5; wi.g.y += LIST_HEIGHT+5; }
+	wi.text = "L3"; wi.g.x += LIST_WIDTH+border; if (wi.g.x + LIST_WIDTH > gwinGetInnerWidth(ghPgLists)) { wi.g.x = border; wi.g.y += LIST_HEIGHT+border; }
 	ghList3 = gwinListCreate(0, &wi, TRUE);
 	gwinListAddItem(ghList3, "Item 0", FALSE);
 	gwinListAddItem(ghList3, "Item 1", FALSE);
@@ -300,7 +323,7 @@ static void createWidgets(void) {
 	gdispImageOpenFile(&imgYesNo, "image_yesno.gif");
 	gwinListItemSetImage(ghList3, 1, &imgYesNo);
 	gwinListItemSetImage(ghList3, 3, &imgYesNo);
-	wi.text = "L4"; wi.g.x += LIST_WIDTH+5; if (wi.g.x + LIST_WIDTH > gwinGetInnerWidth(ghPgLists)) { wi.g.x = 5; wi.g.y += LIST_HEIGHT+5; }
+	wi.text = "L4"; wi.g.x += LIST_WIDTH+border; if (wi.g.x + LIST_WIDTH > gwinGetInnerWidth(ghPgLists)) { wi.g.x = border; wi.g.y += LIST_HEIGHT+border; }
 	ghList4 = gwinListCreate(0, &wi, TRUE);
 	gwinListAddItem(ghList4, "Item 0", FALSE);
 	gwinListAddItem(ghList4, "Item 1", FALSE);
@@ -504,7 +527,7 @@ int main(void) {
 					else
 						pstyle = &WhiteWidgetStyle;
 
-					// Clear the screen to the new color - we avoid the console area as it can't redraw itself
+					// Clear the screen to the new color
 					#if GDISP_NEED_CLIP
 						gdispUnsetClip();
 					#endif
@@ -512,9 +535,6 @@ int main(void) {
 
 					// Update the style on all controls
 					gwinSetDefaultStyle(pstyle, TRUE);
-
-					// Redraw the console too
-					//gwinRedraw(ghConsole);
 				}
 				break;
 			}
