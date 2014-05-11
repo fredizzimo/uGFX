@@ -23,12 +23,14 @@
 #ifndef _GWIN_FRAME_H
 #define _GWIN_FRAME_H
 
-#include "src/gwin/class_gwin.h"
-
-// Flags for gwinFrameCreate()
-#define GWIN_FRAME_BORDER			(GWIN_FIRST_CONTROL_FLAG << 0)
-#define GWIN_FRAME_CLOSE_BTN		(GWIN_FIRST_CONTROL_FLAG << 1)
-#define GWIN_FRAME_MINMAX_BTN		(GWIN_FIRST_CONTROL_FLAG << 2)
+/**
+ * @brief	 Flags for gwinFrameCreate()
+ * @{
+ */
+#define GWIN_FRAME_BORDER			0x00000001
+#define GWIN_FRAME_CLOSE_BTN		0x00000002
+#define GWIN_FRAME_MINMAX_BTN		0x00000004
+/* @} */
 
 typedef struct GFrameObject {
 	GContainerObject	gc;

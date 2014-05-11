@@ -208,23 +208,27 @@ static void WM_Redraw(GHandle gh, int flags) {
 }
 
 static void WM_Size(GHandle gh, coord_t w, coord_t h) {
-	// Give it a minimum size
-	if (w < MIN_WIN_WIDTH) w = MIN_WIN_WIDTH;
-	if (h < MIN_WIN_HEIGHT) h = MIN_WIN_HEIGHT;
+	coord_t		v;
 
 	#if GWIN_NEED_CONTAINERS
 		if (gh->parent) {
 			// Clip to the container
-			if (gh->x+w > gh->parent->x+gh->parent->width) w = gh->parent->x + gh->parent->width - gh->x;
-			if (gh->y+h > gh->parent->y+gh->parent->height) h = gh->parent->y + gh->parent->height - gh->y;
-			if (((const gcontainerVMT *)gh->parent->vmt)->AdjustSize)
-				((const gcontainerVMT *)gh->parent->vmt)->AdjustSize(gh, &w, &h);
+			v = gh->parent->x + gh->parent->width - ((const gcontainerVMT *)gh->parent->vmt)->RightBorder(gh->parent);
+			if (gh->x+w > v)	w = v - gh->x;
+			v = gh->parent->y + gh->parent->height - ((const gcontainerVMT *)gh->parent->vmt)->BottomBorder(gh->parent);
+			if (gh->y+h > v) 	h = v - gh->y;
 		}
 	#endif
 
 	// Clip to the screen
-	if (gh->x+w > gdispGGetWidth(gh->display)) w = gdispGGetWidth(gh->display) - gh->x;
-	if (gh->y+h > gdispGGetHeight(gh->display)) h = gdispGGetHeight(gh->display) - gh->y;
+	v = gdispGGetWidth(gh->display);
+	if (gh->x+w > v) 	w = v - gh->x;
+	v = gdispGGetHeight(gh->display);
+	if (gh->y+h > v) 	h = v - gh->y;
+
+	// Give it a minimum size
+	if (w < MIN_WIN_WIDTH)	w = MIN_WIN_WIDTH;
+	if (h < MIN_WIN_HEIGHT)	h = MIN_WIN_HEIGHT;
 
 	// If there has been no resize just exit
 	if (gh->width == w && gh->height == h)
@@ -243,29 +247,31 @@ static void WM_Size(GHandle gh, coord_t w, coord_t h) {
 }
 
 static void WM_Move(GHandle gh, coord_t x, coord_t y) {
+	coord_t		v;
+
 	#if GWIN_NEED_CONTAINERS
 		if (gh->parent) {
-			// Clip to the parent
+			// Clip to the parent size
+			v = gh->parent->width - ((const gcontainerVMT *)gh->parent->vmt)->LeftBorder(gh->parent) - ((const gcontainerVMT *)gh->parent->vmt)->RightBorder(gh->parent);
+			if (x+gh->width > v)	x = v-gh->width;
+			v = gh->parent->height - ((const gcontainerVMT *)gh->parent->vmt)->TopBorder(gh->parent) - ((const gcontainerVMT *)gh->parent->vmt)->BottomBorder(gh->parent);
+			if (y+gh->height > v)	y = v-gh->height;
 			if (x < 0) x = 0;
 			if (y < 0) y = 0;
-			if (x > gh->parent->width-gh->width)	x = gh->parent->width-gh->width;
-			if (y > gh->parent->height-gh->height)	y = gh->parent->height-gh->height;
-
-			// Allow the parent to adjust it
-			if (((const gcontainerVMT *)gh->parent->vmt)->AdjustPosition)
-				((const gcontainerVMT *)gh->parent->vmt)->AdjustPosition(gh, &x, &y);
 
 			// Convert to absolute position
-			x += gh->parent->x;
-			y += gh->parent->y;
+			x += gh->parent->x + ((const gcontainerVMT *)gh->parent->vmt)->LeftBorder(gh->parent);
+			y += gh->parent->y + ((const gcontainerVMT *)gh->parent->vmt)->TopBorder(gh->parent);
 		}
 	#endif
 
 	// Clip to the screen
+	v = gdispGGetWidth(gh->display);
+	if (x+gh->width > v)	x = v-gh->width;
+	v = gdispGGetHeight(gh->display);
+	if (y+gh->height > v)	y = v-gh->height;
 	if (x < 0) x = 0;
 	if (y < 0) y = 0;
-	if (x > gdispGGetWidth(gh->display)-gh->width)		x = gdispGGetWidth(gh->display)-gh->width;
-	if (y > gdispGGetHeight(gh->display)-gh->height)	y = gdispGGetHeight(gh->display)-gh->height;
 
 	// If there has been no move just exit
 	if (gh->x == x && gh->y == y)

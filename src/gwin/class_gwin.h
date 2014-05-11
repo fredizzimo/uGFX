@@ -121,10 +121,12 @@ typedef struct gwinVMT {
 	 */
 	typedef struct gcontainerVMT {
 		gwidgetVMT	gw;
-		void (*AdjustPosition)		(GHandle gh, coord_t *px, coord_t *py);					// @< The container can adjust the relative position of a child (optional)
-		void (*AdjustSize)			(GHandle gh, coord_t *pwidth, coord_t *pheight);		// @< The container can adjust the size of a child (optional)
-		void (*NotifyAdd)			(GHandle gh, GHandle ghChild);							// @< Notification that a child has been added (optional)
-		void (*NotifyDelete)		(GHandle gh, GHandle ghChild);							// @< Notification that a child has been deleted (optional)
+		coord_t (*LeftBorder)		(GHandle gh);							// @< The size of the left border (mandatory)
+		coord_t (*TopBorder)		(GHandle gh);							// @< The size of the top border (mandatory)
+		coord_t (*RightBorder)		(GHandle gh);							// @< The size of the right border (mandatory)
+		coord_t (*BottomBorder)		(GHandle gh);							// @< The size of the bottom border (mandatory)
+		void (*NotifyAdd)			(GHandle gh, GHandle ghChild);			// @< Notification that a child has been added (optional)
+		void (*NotifyDelete)		(GHandle gh, GHandle ghChild);			// @< Notification that a child has been deleted (optional)
 	} gcontainerVMT;
 	/* @} */
 #endif

@@ -104,6 +104,18 @@ GHandle gwinGetSibling(GHandle gh) {
 	return 0;
 }
 
+coord_t gwinGetInnerWidth(GHandle gh) {
+	if (!(gh->flags & GWIN_FLG_CONTAINER))
+		return 0;
+	return gh->width - ((const gcontainerVMT *)gh->vmt)->LeftBorder(gh) - ((const gcontainerVMT *)gh->vmt)->RightBorder(gh);
+}
+
+coord_t gwinGetInnerHeight(GHandle gh) {
+	if (!(gh->flags & GWIN_FLG_CONTAINER))
+		return 0;
+	return gh->height - ((const gcontainerVMT *)gh->vmt)->TopBorder(gh) - ((const gcontainerVMT *)gh->vmt)->BottomBorder(gh);
+}
+
 #endif /* GFX_USE_GWIN && GWIN_NEED_CONTAINERS */
 /** @} */
 
@@ -119,9 +131,17 @@ GHandle gwinGetSibling(GHandle gh) {
 
 #if GFX_USE_GWIN && GWIN_NEED_CONTAINER
 
+#if GWIN_CONTAINER_BORDER != GWIN_FIRST_CONTROL_FLAG
+	#error "GWIN Container: - Flag definitions don't match"
+#endif
+
+static coord_t BorderSize(GHandle gh)	{ return (gh->flags & GWIN_CONTAINER_BORDER) ? 2 : 0; }
+
 static void DrawSimpleContainer(GWidgetObject *gw, void *param) {
 	(void)	param;
 	gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->pstyle->background);
+	if ((gw->g.flags & GWIN_CONTAINER_BORDER))
+		gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, (gw->g.flags & GWIN_FLG_SYSENABLED) ? gw->pstyle->enabled.edge : gw->pstyle->disabled.edge);
 }
 
 // The container VMT table
@@ -151,18 +171,22 @@ static const gcontainerVMT containerVMT = {
 			},
 		#endif
 	},
-	0,									// Adjust the relative position of a child (optional)
-	0,									// Adjust the size of a child (optional)
+	BorderSize,							// The size of the left border (mandatory)
+	BorderSize,							// The size of the top border (mandatory)
+	BorderSize,							// The size of the right border (mandatory)
+	BorderSize,							// The size of the bottom border (mandatory)
 	0,									// A child has been added (optional)
 	0,									// A child has been deleted (optional)
 };
 
-GHandle gwinGContainerCreate(GDisplay *g, GContainerObject *gw, const GWidgetInit *pInit) {
-	if (!(gw = (GContainerObject *)_gcontainerCreate(g, gw, pInit, &containerVMT)))
+GHandle gwinGContainerCreate(GDisplay *g, GContainerObject *gc, const GWidgetInit *pInit, uint32_t flags) {
+	if (!(gc = (GContainerObject *)_gcontainerCreate(g, gc, pInit, &containerVMT)))
 		return 0;
 
-	gwinSetVisible((GHandle)gw, pInit->g.show);
-	return (GHandle)gw;
+	gc->g.flags |= flags;
+
+	gwinSetVisible((GHandle)gc, pInit->g.show);
+	return (GHandle)gc;
 }
 
 #endif

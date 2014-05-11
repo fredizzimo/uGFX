@@ -81,6 +81,36 @@ extern "C" {
 	GHandle gwinGetSibling(GHandle gh);
 
 	/**
+	 * @brief	Get the inner width of a container window
+	 *
+	 * @return	The inner width of a container window or zero if this is not a container
+	 *
+	 * @param[in] gh		The window
+	 *
+	 * @api
+	 */
+	coord_t gwinGetInnerWidth(GHandle gh);
+
+	/**
+	 * @brief	Get the inner height of a container window
+	 *
+	 * @return	The inner height of a container window or zero if this is not a container
+	 *
+	 * @param[in] gh		The window
+	 *
+	 * @api
+	 */
+	coord_t gwinGetInnerHeight(GHandle gh);
+
+
+	/**
+	 * @brief	 Flags for gwinContainerCreate()
+	 * @{
+	 */
+	#define GWIN_CONTAINER_BORDER		0x00000001
+	/* @} */
+
+	/**
 	 * @brief   Create a simple container.
 	 * @return  NULL if there is no resultant drawing area, otherwise a window handle.
 	 *
@@ -90,8 +120,8 @@ extern "C" {
 	 *
 	 * @api
 	 */
-	GHandle gwinGContainerCreate(GDisplay *g, GContainerObject *gw, const GWidgetInit *pInit);
-	#define gwinContainerCreate(gc, pInit)			gwinGContainerCreate(GDISP, gc, pInit)
+	GHandle gwinGContainerCreate(GDisplay *g, GContainerObject *gw, const GWidgetInit *pInit, uint32_t flags);
+	#define gwinContainerCreate(gc, pInit, flags)			gwinGContainerCreate(GDISP, gc, pInit, flags)
 
 #ifdef __cplusplus
 }

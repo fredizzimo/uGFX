@@ -19,6 +19,12 @@
 
 #if GFX_USE_GWIN && GWIN_NEED_FRAME
 
+#include "src/gwin/class_gwin.h"
+
+#if GWIN_FRAME_BORDER != GWIN_FIRST_CONTROL_FLAG
+	#error "GWIN Frame: - Flag definitions don't match"
+#endif
+
 /* Some values for the default render */
 #define BORDER_X		5
 #define BORDER_Y		30
@@ -29,8 +35,11 @@
 #define gh2obj			((GFrameObject *)gh)
 
 /* Forware declarations */
-void gwinFrameDraw_Std(GWidgetObject *gw, void *param);
+static void gwinFrameDraw_Std(GWidgetObject *gw, void *param);
 static void _callbackBtn(void *param, GEvent *pe);
+
+static coord_t BorderSizeLRB(GHandle gh)	{ return (gh->flags & GWIN_FRAME_BORDER) ? BORDER_X : 0; }
+static coord_t BorderSizeT(GHandle gh)		{ return (gh->flags & GWIN_FRAME_BORDER) ? BORDER_Y : 0; }
 
 static void _frameDestroy(GHandle gh) {
 	/* Deregister the button callback */
@@ -90,8 +99,10 @@ static const gcontainerVMT frameVMT = {
 			},
 		#endif
 	},
-	0,									// Adjust the relative position of a child (optional)
-	0,									// Adjust the size of a child (optional)
+	BorderSizeLRB,						// The size of the left border (mandatory)
+	BorderSizeT,						// The size of the top border (mandatory)
+	BorderSizeLRB,						// The size of the right border (mandatory)
+	BorderSizeLRB,						// The size of the bottom border (mandatory)
 	0,									// A child has been added (optional)
 	0,									// A child has been deleted (optional)
 };
@@ -107,9 +118,6 @@ GHandle gwinGFrameCreate(GDisplay *g, GFrameObject *fo, GWidgetInit *pInit, uint
 	/* Buttons require a border */
 	if ((flags & (GWIN_FRAME_CLOSE_BTN|GWIN_FRAME_MINMAX_BTN)))
 		flags |= GWIN_FRAME_BORDER;
-
-	/* apply flags */
-	fo->gc.g.flags |= flags;
 
 	/* create and initialize the listener if any button is present. */
 	if ((flags & (GWIN_FRAME_CLOSE_BTN|GWIN_FRAME_MINMAX_BTN))) {
@@ -157,6 +165,9 @@ GHandle gwinGFrameCreate(GDisplay *g, GFrameObject *fo, GWidgetInit *pInit, uint
 		fo->btnMax = gwinGButtonCreate(g, 0, &wi);
 	}
 
+	/* Apply flags. We apply these here so the controls above are outside the child area */
+	fo->gc.g.flags |= flags;
+
 	gwinSetVisible(&fo->gc.g, pInit->g.show);
 
 	return &fo->gc.g;
@@ -196,10 +207,8 @@ static const GColorSet* _getDrawColors(GWidgetObject *gw) {
 	return &gw->pstyle->enabled;
 }
 
-void gwinFrameDraw_Std(GWidgetObject *gw, void *param) {
+static void gwinFrameDraw_Std(GWidgetObject *gw, void *param) {
 	const GColorSet		*pcol;
-	color_t			border;
-	color_t			background;
 	(void)param;
 
 	if (gw->g.vmt != (gwinVMT *)&frameVMT)
@@ -207,26 +216,15 @@ void gwinFrameDraw_Std(GWidgetObject *gw, void *param) {
 
 	pcol = _getDrawColors(gw);
 
-	// do some magic to make the background lighter than the widgets. Fix this somewhen.
-	border = HTML2COLOR(0x2698DE);
-	background = HTML2COLOR(0xEEEEEE);
-
 	// Render the actual frame (with border, if any)
 	if (gw->g.flags & GWIN_FRAME_BORDER) {
-		gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, border);
-		gdispGFillArea(gw->g.display, gw->g.x + BORDER_X, gw->g.y + BORDER_Y, gw->g.width - 2*BORDER_X, gw->g.height - BORDER_Y - BORDER_X, background);
+		gdispGFillArea(gw->g.display, gw->g.x + BORDER_X, gw->g.y + BORDER_Y, gw->g.width - 2*BORDER_X, gw->g.height - BORDER_Y - BORDER_X, gw->pstyle->background);
+		gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, BORDER_Y, gw->text, gw->g.font, gdispContrastColor(pcol->edge), pcol->edge, justifyCenter);
+		gdispGFillArea(gw->g.display, gw->g.x, gw->g.y+BORDER_Y, BORDER_X, gw->g.height-(BORDER_Y+BORDER_X), pcol->edge);
+		gdispGFillArea(gw->g.display, gw->g.x+gw->g.width-BORDER_X, gw->g.y+BORDER_Y, BORDER_X, gw->g.height-(BORDER_Y+BORDER_X), pcol->edge);
+		gdispGFillArea(gw->g.display, gw->g.x, gw->g.y+gw->g.height-BORDER_X, gw->g.width, BORDER_X, pcol->edge);
 	} else {
-		// This ensure that the actual frame content (it's children) render at the same spot, no mather whether the frame has a border or not
-		gdispGFillArea(gw->g.display, gw->g.x + BORDER_X, gw->g.y + BORDER_Y, gw->g.width, gw->g.height, background);
-	}
-
-	// Render frame title - if any
-	if (gw->text != NULL) {
-		coord_t text_y;
-
-		text_y = ((BORDER_Y - gdispGetFontMetric(gw->g.font, fontHeight))/2);
-
-		gdispGDrawString(gw->g.display, gw->g.x + BORDER_X, gw->g.y + text_y, gw->text, gw->g.font, pcol->text);
+		gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->pstyle->background);
 	}
 }
 
