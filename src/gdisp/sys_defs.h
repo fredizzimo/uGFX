@@ -211,6 +211,16 @@ extern "C" {
 color_t gdispBlendColor(color_t fg, color_t bg, uint8_t alpha);
 
 /**
+ * @brief   Find a contrasting color
+ * @return	The contrasting color
+ *
+ * @param[in] color		The color to contrast
+ *
+ * @api
+ */
+color_t gdispContrastColor(color_t color);
+
+/**
  * @brief   Get the specified display
  * @return	The pointer to the display or NULL if the display doesn't exist
  * @note	The GDISP variable contains the display used by the gdispXxxx routines

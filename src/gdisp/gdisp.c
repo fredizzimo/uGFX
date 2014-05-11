@@ -3020,10 +3020,20 @@ color_t gdispBlendColor(color_t fg, color_t bg, uint8_t alpha)
 	g += GREEN_OF(bg) * bg_ratio;
 	b += BLUE_OF(bg) * bg_ratio;
 	
-	r /= 256;
-	g /= 256;
-	b /= 256;
+	r >>= 8;
+	g >>= 8;
+	b >>= 8;
 	
+	return RGB2COLOR(r, g, b);
+}
+
+color_t gdispContrastColor(color_t color) {
+	uint16_t r, g, b;
+
+	r = RED_OF(color) > 128 ? 0 : 255;
+	g = GREEN_OF(color) > 128 ? 0 : 255;
+	b = BLUE_OF(color) > 128 ? 0 : 255;
+
 	return RGB2COLOR(r, g, b);
 }
 
