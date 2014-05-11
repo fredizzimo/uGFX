@@ -172,8 +172,8 @@ static void createWidgets(void) {
 	wi.g.x = ScrWidth/2+1;
 	wi.g.width = ScrWidth/2 - 5;
 	ghConsole = gwinConsoleCreate(0, &wi.g);
-    gwinSetColor(ghConsole, Yellow);
-    gwinSetBgColor(ghConsole, Black);
+    gwinSetColor(ghConsole, Black);
+    gwinSetBgColor(ghConsole, 0xE0E0E0);
 
     // Buttons
 	wi.g.parent = ghPgButtons;
@@ -275,7 +275,7 @@ static void createWidgets(void) {
 	gwinListAddItem(ghList1, "Item 11", FALSE);
 	gwinListAddItem(ghList1, "Item 12", FALSE);
 	gwinListAddItem(ghList1, "Item 13", FALSE);
-	wi.text = "L2"; wi.g.x += LIST_WIDTH+1; if (wi.g.x + LIST_WIDTH > gwinGetInnerWidth(ghPgLists)) { wi.g.x = 0; wi.g.y += LIST_HEIGHT+1; }
+	wi.text = "L2"; wi.g.x += LIST_WIDTH+5; if (wi.g.x + LIST_WIDTH > gwinGetInnerWidth(ghPgLists)) { wi.g.x = 5; wi.g.y += LIST_HEIGHT+5; }
 	ghList2 = gwinListCreate(0, &wi, TRUE);
 	gwinListAddItem(ghList2, "Item 0", FALSE);
 	gwinListAddItem(ghList2, "Item 1", FALSE);
@@ -291,7 +291,7 @@ static void createWidgets(void) {
 	gwinListAddItem(ghList2, "Item 11", FALSE);
 	gwinListAddItem(ghList2, "Item 12", FALSE);
 	gwinListAddItem(ghList2, "Item 13", FALSE);
-	wi.text = "L3"; wi.g.x += LIST_WIDTH+1; if (wi.g.x + LIST_WIDTH > gwinGetInnerWidth(ghPgLists)) { wi.g.x = 0; wi.g.y += LIST_HEIGHT+1; }
+	wi.text = "L3"; wi.g.x += LIST_WIDTH+5; if (wi.g.x + LIST_WIDTH > gwinGetInnerWidth(ghPgLists)) { wi.g.x = 5; wi.g.y += LIST_HEIGHT+5; }
 	ghList3 = gwinListCreate(0, &wi, TRUE);
 	gwinListAddItem(ghList3, "Item 0", FALSE);
 	gwinListAddItem(ghList3, "Item 1", FALSE);
@@ -300,7 +300,7 @@ static void createWidgets(void) {
 	gdispImageOpenFile(&imgYesNo, "image_yesno.gif");
 	gwinListItemSetImage(ghList3, 1, &imgYesNo);
 	gwinListItemSetImage(ghList3, 3, &imgYesNo);
-	wi.text = "L4"; wi.g.x += LIST_WIDTH+1; if (wi.g.x + LIST_WIDTH > gwinGetInnerWidth(ghPgLists)) { wi.g.x = 0; wi.g.y += LIST_HEIGHT+1; }
+	wi.text = "L4"; wi.g.x += LIST_WIDTH+5; if (wi.g.x + LIST_WIDTH > gwinGetInnerWidth(ghPgLists)) { wi.g.x = 5; wi.g.y += LIST_HEIGHT+5; }
 	ghList4 = gwinListCreate(0, &wi, TRUE);
 	gwinListAddItem(ghList4, "Item 0", FALSE);
 	gwinListAddItem(ghList4, "Item 1", FALSE);
@@ -326,7 +326,7 @@ static void createWidgets(void) {
 
 	// Progressbar
 	wi.g.parent = ghPgProgressbars;
-	wi.g.width = gwinGetInnerWidth(ghPgImages)-5; wi.g.height = SLIDER_WIDTH; wi.g.y = 5;
+	wi.g.width = gwinGetInnerWidth(ghPgImages)-10; wi.g.height = SLIDER_WIDTH; wi.g.y = 5;
 	wi.g.x = 5; wi.text = "Progressbar 1";
 	ghProgressbar1 = gwinProgressbarCreate(0, &wi);
 	gwinProgressbarSetResolution(ghProgressbar1, 10);
