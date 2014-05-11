@@ -25,7 +25,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+#include <stdio.h>
 #include "gfx.h"
 
 /**
@@ -79,7 +79,7 @@ static GHandle		ghPgButtons, ghPgSliders, ghPgCheckboxes, ghPgLabels, ghPgRadios
 static GHandle		ghButton1, ghButton2, ghButton3, ghButton4;
 static GHandle		ghSlider1, ghSlider2, ghSlider3, ghSlider4;
 static GHandle		ghCheckbox1, ghCheckbox2, ghCheckDisableAll;
-static GHandle		ghLabel1;
+static GHandle		ghLabelSlider1, ghLabelSlider2, ghLabelSlider3, ghLabelSlider4, ghLabelRadio1;
 static GHandle		ghRadio1, ghRadio2;
 static GHandle		ghRadioBlack, ghRadioWhite, ghRadioYellow;
 static GHandle		ghList1, ghList2, ghList3, ghList4;
@@ -93,7 +93,7 @@ static gdispImage	imgYesNo;
 
 #define BUTTON_PADDING		20
 #define TAB_HEIGHT			30
-#define LABEL_HEIGHT		40
+#define LABEL_HEIGHT		15
 #define BUTTON_WIDTH		50
 #define BUTTON_HEIGHT		30
 #define LIST_WIDTH			75
@@ -176,36 +176,36 @@ static void createWidgets(void) {
 
     // Buttons
 	wi.g.parent = ghPgButtons;
-	wi.g.width = BUTTON_WIDTH; wi.g.height = BUTTON_HEIGHT; wi.g.y = 0;
-	wi.g.x = 0; setbtntext(&wi, gwinGetInnerWidth(ghPgButtons), "B1");
+	wi.g.width = BUTTON_WIDTH; wi.g.height = BUTTON_HEIGHT; wi.g.y = 5;
+	wi.g.x = 5; setbtntext(&wi, gwinGetInnerWidth(ghPgButtons), "Button 1");
 	ghButton1 = gwinButtonCreate(0, &wi);
-	wi.g.x += wi.g.width+1; setbtntext(&wi, gwinGetInnerWidth(ghPgButtons), "B2");
+	wi.g.x += wi.g.width+3; setbtntext(&wi, gwinGetInnerWidth(ghPgButtons), "Button 2");
 	ghButton2 = gwinButtonCreate(0, &wi);
-	wi.g.x += wi.g.width+1; setbtntext(&wi, gwinGetInnerWidth(ghPgButtons), "B3");
+	wi.g.x += wi.g.width+3; setbtntext(&wi, gwinGetInnerWidth(ghPgButtons), "Button 3");
 	ghButton3 = gwinButtonCreate(0, &wi);
-	wi.g.x += wi.g.width+1; setbtntext(&wi, gwinGetInnerWidth(ghPgButtons), "B4");
+	wi.g.x += wi.g.width+3; setbtntext(&wi, gwinGetInnerWidth(ghPgButtons), "Button 4");
 	ghButton4 = gwinButtonCreate(0, &wi);
 
 	// Horizontal Sliders
 	wi.g.parent = ghPgSliders;
-	wi.g.width = gwinGetInnerWidth(ghPgSliders); wi.g.height = SLIDER_WIDTH;
-	wi.g.x = 0; wi.g.y = 0; wi.text = "S1";
+	wi.g.width = gwinGetInnerWidth(ghPgSliders) - 10; wi.g.height = SLIDER_WIDTH;
+	wi.g.x = 5; wi.g.y = 5; wi.text = "S1";
 	ghSlider1 = gwinSliderCreate(0, &wi);
 	wi.g.y += wi.g.height + 1; wi.text = "S2";
 	ghSlider2 = gwinSliderCreate(0, &wi);
 
 	// Vertical Sliders
-	wi.g.y += wi.g.height + 1;
-	wi.g.width = SLIDER_WIDTH; wi.g.height = gwinGetInnerHeight(ghPgSliders) - wi.g.y;
-	wi.g.x = 0; wi.text = "S3";
+	wi.g.y += wi.g.height + 5;
+	wi.g.width = SLIDER_WIDTH; wi.g.height = gwinGetInnerHeight(ghPgSliders) - 5 - wi.g.y;
+	wi.g.x = 5; wi.text = "S3";
 	ghSlider3 = gwinSliderCreate(0, &wi);
 	wi.g.x += wi.g.width+1; wi.text = "S4";
 	ghSlider4 = gwinSliderCreate(0, &wi);
 
 	// Checkboxes - for the 2nd checkbox we apply special drawing before making it visible
 	wi.g.parent = ghPgCheckboxes;
-	wi.g.width = CHECKBOX_WIDTH; wi.g.height = CHECKBOX_HEIGHT; wi.g.x = 0;
-	wi.g.y = 0; wi.text = "C1";
+	wi.g.width = CHECKBOX_WIDTH; wi.g.height = CHECKBOX_HEIGHT; wi.g.x = 5;
+	wi.g.y = 5; wi.text = "C1";
 	ghCheckbox1 = gwinCheckboxCreate(0, &wi);
 	wi.customDraw = gwinCheckboxDraw_CheckOnRight;
 	wi.g.y += wi.g.height+1; wi.text = "C2";
@@ -216,19 +216,34 @@ static void createWidgets(void) {
 
     // Labels
 	wi.g.parent = ghPgLabels;
-	wi.g.width = 0;	wi.g.height = LABEL_HEIGHT;	// dynamic width, fixed height
-	wi.g.x = wi.g.y = 0; wi.text = "Label";
-	ghLabel1 = gwinLabelCreate(0, &wi);
+	wi.g.width = 200;	wi.g.height = LABEL_HEIGHT;
+	wi.g.x = wi.g.y = 5;wi.text = "N/A";
+	ghLabelSlider1 = gwinLabelCreate(0, &wi);
+	gwinLabelSetAttribute(ghLabelSlider1, 100, "Slider 1:");
+	wi.g.y += LABEL_HEIGHT + 2;
+	ghLabelSlider2 = gwinLabelCreate(0, &wi);
+	gwinLabelSetAttribute(ghLabelSlider2, 100, "Slider 2:");
+	wi.g.y += LABEL_HEIGHT + 2;
+	ghLabelSlider3 = gwinLabelCreate(0, &wi);
+	gwinLabelSetAttribute(ghLabelSlider3, 100, "Slider 3:");
+	wi.g.y += LABEL_HEIGHT + 2;
+	ghLabelSlider4 = gwinLabelCreate(0, &wi);
+	gwinLabelSetAttribute(ghLabelSlider4, 100, "Slider 4:");
+	wi.g.y += LABEL_HEIGHT + 2;
+	ghLabelRadio1 = gwinLabelCreate(0, &wi);
+	gwinLabelSetAttribute(ghLabelRadio1, 100, "RadioButton 1:");
+
 
 	// Radio Buttons
 	wi.g.parent = ghPgRadios;
-	wi.g.width = RADIO_WIDTH; wi.g.height = RADIO_HEIGHT; wi.g.y = 0;
-	wi.g.x = 0; wi.text = "Yes";
+	wi.g.width = RADIO_WIDTH; wi.g.height = RADIO_HEIGHT; wi.g.y = 5;
+	wi.g.x = 5; wi.text = "Yes";
 	ghRadio1 = gwinRadioCreate(0, &wi, GROUP_YESNO);
 	wi.g.x += wi.g.width; wi.text = "No"; if (wi.g.x + wi.g.width > gwinGetInnerWidth(ghPgRadios)) { wi.g.x = 0; wi.g.y += RADIO_HEIGHT; }
 	ghRadio2 = gwinRadioCreate(0, &wi, GROUP_YESNO);
+	gwinRadioPress(ghRadio1);
 	wi.g.width = COLOR_WIDTH; wi.g.y += RADIO_HEIGHT+5;
-	wi.g.x = 0; wi.text = "Black";
+	wi.g.x = 5; wi.text = "Black";
 	ghRadioBlack = gwinRadioCreate(0, &wi, GROUP_COLORS);
 	wi.g.x += wi.g.width; wi.text = "White"; if (wi.g.x + wi.g.width > gwinGetInnerWidth(ghPgRadios)) { wi.g.x = 0; wi.g.y += RADIO_HEIGHT; }
 	ghRadioWhite = gwinRadioCreate(0, &wi, GROUP_COLORS);
@@ -238,8 +253,8 @@ static void createWidgets(void) {
 
 	// Lists
 	wi.g.parent = ghPgLists;
-	wi.g.width = LIST_WIDTH; wi.g.height = LIST_HEIGHT; wi.g.y = 0;
-	wi.g.x = 0; wi.text = "L1";
+	wi.g.width = LIST_WIDTH; wi.g.height = LIST_HEIGHT; wi.g.y = 5;
+	wi.g.x = 5; wi.text = "L1";
 	ghList1 = gwinListCreate(0, &wi, FALSE);
 	gwinListAddItem(ghList1, "Item 0", FALSE);
 	gwinListAddItem(ghList1, "Item 1", FALSE);
@@ -306,8 +321,8 @@ static void createWidgets(void) {
 
 	// Progressbar
 	wi.g.parent = ghPgProgressbars;
-	wi.g.width = gwinGetInnerWidth(ghPgImages); wi.g.height = SLIDER_WIDTH; wi.g.y = 0;
-	wi.g.x = 0; wi.text = "Progressbar 1";
+	wi.g.width = gwinGetInnerWidth(ghPgImages)-5; wi.g.height = SLIDER_WIDTH; wi.g.y = 5;
+	wi.g.x = 5; wi.text = "Progressbar 1";
 	ghProgressbar1 = gwinProgressbarCreate(0, &wi);
 	gwinProgressbarSetResolution(ghProgressbar1, 10);
 }
@@ -448,14 +463,26 @@ int main(void) {
 				// Set control visibility depending on the tab selected
 				setTab(((GEventGWinRadio *)pe)->radio);
 
-				// Do some special animation for Label1 to demonstrate auto width sizing
+				// We show the state of some of the GUI elements here
 				if (((GEventGWinRadio *)pe)->radio == ghTabLabels) {
-					gwinPrintf(ghConsole, "Change Label Text\n");
-					gfxSleepMilliseconds(1000);
-					gwinSetText(ghLabel1, "Very Big Label", FALSE);
+					char tmp[20];
 
-					gfxSleepMilliseconds(1000);
-					gwinSetText(ghLabel1, "Label", FALSE);
+					// The sliders
+					snprintf(tmp, sizeof(tmp), "%d%%", gwinSliderGetPosition(ghSlider1));
+					gwinSetText(ghLabelSlider1, tmp, TRUE);
+					snprintf(tmp, sizeof(tmp), "%d%%", gwinSliderGetPosition(ghSlider2));
+					gwinSetText(ghLabelSlider2, tmp, TRUE);
+					snprintf(tmp, sizeof(tmp), "%d%%", gwinSliderGetPosition(ghSlider3));
+					gwinSetText(ghLabelSlider3, tmp, TRUE);
+					snprintf(tmp, sizeof(tmp), "%d%%", gwinSliderGetPosition(ghSlider4));
+					gwinSetText(ghLabelSlider4, tmp, TRUE);
+
+					// The radio buttons
+					if (gwinRadioIsPressed(ghRadio1)) {
+ 						gwinSetText(ghLabelRadio1, "Yes", TRUE);
+ 					} else if (gwinRadioIsPressed(ghRadio2)) {
+ 						gwinSetText(ghLabelRadio1, "No", TRUE);
+ 					}
 				}
 				break;
 

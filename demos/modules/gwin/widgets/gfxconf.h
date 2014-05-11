@@ -60,6 +60,7 @@
 
 #define GWIN_NEED_WIDGET                             TRUE
     #define GWIN_NEED_LABEL                          TRUE
+        #define GWIN_LABEL_ATTRIBUTE                 TRUE
     #define GWIN_NEED_BUTTON                         TRUE
 //        #define GWIN_BUTTON_LAZY_RELEASE             TRUE
     #define GWIN_NEED_SLIDER                         TRUE
