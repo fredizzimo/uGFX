@@ -67,7 +67,7 @@ SW = ..
 PROJECT = ch
 
 # Imported source files and paths
-CHIBIOS = ../../../../../ChibiOS_2.6.4
+CHIBIOS = ../ChibiOS
 #include $(CHIBIOS)/boards/MIKROMEDIA_STM32_M4/board.mk					# Not a standard ChibiOS supported board
 include $(CHIBIOS)/os/hal/platforms/STM32F4xx/platform.mk
 include $(CHIBIOS)/os/hal/hal.mk
@@ -76,7 +76,7 @@ include $(CHIBIOS)/os/kernel/kernel.mk
 LDSCRIPT= $(PORTLD)/STM32F407xG.ld
 
 # Imported source files and paths for uGFX
-GFXLIB = ../../../../
+GFXLIB = ../ugfx
 include $(GFXLIB)/boards/base/Mikromedia-STM32-M4-ILI9341/board.mk
 include $(GFXLIB)/boards/base/Mikromedia-STM32-M4-ILI9341/ChibiOS_Board/board.mk		# The replacement ChibiOS board files
 include $(GFXLIB)/gfx.mk
