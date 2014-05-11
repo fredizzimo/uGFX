@@ -5,11 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    boards/base/Mikromedia-STM32-M4-ILI9341/ginput_lld_mouse_board.h
- * @brief   GINPUT Touch low level driver source for the MCU.
- */
-
 #ifndef _GINPUT_LLD_MOUSE_BOARD_H
 #define _GINPUT_LLD_MOUSE_BOARD_H
 
@@ -31,29 +26,14 @@ static const ADCConversionGroup adcgrpcfg = {
   ADC_SQR3_SQ2_N(ADC_CHANNEL_IN8) | ADC_SQR3_SQ1_N(ADC_CHANNEL_IN9)
 };
 
-/**
- * @brief   Initialise the board for the touch.
- *
- * @notapi
- */
 static inline void init_board(void) {
 	adcStart(&ADCD1, 0);
 }
 
-/**
- * @brief   Aquire the bus ready for readings
- *
- * @notapi
- */
 static inline void aquire_bus(void) {
 
 }
 
-/**
- * @brief   Release the bus after readings
- *
- * @notapi
- */
 static inline void release_bus(void) {
 }
 
