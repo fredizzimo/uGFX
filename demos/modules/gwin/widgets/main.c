@@ -96,7 +96,7 @@ static gdispImage	imgYesNo;
 #define LABEL_HEIGHT		40
 #define BUTTON_WIDTH		50
 #define BUTTON_HEIGHT		30
-#define LIST_WIDTH			100
+#define LIST_WIDTH			75
 #define LIST_HEIGHT			80
 #define SLIDER_WIDTH		20
 #define CHECKBOX_WIDTH		80
@@ -225,14 +225,14 @@ static void createWidgets(void) {
 	wi.g.width = RADIO_WIDTH; wi.g.height = RADIO_HEIGHT; wi.g.y = 0;
 	wi.g.x = 0; wi.text = "Yes";
 	ghRadio1 = gwinRadioCreate(0, &wi, GROUP_YESNO);
-	wi.g.x += wi.g.width; wi.text = "No";
+	wi.g.x += wi.g.width; wi.text = "No"; if (wi.g.x + wi.g.width > gwinGetInnerWidth(ghPgRadios)) { wi.g.x = 0; wi.g.y += RADIO_HEIGHT; }
 	ghRadio2 = gwinRadioCreate(0, &wi, GROUP_YESNO);
 	wi.g.width = COLOR_WIDTH; wi.g.y += RADIO_HEIGHT+5;
-	wi.g.x = 2; wi.text = "Black";
+	wi.g.x = 0; wi.text = "Black";
 	ghRadioBlack = gwinRadioCreate(0, &wi, GROUP_COLORS);
-	wi.g.x += wi.g.width; wi.text = "White";
+	wi.g.x += wi.g.width; wi.text = "White"; if (wi.g.x + wi.g.width > gwinGetInnerWidth(ghPgRadios)) { wi.g.x = 0; wi.g.y += RADIO_HEIGHT; }
 	ghRadioWhite = gwinRadioCreate(0, &wi, GROUP_COLORS);
-	wi.g.x += wi.g.width; wi.text = "Yellow";
+	wi.g.x += wi.g.width; wi.text = "Yellow"; if (wi.g.x + wi.g.width > gwinGetInnerWidth(ghPgRadios)) { wi.g.x = 0; wi.g.y += RADIO_HEIGHT; }
 	ghRadioYellow = gwinRadioCreate(0, &wi, GROUP_COLORS);
 	gwinRadioPress(ghRadioWhite);
 
