@@ -157,7 +157,7 @@ static void createWidgets(void) {
 	// Create the Pages
 	wi.g.show = FALSE;
 	wi.g.x = 5; wi.g.y += 5;
-	wi.g.width = ScrWidth/2 - 10; wi.g.height = ScrHeight-wi.g.y-5;
+	wi.g.width = ScrWidth/2 - 5; wi.g.height = ScrHeight-wi.g.y-5;
 	ghPgButtons			= gwinContainerCreate(0, &wi, GWIN_CONTAINER_BORDER);
 	ghPgSliders			= gwinContainerCreate(0, &wi, GWIN_CONTAINER_BORDER);
 	ghPgCheckboxes		= gwinContainerCreate(0, &wi, GWIN_CONTAINER_BORDER);
@@ -170,6 +170,7 @@ static void createWidgets(void) {
 
 	// Console - we apply some special colors before making it visible
 	wi.g.x = ScrWidth/2+1;
+	wi.g.width = ScrWidth/2 - 5;
 	ghConsole = gwinConsoleCreate(0, &wi.g);
     gwinSetColor(ghConsole, Yellow);
     gwinSetBgColor(ghConsole, Black);
