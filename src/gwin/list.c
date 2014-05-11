@@ -643,7 +643,7 @@ static void gwinListDefaultDraw(GWidgetObject* gw, void* param) {
 			gdispGFillConvexPoly(gw->g.display, gw->g.x+iwidth+((SCROLLWIDTH-ARROW)/2+2), gw->g.y+(ARROW/2+1), upArrow, 3, ps->fill);
 			gdispGFillConvexPoly(gw->g.display, gw->g.x+iwidth+((SCROLLWIDTH-ARROW)/2+2), gw->g.y+gw->g.height-(ARROW+ARROW/2+1), downArrow, 3, ps->fill);
 		#else
-			#warning "GWIN: Lists display better when GDISP_NEED_CONVEX_POLGON is turned on"
+			#warning "GWIN: Lists display better when GDISP_NEED_CONVEX_POLYGON is turned on"
 			gdispGFillArea(gw->g.display, gw->g.x+iwidth+((SCROLLWIDTH-ARROW)/2+2), gw->g.y+(ARROW/2+1), ARROW, ARROW, ps->fill);
 			gdispGFillArea(gw->g.display, gw->g.x+iwidth+((SCROLLWIDTH-ARROW)/2+2), gw->g.y+gw->g.height-(ARROW+ARROW/2+1), ARROW, ARROW, ps->fill);
 		#endif
