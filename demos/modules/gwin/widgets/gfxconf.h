@@ -43,6 +43,7 @@
     #define GDISP_NEED_IMAGE_GIF                     TRUE
 
 #define GDISP_DEFAULT_ORIENTATION                    GDISP_ROTATE_LANDSCAPE
+#define GDISP_NEED_MULTITHREAD                       TRUE
 
 ///////////////////////////////////////////////////////////////////////////
 // GWIN                                                                  //
@@ -52,6 +53,9 @@
 #define GWIN_NEED_WINDOWMANAGER                      TRUE
 
 #define GWIN_NEED_CONSOLE                            TRUE
+    #define GWIN_CONSOLE_USE_HISTORY                 TRUE
+        #define GWIN_CONSOLE_HISTORY_AVERAGING       TRUE
+        #define GWIN_CONSOLE_HISTORY_ATCREATE        TRUE
 #define GWIN_NEED_GRAPH                              TRUE
 
 #define GWIN_NEED_WIDGET                             TRUE
@@ -66,6 +70,9 @@
         #define GWIN_NEED_LIST_IMAGES                TRUE
     #define GWIN_NEED_PROGRESSBAR                    TRUE
         #define GWIN_PROGRESSBAR_AUTO                TRUE
+
+#define GWIN_NEED_CONTAINERS                         TRUE
+    #define GWIN_NEED_CONTAINER                      TRUE
 
 ///////////////////////////////////////////////////////////////////////////
 // GEVENT                                                                //
