@@ -133,7 +133,7 @@
 	 * @brief  Add floating point support to printg/scang etc.
 	 */
 	#ifndef GFILE_ALLOW_FLOATS
-		#define GFILE_ALLOW_FLOATS
+		#define GFILE_ALLOW_FLOATS	FALSE
 	#endif
 	/**
 	 * @brief   Can the device be specified as part of the file name.
