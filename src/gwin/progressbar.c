@@ -31,7 +31,7 @@ static void ResetDisplayPos(GProgressbarObject *gsw) {
 
 // We have to deinitialize the timer which auto updates the progressbar if any
 static void _destroy(GHandle gh) {
-	#if GFX_USE_GTIMER
+	#if GWIN_PROGRESSBAR_AUTO
 		gtimerDeinit( &((GProgressbarObject *)gh)->gt );
 	#endif
 
@@ -82,9 +82,9 @@ GHandle gwinGProgressbarCreate(GDisplay *g, GProgressbarObject *gs, const GWidge
 	gs->max = 100;
 	gs->res = 1;
 	gs->pos = 0;
-	gs->delay = 0;
 
 	#if GWIN_PROGRESSBAR_AUTO
+		gs->delay = 0;
 		gtimerInit(&gs->gt);
 	#endif
 
