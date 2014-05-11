@@ -41,7 +41,7 @@ static void createWidgets(void) {
  
 	// create the first image widget
 	wi.g.x = 10; wi.g.y = 10; wi.g.width = 200; wi.g.height = 100;
-	ghImage1 = gwinImageCreate(NULL, &wi.g);
+	ghImage1 = gwinImageCreate(0, &wi.g);
 	gwinImageOpenFile(ghImage1, "ugfx_logo_banner.bmp");
  }
  
