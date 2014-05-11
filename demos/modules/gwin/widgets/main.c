@@ -317,14 +317,14 @@ static void createWidgets(void) {
  */
 static void setTab(GHandle tab) {
 	/* Make sure everything is invisible first */
-	gwinSetVisible(ghPgButtons, FALSE);
-	gwinSetVisible(ghPgSliders, FALSE);
-	gwinSetVisible(ghPgCheckboxes, FALSE);
-	gwinSetVisible(ghPgLabels, FALSE);
-	gwinSetVisible(ghPgRadios, FALSE);
-	gwinSetVisible(ghPgLists, FALSE);
-	gwinSetVisible(ghPgImages, FALSE);
-	gwinSetVisible(ghPgProgressbars, FALSE);
+	gwinHide(ghPgButtons);
+	gwinHide(ghPgSliders);
+	gwinHide(ghPgCheckboxes);
+	gwinHide(ghPgLabels);
+	gwinHide(ghPgRadios);
+	gwinHide(ghPgLists);
+	gwinHide(ghPgImages);
+	gwinHide(ghPgProgressbars);
 
 	// Stop the progress bar
 	gwinProgressbarStop(ghProgressbar1);
@@ -332,21 +332,21 @@ static void setTab(GHandle tab) {
 
 	/* Turn on widgets depending on the tab selected */
 	if (tab == ghTabButtons) {
-		gwinSetVisible(ghPgButtons, TRUE);
+		gwinShow(ghPgButtons);
 	} else if (tab == ghTabSliders) {
-		gwinSetVisible(ghPgSliders, TRUE);
+		gwinShow(ghPgSliders);
 	} else if (tab == ghTabCheckboxes) {
-		gwinSetVisible(ghPgCheckboxes, TRUE);
+		gwinShow(ghPgCheckboxes);
 	} else if (tab == ghTabLabels) {
-		gwinSetVisible(ghPgLabels, TRUE);
+		gwinShow(ghPgLabels);
 	} else if (tab == ghTabRadios) {
-		gwinSetVisible(ghPgRadios, TRUE);
+		gwinShow(ghPgRadios);
 	} else if (tab == ghTabLists) {
-		gwinSetVisible(ghPgLists, TRUE);
+		gwinShow(ghPgLists);
 	} else if (tab == ghTabImages) {
-		gwinSetVisible(ghPgImages, TRUE);
+		gwinShow(ghPgImages);
 	} else if (tab == ghTabProgressbar) {
-		gwinSetVisible(ghPgProgressbars, TRUE);
+		gwinShow(ghPgProgressbars);
 
 		// Start the progress bar
 		gwinProgressbarStart(ghProgressbar1, 500);
@@ -401,7 +401,7 @@ int main(void) {
 	#endif
 
 	// Make the console visible
-	gwinSetVisible(ghConsole, TRUE);
+	gwinShow(ghConsole);
 	gwinClear(ghConsole);
 
     // We want to listen for widget events
