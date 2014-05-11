@@ -156,8 +156,8 @@ static void createWidgets(void) {
 
 	// Create the Pages
 	wi.g.show = FALSE;
-	wi.g.x = 0; wi.g.y += 5;
-	wi.g.width = ScrWidth/2; wi.g.height = ScrHeight-wi.g.y;
+	wi.g.x = 5; wi.g.y += 5;
+	wi.g.width = ScrWidth/2 - 10; wi.g.height = ScrHeight-wi.g.y-5;
 	ghPgButtons			= gwinContainerCreate(0, &wi, GWIN_CONTAINER_BORDER);
 	ghPgSliders			= gwinContainerCreate(0, &wi, GWIN_CONTAINER_BORDER);
 	ghPgCheckboxes		= gwinContainerCreate(0, &wi, GWIN_CONTAINER_BORDER);
@@ -191,16 +191,20 @@ static void createWidgets(void) {
 	wi.g.width = gwinGetInnerWidth(ghPgSliders) - 10; wi.g.height = SLIDER_WIDTH;
 	wi.g.x = 5; wi.g.y = 5; wi.text = "S1";
 	ghSlider1 = gwinSliderCreate(0, &wi);
+	gwinSliderSetPosition(ghSlider1, 33);
 	wi.g.y += wi.g.height + 1; wi.text = "S2";
 	ghSlider2 = gwinSliderCreate(0, &wi);
+	gwinSliderSetPosition(ghSlider2, 86);
 
 	// Vertical Sliders
 	wi.g.y += wi.g.height + 5;
 	wi.g.width = SLIDER_WIDTH; wi.g.height = gwinGetInnerHeight(ghPgSliders) - 5 - wi.g.y;
 	wi.g.x = 5; wi.text = "S3";
 	ghSlider3 = gwinSliderCreate(0, &wi);
+	gwinSliderSetPosition(ghSlider3, 13);
 	wi.g.x += wi.g.width+1; wi.text = "S4";
 	ghSlider4 = gwinSliderCreate(0, &wi);
+	gwinSliderSetPosition(ghSlider4, 76);
 
 	// Checkboxes - for the 2nd checkbox we apply special drawing before making it visible
 	wi.g.parent = ghPgCheckboxes;
