@@ -320,6 +320,8 @@ void gwinSetDefaultStyle(const GWidgetStyle *pstyle, bool_t updateAll) {
 		for(gh = gwinGetNextWindow(0); gh; gh = gwinGetNextWindow(gh)) {
 			if ((gh->flags & GWIN_FLG_WIDGET) && ((GWidgetObject *)gh)->pstyle == defaultStyle)
 				gwinSetStyle(gh, pstyle);
+			else
+				gwinRedraw(gh);
 		}
 	}
 	gwinSetDefaultBgColor(pstyle->background);
