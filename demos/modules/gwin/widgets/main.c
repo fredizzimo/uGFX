@@ -157,7 +157,7 @@ static void createWidgets(void) {
 	// Create the Pages
 	wi.g.show = FALSE;
 	wi.g.x = 5; wi.g.y += 5;
-	wi.g.width = ScrWidth/2 - 5; wi.g.height = ScrHeight-wi.g.y-5;
+	wi.g.width = ScrWidth/2 - 10; wi.g.height = ScrHeight-wi.g.y-5;
 	ghPgButtons			= gwinContainerCreate(0, &wi, GWIN_CONTAINER_BORDER);
 	ghPgSliders			= gwinContainerCreate(0, &wi, GWIN_CONTAINER_BORDER);
 	ghPgCheckboxes		= gwinContainerCreate(0, &wi, GWIN_CONTAINER_BORDER);
