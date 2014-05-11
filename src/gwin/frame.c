@@ -100,26 +100,26 @@ GHandle gwinGFrameCreate(GDisplay *g, GFrameObject *fo, GWidgetInit *pInit, uint
 	if (!(fo = (GFrameObject *)_gcontainerCreate(g, &fo->gc, pInit, &frameVMT)))
 		return 0;
 
-	fo->btnClose = NULL;
-	fo->btnMin = NULL;
-	fo->btnMax = NULL;
+	fo->btnClose = 0;
+	fo->btnMin = 0;
+	fo->btnMax = 0;
 
 	/* Buttons require a border */
-	if ((flags & GWIN_FRAME_CLOSE_BTN || flags & GWIN_FRAME_MINMAX_BTN) && !(flags & GWIN_FRAME_BORDER))
+	if ((flags & (GWIN_FRAME_CLOSE_BTN|GWIN_FRAME_MINMAX_BTN)))
 		flags |= GWIN_FRAME_BORDER;
 
 	/* apply flags */
 	fo->gc.g.flags |= flags;
 
 	/* create and initialize the listener if any button is present. */
-	if ((flags & GWIN_FRAME_CLOSE_BTN) || (flags & GWIN_FRAME_MINMAX_BTN)) {
+	if ((flags & (GWIN_FRAME_CLOSE_BTN|GWIN_FRAME_MINMAX_BTN))) {
 		geventListenerInit(&fo->gl);
 		gwinAttachListener(&fo->gl);
 		geventRegisterCallback(&fo->gl, _callbackBtn, (GHandle)fo);
 	}
 
 	/* create close button if necessary */
-	if (flags & GWIN_FRAME_CLOSE_BTN) {
+	if ((flags & GWIN_FRAME_CLOSE_BTN)) {
 		GWidgetInit wi;
 
 		gwinWidgetClearInit(&wi);
@@ -131,11 +131,11 @@ GHandle gwinGFrameCreate(GDisplay *g, GFrameObject *fo, GWidgetInit *pInit, uint
 		wi.g.width = BUTTON_X;
 		wi.g.height = BUTTON_Y;
 		wi.text = "X";
-		fo->btnClose = gwinButtonCreate(NULL, &wi);		
+		fo->btnClose = gwinGButtonCreate(g, 0, &wi);
 	}
 
 	/* create minimize and maximize buttons if necessary */
-	if (flags & GWIN_FRAME_MINMAX_BTN) {
+	if ((flags & GWIN_FRAME_MINMAX_BTN)) {
 		GWidgetInit wi;
 
 		gwinWidgetClearInit(&wi);
@@ -147,14 +147,14 @@ GHandle gwinGFrameCreate(GDisplay *g, GFrameObject *fo, GWidgetInit *pInit, uint
 		wi.g.width = BUTTON_X;
 		wi.g.height = BUTTON_Y;
 		wi.text = "O";
-		fo->btnMin = gwinButtonCreate(NULL, &wi);		
+		fo->btnMin = gwinGButtonCreate(g, 0, &wi);
 
 		wi.g.x = (flags & GWIN_FRAME_CLOSE_BTN) ? fo->gc.g.width - 3*BORDER_X - 3*BUTTON_X : fo->gc.g.width - BORDER_X - BUTTON_X;
 		wi.g.y = (BORDER_Y - BUTTON_Y) / 2;
 		wi.g.width = BUTTON_X;
 		wi.g.height = BUTTON_Y;
 		wi.text = "_";
-		fo->btnMax = gwinButtonCreate(NULL, &wi);
+		fo->btnMax = gwinGButtonCreate(g, 0, &wi);
 	}
 
 	gwinSetVisible(&fo->gc.g, pInit->g.show);

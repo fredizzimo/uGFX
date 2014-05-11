@@ -217,7 +217,8 @@ static void WM_Size(GHandle gh, coord_t w, coord_t h) {
 			// Clip to the container
 			if (gh->x+w > gh->parent->x+gh->parent->width) w = gh->parent->x + gh->parent->width - gh->x;
 			if (gh->y+h > gh->parent->y+gh->parent->height) h = gh->parent->y + gh->parent->height - gh->y;
-			((const gcontainerVMT *)gh->parent->vmt)->AdjustSize(gh, &w, &h);
+			if (((const gcontainerVMT *)gh->parent->vmt)->AdjustSize)
+				((const gcontainerVMT *)gh->parent->vmt)->AdjustSize(gh, &w, &h);
 		}
 	#endif
 
@@ -251,7 +252,8 @@ static void WM_Move(GHandle gh, coord_t x, coord_t y) {
 			if (y > gh->parent->height-gh->height)	y = gh->parent->height-gh->height;
 
 			// Allow the parent to adjust it
-			((const gcontainerVMT *)gh->parent->vmt)->AdjustPosition(gh, &x, &y);
+			if (((const gcontainerVMT *)gh->parent->vmt)->AdjustPosition)
+				((const gcontainerVMT *)gh->parent->vmt)->AdjustPosition(gh, &x, &y);
 
 			// Convert to absolute position
 			x += gh->parent->x;

@@ -24,13 +24,13 @@ int main(void) {
     // Initialize the display
     gfxInit();
 
+    // Attach the mouse input
+    gwinAttachMouse(0);
+
     // Set the widget defaults
     gwinSetDefaultFont(gdispOpenFont("*"));
     gwinSetDefaultStyle(&WhiteWidgetStyle, FALSE);
     gdispClear(White);
-
-    // Attach the mouse input
-    gwinAttachMouse(0);
 
     // create the widget
     createWidgets();
@@ -40,7 +40,7 @@ int main(void) {
     gwinAttachListener(&gl);
 
     while(1) {
-
+    	gfxSleepMilliseconds(1000);
     }
 
     return 0;

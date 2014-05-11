@@ -148,7 +148,7 @@ GHandle _gwindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pInit
 
 	#if GWIN_NEED_CONTAINERS
 		if (pInit->parent) {
-			if (!(pInit->parent->flags & GWIN_FLG_CONTAINER) || pgw->display != pgw->parent->display) {
+			if (!(pInit->parent->flags & GWIN_FLG_CONTAINER) || pgw->display != pInit->parent->display) {
 				if ((pgw->flags & GWIN_FLG_DYNAMIC))
 					gfxFree(pgw);
 				return 0;
