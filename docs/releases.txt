@@ -2,7 +2,10 @@
 *** Releases                                                              ***
 *****************************************************************************
 
-*** Changes After 2.0 ***
+*** Changes After 2.1 ***
+
+
+*** Release 2.1 ***
 FIX:		Significant improvements to the way the MCU touch driver works.
 FEATURE:	Add support for edge to edge touch calibration. 
 FEATURE:	Added progressbar widget
