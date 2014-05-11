@@ -276,7 +276,7 @@ const char *gwinGetClassName(GHandle gh) {
 	}
 	static bool_t clrSysVisFlag(GHandle gh) {
 		// If we are now not visible but our parent is visible
-		if (!(gh->flags & GWIN_FLG_VISIBLE) && (!gh->parent || (gh->parent->flags & GWIN_FLG_SYSVISIBLE))) {
+		if (!(gh->flags & GWIN_FLG_VISIBLE) || (gh->parent && !(gh->parent->flags & GWIN_FLG_SYSVISIBLE))) {
 			gh->flags &= ~GWIN_FLG_SYSVISIBLE;
 			return TRUE;
 		}
@@ -329,7 +329,7 @@ bool_t gwinGetVisible(GHandle gh) {
 	}
 	static bool_t clrSysEnaFlag(GHandle gh) {
 		// If we are now not enabled but our parent is enabled
-		if (!(gh->flags & GWIN_FLG_ENABLED) && (!gh->parent || (gh->parent->flags & GWIN_FLG_SYSENABLED))) {
+		if (!(gh->flags & GWIN_FLG_ENABLED) || (gh->parent && !(gh->parent->flags & GWIN_FLG_SYSENABLED))) {
 			gh->flags &= ~GWIN_FLG_SYSENABLED;
 			return TRUE;
 		}
