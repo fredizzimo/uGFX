@@ -595,7 +595,7 @@ bool_t gfileEOF(GFILE *f) {
 				if (c >= '0' && c <= '9')
 					c -= '0';
 				else if (c == '*')
-					c = va_arg(ap, int);
+					c = va_arg(arg, int);
 				else
 					break;
 				width = width * 10 + c;
@@ -606,7 +606,7 @@ bool_t gfileEOF(GFILE *f) {
 					if (c >= '0' && c <= '9')
 						c -= '0';
 					else if (c == '*')
-						c = va_arg(ap, int);
+						c = va_arg(arg, int);
 					else
 						break;
 					precision = precision * 10 + c;
@@ -627,11 +627,11 @@ bool_t gfileEOF(GFILE *f) {
 				return ret;
 			case 'c':
 				filler = ' ';
-				*p++ = va_arg(ap, int);
+				*p++ = va_arg(arg, int);
 				break;
 			case 's':
 				filler = ' ';
-				if ((s = va_arg(ap, char *)) == 0)
+				if ((s = va_arg(arg, char *)) == 0)
 					s = "(null)";
 				if (precision == 0)
 					precision = 32767;
@@ -640,9 +640,9 @@ bool_t gfileEOF(GFILE *f) {
 			case 'D':
 			case 'd':
 				if (is_long)
-					l = va_arg(ap, long);
+					l = va_arg(arg, long);
 				else
-					l = va_arg(ap, int);
+					l = va_arg(arg, int);
 				if (l < 0) {
 					*p++ = '-';
 					l = -l;
@@ -651,7 +651,7 @@ bool_t gfileEOF(GFILE *f) {
 				break;
 			#if GFILE_ALLOW_FLOATS
 				case 'f':
-					f = (float) va_arg(ap, double);
+					f = (float) va_arg(arg, double);
 					if (f < 0) {
 						*p++ = '-';
 						f = -f;
@@ -676,9 +676,9 @@ bool_t gfileEOF(GFILE *f) {
 				c = 8;
 			unsigned_common:
 				if (is_long)
-					l = va_arg(ap, long);
+					l = va_arg(arg, long);
 				else
-					l = va_arg(ap, int);
+					l = va_arg(arg, int);
 				p = ltoa_wd(p, l, c, 0);
 				break;
 			default:
