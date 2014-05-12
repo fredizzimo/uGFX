@@ -106,6 +106,9 @@
 ///////////////////////////////////////////////////////////////////////////
 #define GFX_USE_GFILE                                TRUE
 
+#define GFILE_NEED_PRINTG                            TRUE
+#define GFILE_NEED_STRINGS                           TRUE
+
 #define GFILE_NEED_ROMFS                             TRUE
 //#define GFILE_NEED_NATIVEFS                          TRUE
 

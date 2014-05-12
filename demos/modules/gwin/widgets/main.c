@@ -25,7 +25,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include <stdio.h>
 #include "gfx.h"
 
 /**
@@ -496,13 +495,13 @@ int main(void) {
 					char tmp[20];
 
 					// The sliders
-					snprintf(tmp, sizeof(tmp), "%d%%", gwinSliderGetPosition(ghSlider1));
+					snprintg(tmp, sizeof(tmp), "%d%%", gwinSliderGetPosition(ghSlider1));
 					gwinSetText(ghLabelSlider1, tmp, TRUE);
-					snprintf(tmp, sizeof(tmp), "%d%%", gwinSliderGetPosition(ghSlider2));
+					snprintg(tmp, sizeof(tmp), "%d%%", gwinSliderGetPosition(ghSlider2));
 					gwinSetText(ghLabelSlider2, tmp, TRUE);
-					snprintf(tmp, sizeof(tmp), "%d%%", gwinSliderGetPosition(ghSlider3));
+					snprintg(tmp, sizeof(tmp), "%d%%", gwinSliderGetPosition(ghSlider3));
 					gwinSetText(ghLabelSlider3, tmp, TRUE);
-					snprintf(tmp, sizeof(tmp), "%d%%", gwinSliderGetPosition(ghSlider4));
+					snprintg(tmp, sizeof(tmp), "%d%%", gwinSliderGetPosition(ghSlider4));
 					gwinSetText(ghLabelSlider4, tmp, TRUE);
 
 					// The radio buttons
