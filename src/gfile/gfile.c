@@ -483,6 +483,8 @@ bool_t gfileEOF(GFILE *f) {
 
 	// Special String VMT
 	static int StringRead(GFILE *f, void *buf, int size) {
+		(void) size;
+
 		// size must be 1 for a complete read
 		if (!((char *)f->obj)[f->pos])
 			return 0;
@@ -490,6 +492,8 @@ bool_t gfileEOF(GFILE *f) {
 		return 1;
 	}
 	static int StringWrite(GFILE *f, const void *buf, int size) {
+		(void) size;
+
 		// size must be 1 for a complete write
 		((char *)f->obj)[f->pos] = ((char *)buf)[0];
 		return 1;
@@ -569,7 +573,7 @@ bool_t gfileEOF(GFILE *f) {
 		while (*fmt) {
 			if (*fmt != '%') {
 				gfileWrite(f, fmt, 1);
-				ret++; if (--maxlen) return ret;
+				ret++; if (!--maxlen) return ret;
 				fmt++;
 				continue;
 			}
@@ -592,24 +596,24 @@ bool_t gfileEOF(GFILE *f) {
 
 			while (1) {
 				c = *fmt++;
-				if (c >= '0' && c <= '9')
+				if (c >= '0' && c <= '9') {
 					c -= '0';
-				else if (c == '*')
-					c = va_arg(arg, int);
+					width = width * 10 + c;
+				} else if (c == '*')
+					width = va_arg(arg, int);
 				else
 					break;
-				width = width * 10 + c;
 			}
 			if (c == '.') {
 				while (1) {
 					c = *fmt++;
-					if (c >= '0' && c <= '9')
+					if (c >= '0' && c <= '9') {
 						c -= '0';
-					else if (c == '*')
-						c = va_arg(arg, int);
+						precision = precision * 10 + c;
+					} else if (c == '*')
+						precision = va_arg(arg, int);
 					else
 						break;
-					precision = precision * 10 + c;
 				}
 			}
 			/* Long modifier.*/
@@ -694,21 +698,21 @@ bool_t gfileEOF(GFILE *f) {
 			if (width < 0) {
 				if (*s == '-' && filler == '0') {
 					gfileWrite(f, s++, 1);
-					ret++; if (--maxlen) return ret;
+					ret++; if (!--maxlen) return ret;
 					i--;
 				}
 				do {
 					gfileWrite(f, &filler, 1);
-					ret++; if (--maxlen) return ret;
+					ret++; if (!--maxlen) return ret;
 				} while (++width != 0);
 			}
 			while (--i >= 0) {
 				gfileWrite(f, s++, 1);
-				ret++; if (--maxlen) return ret;
+				ret++; if (!--maxlen) return ret;
 			}
 			while (width) {
 				gfileWrite(f, &filler, 1);
-				ret++; if (--maxlen) return ret;
+				ret++; if (!--maxlen) return ret;
 				width--;
 			}
 		}
@@ -722,9 +726,11 @@ bool_t gfileEOF(GFILE *f) {
 			va_list	ap;
 
 			if (maxlen <= 1) {
-				if (maxlen == 1)
+				if (maxlen == 1) {
 					*buf = 0;
-				return 0;
+					return 0;
+				}
+				maxlen += 1;
 			}
 			f.flags = GFILEFLG_OPEN|GFILEFLG_WRITE;
 			f.vmt = &StringVMT;
@@ -741,9 +747,11 @@ bool_t gfileEOF(GFILE *f) {
 			GFILE	f;
 
 			if (maxlen <= 1) {
-				if (maxlen == 1)
+				if (maxlen == 1) {
 					*buf = 0;
-				return 0;
+					return 0;
+				}
+				maxlen += 1;
 			}
 			f.flags = GFILEFLG_OPEN|GFILEFLG_WRITE;
 			f.vmt = &StringVMT;
@@ -772,9 +780,10 @@ bool_t gfileEOF(GFILE *f) {
 
 	int vfscang(GFILE *f, const char *fmt, va_list arg) {
 		int		res, width, size, base;
+		unsigned long num;
 		char	c;
-		bool_t	assign;
-		void	*p;
+		bool_t	assign, negate;
+		char	*p;
 
 		for(res = 0; *fmt; fmt++) {
 			switch(*fmt) {
@@ -784,8 +793,10 @@ bool_t gfileEOF(GFILE *f) {
 			case '%':
 				fmt++;
 				assign = TRUE;
+				negate = FALSE;
 				width = 0;
 				size = 1;
+				num = 0;
 
 				if (*fmt == '*') {
 					fmt++;
@@ -823,13 +834,13 @@ bool_t gfileEOF(GFILE *f) {
 						if (!gfileRead(f, &c, 1)) 				return res;
 					}
 					if (assign) {
-						p = va_arg(ap, char *);
+						p = va_arg(arg, char *);
 						res++;
-						*((char *)p)++ = c;
+						*p++ = c;
 					}
 					while(--width) {
 						if (!gfileRead(f, &c, 1)) 			return res;
-						if (assign) *((char *)p)++ = c;
+						if (assign) *p++ = c;
 					}
 					break;
 				case 's':
@@ -842,9 +853,9 @@ bool_t gfileEOF(GFILE *f) {
 						break;
 					}
 					if (assign) {
-						p = va_arg(ap, char *);
+						p = va_arg(arg, char *);
 						res++;
-						*((char *)p)++ = c;
+						*p++ = c;
 					}
 					if (width) {
 						while(--width) {
@@ -852,7 +863,7 @@ bool_t gfileEOF(GFILE *f) {
 								if (assign) *((char *)p) = 0;
 								return res;
 							}
-							if (assign) *((char *)p)++ = c;
+							if (assign) *p++ = c;
 						}
 					} else {
 						while(1) {
@@ -864,50 +875,93 @@ bool_t gfileEOF(GFILE *f) {
 							case ' ': case '\t': case '\r':
 							case '\n': case '\v': case '\f':	break;
 							default:
-								if (assign) *((char *)p)++ = c;
+								if (assign) *p++ = c;
 								continue;
 							}
 							break;
 						}
 						//ungetch(c);
 					}
-					if (assign) *((char *)p) = 0;
+					if (assign) *p = 0;
 					break;
-				case 'd':
-				case 'i':
-				case 'o':
-				case 'u':
-				case 'x':
-				case 'b':
-					/*
-					while (isspace (*buf))
-					    buf++;
-					if (*s == 'd' || *s == 'u')
-					    base = 10;
-					else if (*s == 'x')
-					    base = 16;
-					else if (*s == 'o')
-					    base = 8;
-					else if (*s == 'b')
-					    base = 2;
-					if (!width) {
-					    if (isspace (*(s + 1)) || *(s + 1) == 0)
-						width = strcspn (buf, ISSPACE);
-					    else
-						width = strchr (buf, *(s + 1)) - buf;
+				case 'd':	base = 10;	goto getnum;
+				case 'i':	base = -1;	goto getnum;
+				case 'o':	base = 8;	goto getnum;
+				case 'u':	base = 10;	goto getnum;
+				case 'x':	base = 16;	goto getnum;
+				case 'b':	base = 2;
+				getnum:
+					while(1) {
+						if (!gfileRead(f, &c, 1))			return res;
+						switch(c) {
+						case ' ': case '\t': case '\r':
+						case '\n': case '\v': case '\f':	continue;
+						}
+						break;
 					}
-					strncpy (tmp, buf, width);
-					tmp[width] = '\0';
-					buf += width;
-					if (!noassign)
-					    atob (va_arg (ap, u_int32_t *), tmp, base);
+					if (c == '-' && *fmt != 'u') {
+						negate = TRUE;
+						if ((width && !--width) || !gfileRead(f, &c, 1))			return res;
+					}
+					if (base == -1) {
+						if (c == '0') {
+							if ((width && !--width) || !gfileRead(f, &c, 1))		goto assignnum;
+							switch(c) {
+							case 'x': case 'X':
+								base = 16;
+								if ((width && !--width) || !gfileRead(f, &c, 1))	return res;
+								break;
+							case 'b': case 'B':
+								base = 2;
+								if ((width && !--width) || !gfileRead(f, &c, 1))	return res;
+								break;
+							default:
+								base = 8;
+								break;
+							}
+						} else
+							base = 10;
+					}
+					while(1) {
+						if (c >= '0' && c <= '9' && c - '0' < base)
+							num = num * base + (c - '0');
+						else if (c >= 'A' && c <= 'F' && base == 16)
+							num = num * base + (c - ('A'-10));
+						else if (c >= 'a' && c <= 'f' && base == 16)
+							num = num * base + (c - ('a'-10));
+						else {
+							// ungetch(c)
+							break;
+						}
+						if ((width && !--width) || !gfileRead(f, &c, 1))
+							break;
+					}
+
+				assignnum:
+					if (negate)
+						num = -num;
+
+					if (assign) {
+						switch(size) {
+						case 0:				// short
+							p = (char *)va_arg(arg, short *);
+							res++;
+							*((short *)p) = (short)num;
+						case 1:				// int
+							p = (char *)va_arg(arg, int *);
+							res++;
+							*((int *)p) = (int)num;
+						case 2: case 3:		// long
+							p = (char *)va_arg(arg, long *);
+							res++;
+							*((long *)p) = (long)num;
+						}
 				    }
-				    if (!noassign)
-					count++;
-					*/
+					break;
 
 				#if GFILE_ALLOW_FLOATS
 					case 'e': case 'f': case 'g':
+						// TODO
 				#endif
 				default:
 					return res;
@@ -941,7 +995,7 @@ bool_t gfileEOF(GFILE *f) {
 			f.flags = GFILEFLG_OPEN|GFILEFLG_READ;
 			f.vmt = &StringVMT;
 			f.pos = 0;
-			f.obj = buf;
+			f.obj = (void *)buf;
 			va_start(ap, fmt);
 			res = vfscang(&f, fmt, ap);
 			va_end(ap);
@@ -955,7 +1009,7 @@ bool_t gfileEOF(GFILE *f) {
 			f.flags = GFILEFLG_OPEN|GFILEFLG_READ;
 			f.vmt = &StringVMT;
 			f.pos = 0;
-			f.obj = buf;
+			f.obj = (void *)buf;
 			res = vfscang(&f, fmt, arg);
 			return res;
 		}
