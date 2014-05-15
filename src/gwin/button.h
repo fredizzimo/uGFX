@@ -80,7 +80,7 @@ GHandle gwinGButtonCreate(GDisplay *g, GButtonObject *gb, const GWidgetInit *pIn
 
 /**
  * @brief	Is the button current pressed
- * @return	TRUE if the button is depressed
+ * @return	TRUE if the button is pressed
  *
  * @param[in] gh	The window handle (must be a button widget)
  *
