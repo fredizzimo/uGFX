@@ -7,12 +7,7 @@
 
 /**
  * @file    src/gwin/checkbox.c
- * @brief   GWIN sub-system button code.
- *
- * @defgroup Checkbox Checkbox
- * @ingroup GWIN
- *
- * @{
+ * @brief   GWIN sub-system button code
  */
 
 #include "gfx.h"
@@ -195,5 +190,3 @@ void gwinCheckboxDraw_CheckOnRight(GWidgetObject *gw, void *param) {
 }
 
 #endif /* (GFX_USE_GWIN && GWIN_NEED_CHECKBOX) */
-/** @} */
-

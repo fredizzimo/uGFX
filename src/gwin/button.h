@@ -10,7 +10,7 @@
  * @brief   GWIN Graphic window subsystem header file.
  *
  * @defgroup Button Button
- * @ingroup GWIN
+ * @ingroup Widgets
  *
  * @details		GWIN allows it to easily create buttons with different styles
  *				and check for different meta states such as: PRESSED, CLICKED,

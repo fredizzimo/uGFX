@@ -7,7 +7,7 @@
 
 /**
  * @file    src/gwin/graph.c
- * @brief   GWIN sub-system button code.
+ * @brief   GWIN sub-system button code
  */
 
 #include "gfx.h"

@@ -178,7 +178,7 @@ void gadcHighSpeedSetISRCallback(GADCISRCallbackFunction isrfn);
  */
 GDataBuffer *gadcHighSpeedGetData(delaytime_t ms);
 GDataBuffer *gadcHighSpeedGetDataI(void);
-/* @} */
+/** @} */
 
 /**
  * @brief   Start the high speed ADC conversions.

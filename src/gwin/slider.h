@@ -10,7 +10,7 @@
  * @brief   GWIN Graphic window subsystem header file.
  *
  * @defgroup Slider Slider
- * @ingroup GWIN
+ * @ingroup Widgets
  *
  * @details		Create sliders with different styles
  *
@@ -144,7 +144,7 @@ void gwinSliderSetPosition(GHandle gh, int pos);
  */
 void gwinSliderDraw_Std(GWidgetObject *gw, void *param);
 void gwinSliderDraw_Image(GWidgetObject *gw, void *param);
-/* @} */
+/** @} */
 
 #ifdef __cplusplus
 }
@@ -152,4 +152,3 @@ void gwinSliderDraw_Image(GWidgetObject *gw, void *param);
 
 #endif /* _GWIN_SLIDER_H */
 /** @} */
-

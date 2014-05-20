@@ -8,24 +8,22 @@
 /**
  * @file    src/gwin/gwidget.h
  * @brief   GWIN Widgets header file.
- */
-
-#ifndef _GWIDGET_H
-#define _GWIDGET_H
-
-/* This file is included within "gwin/gwin.h" */
-
-/**
- * @defgroup Widget Widget
- * @ingroup GWIN
  *
- * @details		A Widget is a GWindow that supports interacting with the user
+ * @defgroup Widget Widget
+ * @ingroup Widgets
+ *
+ * @details		A widget is a Window that supports interacting with the user
  * 				via an input device such as a mouse or toggle buttons. It is the
  * 				base class for widgets such as buttons and sliders.
  *
  * @pre		GFX_USE_GWIN and GWIN_NEED_WIDGET must be set to TRUE in your gfxconf.h
  * @{
  */
+
+#ifndef _GWIDGET_H
+#define _GWIDGET_H
+
+/* This file is included within "gwin/gwin.h" */
 
 // Forward definition
 struct GWidgetObject;
@@ -40,7 +38,7 @@ typedef struct GColorSet {
 	color_t			fill;				// @< The fill color
 	color_t			progress;			// @< The color of progress bars
 } GColorSet;
-/* @} */
+/** @} */
 
 /**
  * @brief		The GWidgetStyle structure
@@ -55,7 +53,7 @@ typedef struct GWidgetStyle {
 	GColorSet		disabled;			// @< The colors when disabled
 	GColorSet		pressed;			// @< The colors when pressed
 } GWidgetStyle;
-/* @} */
+/** @} */
 
 /**
  * @brief	We define a couple of GWidgetStyle's that you can use in your
@@ -67,7 +65,7 @@ typedef struct GWidgetStyle {
  */
 extern const GWidgetStyle BlackWidgetStyle;
 extern const GWidgetStyle WhiteWidgetStyle;
-/* @} */
+/** @} */
 
 /**
  * @brief	Defines a custom drawing function for a widget
@@ -95,7 +93,7 @@ typedef struct GWidgetInit {
 	void *						customParam;			// @< A parameter for the custom draw function (default = NULL)
 	const GWidgetStyle *		customStyle;			// @< A custom style to use - use NULL for the default style
 } GWidgetInit;
-/* @} */
+/** @} */
 
 /**
  * @brief	The GWIN Widget structure
@@ -113,7 +111,7 @@ typedef struct GWidgetObject {
 	void *						fnParam;			// @< A parameter for the current draw function
 	const GWidgetStyle *		pstyle;				// @< The current widget style colors
 } GWidgetObject;
-/* @} */
+/** @} */
 
 /**
  * A comment/rant on the above structure:

@@ -7,12 +7,7 @@
 
 /**
  * @file    src/gwin/slider.c
- * @brief   GWIN sub-system slider code.
- *
- * @defgroup Slider Slider
- * @ingroup GWIN
- *
- * @{
+ * @brief   GWIN sub-system slider code
  */
 
 #include "gfx.h"
@@ -376,5 +371,3 @@ void gwinSliderDraw_Image(GWidgetObject *gw, void *param) {
 #endif /* GDISP_NEED_IMAGE */
 
 #endif /* GFX_USE_GWIN && GWIN_NEED_BUTTON */
-/** @} */
-

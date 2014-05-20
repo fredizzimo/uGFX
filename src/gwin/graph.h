@@ -7,12 +7,12 @@
 
 /**
  * @file	src/gwin/graph.h
- * @brief	GWIN GRAPH module header file.
+ * @brief	GWIN GRAPH module header file
  *
  * @defgroup Graph Graph
- * @ingroup GWIN
+ * @ingroup Windows
  *
- * @details	GWIN allows it to easily draw graphs.
+ * @details	GWIN allows it to easily draw graphs
  * @pre		GFX_USE_GWIN must be set to TRUE in your gfxconf.h
  * @pre		GWIN_NEED_GRAPH must be set to TRUE in your gfxconf.h
  *

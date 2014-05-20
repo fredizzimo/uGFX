@@ -10,7 +10,7 @@
  * @brief   GWIN Graphic window subsystem header file.
  *
  * @defgroup Progressbar Progressbar
- * @ingroup GWIN
+ * @ingroup Widgets
  *
  * @details		Create progressbars with different styles
  *
@@ -199,7 +199,7 @@ void gwinProgressbarDecrement(GHandle gh);
  */
 void gwinProgressbarDraw_Std(GWidgetObject *gw, void *param);
 void gwinProgressbarDraw_Image(GWidgetObject *gw, void *param);
-/* @} */
+/** @} */
 
 #ifdef __cplusplus
 }
@@ -207,4 +207,3 @@ void gwinProgressbarDraw_Image(GWidgetObject *gw, void *param);
 
 #endif /* _GWIN_PROGRESSBAR_H */
 /** @} */
-

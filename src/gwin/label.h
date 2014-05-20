@@ -7,10 +7,10 @@
 
 /**
  * @file	src/gwin/label.h
- * @brief	GWIN label widget header file.
+ * @brief	GWIN label widget header file
  *
  * @defgroup Label Label
- * @ingroup GWIN
+ * @ingroup Widgets
  *
  * @details		GWIN allos it to create an label widget. The widget
  *				takes no user input.

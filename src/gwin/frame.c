@@ -8,11 +8,6 @@
 /**
  * @file    src/gwin/frame.c
  * @brief   GWIN sub-system frame code.
- *
- * @defgroup Frame Frame
- * @ingroup GWIN
- *
- * @{
  */
 
 #include "gfx.h"
@@ -229,5 +224,3 @@ static void gwinFrameDraw_Std(GWidgetObject *gw, void *param) {
 }
 
 #endif  /* (GFX_USE_GWIN && GWIN_NEED_FRAME) || defined(__DOXYGEN__) */
-/** @} */
-

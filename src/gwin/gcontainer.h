@@ -7,17 +7,9 @@
 
 /**
  * @file    src/gwin/gcontainer.h
- * @brief   GWIN Containers header file.
- */
-
-#ifndef _GCONTAINER_H
-#define _GCONTAINER_H
-
-/* This file is included within "gwin/gwin.h" */
-
-/**
- * @defgroup Containers Containers
- * @ingroup GWIN
+ *
+ * @defgroup Container Container
+ * @ingroup Containers
  *
  * @details		A Container is a GWindow that supports child windows. It is also
  * 				a widget in its own right and therefore can accept user input directly.
@@ -25,6 +17,11 @@
  * @pre		GFX_USE_GWIN and GWIN_NEED_CONTAINERS must be set to TRUE in your gfxconf.h
  * @{
  */
+
+#ifndef _GCONTAINER_H
+#define _GCONTAINER_H
+
+/* This file is included within "gwin/gwin.h" */
 
 // Forward definition
 struct GContainerObject;
@@ -37,7 +34,7 @@ struct GContainerObject;
  * @{
  */
 typedef GWidgetObject GContainerObject;
-/* @} */
+/** @} */
 
 /**
  * A comment/rant on the above structure:
@@ -108,7 +105,7 @@ extern "C" {
 	 * @{
 	 */
 	#define GWIN_CONTAINER_BORDER		0x00000001
-	/* @} */
+	/** @} */
 
 	/**
 	 * @brief   Create a simple container.

@@ -10,7 +10,7 @@
  * @brief   GWIN Graphic window subsystem header file.
  *
  * @defgroup Checkbox Checkbox
- * @ingroup GWIN
+ * @ingroup Widgets
  *
  * @details		GWIN allows it to easily create a group of checkbox buttons.
  *
@@ -109,7 +109,7 @@ bool_t gwinCheckboxIsChecked(GHandle gh);
  */
 void gwinCheckboxDraw_CheckOnLeft(GWidgetObject *gw, void *param);
 void gwinCheckboxDraw_CheckOnRight(GWidgetObject *gw, void *param);
-/* @} */
+/** @} */
 
 #endif /* _GWIN_CHECKBOX_H */
 /** @} */

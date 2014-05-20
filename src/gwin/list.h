@@ -10,7 +10,7 @@
  * @brief	GWIN list widget header file
  *
  * @defgroup List List
- * @ingroup GWIN
+ * @ingroup Widgets
  *
  * @details		GWIN allows it to create a list widget.
  *

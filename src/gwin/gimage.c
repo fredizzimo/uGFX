@@ -7,7 +7,7 @@
 
 /**
  * @file	src/gwin/gimage.c
- * @brief	GWIN sub-system image code.
+ * @brief	GWIN sub-system image code
  */
 
 #include "gfx.h"
@@ -181,4 +181,3 @@ gdispImageError gwinImageCache(GHandle gh) {
 }
 
 #endif // GFX_USE_GWIN && GWIN_NEED_IMAGE
-/** @} */

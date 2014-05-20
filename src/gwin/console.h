@@ -10,7 +10,7 @@
  * @brief   GWIN Graphic window subsystem header file.
  *
  * @defgroup Console Console
- * @ingroup GWIN
+ * @ingroup Windows
  *
  * @details		GWIN allows it to create a console/terminal like window.
  *				You can simply use chprintf() to print to the terminal.

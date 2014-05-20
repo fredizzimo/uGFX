@@ -7,12 +7,7 @@
 
 /**
  * @file	src/gwin/list.c
- * @brief	GWIN list widget header file.
- *
- * @defgroup List List
- * @ingroup GWIN
- *
- * @{
+ * @brief	GWIN list widget header file
  */
 
 #include "gfx.h"
@@ -696,5 +691,3 @@ static void gwinListDefaultDraw(GWidgetObject* gw, void* param) {
 }
 
 #endif // GFX_USE_GWIN && GWIN_NEED_LIST
-/** @} */
-

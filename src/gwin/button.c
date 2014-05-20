@@ -7,12 +7,7 @@
 
 /**
  * @file    src/gwin/button.c
- * @brief   GWIN sub-system button code.
- *
- * @defgroup Button Button
- * @ingroup GWIN
- *
- * @{
+ * @brief   GWIN sub-system button code
  */
 
 #include "gfx.h"
@@ -350,5 +345,3 @@ static const GColorSet *getDrawColors(GWidgetObject *gw) {
 #endif
 
 #endif /* GFX_USE_GWIN && GWIN_NEED_BUTTON */
-/** @} */
-

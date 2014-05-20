@@ -10,7 +10,7 @@
  * @brief	GWIN image widget header file.
  *
  * @defgroup Image Image
- * @ingroup GWIN
+ * @ingroup Widgets
  *
  * @details		GWIN allos it to create an image widget. The widget
  *				takes no user input.

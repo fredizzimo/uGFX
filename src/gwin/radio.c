@@ -7,12 +7,7 @@
 
 /**
  * @file    src/gwin/radio.c
- * @brief   GWIN sub-system radio button code.
- *
- * @defgroup RadioButton RadioButton
- * @ingroup GWIN
- *
- * @{
+ * @brief   GWIN sub-system radio button code
  */
 
 #include "gfx.h"
@@ -280,5 +275,3 @@ void gwinRadioDraw_Radio(GWidgetObject *gw, void *param) {
 #endif
 
 #endif /* GFX_USE_GWIN && GWIN_NEED_BUTTON */
-/** @} */
-

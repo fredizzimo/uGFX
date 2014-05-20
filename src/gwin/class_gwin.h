@@ -5,7 +5,7 @@
  *              http://ugfx.org/license.html
  */
 
-/**
+/*
  * @file    src/gwin/class_gwin.h
  * @brief   GWIN Graphic window subsystem header file.
  *
@@ -41,7 +41,7 @@
 #define GWIN_FLG_MINIMIZED				0x00100000			// @< The window is minimized
 #define GWIN_FLG_MAXIMIZED				0x00200000			// @< The window is maximized
 #define GWIN_FIRST_WM_FLAG				0x01000000			// @< 8 bits free for the window manager to use
-/* @} */
+/** @} */
 
 /**
  * @brief	The Virtual Method Table for a GWIN window
@@ -54,7 +54,7 @@ typedef struct gwinVMT {
 	void (*Redraw)		(GWindowObject *gh);			// @< The GWIN redraw routine (optional)
 	void (*AfterClear)	(GWindowObject *gh);			// @< The GWIN after-clear function (optional)
 } gwinVMT;
-/* @} */
+/** @} */
 
 #if GWIN_NEED_WIDGET || defined(__DOXYGEN__)
 
@@ -105,7 +105,7 @@ typedef struct gwinVMT {
 			};
 		#endif
 	} gwidgetVMT;
-	/* @} */
+	/** @} */
 #endif
 
 #if GWIN_NEED_CONTAINERS || defined(__DOXYGEN__)
@@ -128,7 +128,7 @@ typedef struct gwinVMT {
 		void (*NotifyAdd)			(GHandle gh, GHandle ghChild);			// @< Notification that a child has been added (optional)
 		void (*NotifyDelete)		(GHandle gh, GHandle ghChild);			// @< Notification that a child has been deleted (optional)
 	} gcontainerVMT;
-	/* @} */
+	/** @} */
 #endif
 
 // These flags are needed whether or not we are running a window manager.
@@ -140,7 +140,7 @@ typedef struct gwinVMT {
 #define GWIN_WMFLG_NOBGCLEAR		0x0002						// @< Don't clear the area if the window is not visible
 #define GWIN_WMFLG_KEEPCLIP			0x0004						// @< Don't modify the preset clipping area
 #define GWIN_WMFLG_NOZORDER			0x0008						// @< Don't redraw higher z-order windows that overlap
-/* @} */
+/** @} */
 
 #if GWIN_NEED_WINDOWMANAGER || defined(__DOXYGEN__)
 	// @note	There is only ever one instance of each GWindowManager type
@@ -163,7 +163,7 @@ typedef struct gwinVMT {
 		void (*Raise)		(GHandle gh);							// @< A window wants to be on top
 		void (*MinMax)		(GHandle gh, GWindowMinMax minmax);		// @< A window wants to be minimized/maximised
 	} gwmVMT;
-	/* @} */
+	/** @} */
 
 	/**
 	 * @brief	The current window manager

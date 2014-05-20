@@ -10,7 +10,8 @@
  * @brief   GWIN sub-system options header file.
  *
  * @addtogroup GWIN
- * @brief	Module which provides a complete GUI toolkit based on widgets
+ * @brief	The GWIN module uses all the other modules (GDISP, GINPUT, GTIMER...) to
+ *			form a complete GUI toolkit.
  * 
  * @{
  */

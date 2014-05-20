@@ -10,7 +10,7 @@
  * @brief   GWIN Graphic window subsystem header file.
  *
  * @defgroup Frame Frame
- * @ingroup GWIN
+ * @ingroup Containers
  *
  * @details		A frame is a rectangular window that can have optional border as well as buttons to
  *				close, maximize and minimize it. The main purpose of this widget is to contain children. 	
@@ -30,7 +30,7 @@
 #define GWIN_FRAME_BORDER			0x00000001
 #define GWIN_FRAME_CLOSE_BTN		0x00000002
 #define GWIN_FRAME_MINMAX_BTN		0x00000004
-/* @} */
+/** @} */
 
 typedef struct GFrameObject {
 	GContainerObject	gc;

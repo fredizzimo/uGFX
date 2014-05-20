@@ -7,12 +7,7 @@
 
 /**
  * @file    src/gwin/progressbar.c
- * @brief   GWIN sub-system progressbar code.
- *
- * @defgroup Progressbar Progressbar
- * @ingroup GWIN
- *
- * @{
+ * @brief   GWIN sub-system progressbar code
  */
 
 #include "gfx.h"
@@ -319,5 +314,3 @@ void gwinProgressbarDraw_Image(GWidgetObject *gw, void *param) {
 #endif /* GDISP_NEED_IMAGE */
 
 #endif /* GFX_USE_GWIN && GWIN_NEED_BUTTON */
-/** @} */
-

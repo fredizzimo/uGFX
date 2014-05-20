@@ -9,7 +9,7 @@
  * @file    src/gwin/sys_defs.h
  *
  * @defgroup Window Window
- * @ingroup GWIN
+ * @ingroup Windows
  *
  * @details		GWIN provides a basic window manager which allows it to easily
  *				create and destroy different windows at runtime. Each window
@@ -53,7 +53,7 @@ typedef struct GWindowObject {
 		GHandle				parent;				// @< The parent window
 	#endif
 } GWindowObject, * GHandle;
-/* @} */
+/** @} */
 
 /**
  * @brief	The structure to initialise a GWIN.
@@ -75,7 +75,7 @@ typedef struct GWindowInit {
 		GHandle		parent;							// @< The parent - must be a container or NULL
 	#endif
 } GWindowInit;
-/* @} */
+/** @} */
 
 /**
  * @brief	A window's minimized, maximized or normal size

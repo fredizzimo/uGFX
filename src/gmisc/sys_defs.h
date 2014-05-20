@@ -64,7 +64,7 @@ typedef int32_t	fixed;
 #define FIXED0_5		32768						/* @< 0.5 as a fixed (used for rounding) */
 #define FP2FIXED(x)		((fixed)((x)*65536.0))		/* @< floating point to fixed */
 #define FIXED2FP(x)		((double)(x)/65536.0)		/* @< fixed to floating point */
-/* @} */
+/** @} */
 
 /**
  * @brief   The famous number pi

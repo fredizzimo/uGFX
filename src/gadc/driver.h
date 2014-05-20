@@ -36,7 +36,7 @@ typedef struct GadcTimerJob_t {
 	size_t			todo;						// @< How many conversions to do
 	size_t			done;						// @< How many conversions have already been done
 } GadcTimerJob;
-/* @} */
+/** @} */
 
 /**
  * @brief				The structure passed to do a single conversion
@@ -46,7 +46,7 @@ typedef struct GadcNonTimerJob_t {
 	uint32_t				physdev;			// @< The physical device/s. The exact meaning of physdev is hardware dependent.
 	adcsample_t				*buffer;			// @< Where to put the samples.
 	} GadcNonTimerJob;
-/* @} */
+/** @} */
 
 /*===========================================================================*/
 /* External declarations.                                                    */

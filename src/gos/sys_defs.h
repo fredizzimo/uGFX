@@ -58,7 +58,7 @@
 	 */
 	#define DECLARE_THREAD_FUNCTION(fnName, param)	threadreturn_t fnName(void *param)
 	#define DECLARE_THREAD_STACK(name, sz)			uint8_t name[sz];
-	/* @} */
+	/** @} */
 
 	/**
 	 * @}
@@ -75,7 +75,7 @@
 	#define LOW_PRIORITY				0
 	#define NORMAL_PRIORITY				1
 	#define HIGH_PRIORITY				2
-	/* @} */
+	/** @} */
 
 	/**
 	 * @brief	A semaphore

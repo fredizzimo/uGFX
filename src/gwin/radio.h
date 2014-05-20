@@ -10,7 +10,7 @@
  * @brief   GWIN Graphic window subsystem header file.
  *
  * @defgroup RadioButton RadioButton
- * @ingroup GWIN
+ * @ingroup Widgets
  *
  * @details		GWIN allows it to easily create radio buttons with different styles.
  *
@@ -139,4 +139,3 @@ void gwinRadioDraw_Tab(GWidgetObject *gw, void *param);						// @< Draw as a tab
 
 #endif /* _GWIN_RADIO_H */
 /** @} */
-

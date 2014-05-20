@@ -7,12 +7,7 @@
 
 /**
  * @file    src/gwin/gcontainer.c
- * @brief   GWIN sub-system container code.
- *
- * @defgroup Containers Containers
- * @ingroup GWIN
- *
- * @{
+ * @brief   GWIN sub-system container code
  */
 
 #include "gfx.h"
@@ -190,4 +185,3 @@ GHandle gwinGContainerCreate(GDisplay *g, GContainerObject *gc, const GWidgetIni
 }
 
 #endif
-/** @} */

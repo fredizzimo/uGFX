@@ -7,12 +7,7 @@
 
 /**
  * @file	src/gwin/label.c
- * @brief	GWIN label widget header file.
- *
- * @defgroup Label Label
- * @ingroup GWIN
- *
- * @{
+ * @brief	GWIN label widget header file
  */
 
 #include "gfx.h"
@@ -171,5 +166,3 @@ static void gwinLabelDefaultDraw(GWidgetObject *gw, void *param) {
 }
 
 #endif // GFX_USE_GWIN && GFX_NEED_LABEL
-/** @} */
-

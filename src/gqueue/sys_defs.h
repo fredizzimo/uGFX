@@ -45,7 +45,7 @@ typedef struct gfxQueueFSyncItem {
 	struct gfxQueueFSyncItem	*next;
 	gfxSem						sem;
 } gfxQueueFSyncItem;
-/* @} */
+/** @} */
 
 /**
  * @brief	A queue
@@ -67,7 +67,7 @@ typedef struct gfxQueueFSync {
 	gfxQueueFSyncItem	*tail;
 	gfxSem				sem;
 } gfxQueueFSync;
-/* @} */
+/** @} */
 
 /**
  * @brief	A Data Buffer Queue
@@ -104,7 +104,7 @@ extern "C" {
 void gfxQueueASyncInit(gfxQueueASync *pqueue);
 void gfxQueueGSyncInit(gfxQueueGSync *pqueue);
 void gfxQueueFSyncInit(gfxQueueFSync *pqueue);
-/* @} */
+/** @} */
 
 /**
  * @brief	De-Initialise a queue.
@@ -117,7 +117,7 @@ void gfxQueueFSyncInit(gfxQueueFSync *pqueue);
 #define gfxQueueASyncDeinit(pqueue)
 void gfxQueueGSyncDeinit(gfxQueueGSync *pqueue);
 void gfxQueueFSyncDeinit(gfxQueueFSync *pqueue);
-/* @} */
+/** @} */
 
 /**
  * @brief	Get an item from the head of the queue (and remove it from the queue).
@@ -137,7 +137,7 @@ gfxQueueASyncItem *gfxQueueASyncGetI(gfxQueueASync *pqueue);
 gfxQueueGSyncItem *gfxQueueGSyncGet(gfxQueueGSync *pqueue, delaytime_t ms);
 gfxQueueGSyncItem *gfxQueueGSyncGetI(gfxQueueGSync *pqueue);
 gfxQueueFSyncItem *gfxQueueFSyncGet(gfxQueueFSync *pqueue, delaytime_t ms);
-/* @} */
+/** @} */
 
 /**
  * @brief	Put an item on the end of the queue.
@@ -160,7 +160,7 @@ void gfxQueueASyncPutI(gfxQueueASync *pqueue, gfxQueueASyncItem *pitem);
 void gfxQueueGSyncPut(gfxQueueGSync *pqueue, gfxQueueGSyncItem *pitem);
 void gfxQueueGSyncPutI(gfxQueueGSync *pqueue, gfxQueueGSyncItem *pitem);
 bool_t gfxQueueFSyncPut(gfxQueueFSync *pqueue, gfxQueueFSyncItem *pitem, delaytime_t ms);
-/* @} */
+/** @} */
 
 /**
  * @brief	Pop an item from the head of the queue (and remove it from the queue).
@@ -173,7 +173,7 @@ bool_t gfxQueueFSyncPut(gfxQueueFSync *pqueue, gfxQueueFSyncItem *pitem, delayti
 #define gfxQueueASyncPopI(pqueue)			gfxQueueASyncGetI(pqueue)
 #define gfxQueueGSyncPop(pqueue, ms)		gfxQueueGSyncGet(pqueue, ms)
 #define gfxQueueFSyncPop(pqueue, ms)		gfxQueueFSyncGet(pqueue, ms)
-/* @} */
+/** @} */
 
 /**
  * @brief	Push an item into the start of the queue.
@@ -196,7 +196,7 @@ void gfxQueueASyncPushI(gfxQueueASync *pqueue, gfxQueueASyncItem *pitem);
 void gfxQueueGSyncPush(gfxQueueGSync *pqueue, gfxQueueGSyncItem *pitem);
 void gfxQueueGSyncPushI(gfxQueueGSync *pqueue, gfxQueueGSyncItem *pitem);
 bool_t gfxQueueFSyncPush(gfxQueueFSync *pqueue, gfxQueueFSyncItem *pitem, delaytime_t ms);
-/* @} */
+/** @} */
 
 /**
  * @brief	Insert an item on the queue after the specified item.
@@ -221,7 +221,7 @@ void gfxQueueASyncInsertI(gfxQueueASync *pqueue, gfxQueueASyncItem *pitem, gfxQu
 void gfxQueueGSyncInsert(gfxQueueGSync *pqueue, gfxQueueGSyncItem *pitem, gfxQueueASyncItem *pafter);
 void gfxQueueGSyncInsertI(gfxQueueGSync *pqueue, gfxQueueGSyncItem *pitem, gfxQueueASyncItem *pafter);
 bool_t gfxQueueFSyncInsert(gfxQueueFSync *pqueue, gfxQueueFSyncItem *pitem, gfxQueueASyncItem *pafter, delaytime_t ms);
-/* @} */
+/** @} */
 
 /**
  * @brief	Remove an item from the queue.
@@ -243,7 +243,7 @@ void gfxQueueASyncRemoveI(gfxQueueASync *pqueue, gfxQueueASyncItem *pitem);
 void gfxQueueGSyncRemove(gfxQueueGSync *pqueue, gfxQueueGSyncItem *pitem);
 void gfxQueueGSyncRemoveI(gfxQueueGSync *pqueue, gfxQueueGSyncItem *pitem);
 void gfxQueueFSyncRemove(gfxQueueFSync *pqueue, gfxQueueFSyncItem *pitem);
-/* @} */
+/** @} */
 
 /**
  * @brief	Is the queue empty?
@@ -262,7 +262,7 @@ void gfxQueueFSyncRemove(gfxQueueFSync *pqueue, gfxQueueFSyncItem *pitem);
 #define gfxQueueGSyncIsEmptyI(pqueue)		((pqueue)->head == 0)
 #define gfxQueueFSyncIsEmpty(pqueue)		((pqueue)->head == 0)
 #define gfxQueueFSyncIsEmptyI(pqueue)		((pqueue)->head == 0)
-/* @} */
+/** @} */
 
 /**
  * @brief	Is an item in the queue?
@@ -283,7 +283,7 @@ bool_t gfxQueueGSyncIsIn(gfxQueueGSync *pqueue, const gfxQueueGSyncItem *pitem);
 bool_t gfxQueueGSyncIsInI(gfxQueueGSync *pqueue, const gfxQueueGSyncItem *pitem);
 bool_t gfxQueueFSyncIsIn(gfxQueueFSync *pqueue, const gfxQueueFSyncItem *pitem);
 bool_t gfxQueueFSyncIsInI(gfxQueueFSync *pqueue, const gfxQueueFSyncItem *pitem);
-/* @} */
+/** @} */
 
 /**
  * @brief	Get the first item from the head of the queue but do not remove it from the queue.
@@ -307,7 +307,7 @@ bool_t gfxQueueFSyncIsInI(gfxQueueFSync *pqueue, const gfxQueueFSyncItem *pitem)
 #define gfxQueueGSyncPeekI(pqueue)	((const gfxQueueGSyncItem *)((pqueue)->head))
 #define gfxQueueFSyncPeek(pqueue)	((const gfxQueueFSyncItem *)((pqueue)->head))
 #define gfxQueueFSyncPeekI(pqueue)	((const gfxQueueFSyncItem *)((pqueue)->head))
-/* @} */
+/** @} */
 
 /**
  * @brief	Get the next item in the queue (but do not remove it from the queue).
@@ -331,7 +331,7 @@ bool_t gfxQueueFSyncIsInI(gfxQueueFSync *pqueue, const gfxQueueFSyncItem *pitem)
 #define gfxQueueGSyncNextI(pitem)	((const gfxQueueGSyncItem *)((pitem)->next))
 #define gfxQueueFSyncNext(pitem)	((const gfxQueueFSyncItem *)((pitem)->next))
 #define gfxQueueFSyncNextI(pitem)	((const gfxQueueFSyncItem *)((pitem)->next))
-/* @} */
+/** @} */
 
 /**
  * @brief		Allocate some buffers and put them on the free list
@@ -352,7 +352,7 @@ bool_t gfxBufferAlloc(unsigned num, size_t size);
  * @{
  */
 bool_t gfxBufferIsAvailable(void);
-/* @} */
+/** @} */
 
 /**
  * @brief		Get a buffer from the free list
@@ -365,7 +365,7 @@ bool_t gfxBufferIsAvailable(void);
  */
 GDataBuffer *gfxBufferGet(delaytime_t ms);
 GDataBuffer *gfxBufferGetI(void);
-/* @} */
+/** @} */
 
 /**
  * @brief		Release a buffer back to the free list
@@ -382,7 +382,7 @@ GDataBuffer *gfxBufferGetI(void);
  */
 void gfxBufferRelease(GDataBuffer *pd);
 void gfxBufferReleaseI(GDataBuffer *pd);
-/* @} */
+/** @} */
 
 
 #ifdef __cplusplus
