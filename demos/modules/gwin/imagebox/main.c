@@ -35,8 +35,9 @@ GHandle ghImage1;
  
 static void createWidgets(void) {
 	GWidgetInit	wi;
- 
+
 	// Apply some default values for GWIN
+	gwinWidgetClearInit(&wi);
 	wi.g.show = TRUE;
  
 	// create the first image widget
