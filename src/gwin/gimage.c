@@ -24,22 +24,8 @@ static void _destroy(GWindowObject *gh) {
 }
 
 #if GWIN_NEED_IMAGE_ANIMATION
-	static void _redraw(GHandle gh);
-
 	static void _timer(void *param) {
-		#define gh	((GHandle)param)
-
-		// We need to re-test the visibility in case it has been made invisible since the last frame.
-		if ((gh->flags & GWIN_FLG_SYSVISIBLE)) {
-			// Setting the clip here shouldn't be necessary if the redraw doesn't overdraw
-			//	but we put it in for safety anyway
-			#if GDISP_NEED_CLIP
-				gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
-			#endif
-			_redraw(gh);
-		}
-
-		#undef gh
+		_gwinUpdate((GHandle)param);
 	}
 #endif
 
@@ -160,14 +146,7 @@ bool_t gwinImageOpenGFile(GHandle gh, GFILE *f) {
 	if ((gdispImageOpenGFile(&widget(gh)->image, f) & GDISP_IMAGE_ERR_UNRECOVERABLE))
 		return FALSE;
 
-	if ((gh->flags & GWIN_FLG_SYSVISIBLE)) {
-		// Setting the clip here shouldn't be necessary if the redraw doesn't overdraw
-		//	but we put it in for safety anyway
-		#if GDISP_NEED_CLIP
-			gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
-		#endif
-		_redraw(gh);
-	}
+	_gwinUpdate(gh);
 
 	return TRUE;
 }

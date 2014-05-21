@@ -292,16 +292,6 @@ void _gwidgetRedraw(GHandle gh) {
 	gw->fnDraw(gw, gw->fnParam);
 }
 
-void _gwidgetUpdate(GHandle gh) {
-	if (!(gh->flags & GWIN_FLG_SYSVISIBLE))
-		return;
-
-	#if GDISP_NEED_CLIP
-		gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
-	#endif
-	gw->fnDraw(gw, gw->fnParam);
-}
-
 void gwinWidgetClearInit(GWidgetInit *pwi) {
 	char		*p;
 	unsigned	len;
@@ -364,7 +354,7 @@ void gwinSetText(GHandle gh, const char *text, bool_t useAlloc) {
 		gw->text = (const char *)str;
 	} else
 		gw->text = text;
-	_gwidgetUpdate(gh);
+	_gwinUpdate(gh);
 }
 
 const char *gwinGetText(GHandle gh) {
@@ -380,7 +370,7 @@ void gwinSetStyle(GHandle gh, const GWidgetStyle *pstyle) {
 	gw->pstyle = pstyle ? pstyle : defaultStyle;
 	gh->bgcolor = pstyle->background;
 	gh->color = pstyle->enabled.text;
-	_gwidgetUpdate(gh);
+	_gwinUpdate(gh);
 }
 
 const GWidgetStyle *gwinGetStyle(GHandle gh) {
@@ -396,7 +386,7 @@ void gwinSetCustomDraw(GHandle gh, CustomWidgetDrawFunction fn, void *param) {
 
 	gw->fnDraw = fn ? fn : wvmt->DefaultDraw;
 	gw->fnParam = param;
-	_gwidgetUpdate(gh);
+	_gwinUpdate(gh);
 }
 
 bool_t gwinAttachListener(GListener *pl) {

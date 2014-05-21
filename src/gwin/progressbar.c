@@ -123,7 +123,7 @@ void gwinProgressbarSetPosition(GHandle gh, int pos) {
 	}
 
 	ResetDisplayPos(gsw);
-	_gwidgetUpdate(gh);
+	_gwinUpdate(gh);
 
 	#undef gsw
 }
@@ -154,7 +154,7 @@ void gwinProgressbarIncrement(GHandle gh) {
 		gsw->pos = gsw->max;
 
 	ResetDisplayPos(gsw);
-	_gwidgetUpdate(gh);
+	_gwinUpdate(gh);
 
 	#undef gsw
 }
@@ -173,7 +173,7 @@ void gwinProgressbarDecrement(GHandle gh) {
 	gsw->pos -= gsw->res;
 
 	ResetDisplayPos(gsw);
-	_gwidgetUpdate(gh);
+	_gwinUpdate(gh);
 
 	#undef gsw
 }

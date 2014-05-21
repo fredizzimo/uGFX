@@ -208,7 +208,7 @@ void gwinGraphDrawAxis(GHandle gh) {
 	#define gg	((GGraphObject *)gh)
 	coord_t		i, xmin, ymin, xmax, ymax;
 
-	if (gh->vmt != &graphVMT)
+	if (gh->vmt != &graphVMT || !_gwinDrawStart(gh))
 		return;
 
 	xmin = -gg->xorigin;
@@ -262,6 +262,7 @@ void gwinGraphDrawAxis(GHandle gh) {
 		}
 	}
 
+	_gwinDrawEnd(gh);
 	#undef gg
 }
 
@@ -275,7 +276,7 @@ void gwinGraphStartSet(GHandle gh) {
 void gwinGraphDrawPoint(GHandle gh, coord_t x, coord_t y) {
 	#define gg	((GGraphObject *)gh)
 
-	if (gh->vmt != &graphVMT)
+	if (gh->vmt != &graphVMT || !_gwinDrawStart(gh))
 		return;
 
 	if ((gh->flags & GGRAPH_FLG_CONNECTPOINTS)) {
@@ -295,6 +296,7 @@ void gwinGraphDrawPoint(GHandle gh, coord_t x, coord_t y) {
 	// Draw this point.
 	pointto(gg, x, y, &gg->style.point);
 
+	_gwinDrawEnd(gh);
 	#undef gg
 }
 
@@ -303,7 +305,7 @@ void gwinGraphDrawPoints(GHandle gh, const point *points, unsigned count) {
 	unsigned		i;
 	const point		*p;
 
-	if (gh->vmt != &graphVMT)
+	if (gh->vmt != &graphVMT || !_gwinDrawStart(gh))
 		return;
 
 	// Draw the connecting lines
@@ -329,6 +331,7 @@ void gwinGraphDrawPoints(GHandle gh, const point *points, unsigned count) {
 	for(p = points, i = 0; i < count; p++, i++)
 		pointto(gg, p->x, p->y, &gg->style.point);
 
+	_gwinDrawEnd(gh);
 	#undef gg
 }
 

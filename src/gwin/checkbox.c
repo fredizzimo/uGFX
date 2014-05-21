@@ -43,7 +43,7 @@ static void SendCheckboxEvent(GWidgetObject *gw) {
 	static void MouseDown(GWidgetObject *gw, coord_t x, coord_t y) {
 		(void) x; (void) y;
 		gw->g.flags ^= GCHECKBOX_FLG_CHECKED;
-		_gwidgetUpdate((GHandle)gw);
+		_gwinUpdate((GHandle)gw);
 		SendCheckboxEvent(gw);
 	}
 #endif
@@ -52,7 +52,7 @@ static void SendCheckboxEvent(GWidgetObject *gw) {
 	static void ToggleOn(GWidgetObject *gw, uint16_t role) {
 		(void) role;
 		gw->g.flags ^= GCHECKBOX_FLG_CHECKED;
-		_gwidgetUpdate((GHandle)gw);
+		_gwinUpdate((GHandle)gw);
 		SendCheckboxEvent(gw);
 	}
 
@@ -125,7 +125,7 @@ void gwinCheckboxCheck(GHandle gh, bool_t isChecked) {
 		if (!(gh->flags & GCHECKBOX_FLG_CHECKED)) return;
 		gh->flags &= ~GCHECKBOX_FLG_CHECKED;
 	}
-	_gwidgetUpdate(gh);
+	_gwinUpdate(gh);
 	SendCheckboxEvent((GWidgetObject *)gh);
 }
 

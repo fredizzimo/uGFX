@@ -102,7 +102,7 @@ static void gwinListDefaultDraw(GWidgetObject* gw, void* param);
             }
         }
 
-        _gwidgetUpdate(&gw->g);
+        _gwinUpdate(&gw->g);
         sendListEvent(gw, item);
 
     }
@@ -131,14 +131,14 @@ static void gwinListDefaultDraw(GWidgetObject* gw, void* param);
 					gw2obj->top -= iheight;
 					if (gw2obj->top < 0)
 					    gw2obj->top = 0;
-					_gwidgetUpdate(&gw->g);
+					_gwinUpdate(&gw->g);
 				}
 			} else if (y >= gw->g.height - 2*ARROW) {
 				if (gw2obj->top < gw2obj->cnt * iheight - pgsz) {
 				    gw2obj->top += iheight;
 				    if (gw2obj->top > gw2obj->cnt * iheight - pgsz)
 				        gw2obj->top = gw2obj->cnt * iheight - pgsz;
-				    _gwidgetUpdate(&gw->g);
+				    _gwinUpdate(&gw->g);
 				}
 			} else if (y < gw->g.height/2) {
 				if (gw2obj->top > 0) {
@@ -146,7 +146,7 @@ static void gwinListDefaultDraw(GWidgetObject* gw, void* param);
 						gw2obj->top -= pgsz;
 					else
 						gw2obj->top = 0;
-					_gwidgetUpdate(&gw->g);
+					_gwinUpdate(&gw->g);
 				}
 			} else {
 				if (gw2obj->top < gw2obj->cnt * iheight - pgsz) {
@@ -154,7 +154,7 @@ static void gwinListDefaultDraw(GWidgetObject* gw, void* param);
 						gw2obj->top += pgsz;
 					else
 						gw2obj->top = gw2obj->cnt * iheight - pgsz;
-					_gwidgetUpdate(&gw->g);
+					_gwinUpdate(&gw->g);
 				}
 			}
 			return;
@@ -192,7 +192,7 @@ static void gwinListDefaultDraw(GWidgetObject* gw, void* param);
                 gw2obj->top = 0;
             gw2obj->last_mouse_y = y;
             if (oldtop != gw2obj->top)
-            	_gwidgetUpdate(&gw->g);
+            	_gwinUpdate(&gw->g);
         }
 	}
 #endif
@@ -213,7 +213,7 @@ static void gwinListDefaultDraw(GWidgetObject* gw, void* param);
 						if (qix) {
 							qi2li->flags &=~ GLIST_FLG_SELECTED;
 							qix2li->flags |= GLIST_FLG_SELECTED;
-							_gwidgetUpdate(&gw->g);
+							_gwinUpdate(&gw->g);
 						}
 						break;
 					}
@@ -230,7 +230,7 @@ static void gwinListDefaultDraw(GWidgetObject* gw, void* param);
 						if (qix) {
 							qi2li->flags &=~ GLIST_FLG_SELECTED;
 							qix2li->flags |= GLIST_FLG_SELECTED;
-							_gwidgetUpdate(&gw->g);
+							_gwinUpdate(&gw->g);
 						}
 						break;
 					}
@@ -383,7 +383,7 @@ int gwinListAddItem(GHandle gh, const char* item_name, bool_t useAlloc) {
 	// increment the total amount of entries in the list widget
 	gh2obj->cnt++;
 
-	_gwidgetUpdate(gh);
+	_gwinUpdate(gh);
 
 	// return the position in the list (-1 because we start with index 0)
 	return gh2obj->cnt-1;
@@ -481,7 +481,7 @@ void gwinListDeleteAll(GHandle gh) {
 	gh->flags &= ~GLIST_FLG_HASIMAGES;
 	gh2obj->cnt = 0;
 	gh2obj->top = 0;
-	_gwidgetUpdate(gh);
+	_gwinUpdate(gh);
 }
 
 void gwinListItemDelete(GHandle gh, int item) {
@@ -502,7 +502,7 @@ void gwinListItemDelete(GHandle gh, int item) {
 			gfxFree((void *)qi);
 			if (gh2obj->top >= item && gh2obj->top)
 				gh2obj->top--;
-			_gwidgetUpdate(gh);
+			_gwinUpdate(gh);
 			break;
 		}
 	}

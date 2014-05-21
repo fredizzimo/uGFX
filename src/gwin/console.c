@@ -399,6 +399,18 @@ GHandle gwinGConsoleCreate(GDisplay *g, GConsoleObject *gc, const GWindowInit *p
 	}
 #endif
 
+/*
+ *  We can get into gwinPutChar() 2 ways -
+ *  	1. when the user calls us, and
+ *  	2. when the redraw uses us to redraw the display.
+ *  When called by option 2 we MUST not try to obtain a draw session
+ *  as we already have one.
+ *
+ *  We use these macro's below to make sure we do that safely
+ */
+#define DrawStart(gh)		((gh->flags & GCONSOLE_FLG_NOSTORE) || _gwinDrawStart(gh))
+#define DrawEnd(gh)			{ if (!(gh->flags & GCONSOLE_FLG_NOSTORE)) _gwinDrawEnd(gh); }
+
 void gwinPutChar(GHandle gh, char c) {
 	#define gcw		((GConsoleObject *)gh)
 	uint8_t			width, fy;
@@ -406,15 +418,7 @@ void gwinPutChar(GHandle gh, char c) {
 	if (gh->vmt != &consoleVMT || !gh->font)
 		return;
 
-	// only render new character if the console is visible
-	if (!gwinGetVisible(gh))
-		return;
-
 	fy = gdispGetFontMetric(gh->font, fontHeight);
-
-	#if GDISP_NEED_CLIP
-		gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
-	#endif
 
 	#if GWIN_CONSOLE_ESCSEQ
 		/**
@@ -444,7 +448,10 @@ void gwinPutChar(GHandle gh, char c) {
 				case 'J':
 					// Clear the console and reset the cursor
 					clearBuffer(gcw);
-					gdispGFillArea(gh->display, gh->x, gh->y, gh->width, gh->height, gh->bgcolor);
+					if (DrawStart(gh)) {
+						gdispGFillArea(gh->display, gh->x, gh->y, gh->width, gh->height, gh->bgcolor);
+						DrawEnd(gh);
+					}
 					gcw->cx = 0;
 					gcw->cy = 0;
 					gcw->startattr = gcw->currattr;
@@ -469,8 +476,10 @@ void gwinPutChar(GHandle gh, char c) {
 	case '\n':
 		// clear to the end of the line
 		#if GWIN_CONSOLE_USE_CLEAR_LINES
-			if (gcw->cx == 0 && gcw->cy+fy < gh->height)
+			if (gcw->cx == 0 && gcw->cy+fy < gh->height && DrawStart(gh)) {
 				gdispGFillArea(gh->display, gh->x, gh->y + gcw->cy, gh->width, fy, gh->bgcolor);
+				DrawEnd(gh);
+			}
 		#endif
 		// update the cursor
 		gcw->cx = 0;
@@ -513,14 +522,20 @@ void gwinPutChar(GHandle gh, char c) {
 			if (gcw->buffer) {
 				// Scroll the buffer and then redraw using the buffer
 				scrollBuffer(gcw);
-				HistoryRedraw(gh);
+				if (DrawStart(gh)) {
+					HistoryRedraw(gh);
+					DrawEnd(gh);
+				}
 			} else
 		#endif
 		#if GDISP_NEED_SCROLL
 			{
 				// Scroll the console using hardware
 				scrollBuffer(gcw);
-				gdispGVerticalScroll(gh->display, gh->x, gh->y, gh->width, gh->height, fy, gh->bgcolor);
+				if (DrawStart(gh)) {
+					gdispGVerticalScroll(gh->display, gh->x, gh->y, gh->width, gh->height, fy, gh->bgcolor);
+					DrawEnd(gh);
+				}
 
 				// Set the cursor to the start of the last line
 				gcw->cx = 0;
@@ -530,7 +545,10 @@ void gwinPutChar(GHandle gh, char c) {
 			{
 				// Clear the console and reset the cursor
 				clearBuffer(gcw);
-				gdispGFillArea(gh->display, gh->x, gh->y, gh->width, gh->height, gh->bgcolor);
+				if (DrawStart(gh)) {
+					gdispGFillArea(gh->display, gh->x, gh->y, gh->width, gh->height, gh->bgcolor);
+					DrawEnd(gh);
+				}
 				gcw->cx = 0;
 				gcw->cy = 0;
 				#if GWIN_CONSOLE_ESCSEQ
@@ -540,30 +558,37 @@ void gwinPutChar(GHandle gh, char c) {
 		#endif
 	}
 
-	// If we are at the beginning of a new line clear the line
-	#if GWIN_CONSOLE_USE_CLEAR_LINES
-		if (gcw->cx == 0)
-			gdispGFillArea(gh->display, gh->x, gh->y + gcw->cy, gh->width, fy, gh->bgcolor);
-	#endif
-
-	// Draw the character
-	#if GWIN_CONSOLE_USE_FILLED_CHARS
-		gdispGFillChar(gh->display, gh->x + gcw->cx, gh->y + gcw->cy, c, gh->font, ESCPrintColor(gcw), gh->bgcolor);
-	#else
-		gdispGDrawChar(gh->display, gh->x + gcw->cx, gh->y + gcw->cy, c, gh->font, ESCPrintColor(gcw));
-	#endif
+	// Save the char
 	putCharInBuffer(gcw, c);
 
-	#if GWIN_CONSOLE_ESCSEQ
-		// Draw the underline
-		if ((gcw->currattr & ESC_UNDERLINE))
-			gdispGDrawLine(gh->display, gh->x + gcw->cx, gh->y + gcw->cy + fy - gdispGetFontMetric(gh->font, fontDescendersHeight),
-										gh->x + gcw->cx + width + gdispGetFontMetric(gh->font, fontCharPadding), gh->y + gcw->cy + fy - gdispGetFontMetric(gh->font, fontDescendersHeight),
-										ESCPrintColor(gcw));
-		// Bold (very crude)
-		if ((gcw->currattr & ESC_BOLD))
-			gdispGDrawChar(gh->display, gh->x + gcw->cx + 1, gh->y + gcw->cy, c, gh->font, ESCPrintColor(gcw));
-	#endif
+	// Draw the character
+	if (DrawStart(gh)) {
+
+		// If we are at the beginning of a new line clear the line
+		#if GWIN_CONSOLE_USE_CLEAR_LINES
+			if (gcw->cx == 0)
+				gdispGFillArea(gh->display, gh->x, gh->y + gcw->cy, gh->width, fy, gh->bgcolor);
+		#endif
+
+		#if GWIN_CONSOLE_USE_FILLED_CHARS
+			gdispGFillChar(gh->display, gh->x + gcw->cx, gh->y + gcw->cy, c, gh->font, ESCPrintColor(gcw), gh->bgcolor);
+		#else
+			gdispGDrawChar(gh->display, gh->x + gcw->cx, gh->y + gcw->cy, c, gh->font, ESCPrintColor(gcw));
+		#endif
+
+		#if GWIN_CONSOLE_ESCSEQ
+			// Draw the underline
+			if ((gcw->currattr & ESC_UNDERLINE))
+				gdispGDrawLine(gh->display, gh->x + gcw->cx, gh->y + gcw->cy + fy - gdispGetFontMetric(gh->font, fontDescendersHeight),
+											gh->x + gcw->cx + width + gdispGetFontMetric(gh->font, fontCharPadding), gh->y + gcw->cy + fy - gdispGetFontMetric(gh->font, fontDescendersHeight),
+											ESCPrintColor(gcw));
+			// Bold (very crude)
+			if ((gcw->currattr & ESC_BOLD))
+				gdispGDrawChar(gh->display, gh->x + gcw->cx + 1, gh->y + gcw->cy, c, gh->font, ESCPrintColor(gcw));
+		#endif
+
+		DrawEnd(gh);
+	}
 
 	// Update the cursor
 	gcw->cx += width + gdispGetFontMetric(gh->font, fontCharPadding);

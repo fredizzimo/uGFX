@@ -128,10 +128,10 @@ void gwinRadioPress(GHandle gh) {
 
 	if ((gx = gwinRadioGetActive(((GRadioObject *)gh)->group))) {
 		gx->flags &= ~GRADIO_FLG_PRESSED;
-		_gwidgetUpdate(gx);
+		_gwinUpdate(gx);
 	}
 	gh->flags |= GRADIO_FLG_PRESSED;
-	_gwidgetUpdate(gh);
+	_gwinUpdate(gh);
 	SendRadioEvent((GWidgetObject *)gh);
 }
 

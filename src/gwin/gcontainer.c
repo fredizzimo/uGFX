@@ -41,46 +41,6 @@ void _gcontainerDestroy(GHandle gh) {
 	_gwidgetDestroy(gh);
 }
 
-void _gcontainerRedraw(GHandle gh) {
-	GHandle		child;
-
-	if (!(gh->flags & GWIN_FLG_SYSVISIBLE))
-		return;
-
-	((GWidgetObject *)gh)->fnDraw((GWidgetObject *)gh, ((GWidgetObject *)gh)->fnParam);
-
-	for(child = gwinGetFirstChild(gh); child; child = gwinGetSibling(child))
-		gwinRedraw(child);
-}
-
-void _gcontainerUpdate(GHandle gh) {
-	GHandle		child;
-
-	if (!(gh->flags & GWIN_FLG_SYSVISIBLE))
-		return;
-
-	#if GDISP_NEED_CLIP
-		gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
-	#endif
-	((GWidgetObject *)gh)->fnDraw((GWidgetObject *)gh, ((GWidgetObject *)gh)->fnParam);
-
-	for(child = gwinGetFirstChild(gh); child; child = gwinGetSibling(child))
-		gwinRedraw(child);
-}
-
-void _gwinRecurse(GHandle gh, bool_t (*fn)(GHandle gh)) {
-	if (fn(gh) && (gh->flags & GWIN_FLG_CONTAINER)) {
-		// Apply to this windows children
-		for(gh = gwinGetFirstChild(gh); gh; gh = gwinGetSibling(gh)) {
-			// Only recurse when we have to. Otherwise apply it directly
-			if ((gh->flags & GWIN_FLG_CONTAINER))
-				_gwinRecurse(gh, fn);
-			else
-				fn(gh);
-		}
-	}
-}
-
 GHandle gwinGetFirstChild(GHandle gh) {
 	GHandle		child;
 

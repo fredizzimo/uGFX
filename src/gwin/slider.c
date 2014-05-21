@@ -69,7 +69,7 @@ static void ResetDisplayPos(GSliderObject *gsw) {
 			if (x < 0 || x >= gh->width || y < 0 || y >= gh->height) {
 				// No - restore the slider
 				ResetDisplayPos(gsw);
-				_gwidgetUpdate(gh);
+				_gwinUpdate(gh);
 				return;
 			}
 		#endif
@@ -92,7 +92,7 @@ static void ResetDisplayPos(GSliderObject *gsw) {
 		}
 
 		ResetDisplayPos(gsw);
-		_gwidgetUpdate(gh);
+		_gwinUpdate(gh);
 
 		// Generate the event
 		SendSliderEvent(gw);
@@ -122,7 +122,7 @@ static void ResetDisplayPos(GSliderObject *gsw) {
 		}
 
 		// Update the display
-		_gwidgetUpdate(&gw->g);
+		_gwinUpdate(&gw->g);
 		#undef gsw
 	}
 #endif
@@ -164,7 +164,7 @@ static void ResetDisplayPos(GSliderObject *gsw) {
 		gsw->pos = (uint16_t)((uint32_t)value*(gsw->max-gsw->min)/max + gsw->min);
 
 		ResetDisplayPos(gsw);
-		_gwidgetUpdate((GHandle)gw);
+		_gwinUpdate((GHandle)gw);
 
 		// Generate the event
 		SendSliderEvent(gw);
@@ -267,7 +267,7 @@ void gwinSliderSetPosition(GHandle gh, int pos) {
 		else gsw->pos = pos;
 	}
 	ResetDisplayPos(gsw);
-	_gwidgetUpdate(gh);
+	_gwinUpdate(gh);
 
 	#undef gsw
 }

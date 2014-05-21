@@ -34,12 +34,14 @@
 #define GWIN_FLG_SYSENABLED				0x00000800			// @< The window is enabled after parents are tested
 #define GWIN_FLG_DYNAMIC				0x00001000			// @< The GWIN structure is allocated
 #define GWIN_FLG_ALLOCTXT				0x00002000			// @< The text/label is allocated
-#define GWIN_FLG_MOUSECAPTURE			0x00004000			// @< The window has captured the mouse
+#define GWIN_FLG_NEEDREDRAW				0x00004000			// @< Redraw is needed but has been delayed
+#define GWIN_FLG_BGREDRAW				0x00008000			// @< On redraw, if not visible redraw the revealed under-side
 #define GWIN_FLG_SUPERMASK				0x000F0000			// @< The bit mask to leave just the window superclass type
 #define GWIN_FLG_WIDGET					0x00010000			// @< This is a widget
 #define GWIN_FLG_CONTAINER				0x00020000			// @< This is a container
 #define GWIN_FLG_MINIMIZED				0x00100000			// @< The window is minimized
 #define GWIN_FLG_MAXIMIZED				0x00200000			// @< The window is maximized
+#define GWIN_FLG_MOUSECAPTURE			0x00400000			// @< The window has captured the mouse
 #define GWIN_FIRST_WM_FLAG				0x01000000			// @< 8 bits free for the window manager to use
 /** @} */
 
@@ -131,17 +133,6 @@ typedef struct gwinVMT {
 	/** @} */
 #endif
 
-// These flags are needed whether or not we are running a window manager.
-/**
- * @brief	Flags for redrawing after a visibility change
- * @{
- */
-#define GWIN_WMFLG_PRESERVE			0x0001						// @< Preserve whatever existing contents possible if a window can't redraw
-#define GWIN_WMFLG_NOBGCLEAR		0x0002						// @< Don't clear the area if the window is not visible
-#define GWIN_WMFLG_KEEPCLIP			0x0004						// @< Don't modify the preset clipping area
-#define GWIN_WMFLG_NOZORDER			0x0008						// @< Don't redraw higher z-order windows that overlap
-/** @} */
-
 #if GWIN_NEED_WINDOWMANAGER || defined(__DOXYGEN__)
 	// @note	There is only ever one instance of each GWindowManager type
 	typedef struct GWindowManager {
@@ -157,7 +148,7 @@ typedef struct gwinVMT {
 		void (*DeInit)		(void);									// @< The window manager has just been removed as the current window manager
 		bool_t (*Add)		(GHandle gh, const GWindowInit *pInit);	// @< A window has been added
 		void (*Delete)		(GHandle gh);							// @< A window has been deleted
-		void (*Redraw)		(GHandle gh, int visflags);				// @< A window needs to be redraw (or undrawn)
+		void (*Redraw)		(GHandle gh);							// @< A window needs to be redraw (or undrawn)
 		void (*Size)		(GHandle gh, coord_t w, coord_t h);		// @< A window wants to be resized
 		void (*Move)		(GHandle gh, coord_t x, coord_t y);		// @< A window wants to be moved
 		void (*Raise)		(GHandle gh);							// @< A window wants to be on top
@@ -190,6 +181,62 @@ extern "C" {
  */
 GHandle _gwindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pInit, const gwinVMT *vmt, uint32_t flags);
 
+/**
+ * @brief	Redraw the window after a status change.
+ *
+ * @param[in]	gh		The widget to redraw
+ *
+ * @note	Mark a window for redraw.
+ * @note	The window will get redrawn at some later time.
+ * @note	This call is designed to be fast and non-blocking
+ *
+ * @notapi
+ */
+void _gwinUpdate(GHandle gh);
+
+/**
+ * @brief	Flush any pending redraws in the system.
+ *
+ * @param[in]	doWait		Do we wait for the lock?
+ *
+ * @note	This call will attempt to flush any pending redraws
+ * 			in the system. The doWait parameter tells this call
+ * 			how to handle someone already holding the drawing lock.
+ * 			If doWait is TRUE it waits to obtain the lock. If FALSE
+ * 			and the drawing lock is free then the redraw is done
+ * 			immediately. If the drawing lock was taken it will postpone the flush
+ * 			on the basis that someone else will do it for us later.
+ *
+ * @notapi
+ */
+void _gwinFlushRedraws(bool_t doWait);
+
+/**
+ * @brief	Obtain a drawing session
+ * @return	TRUE if the drawing session was obtained, FALSE if the window is not visible
+ *
+ * @param[in]	gh		The window
+ *
+ * @note	This function blocks until a drawing session is available if the window is visible
+ */
+bool_t _gwinDrawStart(GHandle gh);
+
+/**
+ * @brief	Release a drawing session
+ *
+ * @param[in]	gh		The window
+ */
+void _gwinDrawEnd(GHandle gh);
+
+/**
+ * @brief	Add a window to the window manager and set its position and size
+ * @return	TRUE if successful
+ *
+ * @param[in]	gh		The window
+ * @param[in]	pInit	The window init structure
+ */
+bool_t _gwinWMAdd(GHandle gh, const GWindowInit *pInit);
+
 #if GWIN_NEED_WIDGET || defined(__DOXYGEN__)
 	/**
 	 * @brief	Initialise (and allocate if necessary) the base Widget object
@@ -220,24 +267,12 @@ GHandle _gwindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pInit
 	 * @param[in]	gh		The widget to redraw
 	 *
 	 * @note	Do not use this routine to update a widget after a status change.
-	 * 			Use @p _gwidgetUpdate() instead. The difference is that this routine
-	 * 			does not set the clip region. This routine should only be used in the
+	 * 			Use @p _gwinUpdate() instead. This routine should only be used in the
 	 * 			VMT.
 	 *
 	 * @notapi
 	 */
 	void _gwidgetRedraw(GHandle gh);
-
-	/**
-	 * @brief	Redraw the Widget object after a widget status change.
-	 *
-	 * @param[in]	gh		The widget to redraw
-	 *
-	 * @note	Use this routine to update a widget after a status change.
-	 *
-	 * @notapi
-	 */
-	void _gwidgetUpdate(GHandle gh);
 #endif
 
 #if GWIN_NEED_CONTAINERS || defined(__DOXYGEN__)
@@ -270,38 +305,12 @@ GHandle _gwindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pInit
 	 * @param[in]	gh		The container to redraw
 	 *
 	 * @note	Do not use this routine to update a container after a status change.
-	 * 			Use @p _gcontainerUpdate() instead. The difference is that this routine
-	 * 			does not set the clip region. This routine should only be used in the
+	 * 			Use @p _gwinUpdate() instead. This routine should only be used in the
 	 * 			VMT.
 	 *
 	 * @notapi
 	 */
-	void _gcontainerRedraw(GHandle gh);
-
-	/**
-	 * @brief	Redraw the Container object after a container status change.
-	 *
-	 * @param[in]	gh		The container to redraw
-	 *
-	 * @note	Use this routine to update a container after a status change.
-	 *
-	 * @notapi
-	 */
-	void _gcontainerUpdate(GHandle gh);
-
-	/**
-	 * @brief	Apply the specified action to a window and its children.
-	 * @note	The action is applied to the parent first and then its children.
-	 * @note	This routine is built to keep stack usage from recursing to a minimum.
-	 *
-	 * @param[in]	gh		The window to recurse through
-	 * @param[in]	fn		The function to apply. If it returns TRUE any children it has should also have the function applied
-	 *
-	 * @notapi
-	 */
-	void _gwinRecurse(GHandle gh, bool_t (*fn)(GHandle gh));
-#else
-	#define _gwinRecurse(gh, fn)	fn(gh)
+	#define _gcontainerRedraw		_gwidgetRedraw
 #endif
 
 #ifdef __cplusplus
