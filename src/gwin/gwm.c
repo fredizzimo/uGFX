@@ -36,8 +36,8 @@
 		return TRUE;
 	}
 
-	void _gwinFlushRedraws(bool_t doWait) {
-		(void) doWait;
+	void _gwinFlushRedraws(GRedrawMethod how) {
+		(void) how;
 
 		// We are always flushed
 	}
@@ -147,9 +147,6 @@
 
 #if GFX_USE_GWIN && GWIN_NEED_WINDOWMANAGER
 
-// Do we redraw all windows at once?
-#define GWIN_LONG_REDRAW		TRUE
-
 #include "src/gwin/class_gwin.h"
 
 /*-----------------------------------------------
@@ -158,15 +155,18 @@
 
 // The default window manager
 extern const GWindowManager	GNullWindowManager;
-GWindowManager *		_GWINwm;
+GWindowManager *			_GWINwm;
 
-static gfxSem			gwinsem;
-static gfxQueueASync	_GWINList;
-static volatile bool_t	RedrawPending;
-#if GFX_USE_GTIMER
-	static GTimer		RedrawTimer;
-	static void			RedrawTimerFn(void *param);
+static gfxSem				gwinsem;
+static gfxQueueASync		_GWINList;
+#if !GWIN_REDRAW_IMMEDIATE
+	static GTimer			RedrawTimer;
+	static void				RedrawTimerFn(void *param);
 #endif
+static volatile uint8_t		RedrawPending;
+	#define DOREDRAW_INVISIBLES		0x01
+	#define DOREDRAW_VISIBLES		0x02
+
 
 /*-----------------------------------------------
  * Window Routines
@@ -176,7 +176,7 @@ void _gwmInit(void)
 {
 	gfxSemInit(&gwinsem, 1, 1);
 	gfxQueueASyncInit(&_GWINList);
-	#if GFX_USE_GTIMER
+	#if !GWIN_REDRAW_IMMEDIATE
 		gtimerInit(&RedrawTimer);
 		gtimerStart(&RedrawTimer, RedrawTimerFn, 0, TRUE, TIME_INFINITE);
 	#endif
@@ -192,25 +192,25 @@ void _gwmDeinit(void)
 		gwinDestroy(gh);
 
 	_GWINwm->vmt->DeInit();
-	#if GFX_USE_GTIMER
+	#if !GWIN_REDRAW_IMMEDIATE
 		gtimerDeinit(&RedrawTimer);
 	#endif
 	gfxQueueASyncDeinit(&_GWINList);
 	gfxSemDestroy(&gwinsem);
 }
 
-#if GFX_USE_GTIMER
+#if GWIN_REDRAW_IMMEDIATE
+	#define TriggerRedraw(void) _gwinFlushRedraws(REDRAW_NOWAIT);
+#else
 	#define TriggerRedraw()		gtimerJab(&RedrawTimer);
 
 	static void RedrawTimerFn(void *param) {
 		(void)		param;
-		_gwinFlushRedraws(FALSE);
+		_gwinFlushRedraws(REDRAW_NOWAIT);
 	}
-#else
-	#define TriggerRedraw(void) _gwinFlushRedraws(FALSE);
 #endif
 
-void _gwinFlushRedraws(bool_t doWait) {
+void _gwinFlushRedraws(GRedrawMethod how) {
 	GHandle		gh;
 
 	// Do we really need to do anything?
@@ -218,19 +218,46 @@ void _gwinFlushRedraws(bool_t doWait) {
 		return;
 
 	// Obtain the drawing lock
-	if (doWait)
+	if (how == REDRAW_WAIT)
 		gfxSemWait(&gwinsem, TIME_INFINITE);
-	else if (!gfxSemWait(&gwinsem, TIME_IMMEDIATE))
+	else if (how == REDRAW_NOWAIT && !gfxSemWait(&gwinsem, TIME_IMMEDIATE))
 		// Someone is drawing - They will do the redraw when they are finished
 		return;
 
-	// Look for something to redraw
-	while(RedrawPending) {
-		// Catch any new redraw requests from here on
-		RedrawPending = FALSE;
+	// Do loss of visibility first
+	while ((RedrawPending & DOREDRAW_INVISIBLES)) {
+		RedrawPending &= ~DOREDRAW_INVISIBLES;				// Catch new requests
 
 		for(gh = gwinGetNextWindow(0); gh; gh = gwinGetNextWindow(gh)) {
-			if (!(gh->flags & GWIN_FLG_NEEDREDRAW))
+			if ((gh->flags & (GWIN_FLG_NEEDREDRAW|GWIN_FLG_SYSVISIBLE)) != GWIN_FLG_NEEDREDRAW)
+				continue;
+
+			// Do the redraw
+			#if GDISP_NEED_CLIP
+				gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
+				_GWINwm->vmt->Redraw(gh);
+				gdispGUnsetClip(gh->display);
+			#else
+				_GWINwm->vmt->Redraw(gh);
+			#endif
+
+			// Postpone further redraws
+			#if !GWIN_REDRAW_IMMEDIATE && !GWIN_REDRAW_SINGLEOP
+				if (how == REDRAW_NOWAIT) {
+					RedrawPending |= DOREDRAW_INVISIBLES;
+					TriggerRedraw();
+					goto releaselock;
+				}
+			#endif
+		}
+	}
+
+	// Do the visible windows next
+	while ((RedrawPending & DOREDRAW_VISIBLES)) {
+		RedrawPending &= ~DOREDRAW_VISIBLES;				// Catch new requests
+
+		for(gh = gwinGetNextWindow(0); gh; gh = gwinGetNextWindow(gh)) {
+			if ((gh->flags & (GWIN_FLG_NEEDREDRAW|GWIN_FLG_SYSVISIBLE)) != (GWIN_FLG_NEEDREDRAW|GWIN_FLG_SYSVISIBLE))
 				continue;
 
 			// Do the redraw
@@ -243,23 +270,28 @@ void _gwinFlushRedraws(bool_t doWait) {
 			#endif
 
 			// Postpone further redraws (if there are any and the options are set right)
-			#if GFX_USE_GTIMER && !GWIN_LONG_REDRAW
-				if (!doWait) {
+			#if !GWIN_REDRAW_IMMEDIATE && !GWIN_REDRAW_SINGLEOP
+				if (how == REDRAW_NOWAIT) {
 					while((gh = gwinGetNextWindow(gh))) {
-						if ((gh->flags & GWIN_FLG_NEEDREDRAW)) {
-							gtimerJab(&RedrawTimer);
-							RedrawPending = TRUE;
+						if ((gh->flags & (GWIN_FLG_NEEDREDRAW|GWIN_FLG_SYSVISIBLE)) == (GWIN_FLG_NEEDREDRAW|GWIN_FLG_SYSVISIBLE)) {
+							RedrawPending |= DOREDRAW_VISIBLES;
+							TriggerRedraw();
 							break;
 						}
 					}
-					break;
+					goto releaselock;
 				}
 			#endif
 		}
 	}
 
+	#if !GWIN_REDRAW_IMMEDIATE && !GWIN_REDRAW_SINGLEOP
+		releaselock:
+	#endif
+
 	// Release the lock
-	gfxSemSignal(&gwinsem);
+	if (how == REDRAW_WAIT || how == REDRAW_NOWAIT)
+		gfxSemSignal(&gwinsem);
 }
 
 void _gwinUpdate(GHandle gh) {
@@ -269,7 +301,7 @@ void _gwinUpdate(GHandle gh) {
 
 	// Mark for redraw
 	gh->flags |= GWIN_FLG_NEEDREDRAW;
-	RedrawPending = TRUE;
+	RedrawPending |= DOREDRAW_VISIBLES;
 
 	// Asynchronous redraw
 	TriggerRedraw();
@@ -304,22 +336,7 @@ void _gwinDrawEnd(GHandle gh) {
 	#endif
 
 	// Look for something to redraw
-	while(RedrawPending) {
-		RedrawPending = FALSE;
-		for(gh = gwinGetNextWindow(0); gh; gh = gwinGetNextWindow(gh)) {
-			if (!(gh->flags & GWIN_FLG_NEEDREDRAW))
-				continue;
-
-			// Do the redraw
-			#if GDISP_NEED_CLIP
-				gdispGSetClip(gh->display, gh->x, gh->y, gh->width, gh->height);
-				_GWINwm->vmt->Redraw(gh);
-				gdispGUnsetClip(gh->display);
-			#else
-				_GWINwm->vmt->Redraw(gh);
-			#endif
-		}
-	}
+	_gwinFlushRedraws(REDRAW_INSESSION);
 
 	// Release the lock
 	gfxSemSignal(&gwinsem);
@@ -365,10 +382,10 @@ void gwinRedraw(GHandle gh) {
 
 	// Mark for redraw
 	gh->flags |= GWIN_FLG_NEEDREDRAW;
-	RedrawPending = TRUE;
+	RedrawPending |= DOREDRAW_VISIBLES;
 
 	// Synchronous redraw
-	_gwinFlushRedraws(TRUE);
+	_gwinFlushRedraws(REDRAW_WAIT);
 }
 
 #if GWIN_NEED_CONTAINERS
@@ -386,7 +403,7 @@ void gwinRedraw(GHandle gh) {
 				}
 
 				// Mark for redraw
-				RedrawPending = TRUE;
+				RedrawPending |= DOREDRAW_VISIBLES;
 				TriggerRedraw();
 			}
 		} else {
@@ -404,7 +421,7 @@ void gwinRedraw(GHandle gh) {
 				}
 
 				// Mark for redraw - no need to redraw children
-				RedrawPending = TRUE;
+				RedrawPending |= DOREDRAW_INVISIBLES;
 				TriggerRedraw();
 			}
 		}
@@ -414,14 +431,14 @@ void gwinRedraw(GHandle gh) {
 		if (visible) {
 			if (!(gh->flags & GWIN_FLG_VISIBLE)) {
 				gh->flags |= (GWIN_FLG_VISIBLE|GWIN_FLG_SYSVISIBLE|GWIN_FLG_NEEDREDRAW|GWIN_FLG_BGREDRAW);
-				RedrawPending = TRUE;
+				RedrawPending |= DOREDRAW_VISIBLES;
 				TriggerRedraw();
 			}
 		} else {
 			if ((gh->flags & GWIN_FLG_VISIBLE)) {
 				gh->flags &= ~(GWIN_FLG_VISIBLE|GWIN_FLG_SYSVISIBLE);
 				gh->flags |= (GWIN_FLG_NEEDREDRAW|GWIN_FLG_BGREDRAW);
-				RedrawPending = TRUE;
+				RedrawPending |= DOREDRAW_INVISIBLES;
 				TriggerRedraw();
 			}
 		}
@@ -441,14 +458,9 @@ void gwinRedraw(GHandle gh) {
 				for(gh = gwinGetNextWindow(0); gh; gh = gwinGetNextWindow(gh)) {
 					if ((gh->flags & (GWIN_FLG_SYSENABLED|GWIN_FLG_ENABLED)) == GWIN_FLG_ENABLED && (!gh->parent || (gh->parent->flags & GWIN_FLG_SYSENABLED))) {
 						gh->flags |= GWIN_FLG_SYSENABLED;							// Fix it
-						if ((gh->flags & GWIN_FLG_SYSVISIBLE)) {					// Mark for redraw
-							gh->flags |= GWIN_FLG_NEEDREDRAW;
-							RedrawPending = TRUE;
-						}
+						_gwinUpdate(gh);
 					}
 				}
-				if (RedrawPending)
-					TriggerRedraw();
 			}
 		} else {
 			gh->flags &= ~GWIN_FLG_ENABLED;
@@ -459,14 +471,9 @@ void gwinRedraw(GHandle gh) {
 				for(gh = gwinGetNextWindow(0); gh; gh = gwinGetNextWindow(gh)) {
 					if ((gh->flags & GWIN_FLG_SYSENABLED) && (!(gh->flags & GWIN_FLG_ENABLED) || (gh->parent && !(gh->parent->flags & GWIN_FLG_SYSENABLED)))) {
 						gh->flags &= ~GWIN_FLG_SYSENABLED;			// Fix it
-						if ((gh->flags & GWIN_FLG_SYSVISIBLE)) {					// Mark for redraw
-							gh->flags |= GWIN_FLG_NEEDREDRAW;
-							RedrawPending = TRUE;
-						}
+						_gwinUpdate(gh);
 					}
 				}
-				if (RedrawPending)
-					TriggerRedraw();
 			}
 		}
 	}
@@ -701,7 +708,7 @@ static void WM_Size(GHandle gh, coord_t w, coord_t h) {
 		} else {
 			// We need to make this window invisible and ensure that has been drawn
 			gwinSetVisible(gh, FALSE);
-			_gwinFlushRedraws(TRUE);
+			_gwinFlushRedraws(REDRAW_WAIT);
 
 			// Resize
 			gh->width = w; gh->height = h;
@@ -771,7 +778,7 @@ static void WM_Move(GHandle gh, coord_t x, coord_t y) {
 	if ((gh->flags & GWIN_FLG_SYSVISIBLE)) {
 		// We need to make this window invisible and ensure that has been drawn
 		gwinSetVisible(gh, FALSE);
-		_gwinFlushRedraws(TRUE);
+		_gwinFlushRedraws(REDRAW_WAIT);
 
 		// Do the move
 		v = gh->x; gh->x = x; x = v;

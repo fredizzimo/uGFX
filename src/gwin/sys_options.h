@@ -137,6 +137,33 @@
 		#define GWIN_FLAT_STYLING		FALSE
 	#endif
 	/**
+	 * @brief	Don't use a timer for redrawing windows
+	 * @details	Defaults to FALSE
+	 * @note	Normally windows and widgets are redrawn on a timer. Setting this
+	 * 			option causes them to be redrawn immediately. Note that this can
+	 * 			cause extended blocking times on events and saves little code.
+	 * @note	If GWIN_NEED_WINDOWMANAGER is FALSE then this setting is ignored
+	 * 			as redrawing always occurs immediately.
+	 */
+	#ifndef GWIN_REDRAW_IMMEDIATE
+		#define GWIN_REDRAW_IMMEDIATE	FALSE
+	#endif
+	/**
+	 * @brief	Redraw all windows in a single operation
+	 * @details	Defaults to FALSE
+	 * @note	Windows are normally redraw one per gtimer cycle.
+	 * 			Setting this option causes all windows to be redrawn in
+	 * 			a single gtimer cycle. Note that this can
+	 * 			cause extended blocking times on the timer thread but may
+	 * 			speed up redraw slightly.
+	 * @note	This is only relevant if GWIN_REDRAW_IMMEDIATE is FALSE.
+	 * 			Everything always gets redrawn in a single operation if
+	 * 			GWIN_REDRAW_IMMEDIATE is TRUE.
+	 */
+	#ifndef GWIN_REDRAW_SINGLEOP
+		#define GWIN_REDRAW_SINGLEOP	FALSE
+	#endif
+	/**
 	 * @brief   Buttons should not insist the mouse is over the button on mouse release
 	 * @details	Defaults to FALSE
 	 */

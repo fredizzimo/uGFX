@@ -195,6 +195,14 @@ GHandle _gwindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pInit
 void _gwinUpdate(GHandle gh);
 
 /**
+ * @brief	How to flush the redraws
+ * @notes	REDRAW_WAIT			- Wait for a drawing session to be available
+ * @notes	REDRAW_NOWAIT		- Do nothing if the drawing session is not available
+ * @note	REDRAW_INSESSION	- We are already in a drawing session
+ */
+typedef enum GRedrawMethod { REDRAW_WAIT, REDRAW_NOWAIT, REDRAW_INSESSION }	GRedrawMethod;
+
+/**
  * @brief	Flush any pending redraws in the system.
  *
  * @param[in]	doWait		Do we wait for the lock?
@@ -209,7 +217,7 @@ void _gwinUpdate(GHandle gh);
  *
  * @notapi
  */
-void _gwinFlushRedraws(bool_t doWait);
+void _gwinFlushRedraws(GRedrawMethod how);
 
 /**
  * @brief	Obtain a drawing session

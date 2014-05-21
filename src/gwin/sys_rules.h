@@ -91,6 +91,13 @@
 			#define GFX_USE_GQUEUE		TRUE
 			#define GQUEUE_NEED_ASYNC	TRUE
 		#endif
+		#if !GFX_USE_GTIMER
+			#if GFX_DISPLAY_RULE_WARNINGS
+				#warning "GWIN: GFX_USE_GTIMER is required if GWIN_NEED_WINDOWMANAGER is TRUE. It has been turned on for you."
+			#endif
+			#undef GFX_USE_GTIMER
+			#define GFX_USE_GTIMER		TRUE
+		#endif
 	#endif
 
 	// Rules for individual objects
@@ -114,13 +121,6 @@
 	#if GWIN_NEED_CONSOLE
 		#if !GDISP_NEED_TEXT
 			#error "GWIN: GDISP_NEED_TEXT is required if GWIN_NEED_CONSOLE is TRUE."
-		#endif
-	#endif
-	#if GWIN_NEED_PROGRESSBAR
-		#if GWIN_PROGRESSBAR_AUTO
-			#if !GFX_USE_GTIMER
-				#error "GWIN: GFX_USE_GTIMER is required if GWIN_PROGRESSBAR_AUTO is TRUE."
-			#endif
 		#endif
 	#endif
 #endif

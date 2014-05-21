@@ -134,6 +134,8 @@
 //#define GFX_USE_GWIN                                 FALSE
 
 //#define GWIN_NEED_WINDOWMANAGER                      FALSE
+//    #define GWIN_REDRAW_IMMEDIATE                    FALSE
+//    #define GWIN_REDRAW_SINGLEOP                     FALSE
 
 //#define GWIN_NEED_CONSOLE                            FALSE
 //    #define GWIN_CONSOLE_USE_HISTORY                 FALSE
