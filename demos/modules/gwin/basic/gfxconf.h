@@ -46,7 +46,6 @@
 #define GDISP_NEED_CIRCLE		TRUE
 
 /* Features for the GWIN subsystem. */
-#define GWIN_NEED_WINDOWMANAGER	TRUE
 
 #endif /* _GFXCONF_H */
 
