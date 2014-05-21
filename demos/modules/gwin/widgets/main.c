@@ -527,9 +527,6 @@ int main(void) {
 						pstyle = &WhiteWidgetStyle;
 
 					// Clear the screen to the new color
-					#if GDISP_NEED_CLIP
-						gdispUnsetClip();
-					#endif
 					gdispClear(pstyle->background);
 
 					// Update the style on all controls
