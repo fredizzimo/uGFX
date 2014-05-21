@@ -3,6 +3,7 @@
 *****************************************************************************
 
 *** Changes After 2.1 ***
+FEATURE:	Added nested containers demo
 
 
 *** Release 2.1 ***
