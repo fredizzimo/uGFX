@@ -7,7 +7,7 @@
 
 // Set this to your frame buffer pixel format. Note Linux frame buffer only supports RGB modes (no BGR modes).
 #ifndef GDISP_LLD_PIXELFORMAT
-	#define GDISP_LLD_PIXELFORMAT		GDISP_PIXELFORMAT_RGB565
+	#define GDISP_LLD_PIXELFORMAT		GDISP_PIXELFORMAT_RGB888
 #endif
 
 #ifdef GDISP_DRIVER_VMT
@@ -91,7 +91,7 @@
 		}
 
 		#ifdef USE_SET_MODE
-		fb_var.reserved[0] = 0;
+			fb_var.reserved[0] = 0;
 			fb_var.reserved[1] = 0;
 			fb_var.reserved[2] = 0;
 			fb_var.xoffset = 0;
@@ -113,8 +113,8 @@
 			fprintf(stderr, "GDISP Framebuffer: The display is not in TRUECOLOR mode\n");
 			exit(-1);
 		}
-		if (fb_var.bits_per_pixel != LLDCOLOR_BITS) {
-			fprintf(stderr, "GDISP Framebuffer: The display is not %u bits per pixel\n", LLDCOLOR_BITS);
+		if (fb_var.bits_per_pixel != LLDCOLOR_TYPE_BITS) {
+			fprintf(stderr, "GDISP Framebuffer: The display is %u not %u bits per pixel\n", fb_var.bits_per_pixel, LLDCOLOR_TYPE_BITS);
 			exit(-1);
 		}
 		if (fb_var.red.length != LLDCOLOR_BITS_R || fb_var.green.length != LLDCOLOR_BITS_G || fb_var.blue.length != LLDCOLOR_BITS_B) {
