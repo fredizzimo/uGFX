@@ -205,6 +205,8 @@ extern "C" {
 	#endif
 
 	#if GFILE_NEED_PRINTG
+		#include <stdarg.h>
+
 		int vfnprintg(GFILE *f, int maxlen, const char *fmt, va_list arg);
 		int fnprintg(GFILE *f, int maxlen, const char *fmt, ...);
 		#define vfprintg(f,m,a)			vfnprintg(f,0,m,a)
@@ -221,6 +223,8 @@ extern "C" {
 	#endif
 
 	#if GFILE_NEED_SCANG
+		#include <stdarg.h>
+
 		int vfscang(GFILE *f, const char *fmt, va_list arg);
 		int fscang(GFILE *f, const char *fmt, ...);
 		#define vscang(f,a)			vfscang(gfileStdIn,f,a)
