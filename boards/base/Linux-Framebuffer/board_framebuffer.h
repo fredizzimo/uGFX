@@ -91,7 +91,7 @@
 		}
 
 		#ifdef USE_SET_MODE
-			info.reserved[0] = 0;
+		fb_var.reserved[0] = 0;
 			fb_var.reserved[1] = 0;
 			fb_var.reserved[2] = 0;
 			fb_var.xoffset = 0;
