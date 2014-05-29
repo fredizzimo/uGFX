@@ -45,6 +45,45 @@ static void _frameDestroy(GHandle gh) {
 	_gcontainerDestroy(gh);
 }
 
+static void _closeBtnDraw(struct GWidgetObject *gw, void *param) {
+	// the background
+	if (gwinButtonIsPressed( (GHandle)gw)) {
+		gdispFillArea(gw->g.x, gw->g.y, gw->g.width, gw->g.height, gdispBlendColor(Black, HTML2COLOR(0xC55152), 50));
+	} else {
+		gdispFillArea(gw->g.x, gw->g.y, gw->g.width, gw->g.height, HTML2COLOR(0xC55152));
+	}
+
+	// the cross
+	gdispDrawLine(gw->g.x+4, gw->g.y+4, gw->g.x+gw->g.width-5, gw->g.y+gw->g.height-5, White);
+	gdispDrawLine(gw->g.x+gw->g.width-5, gw->g.y+4, gw->g.x+4, gw->g.y+gw->g.height-5, White);
+}
+
+static void _closeBtnMin(struct GWidgetObject *gw, void *param) {
+	// the background
+	if (gwinButtonIsPressed( (GHandle)gw)) {
+		gdispFillArea(gw->g.x, gw->g.y, gw->g.width, gw->g.height, gdispBlendColor(Black, Grey, 50));
+	} else {
+		gdispFillArea(gw->g.x, gw->g.y, gw->g.width, gw->g.height, gdispBlendColor(White, Grey, 50));
+	}
+
+	// the symbol
+	gdispDrawLine(gw->g.x+5, gw->g.y+gw->g.height-5, gw->g.x+gw->g.width-5, gw->g.y+gw->g.height-5, White);
+}
+
+static void _closeBtnMax(struct GWidgetObject *gw, void *param) {
+	// the background
+	if (gwinButtonIsPressed( (GHandle)gw)) {
+		gdispFillArea(gw->g.x, gw->g.y, gw->g.width, gw->g.height, gdispBlendColor(Black, Grey, 50));
+	} else {
+		gdispFillArea(gw->g.x, gw->g.y, gw->g.width, gw->g.height, gdispBlendColor(White, Grey, 50));
+	}
+
+	// the symbol
+	gdispDrawBox(gw->g.x+4, gw->g.y+4, gw->g.width-8, gw->g.height-8, White);
+	gdispDrawLine(gw->g.x+4, gw->g.y+5, gw->g.x+gw->g.width-5, gw->g.y+5, White);
+	gdispDrawLine(gw->g.x+4, gw->g.y+6, gw->g.x+gw->g.width-5, gw->g.y+6, White);
+}
+
 #if 0 && GINPUT_NEED_MOUSE
 	static void _mouseDown(GWidgetObject *gw, coord_t x, coord_t y) {
 	
@@ -133,7 +172,8 @@ GHandle gwinGFrameCreate(GDisplay *g, GFrameObject *fo, GWidgetInit *pInit, uint
 		wi.g.y = (BORDER_Y - BUTTON_Y) / 2;
 		wi.g.width = BUTTON_X;
 		wi.g.height = BUTTON_Y;
-		wi.text = "X";
+		wi.text = "Frame Close Button";
+		wi.customDraw = _closeBtnDraw;
 		fo->btnClose = gwinGButtonCreate(g, 0, &wi);
 	}
 
@@ -149,15 +189,17 @@ GHandle gwinGFrameCreate(GDisplay *g, GFrameObject *fo, GWidgetInit *pInit, uint
 		wi.g.y = (BORDER_Y - BUTTON_Y) / 2;
 		wi.g.width = BUTTON_X;
 		wi.g.height = BUTTON_Y;
-		wi.text = "O";
-		fo->btnMin = gwinGButtonCreate(g, 0, &wi);
+		wi.text = "Frame Max Button";
+		wi.customDraw = _closeBtnMax;
+		fo->btnMax = gwinGButtonCreate(g, 0, &wi);
 
 		wi.g.x = (flags & GWIN_FRAME_CLOSE_BTN) ? fo->gc.g.width - 3*BORDER_X - 3*BUTTON_X : fo->gc.g.width - BORDER_X - BUTTON_X;
 		wi.g.y = (BORDER_Y - BUTTON_Y) / 2;
 		wi.g.width = BUTTON_X;
 		wi.g.height = BUTTON_Y;
-		wi.text = "_";
-		fo->btnMax = gwinGButtonCreate(g, 0, &wi);
+		wi.text = "Frame Min Button";
+		wi.customDraw = _closeBtnMin;
+		fo->btnMin = gwinGButtonCreate(g, 0, &wi);
 	}
 
 	/* Apply flags. We apply these here so the controls above are outside the child area */
@@ -173,7 +215,7 @@ static void _callbackBtn(void *param, GEvent *pe) {
 	switch (pe->type) {
 		case GEVENT_GWIN_BUTTON:
 			if (((GEventGWinButton *)pe)->button == ((GFrameObject*)(GHandle)param)->btnClose)
-				gwinDestroy((GHandle)param);
+				;//gwinDestroy((GHandle)param);
 
 			else if (((GEventGWinButton *)pe)->button == ((GFrameObject*)(GHandle)param)->btnMin) {
 				;/* ToDo */
