@@ -46,6 +46,8 @@ static void _frameDestroy(GHandle gh) {
 }
 
 static void _closeBtnDraw(struct GWidgetObject *gw, void *param) {
+	(void) param;
+
 	// the background
 	if (gwinButtonIsPressed( (GHandle)gw)) {
 		gdispFillArea(gw->g.x, gw->g.y, gw->g.width, gw->g.height, gdispBlendColor(Black, HTML2COLOR(0xC55152), 50));
@@ -59,6 +61,8 @@ static void _closeBtnDraw(struct GWidgetObject *gw, void *param) {
 }
 
 static void _closeBtnMin(struct GWidgetObject *gw, void *param) {
+	(void) param;
+
 	// the background
 	if (gwinButtonIsPressed( (GHandle)gw)) {
 		gdispFillArea(gw->g.x, gw->g.y, gw->g.width, gw->g.height, gdispBlendColor(Black, Grey, 50));
@@ -71,6 +75,8 @@ static void _closeBtnMin(struct GWidgetObject *gw, void *param) {
 }
 
 static void _closeBtnMax(struct GWidgetObject *gw, void *param) {
+	(void) param;
+
 	// the background
 	if (gwinButtonIsPressed( (GHandle)gw)) {
 		gdispFillArea(gw->g.x, gw->g.y, gw->g.width, gw->g.height, gdispBlendColor(Black, Grey, 50));
