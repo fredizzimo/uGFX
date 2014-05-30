@@ -5,7 +5,8 @@
 *** Changes After 2.1 ***
 FEATURE:	Added nested containers demo
 FEATURE:	Revised GWIN redraw strategy
-
+FEATURE:	Added generic framebuffer driver
+FEATURE:	Added Linux-Framebuffer board definition
 
 *** Release 2.1 ***
 FIX:		Significant improvements to the way the MCU touch driver works.
