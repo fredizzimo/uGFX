@@ -215,7 +215,7 @@ static void _callbackBtn(void *param, GEvent *pe) {
 	switch (pe->type) {
 		case GEVENT_GWIN_BUTTON:
 			if (((GEventGWinButton *)pe)->button == ((GFrameObject*)(GHandle)param)->btnClose)
-				;//gwinDestroy((GHandle)param);
+				gwinDestroy((GHandle)param);
 
 			else if (((GEventGWinButton *)pe)->button == ((GFrameObject*)(GHandle)param)->btnMin) {
 				;/* ToDo */
