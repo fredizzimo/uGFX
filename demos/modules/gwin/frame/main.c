@@ -8,12 +8,11 @@ static GHandle      ghButton1, ghButton2, ghButton3;
 static GHandle      ghWindow1;
 
 static void _updateColor(void) {
-    color_t color;
+    uint32_t color;
 
-    color  = 0;
-    color |= (0xFF0000 & (gwinSliderGetPosition(ghSliderR)) << 16);
-    color |= (0x00FF00 & (gwinSliderGetPosition(ghSliderG)) <<  8);
-    color |= (0x0000FF & (gwinSliderGetPosition(ghSliderB)) <<  0);
+    color  = (unsigned)gwinSliderGetPosition(ghSliderR) << 16;
+    color |= (unsigned)gwinSliderGetPosition(ghSliderG) <<  8;
+    color |= (unsigned)gwinSliderGetPosition(ghSliderB) <<  0;
 
     gwinSetBgColor(ghWindow1, HTML2COLOR(color));
     gwinClear(ghWindow1);
