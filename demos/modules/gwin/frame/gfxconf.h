@@ -35,6 +35,9 @@
 #define GDISP_NEED_VALIDATION                        TRUE
 #define GDISP_NEED_CLIP                              TRUE
 #define GDISP_NEED_TEXT                              TRUE
+    #define GDISP_NEED_ANTIALIAS                     TRUE
+    #define GDISP_NEED_UTF8                          TRUE
+    #define GDISP_NEED_TEXT_KERNING                  TRUE
     #define GDISP_INCLUDE_FONT_UI2                   TRUE
 #define GDISP_NEED_CIRCLE                            TRUE
 #define GDISP_NEED_CONVEX_POLYGON                    TRUE

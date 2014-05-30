@@ -1,9 +1,25 @@
 #include "gfx.h"
+#include "stdio.h"
 
 static GListener    gl;
 static GHandle      ghFrame1;
+static GHandle      ghSliderR, ghSliderG, ghSliderB;
+static GHandle      ghButton1, ghButton2, ghButton3;
+static GHandle      ghWindow1;
 
-static void createWidgets(void) {
+static void _updateColor(void) {
+    color_t color;
+
+    color  = 0;
+    color |= (0xFF0000 & (gwinSliderGetPosition(ghSliderR)) << 16);
+    color |= (0x00FF00 & (gwinSliderGetPosition(ghSliderG)) <<  8);
+    color |= (0x0000FF & (gwinSliderGetPosition(ghSliderB)) <<  0);
+
+    gwinSetBgColor(ghWindow1, HTML2COLOR(color));
+    gwinClear(ghWindow1);
+}
+
+static void _createWidgets(void) {
     GWidgetInit wi;
 
     // Apply some default values for GWIN
@@ -11,16 +27,86 @@ static void createWidgets(void) {
     wi.g.show = TRUE;
 
     // Apply the frame parameters    
-    wi.g.width = 400;
-    wi.g.height = 300;
+    wi.g.width = 300;
+    wi.g.height = 200;
     wi.g.y = 10;
     wi.g.x = 10;
-    wi.text = "Frame 1";
-
+    wi.text = "Colorpicker";
     ghFrame1 = gwinFrameCreate(0, &wi, GWIN_FRAME_BORDER | GWIN_FRAME_CLOSE_BTN | GWIN_FRAME_MINMAX_BTN);
+
+    // Apply the button parameters
+    wi.g.width = 60;
+    wi.g.height = 20;
+    wi.g.x = 10;
+    wi.g.y = 10;
+    wi.text = "Random";
+    wi.g.parent = ghFrame1;
+    ghButton1 = gwinButtonCreate(0, &wi);
+
+    // Apply the slider parameters
+    wi.g.width = 200;
+    wi.g.height = 20;
+    wi.g.x = 80;
+    wi.g.y += 0;
+    wi.text = "Red";
+    wi.g.parent = ghFrame1;
+    ghSliderR = gwinSliderCreate(0, &wi);
+    gwinSliderSetRange(ghSliderR, 0, 255);
+    gwinSliderSetPosition(ghSliderR, 180);
+
+    // Apply the button parameters
+    wi.g.width = 60;
+    wi.g.height = 20;
+    wi.g.x = 10;
+    wi.g.y += 25;
+    wi.text = "Random";
+    wi.g.parent = ghFrame1;
+    ghButton2 = gwinButtonCreate(0, &wi);
+
+    // Apply the slider parameters
+    wi.g.width = 200;
+    wi.g.height = 20;
+    wi.g.x = 80;
+    wi.g.y += 0;
+    wi.text = "Green";
+    wi.g.parent = ghFrame1;
+    ghSliderG = gwinSliderCreate(0, &wi);
+    gwinSliderSetRange(ghSliderG, 0, 255);
+    gwinSliderSetPosition(ghSliderG, 60);
+
+    // Apply the button parameters
+    wi.g.width = 60;
+    wi.g.height = 20;
+    wi.g.x = 10;
+    wi.g.y += 25;
+    wi.text = "Random";
+    wi.g.parent = ghFrame1;
+    ghButton3 = gwinButtonCreate(0, &wi);
+
+    // Apply the slider parameters
+    wi.g.width = 200;
+    wi.g.height = 20;
+    wi.g.x = 80;
+    wi.g.y += 0;
+    wi.text = "Blue";
+    wi.g.parent = ghFrame1;
+    ghSliderB = gwinSliderCreate(0, &wi);
+    gwinSliderSetRange(ghSliderB, 0, 255);
+    gwinSliderSetPosition(ghSliderB, 235);
+
+    // Color Preview
+    wi.g.width = 270;
+    wi.g.height = 65;
+    wi.g.x = 10;
+    wi.g.y = 90;
+    ghWindow1 = gwinWindowCreate(0, &wi.g);
+    
+    _updateColor();
 }
 
 int main(void) {
+    GEvent* pe;
+
     // Initialize the display
     gfxInit();
 
@@ -33,14 +119,39 @@ int main(void) {
     gdispClear(White);
 
     // create the widget
-    createWidgets();
+    _createWidgets();
 
     // We want to listen for widget events
     geventListenerInit(&gl);
     gwinAttachListener(&gl);
 
     while(1) {
-    	gfxSleepMilliseconds(1000);
+        // Get an Event
+        pe = geventEventWait(&gl, TIME_INFINITE);
+
+        switch(pe->type) {
+            case GEVENT_GWIN_SLIDER:
+                if (((GEventGWinSlider *)pe)->slider == ghSliderR || \
+                                                        ghSliderG || \
+                                                        ghSliderB ) {
+                    _updateColor();
+                }
+                break;
+
+            case GEVENT_GWIN_BUTTON:
+                if (((GEventGWinButton *)pe)->button == ghButton1) {
+                    gwinSliderSetPosition(ghSliderR, rand() % 256);
+                } else if (((GEventGWinButton *)pe)->button == ghButton2) {
+                    gwinSliderSetPosition(ghSliderG, rand() % 256);
+                } else if (((GEventGWinButton *)pe)->button == ghButton3) {
+                    gwinSliderSetPosition(ghSliderB, rand() % 256);
+                }
+
+                _updateColor();
+
+            default:
+                break;
+        }
     }
 
     return 0;
