@@ -115,8 +115,8 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		unsigned int i;
 
 		acquire_bus(g);
-		for (i = 0; i < (GDISP_SCREEN_WIDTH * GDISP_SCREEN_HEIGHT / 8); i += GDISP_SCREEN_WIDTH) {
-			write_data(g, RAM(g) + i, GDISP_SCREEN_WIDTH);
+		for (i = 0; i < 9; ++i) {
+			write_data(g, RAM(g) + (i * GDISP_SCREEN_WIDTH), GDISP_SCREEN_WIDTH);
 		}
 		release_bus(g);
 	}
