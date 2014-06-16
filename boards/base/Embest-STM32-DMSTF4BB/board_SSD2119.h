@@ -38,6 +38,7 @@ static const PWMConfig pwmcfg = {
 		{PWM_OUTPUT_ACTIVE_HIGH, 0},
 		{PWM_OUTPUT_ACTIVE_HIGH, 0}
 	},
+	0,
 	0
 };
 
