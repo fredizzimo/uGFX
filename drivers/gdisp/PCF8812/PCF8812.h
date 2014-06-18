@@ -21,12 +21,12 @@
 
 #define PCF8812_SET_PRS				0x10  // Set Vop range, VLCD programming range select
 
-#define PCF8812_SET_Y				0x04  // 0 0  1  0  0 Y3 Y2 Y1 Y0
+#define PCF8812_SET_Y				0x40  // 0 0  1  0  0 Y3 Y2 Y1 Y0
 #define PCF8812_SET_X				0x80  // 0 1 X6 X5 X4 X3 X2 X1 X0
 
 // =========================================
 
-#define PCF8812_TEMP_CONTROL		0x04  // set temperature coefﬁcient (TCx)
+#define PCF8812_SET_TEMP    		0x04  // set temperature coefﬁcient (TCx)
 #define PCF8812_TEMP_MODE_0			0x00  // TC1 = 0, TC0 = 0
 #define PCF8812_TEMP_MODE_1			0x01  // TC1 = 0, TC0 = 1
 #define PCF8812_TEMP_MODE_2			0x02  // TC1 = 1, TC0 = 0

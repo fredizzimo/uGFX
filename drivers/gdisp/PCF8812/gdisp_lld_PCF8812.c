@@ -32,7 +32,7 @@
 	#define GDISP_INITIAL_BACKLIGHT	100
 #endif
 
-#define GDISP_FLG_NEEDFLUSH			(GDISP_FLG_DRIVER<<0)
+#define GDISP_FLG_NEEDFLUSH			(GDISP_FLG_DRIVER << 0)
 
 #include "drivers/gdisp/PCF8812/PCF8812.h"
 
@@ -43,8 +43,10 @@
 // Some common routines and macros
 #define RAM(g)				((uint8_t *)g->priv)
 
-#define xyaddr(x, y)		((x) + ((y)>>3)*GDISP_SCREEN_WIDTH)
-#define xybit(y)			(1<<((y)&7))
+unsigned char RAM[(GDISP_SCREEN_WIDTH * GDISP_SCREEN_HEIGHT / 8)];
+
+#define xyaddr(x, y)   ((x) + ((y) >> 3) * GDISP_SCREEN_WIDTH)
+#define xybit(y)       (1 << ((y) & 7))
 
 /*===========================================================================*/
 /* Driver exported functions.                                                */
@@ -72,19 +74,19 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 	acquire_bus(g);
 
-	write_cmd(g, PCF8812_SET_FUNC | PCF8812_H);
-	write_cmd(g, PCF8812_TEMP_CONTROL | PCF8812_TEMP_MODE_1);
-	write_cmd(g, PCF8812_SET_VMULT | PCF8812_VMULT_MODE_1);
-	write_cmd(g, PCF8812_SET_VOP | 0xFF);
+	write_cmd(g, PCF8812_SET_FUNC   | PCF8812_H);
+	write_cmd(g, PCF8812_SET_TEMP   | PCF8812_TEMP_MODE_1);
+	write_cmd(g, PCF8812_SET_VMULT  | PCF8812_VMULT_MODE_1);
+	write_cmd(g, PCF8812_SET_VOP    | 0xFF);
 	write_cmd(g, PCF8812_SET_FUNC);
-	write_cmd(g, PCF8812_DISPLAY | PCF8812_DISPLAY_MODE_NORMAL);
-
+	write_cmd(g, PCF8812_DISPLAY    | PCF8812_DISPLAY_MODE_NORMAL);
+	write_cmd(g, PCF8812_SET_X); // X = 0
+	write_cmd(g, PCF8812_SET_Y); // Y = 0
 
 
 	unsigned int i;
-	for (i = 0; i < (GDISP_SCREEN_WIDTH * GDISP_SCREEN_HEIGHT / 8); ++i)
+	for (i = 0; i < (GDISP_SCREEN_WIDTH * GDISP_SCREEN_HEIGHT / 8); i++)
 	{
-		RAM(g)[i] &= 0x00; 
 		write_data(g, (uint8_t*)0x00, 1);
 	}
 
@@ -115,8 +117,12 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		unsigned int i;
 
 		acquire_bus(g);
-		for (i = 0; i < 9; ++i) {
-			write_data(g, RAM(g) + (i * GDISP_SCREEN_WIDTH), GDISP_SCREEN_WIDTH);
+
+		//write_cmd(g, PCF8812_SET_X);
+		//write_cmd(g, PCF8812_SET_Y);
+
+		for (i = 0; i < 9; i++) {
+		  write_data(g, RAM(g) + (i * GDISP_SCREEN_WIDTH), GDISP_SCREEN_WIDTH);
 		}
 		release_bus(g);
 	}
@@ -145,69 +151,12 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			y = g->p.x;
 			break;
 		}
-		if (gdispColor2Native(g->p.color) == Black)
+		if (gdispColor2Native(g->p.color) != Black)
 			RAM(g)[xyaddr(x, y)] |= xybit(y);
 		else
 			RAM(g)[xyaddr(x, y)] &= ~xybit(y);
 		g->flags |= GDISP_FLG_NEEDFLUSH;
 	}
 #endif
-
-#if GDISP_NEED_CONTROL && GDISP_HARDWARE_CONTROL
-	LLDSPEC void gdisp_lld_control(GDisplay *g) {
-		switch(g->p.x) {
-		case GDISP_CONTROL_POWER:
-			if (g->g.Powermode == (powermode_t)g->p.ptr)
-				return;
-			switch((powermode_t)g->p.ptr) {
-			case powerOff:
-			case powerSleep:
-			case powerDeepSleep:
-				acquire_bus(g);
-				write_cmd(g, PCF8812_DISPLAY_OFF);
-				release_bus(g);
-				break;
-			case powerOn:
-				acquire_bus(g);
-				write_cmd(g, PCF8812_DISPLAY_ON);
-				release_bus(g);
-				break;
-			default:
-				return;
-			}
-			g->g.Powermode = (powermode_t)g->p.ptr;
-			return;
-
-		case GDISP_CONTROL_ORIENTATION:
-			if (g->g.Orientation == (orientation_t)g->p.ptr)
-				return;
-			switch((orientation_t)g->p.ptr) {
-			/* Rotation is handled by the drawing routines */
-			case GDISP_ROTATE_0:
-			case GDISP_ROTATE_180:
-				g->g.Height = GDISP_SCREEN_HEIGHT;
-				g->g.Width = GDISP_SCREEN_WIDTH;
-				break;
-			case GDISP_ROTATE_90:
-			case GDISP_ROTATE_270:
-				g->g.Height = GDISP_SCREEN_WIDTH;
-				g->g.Width = GDISP_SCREEN_HEIGHT;
-				break;
-			default:
-				return;
-			}
-			g->g.Orientation = (orientation_t)g->p.ptr;
-			return;
-
-		case GDISP_CONTROL_CONTRAST:
-            if ((unsigned)g->p.ptr > 100)
-            	g->p.ptr = (void *)100;
-			acquire_bus(g);
-			release_bus(g);
-            g->g.Contrast = (unsigned)g->p.ptr;
-			return;
-		}
-	}
-#endif // GDISP_NEED_CONTROL
 
 #endif // GFX_USE_GDISP
