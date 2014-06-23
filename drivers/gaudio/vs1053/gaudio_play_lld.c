@@ -26,7 +26,7 @@
 	#define VS1053_FIRMWARE_PATCH		FALSE
 #endif
 #ifndef VS1053_POLL_RATE
-	#define	VS1053_POLL_RATAE	5
+	#define	VS1053_POLL_RATE	5
 #endif
 
 // Load the patch file if desired. New format patches only.
