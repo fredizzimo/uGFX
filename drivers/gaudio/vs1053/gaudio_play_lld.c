@@ -25,6 +25,9 @@
 #ifndef VS1053_FIRMWARE_PATCH
 	#define VS1053_FIRMWARE_PATCH		FALSE
 #endif
+#ifndef VS1053_POLL_RATE
+	#define	VS1053_POLL_RATAE	5
+#endif
 
 // Load the patch file if desired. New format patches only.
 #if VS1053_FIRMWARE_PATCH
@@ -299,7 +302,7 @@ void gaudio_play_lld_start(void) {
 
 	// Start the playing by starting the timer and executing FeedData immediately just to get things started
 	// We really should set the timer to be equivalent to half the available data but that is just too hard to calculate.
-	gtimerStart(&playTimer, FeedData, 0, TRUE, 5);
+	gtimerStart(&playTimer, FeedData, 0, TRUE, VS1053_POLL_RATE);
 	FeedData(0);
 }
 
