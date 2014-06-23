@@ -242,7 +242,7 @@ bool_t gaudio_play_lld_init(uint16_t channel, uint32_t frequency, ArrayDataForma
 			0xFF, 0xFF, 0xFF, 0xFF,
 	};
 
-	if (format != ARRAY_DATA_8BITUNSIGNED && format != ARRAY_DATA_16BITSIGNED)
+	if (format != ARRAY_DATA_8BITUNSIGNED && format != ARRAY_DATA_16BITSIGNED && format != ARRAY_DATA_UNKNOWN)
 		return FALSE;
 	if (frequency > VS1053_MAX_SAMPLE_RATE)
 		return FALSE;
@@ -254,21 +254,23 @@ bool_t gaudio_play_lld_init(uint16_t channel, uint32_t frequency, ArrayDataForma
 	}
 
 	// Setup
-	bps = (gfxSampleFormatBits(format)+7)/8;
-	if (channel == GAUDIO_PLAY_STEREO)
-		bps *= 2;
-	brate = frequency * bps;
+	if (format == ARRAY_DATA_8BITUNSIGNED || format == ARRAY_DATA_16BITSIGNED) {
+		bps = (gfxSampleFormatBits(format)+7)/8;
+		if (channel == GAUDIO_PLAY_STEREO)
+			bps *= 2;
+		brate = frequency * bps;
 
-	// Write the RIFF header
-	waitforready();
-	data_write(hdr1, sizeof(hdr1));
-	buf[0] = channel == GAUDIO_PLAY_STEREO ? 2 : 1;		buf[1] = 0;								data_write(buf, 2);
-	buf[0] = frequency;	buf[1] = frequency>>8;	buf[2] = frequency>>16; buf[3] = frequency>>24;	data_write(buf, 4);
-	buf[0] = brate;		buf[1] = brate>>8;		buf[2] = brate>>16;		buf[3] = brate>>24;		data_write(buf, 4);
-	waitforready();						// 32 bytes max before checking
-	buf[0] = bps; 										buf[1] = 0;								data_write(buf, 2);
-	buf[0] = gfxSampleFormatBits(format);				buf[1] = 0;								data_write(buf, 2);
-	data_write(hdr2, sizeof(hdr2));
+		// Write the RIFF header
+		waitforready();
+		data_write(hdr1, sizeof(hdr1));
+		buf[0] = channel == GAUDIO_PLAY_STEREO ? 2 : 1;		buf[1] = 0;								data_write(buf, 2);
+		buf[0] = frequency;	buf[1] = frequency>>8;	buf[2] = frequency>>16; buf[3] = frequency>>24;	data_write(buf, 4);
+		buf[0] = brate;		buf[1] = brate>>8;		buf[2] = brate>>16;		buf[3] = brate>>24;		data_write(buf, 4);
+		waitforready();						// 32 bytes max before checking
+		buf[0] = bps; 										buf[1] = 0;								data_write(buf, 2);
+		buf[0] = gfxSampleFormatBits(format);				buf[1] = 0;								data_write(buf, 2);
+		data_write(hdr2, sizeof(hdr2));
+	}
 	return TRUE;
 }
 
