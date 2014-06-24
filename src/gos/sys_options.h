@@ -62,6 +62,13 @@
 	#ifndef GFX_USE_OS_RAW32
 		#define GFX_USE_OS_RAW32		FALSE
 	#endif
+	/**
+	 * @brief   Use a eCos
+	 * @details	Defaults to FALSE
+	 */
+	#ifndef GFX_USE_OS_ECOS
+		#define GFX_USE_OS_ECOS			FALSE
+	#endif
 /**
  * @}
  *
