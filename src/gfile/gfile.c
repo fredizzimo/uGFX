@@ -97,7 +97,7 @@ GFILE *gfileStdErr;
 /********************************************************
  * The FAT file-system VMT
  ********************************************************/
-#ifndef GFILE_NEED_FATFS
+#if GFILE_NEED_FATFS
 	#include "src/gfile/inc_fatfs.c"
 #endif
 
