@@ -12,6 +12,15 @@
 #include "ff.h"
 #include "ffconf.h"
 
+/*
+ * ToDo:
+ *
+ *   - fatfsExists()
+ *   - f_mount has to be called before the disk can be accessed
+ *   - complete _flags2mode()
+ *   - restructure provided diskio.c files
+ *   - do full testing
+ */
 /********************************************************
  * The FAT file-system VMT
  ********************************************************/
