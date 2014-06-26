@@ -15,12 +15,11 @@
 /*
  * ToDo:
  *
- *   - fatfsExists()
  *   - f_mount has to be called before the disk can be accessed
  *   - complete _flags2mode()
  *   - restructure provided diskio.c files
- *   - do full testing
  */
+
 /********************************************************
  * The FAT file-system VMT
  ********************************************************/
@@ -39,7 +38,7 @@ static bool_t fatfsEOF(GFILE* f);
 
 static const GFILEVMT FsFatFSVMT = {
 	GFILE_CHAINHEAD,
-	GFSFLG_SEEKABLE,
+	GFSFLG_WRITEABLE | GFSFLG_SEEKABLE,
 	'F',
 	fatfsDel,
 	fatfsExists,
@@ -61,12 +60,14 @@ static void _flags2mode(GFILE* f, BYTE* mode)
 {
 	*mode = 0;
 
-	if (f->flags & GFILEFLG_MUSTEXIST)
+	if (f->flags & GFILEFLG_READ)
 		*mode |= FA_READ;
-	else if (f->flags & GFILEFLG_APPEND)
-		*mode |= 0;	/* ToDO */
-	else
+	if (f->flags & GFILEFLG_WRITE)
 		*mode |= FA_WRITE;
+	if (f->flags & GFILEFLG_APPEND)
+		*mode |= 0;  // ToDo
+	if (f->flags & GFILEFLG_TRUNC)
+		*mode |= FA_CREATE_ALWAYS;
 
 	/* ToDo - Complete */	
 }
@@ -84,9 +85,12 @@ static bool_t fatfsDel(const char* fname)
 
 static bool_t fatfsExists(const char* fname)
 {
-	(void)fname;
+	FRESULT ferr;
+	FILINFO fno;
 
-	/* ToDo */
+	ferr = f_stat( (const TCHAR*)fname, &fno);
+	if (ferr != FR_OK)
+		return FALSE;
 
 	return TRUE;
 }
@@ -116,15 +120,22 @@ static bool_t fatfsRename(const char* oldname, const char* newname)
 
 static bool_t fatfsOpen(GFILE* f, const char* fname)
 {
-	FIL* fd = 0;
+	FIL* fd;
 	BYTE mode;
 	FRESULT ferr;
+
+	if (!(fd = gfxAlloc(sizeof(FIL))))
+		return FALSE;
 
 	_flags2mode(f, &mode);
 
 	ferr = f_open(fd, fname, mode);
-	if (ferr != FR_OK)
+	if (ferr != FR_OK) {
+		gfxFree( (FIL*)f->obj );
+		f->obj = 0;
+
 		return FALSE;
+	}
 
 	f->obj = (void*)fd;
 
@@ -133,6 +144,9 @@ static bool_t fatfsOpen(GFILE* f, const char* fname)
 
 static void fatfsClose(GFILE* f)
 {
+	if ((FIL*)f->obj != 0)
+		gfxFree( (FIL*)f->obj );
+
 	f_close( (FIL*)f->obj );
 }
 
@@ -167,7 +181,7 @@ static bool_t fatfsSetPos(GFILE* f, long int pos)
 
 static long int fatfsGetSize(GFILE* f)
 {
-	return (long int)f_tell( (FIL*)f->obj );
+	return (long int)f_size( (FIL*)f->obj );
 }
 
 static bool_t fatfsEOF(GFILE* f)
