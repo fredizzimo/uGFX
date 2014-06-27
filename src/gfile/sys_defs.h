@@ -200,8 +200,40 @@ extern "C" {
 	#if GFILE_NEED_CHIBIOSFS && GFX_USE_OS_CHIBIOS
 		GFILE *		gfileOpenBaseFileStream(void *BaseFileStreamPtr, const char *mode);
 	#endif
+
 	#if GFILE_NEED_MEMFS
 		GFILE *		gfileOpenMemory(void *memptr, const char *mode);
+	#endif
+
+	#if GFILE_NEED_FATFS
+		/**
+		 * @brief					Mount a logical drive (aka partition)
+		 *
+		 * @details					Not supported by every file system
+		 * @details					Currently just one drive at one is supported.
+		 *
+		 * @param[in] fs			The file system (F for FatFS)
+		 * @param[in] drive			The logical drive prefix
+		 *
+		 * @return					TRUE on success, FALSE otherwise
+		 *
+		 * @api
+		 */
+		bool_t gfileMount(char fs, const char *drive);
+
+		/**
+		 * @brief					Unmount a logical drive (aka partition)
+		 *
+		 * @details					Does have no effect if @p gfileMount() as been called before hand
+		 *
+		 * @param[in] fs			The file system (F for FatFS)
+		 * @param[in] drive			The logical drive prefix
+		 *
+		 * @return					TRUE on success, FALSE otherwise
+		 *
+		 * @api
+		 */
+		bool_t gfileUnmount(char fs, const char *drive);	
 	#endif
 
 	#if GFILE_NEED_PRINTG

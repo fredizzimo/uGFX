@@ -12,14 +12,6 @@
 #include "ff.h"
 #include "ffconf.h"
 
-/*
- * ToDo:
- *
- *   - f_mount has to be called before the disk can be accessed
- *   - complete _flags2mode()
- *   - restructure provided diskio.c files
- */
-
 /********************************************************
  * The FAT file-system VMT
  ********************************************************/
@@ -35,6 +27,8 @@ static int fatfsWrite(GFILE* f, const void* buf, int size);
 static bool_t fatfsSetPos(GFILE* f, long int pos);
 static long int fatfsGetSize(GFILE* f);
 static bool_t fatfsEOF(GFILE* f);
+static bool_t fatfsMount(const char* drive);
+static bool_t fatfsUnmount(const char* drive);
 
 static const GFILEVMT FsFatFSVMT = {
 	GFILE_CHAINHEAD,
@@ -50,11 +44,17 @@ static const GFILEVMT FsFatFSVMT = {
 	fatfsWrite,
 	fatfsSetPos,
 	fatfsGetSize,
-	fatfsEOF
+	fatfsEOF,
+	fatfsMount,
+	fatfsUnmount
 };
 
 #undef GFILE_CHAINHEAD
 #define GFILE_CHAINHEAD &FsFatFSVMT
+
+// optimize these later on. Use an array to have multiple FatFS
+static bool_t fatfs_mounted = FALSE;
+static FATFS fatfs_fs;
 
 static void _flags2mode(GFILE* f, BYTE* mode)
 {
@@ -123,7 +123,10 @@ static bool_t fatfsOpen(GFILE* f, const char* fname)
 	FIL* fd;
 	BYTE mode;
 	FRESULT ferr;
-
+/*
+	if (!fatfs_mounted && !fatfsMount(""))
+		return FALSE;
+*/
 	if (!(fd = gfxAlloc(sizeof(FIL))))
 		return FALSE;
 
@@ -131,7 +134,7 @@ static bool_t fatfsOpen(GFILE* f, const char* fname)
 
 	ferr = f_open(fd, fname, mode);
 	if (ferr != FR_OK) {
-		gfxFree( (FIL*)f->obj );
+		gfxFree(fd);
 		f->obj = 0;
 
 		return FALSE;
@@ -144,10 +147,10 @@ static bool_t fatfsOpen(GFILE* f, const char* fname)
 
 static void fatfsClose(GFILE* f)
 {
-	if ((FIL*)f->obj != 0)
+	if ((FIL*)f->obj != 0) { 
 		gfxFree( (FIL*)f->obj );
-
-	f_close( (FIL*)f->obj );
+		f_close( (FIL*)f->obj );
+	}
 }
 
 static int fatfsRead(GFILE* f, void* buf, int size)
@@ -190,5 +193,33 @@ static bool_t fatfsEOF(GFILE* f)
 		return TRUE;
 	else
 		return FALSE;
+}
+
+static bool_t fatfsMount(const char* drive)
+{
+	FRESULT ferr;
+
+	if (!fatfs_mounted) {
+		ferr = f_mount(&fatfs_fs, drive, 1);
+		if (ferr !=  FR_OK)
+			return FALSE;
+		fatfs_mounted = TRUE;
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+static bool_t fatfsUnmount(const char* drive)
+{
+	(void)drive;
+
+	if (fatfs_mounted) {
+		// FatFS does not provide an unmount routine.
+		fatfs_mounted = FALSE;
+		return TRUE;
+	}
+
+	return FALSE;
 }
 

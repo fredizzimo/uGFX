@@ -46,6 +46,7 @@ static const GFILEVMT FsNativeVMT = {
 	NativeDel, NativeExists, NativeFilesize, NativeRen,
 	NativeOpen, NativeClose, NativeRead, NativeWrite,
 	NativeSetpos, NativeGetsize, NativeEof,
+	0, 0
 };
 #undef GFILE_CHAINHEAD
 #define GFILE_CHAINHEAD		&FsNativeVMT

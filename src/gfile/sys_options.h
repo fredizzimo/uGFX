@@ -21,6 +21,18 @@
  * @{
  */
 	/**
+	 * @brief	Should the filesystem be mounted automatically
+	 * @details	The filesystem will be mounted automatically if the
+	 *			user does not do it manually.
+	 * @details	Defaults to FALSE
+	 *
+	 * @note	Only available for filesystems that actually implement a
+	 *			mounting routine.
+	 */
+	#ifndef GFILE_NEED_AUTOMOUNT
+		#define GFILE_NEED_AUTOMOUNT	FALSE
+	#endif
+	/**
 	 * @brief   Include printg, fprintg etc functions
 	 * @details	Defaults to FALSE
 	 */
