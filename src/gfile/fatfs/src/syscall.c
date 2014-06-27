@@ -1,67 +1,57 @@
 /*
-    ChibiOS/RT - Copyright (C) 2006-2013 Giovanni Di Sirio
+ * This file is subject to the terms of the GFX License. If a copy of
+ * the license was not distributed with this file, you can obtain one at:
+ *
+ *              http://ugfx.org/license.html
+ */
 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
-*/
-
-/*------------------------------------------------------------------------*/
-/* Sample code of OS dependent controls for FatFs R0.08b                  */
-/* (C)ChaN, 2011                                                          */
-/*------------------------------------------------------------------------*/
-
-#include "ch.h"
+#include "gfx.h"
 #include "ff.h"
 
 #if _FS_REENTRANT
+
 /*------------------------------------------------------------------------*/
 /* Static array of Synchronization Objects                                */
 /*------------------------------------------------------------------------*/
-static Semaphore ff_sem[_VOLUMES];
+static gfxSem ff_sem[_VOLUMES];
 
 /*------------------------------------------------------------------------*/
 /* Create a Synchronization Object                                        */
 /*------------------------------------------------------------------------*/
-int ff_cre_syncobj(BYTE vol, _SYNC_t *sobj) {
+int ff_cre_syncobj(BYTE vol, _SYNC_t *sobj)
+{
+	*sobj = ff_sem[vol];
+	gfxSemInit(sobj, 1, MAX_SEMAPHORE_COUNT);
 
-  *sobj = &ff_sem[vol];
-  chSemInit(*sobj, 1);
-  return TRUE;
+	return 1;
 }
 
 /*------------------------------------------------------------------------*/
 /* Delete a Synchronization Object                                        */
 /*------------------------------------------------------------------------*/
-int ff_del_syncobj(_SYNC_t sobj) {
+int ff_del_syncobj(_SYNC_t sobj)
+{
+	gfxSemDestroy( (gfxSem*)&sobj );
 
-  chSemReset(sobj, 0);
-  return TRUE;
+	return 1;
 }
 
 /*------------------------------------------------------------------------*/
 /* Request Grant to Access the Volume                                     */
 /*------------------------------------------------------------------------*/
-int ff_req_grant(_SYNC_t sobj) {
-
-  msg_t msg = chSemWaitTimeout(sobj, (systime_t)_FS_TIMEOUT);
-  return msg == RDY_OK;
+int ff_req_grant(_SYNC_t sobj)
+{
+	if (gfxSemWait( (gfxSem*)&sobj, (delaytime_t)_FS_TIMEOUT) )
+		return TRUE;
+	return FALSE;
 }
 
 /*------------------------------------------------------------------------*/
 /* Release Grant to Access the Volume                                     */
 /*------------------------------------------------------------------------*/
-void ff_rel_grant(_SYNC_t sobj) {
-
-  chSemSignal(sobj);
+void ff_rel_grant(_SYNC_t sobj)
+{
+	gfxSemSignal( (gfxSem*)&sobj );
 }
 #endif /* _FS_REENTRANT */
 
@@ -69,16 +59,17 @@ void ff_rel_grant(_SYNC_t sobj) {
 /*------------------------------------------------------------------------*/
 /* Allocate a memory block                                                */
 /*------------------------------------------------------------------------*/
-void *ff_memalloc(UINT size) {
-
-  return chHeapAlloc(NULL, size);
+void *ff_memalloc(UINT size)
+{
+	return gfxAlloc( (size_t)size );
 }
 
 /*------------------------------------------------------------------------*/
 /* Free a memory block                                                    */
 /*------------------------------------------------------------------------*/
-void ff_memfree(void *mblock) {
-
-  chHeapFree(mblock);
+void ff_memfree(void *mblock)
+{
+	gfxFree(mblock);
 }
 #endif /* _USE_LFN == 3 */
+
