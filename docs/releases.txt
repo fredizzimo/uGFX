@@ -8,6 +8,7 @@ FEATURE:	Revised GWIN redraw strategy
 FEATURE:	Added generic framebuffer driver
 FEATURE:	Added Linux-Framebuffer board definition
 FEATURE:	Added FatFS support for GFILE
+FEATURE:	Added gfileMount() and gfileUnmount()
 
 
 *** Release 2.1 ***
