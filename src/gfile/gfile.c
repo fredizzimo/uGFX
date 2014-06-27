@@ -56,6 +56,8 @@ typedef struct GFILEVMT {
 	bool_t		(*setpos)	(GFILE *f, long int pos);
 	long int	(*getsize)	(GFILE *f);
 	bool_t		(*eof)		(GFILE *f);
+	bool_t		(*mount)	(const char *drive);
+	bool_t		(*unmount)	(const char *drive);
 } GFILEVMT;
 
 // The chain of FileSystems
@@ -97,7 +99,7 @@ GFILE *gfileStdErr;
 /********************************************************
  * The FAT file-system VMT
  ********************************************************/
-#ifndef GFILE_NEED_FATFS
+#if GFILE_NEED_FATFS
 	#include "src/gfile/inc_fatfs.c"
 #endif
 
@@ -473,6 +475,34 @@ bool_t gfileEOF(GFILE *f) {
 	if (!f->vmt->eof)
 		return FALSE;
 	return f->vmt->eof(f);
+}
+
+bool_t gfileMount(char fs, const char* drive) {
+	const GFILEVMT *p;
+
+	// Find the correct VMT
+	for(p = FsChain; p; p = p->next) {
+		if (p->prefix == fs) {
+			if (!p->mount)
+				return FALSE;
+			return p->mount(drive);
+		}
+	}
+	return FALSE;
+}
+
+bool_t gfileUnmount(char fs, const char* drive) {
+	const GFILEVMT *p;
+
+	// Find the correct VMT
+	for(p = FsChain; p; p = p->next) {
+		if (p->prefix == fs) {
+			if (!p->mount)
+				return FALSE;
+			return p->unmount(drive);
+		}
+	}
+	return FALSE;
 }
 
 /********************************************************
