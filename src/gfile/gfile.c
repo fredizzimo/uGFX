@@ -477,35 +477,33 @@ bool_t gfileEOF(GFILE *f) {
 	return f->vmt->eof(f);
 }
 
-#if GFILE_NEED_FATFS
-	bool_t gfileMount(char fs, const char* drive) {
-		const GFILEVMT *p;
+bool_t gfileMount(char fs, const char* drive) {
+	const GFILEVMT *p;
 
-		// Find the correct VMT
-		for(p = FsChain; p; p = p->next) {
-			if (p->prefix == fs) {
-				if (!p->mount)
-					return FALSE;
-				return p->mount(drive);
-			}
+	// Find the correct VMT
+	for(p = FsChain; p; p = p->next) {
+		if (p->prefix == fs) {
+			if (!p->mount)
+				return FALSE;
+			return p->mount(drive);
 		}
-		return FALSE;
 	}
+	return FALSE;
+}
 
-	bool_t gfileUnmount(char fs, const char* drive) {
-		const GFILEVMT *p;
+bool_t gfileUnmount(char fs, const char* drive) {
+	const GFILEVMT *p;
 
-		// Find the correct VMT
-		for(p = FsChain; p; p = p->next) {
-			if (p->prefix == fs) {
-				if (!p->mount)
-					return FALSE;
-				return p->unmount(drive);
-			}
+	// Find the correct VMT
+	for(p = FsChain; p; p = p->next) {
+		if (p->prefix == fs) {
+			if (!p->mount)
+				return FALSE;
+			return p->unmount(drive);
 		}
-		return FALSE;
 	}
-#endif
+	return FALSE;
+}
 
 /********************************************************
  * String VMT routines

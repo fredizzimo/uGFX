@@ -21,16 +21,14 @@
  * @{
  */
 	/**
-	 * @brief	Should the filesystem be mounted automatically
-	 * @details	The filesystem will be mounted automatically if the
-	 *			user does not do it manually.
+	 * @brief	Should the filesystem not be mounted automatically
+	 * @details	The filesystem is normally mounted automatically if the
+	 *			user does not do it manually. This option turns that off
+	 *			so the user must manually mount the file-system first.
 	 * @details	Defaults to FALSE
-	 *
-	 * @note	Only available for filesystems that actually implement a
-	 *			mounting routine.
 	 */
-	#ifndef GFILE_NEED_AUTOMOUNT
-		#define GFILE_NEED_AUTOMOUNT	FALSE
+	#ifndef GFILE_NEED_NOAUTOMOUNT
+		#define GFILE_NEED_NOAUTOMOUNT	FALSE
 	#endif
 	/**
 	 * @brief   Include printg, fprintg etc functions

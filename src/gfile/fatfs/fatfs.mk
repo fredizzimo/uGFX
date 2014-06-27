@@ -1,6 +1,6 @@
-GFXSRC +=    $(GFXLIB)/src/gfile/fatfs/src/ff.c \
-             $(GFXLIB)/src/gfile/fatfs/src/chibios_fatfs_diskio.c \
-             $(GFXLIB)/src/gfile/fatfs/src/syscall.c
+GFXSRC +=    $(GFXLIB)/src/gfile/fatfs/fatfs.c \
+             $(GFXLIB)/src/gfile/fatfs/fatfs_syscall.c \
+             $(GFXLIB)/src/gfile/fatfs/fatfs_chibios_diskio.c
 
 
 GFXINC +=    $(GFXLIB)/src/gfile/fatfs/src

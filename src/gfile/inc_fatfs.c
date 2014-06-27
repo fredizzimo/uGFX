@@ -56,20 +56,21 @@ static const GFILEVMT FsFatFSVMT = {
 static bool_t fatfs_mounted = FALSE;
 static FATFS fatfs_fs;
 
-static void _flags2mode(GFILE* f, BYTE* mode)
+static BYTE fatfs_flags2mode(GFILE* f)
 {
-	*mode = 0;
+	BYTE mode = 0;
 
 	if (f->flags & GFILEFLG_READ)
-		*mode |= FA_READ;
+		mode |= FA_READ;
 	if (f->flags & GFILEFLG_WRITE)
-		*mode |= FA_WRITE;
+		mode |= FA_WRITE;
 	if (f->flags & GFILEFLG_APPEND)
-		*mode |= 0;  // ToDo
+		mode |= 0;  // ToDo
 	if (f->flags & GFILEFLG_TRUNC)
-		*mode |= FA_CREATE_ALWAYS;
+		mode |= FA_CREATE_ALWAYS;
 
-	/* ToDo - Complete */	
+	/* ToDo - Complete */
+	return mode;
 }
 
 static bool_t fatfsDel(const char* fname)
@@ -121,19 +122,16 @@ static bool_t fatfsRename(const char* oldname, const char* newname)
 static bool_t fatfsOpen(GFILE* f, const char* fname)
 {
 	FIL* fd;
-	BYTE mode;
-	FRESULT ferr;
-/*
-	if (!fatfs_mounted && !fatfsMount(""))
-		return FALSE;
-*/
+
+	#if !GFILE_NEED_NOAUTOMOUNT
+		if (!fatfs_mounted && !fatfsMount(""))
+			return FALSE;
+	#endif
+
 	if (!(fd = gfxAlloc(sizeof(FIL))))
 		return FALSE;
 
-	_flags2mode(f, &mode);
-
-	ferr = f_open(fd, fname, mode);
-	if (ferr != FR_OK) {
+	if (f_open(fd, fname, fatfs_flags2mode(f)) != FR_OK) {
 		gfxFree(fd);
 		f->obj = 0;
 

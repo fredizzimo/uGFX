@@ -51,7 +51,7 @@ static const GFILEVMT FsNativeVMT = {
 #undef GFILE_CHAINHEAD
 #define GFILE_CHAINHEAD		&FsNativeVMT
 
-static void flags2mode(char *buf, uint16_t flags) {
+static void Native_flags2mode(char *buf, uint16_t flags) {
 	if (flags & GFILEFLG_MUSTEXIST)
 		*buf = 'r';
 	else if (flags & GFILEFLG_APPEND)
@@ -90,7 +90,7 @@ static bool_t NativeOpen(GFILE *f, const char *fname) {
 	FILE *fd;
 	char mode[5];
 
-	flags2mode(mode, f->flags);
+	Native_flags2mode(mode, f->flags);
 	if (!(fd = fopen(fname, mode)))
 		return FALSE;
 	f->obj = (void *)fd;
