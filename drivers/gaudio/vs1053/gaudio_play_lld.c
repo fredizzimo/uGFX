@@ -278,11 +278,19 @@ bool_t gaudio_play_lld_init(uint16_t channel, uint32_t frequency, ArrayDataForma
 }
 
 bool_t gaudio_play_lld_set_volume(uint8_t vol) {
+	uint16_t tmp;
+
 	// Volume is 0xFE -> 0x00. Adjust vol to match
 	vol = ~vol;
-	if (vol == 0xFF) vol = 0xFE;
+	if (vol > 0xFE)
+		vol = 0xFE;
 
-	cmd_write(SCI_VOL, ((uint16_t)vol) << 8 | vol);
+	tmp  = 0;
+	tmp |= (( vol << VOL_LEFT_SHIFT ) & VOL_LEFT_MASK );
+	tmp |= (( vol << VOL_RIGHT_SHIFT ) & VOL_RIGHT_MASK );
+
+	cmd_write(SCI_VOL, tmp);
+
 	return TRUE;
 }
 
