@@ -535,6 +535,7 @@ bool_t gfileUnmount(char fs, const char* drive) {
 		0, 0, 0, 0,
 		0, 0, StringRead, StringWrite,
 		0, 0, 0,
+		0, 0
 	};
 #endif
 

@@ -16,5 +16,6 @@
 #if GFX_USE_GFILE && GFILE_NEED_FATFS
 
 #include "src/ff.c"
+#include "src/option/unicode.c"
 
 #endif // GFX_USE_GFILE && GFILE_NEED_FATFS

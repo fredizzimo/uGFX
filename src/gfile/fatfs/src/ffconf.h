@@ -56,7 +56,7 @@
 / Locale and Namespace Configurations
 /---------------------------------------------------------------------------*/
 
-#define _CODE_PAGE	932
+#define _CODE_PAGE 1252
 /* The _CODE_PAGE specifies the OEM code page to be used on the target system.
 /  Incorrect setting of the code page can cause a file open failure.
 /
@@ -88,7 +88,7 @@
 /   1    - ASCII (Valid for only non-LFN configuration) */
 
 
-#define	_USE_LFN	0		/* 0 to 3 */
+#define	_USE_LFN	3		/* 0 to 3 */
 #define	_MAX_LFN	255		/* Maximum LFN length to handle (12 to 255) */
 /* The _USE_LFN option switches the LFN feature.
 /
@@ -188,7 +188,7 @@
 /  with file lock control. This feature uses bss _FS_LOCK * 12 bytes. */
 
 
-#define _FS_REENTRANT	1		/* 0:Disable or 1:Enable */
+#define _FS_REENTRANT	0		/* 0:Disable or 1:Enable */
 #if _FS_REENTRANT
 	#include "gfx.h"
 #endif
