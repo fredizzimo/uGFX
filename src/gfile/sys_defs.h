@@ -226,6 +226,19 @@ extern "C" {
 	 */
 	bool_t gfileUnmount(char fs, const char *drive);
 
+	/**
+	 * @brief					Syncs the file object (flushes the buffer)
+	 *
+	 * @details					Not supported by every file system
+	 *
+	 * @param[in] f				The file
+	 *
+	 * @return					TRUE on success, FALSE otherwise
+	 *
+	 * @api
+	 */
+	bool_t gfileSync(GFILE *f);
+
 	#if GFILE_NEED_CHIBIOSFS && GFX_USE_OS_CHIBIOS
 		GFILE *		gfileOpenBaseFileStream(void *BaseFileStreamPtr, const char *mode);
 	#endif

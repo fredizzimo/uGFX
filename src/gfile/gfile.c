@@ -58,6 +58,7 @@ typedef struct GFILEVMT {
 	bool_t		(*eof)		(GFILE *f);
 	bool_t		(*mount)	(const char *drive);
 	bool_t		(*unmount)	(const char *drive);
+	bool_t		(*sync)		(GFILE *f);
 } GFILEVMT;
 
 // The chain of FileSystems
@@ -503,6 +504,12 @@ bool_t gfileUnmount(char fs, const char* drive) {
 		}
 	}
 	return FALSE;
+}
+
+bool_t gfileSync(GFILE *f) {
+	if (!f->vmt->sync)
+		return FALSE;
+	return f->vmt->sync(f);
 }
 
 /********************************************************

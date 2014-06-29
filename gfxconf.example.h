@@ -220,6 +220,7 @@
 //    #define GFILE_ALLOW_DEVICESPECIFIC               FALSE
 //    #define GFILE_MAX_GFILES                         3
 //#define GFILE_NEED_NOAUTOMOUNT                       FALSE
+//#define GFILE_NEED_NOAUTOSYNC                        FALSE
 
 //#define GFILE_NEED_MEMFS                             FALSE
 //#define GFILE_NEED_ROMFS                             FALSE

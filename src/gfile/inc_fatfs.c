@@ -29,6 +29,7 @@ static long int fatfsGetSize(GFILE* f);
 static bool_t fatfsEOF(GFILE* f);
 static bool_t fatfsMount(const char* drive);
 static bool_t fatfsUnmount(const char* drive);
+static bool_t fatfsSync(GFILE* f);
 
 static const GFILEVMT FsFatFSVMT = {
 	GFILE_CHAINHEAD,
@@ -46,7 +47,8 @@ static const GFILEVMT FsFatFSVMT = {
 	fatfsGetSize,
 	fatfsEOF,
 	fatfsMount,
-	fatfsUnmount
+	fatfsUnmount,
+	fatfsSync
 };
 
 #undef GFILE_CHAINHEAD
@@ -140,6 +142,13 @@ static bool_t fatfsOpen(GFILE* f, const char* fname)
 
 	f->obj = (void*)fd;
 
+	#if !GFILE_NEED_NOAUTOSYNC
+		// no need to sync when not opening for write
+		if (f->flags & GFILEFLG_WRITE) {
+			f_sync( (FIL*)f->obj );
+		}
+	#endif
+
 	return TRUE;	
 }
 
@@ -165,6 +174,7 @@ static int fatfsWrite(GFILE* f, const void* buf, int size)
 	int wr;
 
 	f_write( (FIL*)f->obj, buf, size, (UINT*)&wr);
+	f_sync( (FIL*)f->obj );
 
 	return wr;
 }
@@ -219,5 +229,17 @@ static bool_t fatfsUnmount(const char* drive)
 	}
 
 	return FALSE;
+}
+
+static bool_t fatfsSync(GFILE *f)
+{
+	FRESULT ferr;
+
+	ferr = f_sync( (FIL*)f->obj );
+	if (ferr != FR_OK) {
+		return FALSE;
+	}
+
+	return TRUE;
 }
 

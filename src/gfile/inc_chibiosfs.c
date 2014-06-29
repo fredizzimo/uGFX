@@ -27,7 +27,8 @@ static const GFILEVMT FsCHIBIOSVMT = {
 	0, 0, 0, 0,
 	0, ChibiOSBFSClose, ChibiOSBFSRead, ChibiOSBFSWrite,
 	ChibiOSBFSSetpos, ChibiOSBFSGetsize, ChibiOSBFSEof,
-	0, 0
+	0, 0,
+	0
 };
 
 static void ChibiOSBFSClose(GFILE *f) {

@@ -9,6 +9,7 @@ FEATURE:	Added generic framebuffer driver
 FEATURE:	Added Linux-Framebuffer board definition
 FEATURE:	Added FatFS support for GFILE
 FEATURE:	Added gfileMount() and gfileUnmount()
+FEATURE:	Added gfileSync()
 
 
 *** Release 2.1 ***
