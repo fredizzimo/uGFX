@@ -21,6 +21,29 @@
  * @{
  */
 	/**
+	 * @brief	Should the filesystem not be mounted automatically
+	 * @details	The filesystem is normally mounted automatically if the
+	 *			user does not do it manually. This option turns that off
+	 *			so the user must manually mount the file-system first.
+	 * @details	Defaults to FALSE
+	 */
+	#ifndef GFILE_NEED_NOAUTOMOUNT
+		#define GFILE_NEED_NOAUTOMOUNT	FALSE
+	#endif
+	/**
+	 * @brief	Should the filesystem be synced automatically
+	 * @details	The filesystem will automatically be synced after an open() or
+	 *			write() call unless this feature is disabled.
+	 * @details	If this feature is disabled, the user should sync the filesystem
+	 *			himself using @p gfileSync()
+	 * @details	Not all filesystems implement the syncing feature. This feature will
+	 *			have no effect in such a case.
+	 * @details	Defaults to FALSE
+	 */
+	#ifndef GFILE_NEED_NOAUTOSYNC
+		#define GFILE_NEED_NOAUTOSYNC	FALSE
+	#endif
+	/**
 	 * @brief   Include printg, fprintg etc functions
 	 * @details	Defaults to FALSE
 	 */

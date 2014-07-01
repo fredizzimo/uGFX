@@ -52,6 +52,8 @@ static const GFILEVMT FsROMVMT = {
 	0, ROMExists, ROMFilesize, 0,
 	ROMOpen, ROMClose, ROMRead, 0,
 	ROMSetpos, ROMGetsize, ROMEof,
+	0, 0,
+	0
 };
 #undef GFILE_CHAINHEAD
 #define GFILE_CHAINHEAD		&FsROMVMT
