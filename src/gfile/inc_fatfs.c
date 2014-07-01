@@ -174,7 +174,9 @@ static int fatfsWrite(GFILE* f, const void* buf, int size)
 	int wr;
 
 	f_write( (FIL*)f->obj, buf, size, (UINT*)&wr);
-	f_sync( (FIL*)f->obj );
+	#if !GFILE_NEED_NOAUTOSYNC
+		f_sync( (FIL*)f->obj );
+	#endif
 
 	return wr;
 }
