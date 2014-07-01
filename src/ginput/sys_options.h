@@ -73,40 +73,41 @@
  * @{
  */
 	/**
-	 * @brief   Use a custom board definition for the mouse/touch driver even if a board definition exists.
+	 * @brief   Turn off touch mouse support.
 	 * @details	Defaults to FALSE
-	 * @details	If TRUE, add ginput_lld_mouse_board.h to your project directory and customise it.
-	 * @note	Not all GINPUT mouse/touch low level drivers use board definition files.
+	 * @note	Touch device handling requires a lot of code. If your mouse doesn't require it
+	 * 			this can be turned off to save a lot of space.
 	 */
-	#ifndef GINPUT_MOUSE_USE_CUSTOM_BOARD
-		#define GINPUT_MOUSE_USE_CUSTOM_BOARD		FALSE
+	#ifndef GINPUT_TOUCH_NOTOUCH
+		#define GINPUT_TOUCH_NOTOUCH					FALSE
 	#endif
 	/**
-	 * @brief   Use a custom board definition for the keyboard driver even if a board definition exists.
+	 * @brief   Turn off calibration support.
 	 * @details	Defaults to FALSE
-	 * @details	If TRUE, add ginput_lld_keyboard_board.h to your project directory and customise it.
-	 * @note	Not all GINPUT keyboard low level drivers use board definition files.
+	 * @note	Calibration requires a lot of code. If your mouse doesn't require it
+	 * 			this can be turned off to save a lot of space.
 	 */
-	#ifndef GINPUT_KEYBOARD_USE_CUSTOM_BOARD
-		#define GINPUT_KEYBOARD_USE_CUSTOM_BOARD	FALSE
+	#ifndef GINPUT_TOUCH_NOCALIBRATE
+		#define GINPUT_TOUCH_NOCALIBRATE				FALSE
 	#endif
 	/**
-	 * @brief   Use a custom board definition for the toggle driver even if a board definition exists.
-	 * @details	Defaults to FALSE
-	 * @details	If TRUE, add ginput_lld_toggle_board.h to your project directory and customise it.
-	 * @note	Not all GINPUT toggle low level drivers use board definition files.
+	 * @brief   Milliseconds between mouse polls.
+	 * @details	Defaults to 25 millseconds
+	 * @note	How often mice should be polled. More often leads to smoother mouse movement
+	 * 			but increases CPU usage. If no mouse drivers need polling the poll is not
+	 * 			started.
 	 */
-	#ifndef GINPUT_TOGGLE_USE_CUSTOM_BOARD
-		#define GINPUT_TOGGLE_USE_CUSTOM_BOARD		FALSE
+	#ifndef GINPUT_MOUSE_POLL_PERIOD
+		#define GINPUT_MOUSE_POLL_PERIOD				25
 	#endif
+
 	/**
-	 * @brief   Use a custom board definition for the dial driver even if a board definition exists.
-	 * @details	Defaults to FALSE
-	 * @details	If TRUE, add ginput_lld_dial_board.h to your project directory and customise it.
-	 * @note	Not all GINPUT dial low level drivers use board definition files.
+	 * @brief   Milliseconds separating a CLICK from a CXTCLICK.
+	 * @details	Defaults to 700 millseconds
+	 * @note	How long it takes for a click to turn into a CXTCLICK on a touch device.
 	 */
-	#ifndef GINPUT_DIAL_USE_CUSTOM_BOARD
-		#define GINPUT_DIAL_USE_CUSTOM_BOARD		FALSE
+	#ifndef GINPUT_TOUCH_CLICK_TIME
+		#define GINPUT_TOUCH_CLICK_TIME					700
 	#endif
 /** @} */
 
