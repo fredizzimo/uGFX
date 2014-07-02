@@ -48,6 +48,10 @@ typedef struct GCheckboxObject {
 	#endif
 } GCheckboxObject;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief				Create a checkbox window.
  * @return				NULL if there is no resultant drawing area, otherwise a window handle.
@@ -110,6 +114,10 @@ bool_t gwinCheckboxIsChecked(GHandle gh);
 void gwinCheckboxDraw_CheckOnLeft(GWidgetObject *gw, void *param);
 void gwinCheckboxDraw_CheckOnRight(GWidgetObject *gw, void *param);
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _GWIN_CHECKBOX_H */
 /** @} */

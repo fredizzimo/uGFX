@@ -26,6 +26,8 @@ static const GFILEVMT FsMemVMT = {
 	0, 0, 0, 0,
 	0, 0, MEMRead, MEMWrite,
 	MEMSetpos, 0, 0,
+	0, 0, 
+	0
 };
 
 static int MEMRead(GFILE *f, void *buf, int size) {
