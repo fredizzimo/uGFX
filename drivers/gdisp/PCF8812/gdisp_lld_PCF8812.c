@@ -43,8 +43,6 @@
 // Some common routines and macros
 #define RAM(g)				((uint8_t *)g->priv)
 
-unsigned char RAM[(GDISP_SCREEN_WIDTH * GDISP_SCREEN_HEIGHT / 8)];
-
 #define xyaddr(x, y)   ((x) + ((y) >> 3) * GDISP_SCREEN_WIDTH)
 #define xybit(y)       (1 << ((y) & 7))
 
@@ -61,7 +59,7 @@ unsigned char RAM[(GDISP_SCREEN_WIDTH * GDISP_SCREEN_HEIGHT / 8)];
 
 LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	// The private area is the display surface.
-	g->priv = gfxAlloc((GDISP_SCREEN_WIDTH * GDISP_SCREEN_HEIGHT / 8));
+	g->priv = gfxAlloc((GDISP_SCREEN_WIDTH * (GDISP_SCREEN_HEIGHT / 8)));
 
 	// Initialise the board interface
 	init_board(g);
@@ -85,13 +83,14 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 
 	unsigned int i;
-	for (i = 0; i < (GDISP_SCREEN_WIDTH * GDISP_SCREEN_HEIGHT / 8); i++)
+	for (i = 0; i < (GDISP_SCREEN_WIDTH * (GDISP_SCREEN_HEIGHT / 8)); i++)
 	{
-		write_data(g, (uint8_t*)0x00, 1);
+		RAM(g)[i] = 0x00;
+		write_data(g, 0x00, 1);
 	}
 
-    // Finish Init
-    post_init_board(g);
+	// Finish Init
+	post_init_board(g);
 
  	// Release the bus
 	release_bus(g);
@@ -114,15 +113,17 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		if (!(g->flags & GDISP_FLG_NEEDFLUSH))
 			return;
 
-		unsigned int i;
-
 		acquire_bus(g);
 
-		//write_cmd(g, PCF8812_SET_X);
-		//write_cmd(g, PCF8812_SET_Y);
+		write_cmd(g, PCF8812_SET_X);
+		write_cmd(g, PCF8812_SET_Y);
 
-		for (i = 0; i < 9; i++) {
-		  write_data(g, RAM(g) + (i * GDISP_SCREEN_WIDTH), GDISP_SCREEN_WIDTH);
+		unsigned char x, y;
+
+		for (y = 0; y < (GDISP_SCREEN_HEIGHT / 8); y++) {
+			for(x = 0; x < GDISP_SCREEN_WIDTH; x++) {
+				write_data(g, RAM(g) + xyaddr(x, y), 1);
+			}
 		}
 		release_bus(g);
 	}
@@ -151,7 +152,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			y = g->p.x;
 			break;
 		}
-		if (gdispColor2Native(g->p.color) != Black)
+		if (gdispColor2Native(g->p.color) == Black)
 			RAM(g)[xyaddr(x, y)] |= xybit(y);
 		else
 			RAM(g)[xyaddr(x, y)] &= ~xybit(y);
