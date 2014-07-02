@@ -26,6 +26,7 @@
 ///////////////////////////////////////////////////////////////////////////
 // GOS - One of these must be defined, preferably in your Makefile       //
 ///////////////////////////////////////////////////////////////////////////
+//#define GFX_USE_OS_RAW32                             FALSE
 //#define GFX_USE_OS_CHIBIOS                           FALSE
 //#define GFX_USE_OS_FREERTOS                          FALSE
 //    #define GFX_FREERTOS_USE_TRACE                   FALSE
@@ -219,6 +220,8 @@
 //    #define GFILE_ALLOW_FLOATS                       FALSE
 //    #define GFILE_ALLOW_DEVICESPECIFIC               FALSE
 //    #define GFILE_MAX_GFILES                         3
+//#define GFILE_NEED_NOAUTOMOUNT                       FALSE
+//#define GFILE_NEED_NOAUTOSYNC                        FALSE
 
 //#define GFILE_NEED_MEMFS                             FALSE
 //#define GFILE_NEED_ROMFS                             FALSE

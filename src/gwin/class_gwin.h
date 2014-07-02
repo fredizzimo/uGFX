@@ -98,7 +98,7 @@ typedef struct gwinVMT {
 				void (*ToggleOn)		(GWidgetObject *gw, uint16_t role);						// @< Process toggle on events (optional)
 			};
 		#endif
-		#if GINPUT_NEED_TOGGLE
+		#if GINPUT_NEED_DIAL
 			struct {
 				uint16_t				dialroles;												// @< The roles supported for dials (0->dialroles-1)
 				void (*DialAssign)		(GWidgetObject *gw, uint16_t role, uint16_t instance);	// @< Test the role and save the dial instance handle (optional)
