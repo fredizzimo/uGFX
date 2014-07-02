@@ -83,9 +83,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 
 	unsigned int i;
-	for (i = 0; i < (GDISP_SCREEN_WIDTH * (GDISP_SCREEN_HEIGHT / 8)); i++)
-	{
-		RAM(g)[i] = 0x00;
+	for (i = 0; i < (GDISP_SCREEN_WIDTH * (GDISP_SCREEN_HEIGHT / 8)); i++) {
 		write_data(g, 0x00, 1);
 	}
 
@@ -110,21 +108,21 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	LLDSPEC void gdisp_lld_flush(GDisplay *g) {
 
 		// Don't flush if we don't need it.
-		if (!(g->flags & GDISP_FLG_NEEDFLUSH))
+		if (!(g->flags & GDISP_FLG_NEEDFLUSH)) {
 			return;
+		}
 
 		acquire_bus(g);
 
 		write_cmd(g, PCF8812_SET_X);
 		write_cmd(g, PCF8812_SET_Y);
 
-		unsigned char x, y;
+		unsigned int i;
 
-		for (y = 0; y < (GDISP_SCREEN_HEIGHT / 8); y++) {
-			for(x = 0; x < GDISP_SCREEN_WIDTH; x++) {
-				write_data(g, RAM(g) + xyaddr(x, y), 1);
-			}
+		for (i = 0; i < (GDISP_SCREEN_WIDTH * (GDISP_SCREEN_HEIGHT / 8)); i++) {
+			write_data(g, RAM(g)[i], 1);
 		}
+
 		release_bus(g);
 	}
 #endif
@@ -152,10 +150,13 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			y = g->p.x;
 			break;
 		}
-		if (gdispColor2Native(g->p.color) == Black)
+
+		if (gdispColor2Native(g->p.color) != Black) {
 			RAM(g)[xyaddr(x, y)] |= xybit(y);
-		else
+		} else {
 			RAM(g)[xyaddr(x, y)] &= ~xybit(y);
+		}
+
 		g->flags |= GDISP_FLG_NEEDFLUSH;
 	}
 #endif
