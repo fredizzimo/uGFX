@@ -82,6 +82,19 @@
  	#ifndef GFX_FREERTOS_USE_TRACE
  		#define GFX_FREERTOS_USE_TRACE	FALSE
  	#endif
+ 	/**
+ 	 * @brief	How much RAM should uGFX use for the heap
+ 	 * @details	Defaults to 0. Only valid with GFX_USE_OS_RAW32
+ 	 * @note	If 0 then the standard C runtime malloc(), free() and realloc()
+ 	 * 			are used.
+ 	 * @note	If it is non-zero then this is the number of bytes of RAM
+ 	 * 			to use for the heap (gfxAlloc() and gfxFree()). No C
+ 	 * 			runtime routines will be used and a new routine @p gfxAddHeapBlock()
+ 	 * 			is added allowing the user to add extra memory blocks to the heap.
+ 	 */
+	#ifndef GOS_RAW_HEAP_SIZE
+		#define GOS_RAW_HEAP_SIZE		0
+	#endif
 /** @} */
 
 #endif /* _GOS_OPTIONS_H */
