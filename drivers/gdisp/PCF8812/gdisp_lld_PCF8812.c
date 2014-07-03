@@ -9,7 +9,7 @@
 
 #if GFX_USE_GDISP
 
-#define GDISP_DRIVER_VMT			GDISPVMT_PCF8812
+#define GDISP_DRIVER_VMT		GDISPVMT_PCF8812
 #include "drivers/gdisp/PCF8812/gdisp_lld_config.h"
 #include "src/gdisp/driver.h"
 
@@ -20,10 +20,10 @@
 /*===========================================================================*/
 
 #ifndef GDISP_SCREEN_HEIGHT
-	#define GDISP_SCREEN_HEIGHT		65
+	#define GDISP_SCREEN_HEIGHT	65
 #endif
 #ifndef GDISP_SCREEN_WIDTH
-	#define GDISP_SCREEN_WIDTH		102
+	#define GDISP_SCREEN_WIDTH	102
 #endif
 #ifndef GDISP_INITIAL_CONTRAST
 	#define GDISP_INITIAL_CONTRAST	51
@@ -41,7 +41,7 @@
 /*===========================================================================*/
 
 // Some common routines and macros
-#define RAM(g)				((uint8_t *)g->priv)
+#define RAM(g)	((uint8_t *)g->priv)
 
 #define xyaddr(x, y)   ((x) + ((y) >> 3) * GDISP_SCREEN_WIDTH)
 #define xybit(y)       (1 << ((y) & 7))
@@ -54,7 +54,7 @@
  * As this controller can't update on a pixel boundary we need to maintain the
  * the entire display surface in memory so that we can do the necessary bit
  * operations. Fortunately it is a small display in monochrome.
- * 65 * 102 / 8 = 829 bytes.
+ * 102 * 65 / 8 = 828,75 bytes.
  */
 
 LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
@@ -72,18 +72,18 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 	acquire_bus(g);
 
-	write_cmd(g, PCF8812_SET_FUNC   | PCF8812_H);
-	write_cmd(g, PCF8812_SET_TEMP   | PCF8812_TEMP_MODE_1);
-	write_cmd(g, PCF8812_SET_VMULT  | PCF8812_VMULT_MODE_1);
-	write_cmd(g, PCF8812_SET_VOP    | 0xFF);
+	write_cmd(g, PCF8812_SET_FUNC | PCF8812_H);
+	write_cmd(g, PCF8812_SET_TEMP | PCF8812_TEMP_MODE_1);
+	write_cmd(g, PCF8812_SET_VMULT | PCF8812_VMULT_MODE_1);
+	write_cmd(g, PCF8812_SET_VOP | 0xFF);
 	write_cmd(g, PCF8812_SET_FUNC);
-	write_cmd(g, PCF8812_DISPLAY    | PCF8812_DISPLAY_MODE_NORMAL);
+	write_cmd(g, PCF8812_DISPLAY | PCF8812_DISPLAY_MODE_NORMAL);
 	write_cmd(g, PCF8812_SET_X); // X = 0
 	write_cmd(g, PCF8812_SET_Y); // Y = 0
 
-
 	unsigned int i;
-	for (i = 0; i < (GDISP_SCREEN_WIDTH * (GDISP_SCREEN_HEIGHT / 8)); i++) {
+
+	for (i = 0; i < (GDISP_SCREEN_WIDTH * (GDISP_SCREEN_HEIGHT / 8)); ++i) {
 		write_data(g, 0x00, 1);
 	}
 
@@ -92,6 +92,9 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
  	// Release the bus
 	release_bus(g);
+
+	/* Turn on the back-light */
+	set_backlight(g, GDISP_INITIAL_BACKLIGHT);
 
 	/* Initialise the GDISP structure */
 	g->g.Width = GDISP_SCREEN_WIDTH;
@@ -114,12 +117,12 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 		acquire_bus(g);
 
-		write_cmd(g, PCF8812_SET_X);
-		write_cmd(g, PCF8812_SET_Y);
+		write_cmd(g, PCF8812_SET_X);  // X = 0
+		write_cmd(g, PCF8812_SET_Y);  // Y = 0
 
 		unsigned int i;
 
-		for (i = 0; i < (GDISP_SCREEN_WIDTH * (GDISP_SCREEN_HEIGHT / 8)); i++) {
+		for (i = 0; i < (GDISP_SCREEN_WIDTH * (GDISP_SCREEN_HEIGHT / 8)); ++i) {
 			write_data(g, RAM(g)[i], 1);
 		}
 
@@ -129,7 +132,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 #if GDISP_HARDWARE_DRAWPIXEL
 	LLDSPEC void gdisp_lld_draw_pixel(GDisplay *g) {
-		coord_t		x, y;
+		coord_t x, y;
 
 		switch(g->g.Orientation) {
 		default:
