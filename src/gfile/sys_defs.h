@@ -73,7 +73,7 @@ extern "C" {
 
 	/**
 	 * @brief					Get the size of a file
-	 * @note					Please use @p gfileGetSize() if the file is not opened
+	 * @note					Please use @p gfileGetSize() if the file is opened
 	 * 
 	 * @param[in] fname			The file name
 	 * 
