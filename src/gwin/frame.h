@@ -45,8 +45,7 @@ typedef struct GFrameObject {
 /**
  * @brief				Create a frame widget
  *
- * @details				This widget provides a window like we know it from desktop systems. You usually use this together with
- *						gwinAddChild().
+ * @details				This widget provides a window like we know it from desktop systems.
  *
  * @param[in] g			The GDisplay to display this window on
  * @param[in] fo		The GFrameObject structure to initialize. If this is NULL the structure is dynamically allocated.
@@ -54,7 +53,7 @@ typedef struct GFrameObject {
  * @param[in] flags		Some flags, see notes.
  *
  * @note				Possible flags are: GWIN_FRAME_BORDER, GWIN_FRAME_CLOSE_BTN, GWIN_FRAME_MINMAX_BTN.
- *						Whether the close or the minimize maximize buttons are used, the boarder is automatically invoked.
+ *						When the close or the minimize/maximize buttons are used, the boarder is automatically invoked.
  * @note				These frame buttons are processed internally. The close button will invoke a gwinDestroy() which will
  *						destroy the window itself and EVERY child it contains (also children of children).
  *
