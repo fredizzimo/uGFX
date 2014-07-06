@@ -144,7 +144,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 				break;
 			case GDISP_ROTATE_90:
 				x = g->p.y;
-				y = g->p.x;
+				y = (g->g.Width - g->p.x - 1);
 				break;
 			case GDISP_ROTATE_180:
 				x = g->g.Width  - g->p.x - 1;
