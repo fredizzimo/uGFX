@@ -177,8 +177,13 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			if (g->g.Powermode == (powermode_t)g->p.ptr)
 				return;
 			switch((powermode_t)g->p.ptr) {
-			case powerOff: case powerOn: case powerSleep: case powerDeepSleep:
-				//board_power(g, (powermode_t)g->p.ptr);
+			case powerOff:
+			case powerSleep:
+			case powerDeepSleep:
+				write_index(g, PCF8812_SET_FUNC | PCF8812_PD);
+				break;
+			case powerOn:
+				write_index(g, PCF8812_SET_FUNC);
 				break;
 			default:
 				return;
@@ -218,13 +223,13 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 		case GDISP_CONTROL_BACKLIGHT:
 			if ((unsigned)g->p.ptr > 100) g->p.ptr = (void *)100;
-			//board_backlight(g, (unsigned)g->p.ptr);
+			set_backlight(g, (unsigned)g->p.ptr);
 			g->g.Backlight = (unsigned)g->p.ptr;
 			return;
 
 		case GDISP_CONTROL_CONTRAST:
 			if ((unsigned)g->p.ptr > 100) g->p.ptr = (void *)100;
-			//board_contrast(g, (unsigned)g->p.ptr);
+			// ToDo
 			g->g.Contrast = (unsigned)g->p.ptr;
 			return;
 		}
