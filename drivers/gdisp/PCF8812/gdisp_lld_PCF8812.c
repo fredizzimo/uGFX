@@ -38,11 +38,8 @@
 // Some common routines and macros
 #define RAM(g)			((uint8_t *)g->priv)
 
-//#define xyaddr(x, y)	((x) + ((y) >> 3) * GDISP_MATRIX_WIDTH)
-//#define xybit(y)		(1 << ((y) & 7))
-
-#define xyaddr(x, y)	((((y) / 8) * GDISP_MATRIX_WIDTH) + (x))
-#define xybit(y)		(1 << ((y) % 8))
+#define xyaddr(x, y)	((x) + ((y) >> 3) * GDISP_MATRIX_WIDTH)
+#define xybit(y)		(1 << ((y) & 7))
 
 /*===========================================================================*/
 /* Driver exported functions.                                                */
@@ -56,7 +53,7 @@
  * Display 96 * 65 / 8 = 780
  */
 
-#define GDISP_SCREEN_BYTES ((GDISP_SCREEN_WIDTH * GDISP_SCREEN_HEIGHT) / 8)
+//#define GDISP_SCREEN_BYTES ((GDISP_SCREEN_WIDTH * GDISP_SCREEN_HEIGHT) / 8)
 #define GDISP_MATRIX_BYTES ((GDISP_MATRIX_WIDTH * GDISP_MATRIX_HEIGHT) / 8) // real height 65 pixels, this fix 65 / 8 != 9
 
 LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
@@ -76,9 +73,10 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	acquire_bus(g);
 
 	write_index(g, PCF8812_SET_FUNC  | PCF8812_H);
-	write_index(g, PCF8812_SET_TEMP  | PCF8812_TEMP_MODE_1);
-	write_index(g, PCF8812_SET_VMULT | PCF8812_VMULT_MODE_1);
-	write_index(g, PCF8812_SET_VOP   | 0x00);
+	write_index(g, PCF8812_SET_BIAS  | PCF8812_BIAS_MODE_7);
+	write_index(g, PCF8812_SET_TEMP  | PCF8812_TEMP_MODE_2);
+	write_index(g, PCF8812_SET_VMULT | PCF8812_VMULT_MODE_0);
+	write_index(g, PCF8812_SET_VOP   | 0xFF);
 	write_index(g, PCF8812_SET_FUNC);
 	write_index(g, PCF8812_DISPLAY   | PCF8812_DISPLAY_MODE_NORMAL);
 	write_index(g, PCF8812_SET_X); // X = 0
@@ -146,14 +144,14 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 				break;
 			case GDISP_ROTATE_90:
 				x = g->p.y;
-				y = g->g.Height - g->p.x-1;
+				y = g->p.x;
 				break;
 			case GDISP_ROTATE_180:
-				x = g->g.Width  - g->p.x-1;
-				y = g->g.Height - g->p.y-1;
+				x = g->g.Width  - g->p.x - 1;
+				y = g->g.Height - g->p.y - 1;
 				break;
 			case GDISP_ROTATE_270:
-				x = g->g.Height - g->p.y-1;
+				x = g->g.Height - g->p.y - 1;
 				y = g->p.x;
 				break;
 			}
@@ -172,87 +170,6 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	}
 #endif
 
-/*
-#if GDISP_NEED_CONTROL && GDISP_HARDWARE_CONTROL
-	LLDSPEC void gdisp_lld_control(GDisplay *g) {
-		switch(g->p.x) {
-		case GDISP_CONTROL_POWER:
-			if (g->g.Powermode == (powermode_t)g->p.ptr)
-				return;
-			switch((powermode_t)g->p.ptr) {
-			case powerOff:
-				acquire_bus(g);
-				
-				release_bus(g);
-				break;
-			case powerOn:
-				acquire_bus(g);
-				
-				release_bus(g);
-				break;
-			case powerSleep:
-				acquire_bus(g);
-				
-				release_bus(g);
-				break;
-			default:
-				return;
-			}
-			g->g.Powermode = (powermode_t)g->p.ptr;
-			return;
-
-		case GDISP_CONTROL_ORIENTATION:
-			if (g->g.Orientation == (orientation_t)g->p.ptr)
-				return;
-			switch((orientation_t)g->p.ptr) {
-			case GDISP_ROTATE_0:
-				acquire_bus(g);
-								
-				release_bus(g);
-				g->g.Height = GDISP_SCREEN_HEIGHT;
-				g->g.Width = GDISP_SCREEN_WIDTH;
-				break;
-			case GDISP_ROTATE_90:
-				acquire_bus(g);
-								
-				release_bus(g);
-				g->g.Height = GDISP_SCREEN_WIDTH;
-				g->g.Width = GDISP_SCREEN_HEIGHT;
-				break;
-			case GDISP_ROTATE_180:
-				acquire_bus(g);
-								
-				release_bus(g);
-				g->g.Height = GDISP_SCREEN_HEIGHT;
-				g->g.Width = GDISP_SCREEN_WIDTH;
-				break;
-			case GDISP_ROTATE_270:
-				acquire_bus(g);
-								
-				release_bus(g);
-				g->g.Height = GDISP_SCREEN_WIDTH;
-				g->g.Width = GDISP_SCREEN_HEIGHT;
-				break;
-			default:
-				return;
-			}
-			g->g.Orientation = (orientation_t)g->p.ptr;
-			return;
-
-        case GDISP_CONTROL_BACKLIGHT:
-            if ((unsigned)g->p.ptr > 100)
-            	g->p.ptr = (void *)100;
-            set_backlight(g, (unsigned)g->p.ptr);
-            g->g.Backlight = (unsigned)g->p.ptr;
-            return;
-
-		//case GDISP_CONTROL_CONTRAST:
-        default:
-            return;
-		}
-	}
-#endif
-*/
 #if GDISP_NEED_CONTROL
 	LLDSPEC void gdisp_lld_control(GDisplay *g) {
 		switch(g->p.x) {
@@ -275,7 +192,6 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			switch((orientation_t)g->p.ptr) {
 				case GDISP_ROTATE_0:
 				case GDISP_ROTATE_180:
-					write_index(g, PCF8812_SET_FUNC | PCF8812_H | 0x01);
 					if (g->g.Orientation == GDISP_ROTATE_90 || g->g.Orientation == GDISP_ROTATE_270) {
 						coord_t		tmp;
 
@@ -286,7 +202,6 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 					break;
 				case GDISP_ROTATE_90:
 				case GDISP_ROTATE_270:
-					write_index(g, PCF8812_SET_FUNC | PCF8812_V | 0x01);
 					if (g->g.Orientation == GDISP_ROTATE_0 || g->g.Orientation == GDISP_ROTATE_180) {
 						coord_t		tmp;
 
