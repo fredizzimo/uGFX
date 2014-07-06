@@ -16,8 +16,12 @@
 
 #define GDISP_HARDWARE_FLUSH			TRUE		// This controller requires flushing
 #define GDISP_HARDWARE_DRAWPIXEL		TRUE
+#define GDISP_HARDWARE_CONTROL			TRUE
 
-#define GDISP_LLD_PIXELFORMAT			GDISP_PIXELFORMAT_MONO 
+// Set this to your frame buffer pixel format.
+#ifndef GDISP_LLD_PIXELFORMAT
+	#define GDISP_LLD_PIXELFORMAT		GDISP_PIXELFORMAT_MONO
+#endif
 
 #endif	/* GFX_USE_GDISP */
 
