@@ -28,7 +28,8 @@
 
 	// SET THIS HERE!!!
 	// This must also match the pixel format above
-	#define FRAMEBUF		640x480x16
+	//#define FRAMEBUF		640x480x16
+	#define FRAMEBUF		fb0
 
 	static void board_init(GDisplay *g, fbInfo *fbi) {
 		// Initialize the frame buffer device - we assume everything is going to succeed.
