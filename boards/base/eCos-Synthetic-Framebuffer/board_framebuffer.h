@@ -20,7 +20,7 @@
 #endif
 
 // Uncomment this if your frame buffer device requires flushing ("Synch" in eCos speak)
-//#define GDISP_HARDWARE_FLUSH		TRUE
+#define GDISP_HARDWARE_FLUSH		TRUE
 
 #ifdef GDISP_DRIVER_VMT
 
@@ -28,7 +28,6 @@
 
 	// SET THIS HERE!!!
 	// This must also match the pixel format above
-	//#define FRAMEBUF		640x480x16
 	#define FRAMEBUF		fb0
 
 	static void board_init(GDisplay *g, fbInfo *fbi) {
