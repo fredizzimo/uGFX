@@ -13,7 +13,7 @@
 #define PCF8812_V 					0x02
 #define PCF8812_PD					0x04
 
-#define PCF8812_DISPLAY				0x08
+#define PCF8812_SET_DISPLAY			0x08
 #define PCF8812_DISPLAY_MODE_BLANK	0x00  // bit D = 0, E = 0
 #define PCF8812_DISPLAY_MODE_FILL 	0x01  // bit D = 0, E = 1
 #define PCF8812_DISPLAY_MODE_NORMAL	0x04  // bit D = 1, E = 0

@@ -72,15 +72,14 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 	acquire_bus(g);
 
-	write_index(g, PCF8812_SET_FUNC  | PCF8812_H);
-	write_index(g, PCF8812_SET_BIAS  | PCF8812_BIAS_MODE_7);
-	write_index(g, PCF8812_SET_TEMP  | PCF8812_TEMP_MODE_2);
-	write_index(g, PCF8812_SET_VMULT | PCF8812_VMULT_MODE_0);
-	write_index(g, PCF8812_SET_VOP   | 0xFF);
-	write_index(g, PCF8812_SET_FUNC);
-	write_index(g, PCF8812_DISPLAY   | PCF8812_DISPLAY_MODE_NORMAL);
-	write_index(g, PCF8812_SET_X); // X = 0
-	write_index(g, PCF8812_SET_Y); // Y = 0
+	write_cmd(g, PCF8812_SET_FUNC  		| PCF8812_H);
+	write_cmd(g, PCF8812_SET_TEMP  		| PCF8812_TEMP_MODE_2);
+	write_cmd(g, PCF8812_SET_BIAS  		| PCF8812_BIAS_MODE_4);
+	write_cmd(g, PCF8812_SET_VOP		| (0x40));
+	write_cmd(g, PCF8812_SET_FUNC);
+	write_cmd(g, PCF8812_SET_DISPLAY	| PCF8812_DISPLAY_MODE_NORMAL);
+	write_cmd(g, PCF8812_SET_X);		// X = 0
+	write_cmd(g, PCF8812_SET_Y);		// Y = 0
 
 	coord_t i;
 
@@ -118,8 +117,8 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 		acquire_bus(g);
 
-		write_index(g, PCF8812_SET_X | 0);  // X = 0
-		write_index(g, PCF8812_SET_Y | 0);  // Y = 0
+		write_cmd(g, PCF8812_SET_X | 0);  // X = 0
+		write_cmd(g, PCF8812_SET_Y | 0);  // Y = 0
 
 		coord_t i;
 
@@ -144,7 +143,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 				break;
 			case GDISP_ROTATE_90:
 				x = g->p.y;
-				y = (g->g.Width - g->p.x - 1);
+				y = g->g.Width - g->p.x - 1;
 				break;
 			case GDISP_ROTATE_180:
 				x = g->g.Width  - g->p.x - 1;
@@ -180,10 +179,10 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			case powerOff:
 			case powerSleep:
 			case powerDeepSleep:
-				write_index(g, PCF8812_SET_FUNC | PCF8812_PD);
+				write_cmd(g, PCF8812_SET_FUNC | PCF8812_PD);
 				break;
 			case powerOn:
-				write_index(g, PCF8812_SET_FUNC);
+				write_cmd(g, PCF8812_SET_FUNC);
 				break;
 			default:
 				return;
@@ -229,7 +228,6 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 		case GDISP_CONTROL_CONTRAST:
 			if ((unsigned)g->p.ptr > 100) g->p.ptr = (void *)100;
-			// ToDo
 			g->g.Contrast = (unsigned)g->p.ptr;
 			return;
 		}
