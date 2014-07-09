@@ -24,22 +24,22 @@
 #define GDISP_SCREEN_HEIGHT		65
 #define GDISP_SCREEN_WIDTH		96
 
-#define GDISP_INITIAL_CONTRAST	51
-#define GDISP_INITIAL_BACKLIGHT	100
+#define GDISP_INITIAL_CONTRAST		51
+#define GDISP_INITIAL_BACKLIGHT		100
 
-#define GDISP_FLG_NEEDFLUSH			(GDISP_FLG_DRIVER << 0)
+#define GDISP_FLG_NEEDFLUSH		(GDISP_FLG_DRIVER << 0)
 
 #include "drivers/gdisp/PCF8812/PCF8812.h"
 
 /*===========================================================================*/
-/* Driver local routines    .                                                */
+/* Driver local routines.                                                    */
 /*===========================================================================*/
 
 // Some common routines and macros
-#define RAM(g)			((uint8_t *)g->priv)
+#define RAM(g)				((uint8_t *)g->priv)
 
-#define xyaddr(x, y)	((x) + ((y) >> 3) * GDISP_MATRIX_WIDTH)
-#define xybit(y)		(1 << ((y) & 7))
+#define xyaddr(x, y)			((x) + ((y) >> 3) * GDISP_MATRIX_WIDTH)
+#define xybit(y)			(1 << ((y) & 7))
 
 /*===========================================================================*/
 /* Driver exported functions.                                                */
