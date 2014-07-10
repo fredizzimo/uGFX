@@ -78,7 +78,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 	coord_t i;
 
-	for (i = 0; i < GDISP_SCREEN_BYTES; i++) {
+	for(i = 0; i < GDISP_SCREEN_BYTES; i++) {
 		write_data(g, 0x00, 1);
 	}
 
@@ -116,8 +116,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		write_cmd(g, PCD8544_SET_Y | 0);  // Y = 0
 
 		coord_t i;
-
-		for (i = 0; i < GDISP_SCREEN_BYTES; i++) {
+		for(i = 0; i < GDISP_SCREEN_BYTES; i++) {
 			write_data(g, RAM(g)[i], 1);
 		}
 
@@ -128,7 +127,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 #if GDISP_HARDWARE_DRAWPIXEL
 	LLDSPEC void gdisp_lld_draw_pixel(GDisplay *g) {
 		coord_t x, y;
-		
+
 		#if GDISP_NEED_CONTROL
 			switch(g->g.Orientation) {
 			default:
