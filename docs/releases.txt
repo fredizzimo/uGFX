@@ -10,6 +10,7 @@ FEATURE:	Added Linux-Framebuffer board definition
 FEATURE:	Added FatFS support for GFILE
 FEATURE:	Added gfileMount() and gfileUnmount()
 FEATURE:	Added gfileSync()
+FEATURE:	Added gwinDrawThickLine()
 
 
 *** Release 2.1 ***
