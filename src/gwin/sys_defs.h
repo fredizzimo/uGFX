@@ -601,6 +601,24 @@ extern "C" {
 	void gwinDrawLine(GHandle gh, coord_t x0, coord_t y0, coord_t x1, coord_t y1);
 
 	/**
+	 * @brief	Draw a thick line in the window
+	 * @details	The line thickness is specified in pixels. The line ends can
+	 *		be selected to be either flat or round.
+	 * @note	Uses gdispGFillConvexPoly() internally to perform the drawing.
+	 * @note	Uses the current foreground color to draw the line
+	 * 
+	 * @param[in] gh		The window handle
+	 * @param[in] x0,y0		The start position
+	 * @param[in] x1,y1		The end position
+	 * @param[in] color		The color to use
+	 * @param[in] width		The width of the line
+	 * @param[in] round		Use round ends for the line
+	 * 
+	 * @api
+	 */
+	void gwinDrawThickLine(GHandle gh, coord_t x0, coord_t y0, coord_t x1, coord_t y1, coord_t width, bool_t round);
+
+	/**
 	 * @brief   Draw a box in the window
 	 * @note	Uses the current foreground color to draw the box
 	 * @note	May leave GDISP clipping to this window's dimensions
