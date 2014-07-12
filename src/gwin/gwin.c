@@ -226,6 +226,12 @@ void gwinDrawLine(GHandle gh, coord_t x0, coord_t y0, coord_t x1, coord_t y1) {
 	_gwinDrawEnd(gh);
 }
 
+void gwinDrawThickLine(GHandle gh, coord_t x0, coord_t y0, coord_t x1, coord_t y1, coord_t width, bool_t round) {
+	if (!_gwinDrawStart(gh)) return;
+	gdispGDrawThickLine(gh->display, gh->x+x0, gh->y+y0, gh->x+x1, gh->y+y1, gh->color, width, round);
+	_gwinDrawEnd(gh);
+}
+
 void gwinDrawBox(GHandle gh, coord_t x, coord_t y, coord_t cx, coord_t cy) {
 	if (!_gwinDrawStart(gh)) return;
 	gdispGDrawBox(gh->display, gh->x+x, gh->y+y, cx, cy, gh->color);
