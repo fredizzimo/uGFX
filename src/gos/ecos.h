@@ -73,7 +73,7 @@ void gfxSleepMilliseconds(delaytime_t ms);
 void gfxSleepMicroseconds(delaytime_t ms);
 
 #define gfxAlloc(sz)					malloc(sz)
-#define gfxFree(ptr)					free(sz)
+#define gfxFree(ptr)					free(ptr)
 #define gfxRealloc(ptr, oldsz, newsz)	realloc(ptr, newsz)
 
 #define gfxSystemLock()					cyg_scheduler_lock()
