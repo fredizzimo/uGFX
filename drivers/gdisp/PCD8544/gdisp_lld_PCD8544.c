@@ -76,11 +76,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	write_cmd(g, PCD8544_SET_X);		// X = 0
 	write_cmd(g, PCD8544_SET_Y);		// Y = 0
 
-	coord_t i;
-
-	for(i = 0; i < GDISP_SCREEN_BYTES; i++) {
-		write_data(g, 0x00, 1);
-	}
+	write_data(g, 0x00, GDISP_SCREEN_BYTES);
 
 	// Finish Init
 	post_init_board(g);
@@ -115,10 +111,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		write_cmd(g, PCD8544_SET_X | 0);  // X = 0
 		write_cmd(g, PCD8544_SET_Y | 0);  // Y = 0
 
-		coord_t i;
-		for(i = 0; i < GDISP_SCREEN_BYTES; i++) {
-			write_data(g, RAM(g)[i], 1);
-		}
+		write_data(g, RAM(g), GDISP_SCREEN_BYTES);
 
 		release_bus(g);
 	}
