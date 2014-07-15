@@ -10,6 +10,11 @@ FEATURE:	Added Linux-Framebuffer board definition
 FEATURE:	Added FatFS support for GFILE
 FEATURE:	Added gfileMount() and gfileUnmount()
 FEATURE:	Added gfileSync()
+FEATURE:	Added gwinDrawThickLine()
+FEATURE:	Added support for eCos
+FEATURE:	Added PCF8812 gdisp driver
+FEATURE:	Added PCD8544 gdisp driver
+FEATURE:	Added Raspberry Pi board support
 
 
 *** Release 2.1 ***

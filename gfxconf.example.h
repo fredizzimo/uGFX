@@ -32,6 +32,11 @@
 //#define GFX_USE_OS_WIN32                             FALSE
 //#define GFX_USE_OS_LINUX                             FALSE
 //#define GFX_USE_OS_OSX                               FALSE
+//#define GFX_USE_OS_ECOS                              FALSE
+//#define GFX_USE_OS_RAW32                             FALSE
+//    #define GOS_RAW_HEAP_SIZE                        0
+//    #define INTERRUPTS_OFF()                         optional_code
+//    #define INTERRUPTS_ON()                          optional_code
 
 
 ///////////////////////////////////////////////////////////////////////////

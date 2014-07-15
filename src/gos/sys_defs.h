@@ -451,6 +451,8 @@
 	#include "src/gos/osx.h"
 #elif GFX_USE_OS_RAW32
 	#include "src/gos/raw32.h"
+#elif GFX_USE_OS_ECOS
+	#include "src/gos/ecos.h"
 #else
 	#error "Your operating system is not supported yet"
 #endif

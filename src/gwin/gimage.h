@@ -9,7 +9,7 @@
  * @file	src/gwin/gimage.h
  * @brief	GWIN image widget header file.
  *
- * @defgroup Image Image
+ * @defgroup ImageBox ImageBox
  * @ingroup Widgets
  *
  * @details		GWIN allos it to create an image widget. The widget
