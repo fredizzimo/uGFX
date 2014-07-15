@@ -33,6 +33,9 @@ static void SendCheckboxEvent(GWidgetObject *gw) {
 		pce->type = GEVENT_GWIN_CHECKBOX;
 		pce->checkbox = &gw->g;
 		pce->isChecked = (gw->g.flags & GCHECKBOX_FLG_CHECKED) ? TRUE : FALSE;
+		#if GWIN_WIDGET_TAGS
+			pce->tag = gw->tag;
+		#endif
 		geventSendEvent(psl);
 	}
 

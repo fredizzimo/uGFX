@@ -40,6 +40,9 @@ typedef struct GEventGWinList {
 	GEventType		type;		// The type of this event (GEVENT_GWIN_LIST)
 	GHandle			list;		// The list
 	int				item;		// The item that has been selected (or unselected in a multi-select listbox)
+	#if GWIN_WIDGET_TAGS
+		WidgetTag	tag;		// The list tag
+	#endif
 } GEventGWinList;
 
 // A list window

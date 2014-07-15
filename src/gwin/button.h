@@ -38,6 +38,9 @@
 typedef struct GEventGWinButton {
 	GEventType		type;				// The type of this event (GEVENT_GWIN_BUTTON)
 	GHandle			button;				// The button that has been depressed (actually triggered on release)
+	#if GWIN_WIDGET_TAGS
+		WidgetTag	tag;				// The button tag
+	#endif
 } GEventGWinButton;
 
 /**

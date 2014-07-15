@@ -37,6 +37,9 @@ typedef struct GEventGWinRadio {
 	GEventType		type;				// The type of this event (GEVENT_GWIN_RADIO)
 	GHandle			radio;				// The radio button that has been depressed
 	uint16_t		group;				// The group for this radio button
+	#if GWIN_WIDGET_TAGS
+		WidgetTag	tag;				// The radio tag
+	#endif
 } GEventGWinRadio;
 
 /**

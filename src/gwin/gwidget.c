@@ -242,6 +242,9 @@ GHandle _gwidgetCreate(GDisplay *g, GWidgetObject *pgw, const GWidgetInit *pInit
 	pgw->fnDraw = pInit->customDraw ? pInit->customDraw : vmt->DefaultDraw;
 	pgw->fnParam = pInit->customParam;
 	pgw->pstyle = pInit->customStyle ? pInit->customStyle : defaultStyle;
+	#if GWIN_WIDGET_TAGS
+			pgw->tag = pInit->tag;
+	#endif
 
 	return 	&pgw->g;
 }
@@ -470,6 +473,17 @@ bool_t gwinAttachListener(GListener *pl) {
 		// Assign the new
 		wvmt->DialAssign(gw, role, instance);
 		return geventAttachSource(&gl, gsh, 0);
+	}
+#endif
+
+#if GWIN_WIDGET_TAGS
+	void gwinSetTag(GHandle gh, WidgetTag tag) {
+		if ((gh->flags & GWIN_FLG_WIDGET))
+			gw->tag = tag;
+	}
+
+	WidgetTag gwinGetTag(GHandle gh) {
+		return ((gh->flags & GWIN_FLG_WIDGET)) ? gw->tag : 0;
 	}
 #endif
 

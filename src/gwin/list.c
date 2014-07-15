@@ -66,6 +66,9 @@ static void sendListEvent(GWidgetObject *gw, int item) {
 		ple->type = GEVENT_GWIN_LIST;
 		ple->list = (GHandle)gw;
 		ple->item = item;
+		#if GWIN_WIDGET_TAGS
+			ple->tag = gw->tag;
+		#endif
 
 		geventSendEvent(psl);
 	}

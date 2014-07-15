@@ -166,6 +166,7 @@
 //    #define GWIN_NEED_PROGRESSBAR                    FALSE
 //        #define GWIN_PROGRESSBAR_AUTO                FALSE
 //    #define GWIN_FLAT_STYLING                        FALSE
+//    #define GWIN_WIDGET_TAGS                         FALSE
 
 //#define GWIN_NEED_CONTAINERS                         FALSE
 //    #define GWIN_NEED_CONTAINER                      FALSE
