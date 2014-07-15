@@ -542,7 +542,7 @@ bool_t gfileSync(GFILE *f) {
 		0, 0, 0, 0,
 		0, 0, StringRead, StringWrite,
 		0, 0, 0,
-		0, 0
+		0, 0, 0
 	};
 #endif
 
