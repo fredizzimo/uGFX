@@ -56,7 +56,7 @@ typedef void (*GEventCallbackFn)(void *param, GEvent *pe);
 // The Listener Object
 typedef struct GListener {
 	gfxSem				waitqueue;			// Private: Semaphore for the listener to wait on.
-	gfxSem				eventlock;			// Private: Protect against more than one sources trying to use this event lock at the same time
+	uint16_t			flags;				// Private: Flags for operation
 	GEventCallbackFn	callback;			// Private: Call back Function
 	void				*param;				// Private: Parameter for the callback function.
 	GEvent				event;				// Public:  The event object into which the event information is stored.
@@ -149,9 +149,11 @@ void geventDetachSource(GListener *pl, GSourceHandle gsh);
  * 			timeout specifies the time to wait in system ticks.
  *			TIME_INFINITE means no timeout - wait forever for an event.
  *			TIME_IMMEDIATE means return immediately
- * @note	The GEvent buffer is staticly allocated within the GListener so the event does not
- *			need to be dynamicly freed however it will get overwritten by the next call to
- *			this routine.
+ * @note	The returned GEvent is released when this routine is called again
+ * 			or when optionally @p geventEventComplete() is called. Calling @p geventEventComplete()
+ * 			allows the GEvent object to be reused earlier which can reduce missed events. The GEvent
+ * 			object MUST NOT be used after this function is called (and is blocked waiting for the next
+ * 			event) or after geventEventComplete() is called.
  *
  * @param[in] pl		The listener
  * @param[in] timeout	The timeout
@@ -159,6 +161,17 @@ void geventDetachSource(GListener *pl, GSourceHandle gsh);
  * @return	NULL on timeout
  */
 GEvent *geventEventWait(GListener *pl, delaytime_t timeout);
+
+/**
+ * @brief	Release the GEvent buffer associated with a listener.
+ * @details	The GEvent returned by @p geventEventWait() is released.
+ * @note	The GEvent pointer returned by @p geventEventWait() is released when @p geventEventWait()
+ * 			is called again or when this function is called. The GEvent
+ * 			object MUST NOT be used after this function is called.
+ *
+ * @param[in] pl		The listener
+ */
+void geventEventComplete(GListener *pl);
 
 /* @brief	Register a callback for an event on a listener from an assigned source.
  * @details	The type of the event should be checked (pevent->type) and then pevent should be typecast to the
