@@ -38,7 +38,7 @@ static coord_t BorderSizeT(GHandle gh)		{ return (gh->flags & GWIN_FRAME_BORDER)
 
 static void _frameDestroy(GHandle gh) {
 	/* Deregister the button callback */
-	if ((flags & (GWIN_FRAME_CLOSE_BTN|GWIN_FRAME_MINMAX_BTN))) {
+	if ((gh->flags & (GWIN_FRAME_CLOSE_BTN|GWIN_FRAME_MINMAX_BTN))) {
 		geventRegisterCallback(&gh2obj->gl, NULL, NULL);
 		geventDetachSource(&gh2obj->gl, NULL);
 	}
