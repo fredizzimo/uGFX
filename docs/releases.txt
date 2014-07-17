@@ -15,6 +15,9 @@ FEATURE:	Added support for eCos
 FEATURE:	Added PCF8812 gdisp driver
 FEATURE:	Added PCD8544 gdisp driver
 FEATURE:	Added Raspberry Pi board support
+FEATURE:	Added R61505U gdisp driver
+FIX:		Fix threading issues in GEvent for callbacks
+FEATURE:	Added geventEventComplete()
 
 
 *** Release 2.1 ***
