@@ -18,13 +18,17 @@
 	#error "GOS: configUSE_MUTEXES must be defined in FreeRTOSConfig.h"
 #endif
 
-#if configUSE_COUNTING_SEMAPHORES  != 1
+#if configUSE_COUNTING_SEMAPHORES != 1
 	#error "GOS: configUSE_COUNTING_SEMAPHORES must be defined in FreeRTOSConfig.h"
 #endif
 
 void _gosInit(void)
 {
-	// The user must call vTaskStartScheduler() himself before he calls gfxInit().
+	#if !GFX_NO_OS_INIT
+		#error "GOS: Operating System initialization for FreeRTOS is not yet implemented in uGFX. Please set GFX_NO_OS_INIT to TRUE in your gfxconf.h"
+	#else
+		#warning "GOS: Operating System initialization has been turned off. Make sure you call vTaskStartScheduler() before gfxInit() in your application!"
+	#endif
 }
 
 void _gosDeinit(void)

@@ -35,6 +35,7 @@ void get_ticks(mach_timespec_t *mts){
 
 void _gosInit(void)
 {
+	/* No initialization of the operating system itself is needed */
 	gfxMutexInit(&SystemMutex);
 }
 

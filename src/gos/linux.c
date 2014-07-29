@@ -18,6 +18,7 @@ static gfxMutex		SystemMutex;
 
 void _gosInit(void)
 {
+	/* No initialization of the operating system itself is needed */
 	gfxMutexInit(&SystemMutex);
 }
 

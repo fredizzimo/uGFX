@@ -17,7 +17,11 @@
 
 void _gosInit(void)
 {
-	// The user must call raw_os_start() himself before he calls gfxInit().
+	#if !GFX_NO_OS_INIT
+		#error "GOS: Operating System initialization for RawRTOS is not yet implemented in uGFX. Please set GFX_NO_OS_INIT to TRUE in your gfxconf.h"
+	#else
+		#warning "GOS: Operating System initialization has been turned off. Make sure you call raw_os_start() before gfxInit() in your application!"
+	#endif
 }
 
 void _gosDeinit(void)

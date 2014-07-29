@@ -24,6 +24,12 @@ static void _gosThreadsInit(void);
 
 void _gosInit(void)
 {
+	/* No initialization of the operating system itself is needed as there isn't one.
+	 * On the other hand the C runtime should still already be initialized before
+	 * getting here!
+	 */
+	#warning "GOS: Raw32 - Make sure you initialize your hardware and the C runtime before calling gfxInit() in your application!"
+
 	// Set up the heap allocator
 	_gosHeapInit();
 

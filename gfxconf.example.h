@@ -38,6 +38,9 @@
 //    #define INTERRUPTS_OFF()                         optional_code
 //    #define INTERRUPTS_ON()                          optional_code
 
+// Options that (should where relevant) apply to all operating systems
+//    #define GFX_NO_OS_INIT                           FALSE
+
 
 ///////////////////////////////////////////////////////////////////////////
 // GDISP                                                                 //
