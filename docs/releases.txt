@@ -18,7 +18,7 @@ FEATURE:	Added Raspberry Pi board support
 FEATURE:	Added R61505U gdisp driver
 FIX:		Fix threading issues in GEvent for callbacks
 FEATURE:	Added geventEventComplete()
-
+FEATURE:	Added support for the rawrtos real time operating system
 
 *** Release 2.1 ***
 FIX:		Significant improvements to the way the MCU touch driver works.

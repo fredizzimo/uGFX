@@ -439,6 +439,8 @@
  * All the above was just for the doxygen documentation. All the implementation of the above
  * (without any of the documentation overheads) is in the files below.
  */
+#elif GFX_USE_OS_RAWRTOS
+ 	#include "src/gos/rawrtos.h"
 #elif GFX_USE_OS_CHIBIOS
 	#include "src/gos/chibios.h"
 #elif GFX_USE_OS_FREERTOS
