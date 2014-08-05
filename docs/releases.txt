@@ -21,6 +21,7 @@ FEATURE:	Added geventEventComplete()
 FEATURE:	Added support for the rawrtos real time operating system
 FEATURE:	Operating System initialisation is now optional
 
+
 *** Release 2.1 ***
 FIX:		Significant improvements to the way the MCU touch driver works.
 FEATURE:	Add support for edge to edge touch calibration. 
