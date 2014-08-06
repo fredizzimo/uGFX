@@ -18,7 +18,7 @@ FEATURE:	Added Raspberry Pi board support
 FEATURE:	Added R61505U gdisp driver
 FIX:		Fix threading issues in GEvent for callbacks
 FEATURE:	Added geventEventComplete()
-FEATURE:	Added support for the rawrtos real time operating system
+FEATURE:	Added support for the RawOS real time operating system
 FEATURE:	Operating System initialisation is now optional
 
 
