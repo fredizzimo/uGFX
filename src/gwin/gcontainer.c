@@ -93,11 +93,15 @@ coord_t gwinGetInnerHeight(GHandle gh) {
 static coord_t BorderSize(GHandle gh)	{ return (gh->flags & GWIN_CONTAINER_BORDER) ? 2 : 0; }
 
 static void DrawSimpleContainer(GWidgetObject *gw, void *param) {
-	(void)	param;
-	gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->pstyle->background);
-	if ((gw->g.flags & GWIN_CONTAINER_BORDER))
-		gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, (gw->g.flags & GWIN_FLG_SYSENABLED) ? gw->pstyle->enabled.edge : gw->pstyle->disabled.edge);
-}
+    (void)param;
+
+    if ((gw->g.flags & GWIN_CONTAINER_TRANSPARENT) == 0) {
+        gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->pstyle->background);
+    }
+
+    if ((gw->g.flags & GWIN_CONTAINER_BORDER))
+        gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, (gw->g.flags & GWIN_FLG_SYSENABLED) ? gw->pstyle->enabled.edge : gw->pstyle->disabled.edge);
+} 
 
 // The container VMT table
 static const gcontainerVMT containerVMT = {
