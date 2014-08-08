@@ -95,9 +95,8 @@ static coord_t BorderSize(GHandle gh)	{ return (gh->flags & GWIN_CONTAINER_BORDE
 static void DrawSimpleContainer(GWidgetObject *gw, void *param) {
     (void)param;
 
-    if ((gw->g.flags & GWIN_CONTAINER_TRANSPARENT) == 0) {
+    if (!(gw->g.flags & GWIN_CONTAINER_TRANSPARENT))
         gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->pstyle->background);
-    }
 
     if ((gw->g.flags & GWIN_CONTAINER_BORDER))
         gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, (gw->g.flags & GWIN_FLG_SYSENABLED) ? gw->pstyle->enabled.edge : gw->pstyle->disabled.edge);
