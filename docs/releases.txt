@@ -20,6 +20,7 @@ FIX:		Fix threading issues in GEvent for callbacks
 FEATURE:	Added geventEventComplete()
 FEATURE:	Added support for the RawOS real time operating system
 FEATURE:	Operating System initialisation is now optional
+FEATURE:	Added optional transparency to container
 
 
 *** Release 2.1 ***
