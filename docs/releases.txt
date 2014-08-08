@@ -21,6 +21,7 @@ FEATURE:	Added geventEventComplete()
 FEATURE:	Added support for the RawOS real time operating system
 FEATURE:	Operating System initialisation is now optional
 FEATURE:	Added optional transparency to container
+FEATURE:	Prevent mouse events going to obscured widgets
 
 
 *** Release 2.1 ***
