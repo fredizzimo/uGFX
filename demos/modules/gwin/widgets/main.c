@@ -194,7 +194,7 @@ static void createWidgets(void) {
 	wi.g.width = ScrWidth/2 - 2*border;
 	ghConsole = gwinConsoleCreate(0, &wi.g);
     gwinSetColor(ghConsole, Black);
-    gwinSetBgColor(ghConsole, 0xF0F0F0);
+    gwinSetBgColor(ghConsole, HTML2COLOR(0xF0F0F0));
 
     // Buttons
 	wi.g.parent = ghPgButtons;
