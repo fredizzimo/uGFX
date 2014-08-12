@@ -30,6 +30,11 @@ static bool_t fatfsEOF(GFILE* f);
 static bool_t fatfsMount(const char* drive);
 static bool_t fatfsUnmount(const char* drive);
 static bool_t fatfsSync(GFILE* f);
+#if _FS_MINIMIZE <= 1 && GFILE_NEED_FILELISTS
+	static gfileList *fatfsFlOpen(const char *path, bool_t dirs);
+	static const char *fatfsFlRead(gfileList *pfl);
+	static void fatfsFlClose(gfileList *pfl);
+#endif
 
 static const GFILEVMT FsFatFSVMT = {
 	GFILE_CHAINHEAD,
@@ -46,13 +51,28 @@ static const GFILEVMT FsFatFSVMT = {
 	fatfsSetPos,
 	fatfsGetSize,
 	fatfsEOF,
-	fatfsMount,
-	fatfsUnmount,
-	fatfsSync
+	fatfsMount, fatfsUnmount, fatfsSync,
+	#if GFILE_NEED_FILELISTS
+		#if _FS_MINIMIZE <= 1
+			fatfsFlOpen, fatfsFlRead, fatfsFlClose
+		#else
+			0, 0, 0
+		#endif
+	#endif
 };
 
 #undef GFILE_CHAINHEAD
 #define GFILE_CHAINHEAD &FsFatFSVMT
+
+// Our directory list structure
+typedef struct fatfsList {
+	gfileList	fl;					// This must be the first element.
+	DIR			dir;
+	FILINFO		fno;
+	#if _USE_LFN
+		char	lfn[_MAX_LFN + 1];   /* Buffer to store the LFN */
+	#endif
+} fatfsList;
 
 // optimize these later on. Use an array to have multiple FatFS
 static bool_t fatfs_mounted = FALSE;
@@ -245,3 +265,58 @@ static bool_t fatfsSync(GFILE *f)
 	return TRUE;
 }
 
+#if _FS_MINIMIZE <= 1 && GFILE_NEED_FILELISTS
+	static gfileList *fatfsFlOpen(const char *path, bool_t dirs) {
+		fatfsList	*p;
+		(void) dirs;
+
+		if (!(p = gfxAlloc(sizeof(fatfsList))))
+			return 0;
+
+		if (f_opendir(&p->dir, path) != FR_OK) {
+			gfxFree(p);
+			return 0;
+		}
+		return &p->fl;
+	}
+
+	static const char *fatfsFlRead(gfileList *pfl) {
+		#define ffl		((fatfsList *)pfl)
+
+		while(1) {
+			#if _USE_LFN
+				ffl->fno.lfname = ffl->lfn;
+				ffl->fno.lfsize = sizeof(ffl->lfn);
+			#endif
+
+			// Read the next entry
+			if (f_readdir(&ffl->dir, &ffl->fno) != FR_OK || !ffl->fno.fname[0])
+				return 0;
+
+			/* Ignore dot entries */
+			if (ffl->fno.fname[0] == '.') continue;
+
+			/* Is it a directory */
+			if (ffl->fl.dirs) {
+				if ((ffl->fno.fattrib & AM_DIR))
+					break;
+			} else {
+				if (!(ffl->fno.fattrib & AM_DIR))
+					break;
+			}
+		}
+
+		#if _USE_LFN
+			return ffl->fno.lfname[0] ? ffl->fno.lfname : ffl->fno.fname;
+		#else
+			return ffl->fno.fname;
+		#endif
+		#undef ffl
+	}
+
+	static void fatfsFlClose(gfileList *pfl) {
+		f_closedir(&((fatfsList *)pfl)->dir);
+		gfxFree(pfl);
+	}
+
+#endif
