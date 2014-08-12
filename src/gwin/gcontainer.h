@@ -105,6 +105,7 @@ extern "C" {
 	 * @{
 	 */
 	#define GWIN_CONTAINER_BORDER		0x00000001
+	#define GWIN_CONTAINER_TRANSPARENT	0x00000002
 	/** @} */
 
 	/**

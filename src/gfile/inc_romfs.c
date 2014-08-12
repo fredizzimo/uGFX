@@ -31,10 +31,14 @@ typedef struct ROMFS_DIRENTRY {
 } ROMFS_DIRENTRY;
 
 #define ROMFS_DIRENTRY_HEAD		0
-
 #include "romfs_files.h"
-
 static const ROMFS_DIRENTRY const *FsROMHead = ROMFS_DIRENTRY_HEAD;
+
+typedef struct ROMFileList {
+	gfileList				fl;
+	const ROMFS_DIRENTRY	*pdir;
+} ROMFileList;
+
 
 static bool_t ROMExists(const char *fname);
 static long int	ROMFilesize(const char *fname);
@@ -44,6 +48,11 @@ static int ROMRead(GFILE *f, void *buf, int size);
 static bool_t ROMSetpos(GFILE *f, long int pos);
 static long int ROMGetsize(GFILE *f);
 static bool_t ROMEof(GFILE *f);
+#if GFILE_NEED_FILELISTS
+	static gfileList *ROMFlOpen(const char *path, bool_t dirs);
+	static const char *ROMFlRead(gfileList *pfl);
+	static void ROMFlClose(gfileList *pfl);
+#endif
 
 static const GFILEVMT FsROMVMT = {
 	GFILE_CHAINHEAD,									// next
@@ -52,8 +61,10 @@ static const GFILEVMT FsROMVMT = {
 	0, ROMExists, ROMFilesize, 0,
 	ROMOpen, ROMClose, ROMRead, 0,
 	ROMSetpos, ROMGetsize, ROMEof,
-	0, 0,
-	0
+	0, 0, 0,
+	#if GFILE_NEED_FILELISTS
+		ROMFlOpen, ROMFlRead, ROMFlClose
+	#endif
 };
 #undef GFILE_CHAINHEAD
 #define GFILE_CHAINHEAD		&FsROMVMT
@@ -122,3 +133,45 @@ static bool_t ROMEof(GFILE *f)
 {
 	return f->pos >= ((const ROMFS_DIRENTRY *)f->obj)->size;
 }
+
+#if GFILE_NEED_FILELISTS
+	static gfileList *ROMFlOpen(const char *path, bool_t dirs) {
+		ROMFileList *	p;
+		(void)			path;
+
+		// We don't support directories or path searching
+		if (dirs)
+			return 0;
+
+		// Allocate the list buffer
+		if (!(p = gfxAlloc(sizeof(ROMFileList))))
+			return 0;
+
+		// Initialize it and return it.
+		p->pdir = 0;
+		return &p->fl;
+	}
+
+	static const char *ROMFlRead(gfileList *pfl) {
+		#define rfl		((ROMFileList *)pfl)
+
+		// Is it the first entry
+		if (!rfl->pdir) {
+			rfl->pdir = FsROMHead;
+			return FsROMHead->name;
+		}
+
+		// Is it not the last entry
+		if (rfl->pdir->next) {
+			rfl->pdir = rfl->pdir->next;
+			return rfl->pdir->name;
+		}
+
+		return 0;
+		#undef rfl
+	}
+
+	static void ROMFlClose(gfileList *pfl) {
+		gfxFree(pfl);
+	}
+#endif

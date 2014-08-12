@@ -33,18 +33,21 @@
 
 void _gosInit(void)
 {
-	/* Don't initialise if the user already has */
-	
-	#if CH_KERNEL_MAJOR == 2
-	if (!chThdSelf()) {
-		halInit();
-		chSysInit();
-	}
-	#elif CH_KERNEL_MAJOR == 3
-	if (!chThdGetSelfX()) {
-		halInit();
-		chSysInit();
-	}
+	#if !GFX_NO_OS_INIT
+		/* Don't Initialize if the user already has */
+		#if CH_KERNEL_MAJOR == 2
+			if (!chThdSelf()) {
+				halInit();
+				chSysInit();
+			}
+		#elif CH_KERNEL_MAJOR == 3
+			if (!chThdGetSelfX()) {
+				halInit();
+				chSysInit();
+			}
+		#endif
+	#else
+		#warning "GOS: Operating System initialization has been turned off. Make sure you call halInit() and chSysInit() before gfxInit() in your application!"
 	#endif
 }
 

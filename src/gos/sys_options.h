@@ -76,6 +76,20 @@
  * @{
  */
  	/**
+ 	 * @brief	Should uGFX avoid initializing the operating system
+ 	 * @details	Defaults to FALSE
+ 	 * @note	This is not relevant to all operating systems eg Win32 never initializes the
+ 	 * 			operating system as uGFX runs as an application outside the boot process.
+ 	 * @note	Operating system initialization is not necessarily implemented for all
+ 	 * 			operating systems yet even when it is relevant. These operating systems
+ 	 * 			will display a compile warning reminding you to initialize the operating
+ 	 * 			system in your application code. Note that on these operating systems the
+ 	 * 			demo applications will not work without modification.
+ 	 */
+ 	#ifndef GFX_NO_OS_INIT
+ 		#define GFX_NO_OS_INIT			FALSE
+ 	#endif
+ 	/**
  	 * @brief	Should uGFX stuff be added to the FreeRTOS+Tracer
  	 * @details	Defaults to FALSE
  	 */

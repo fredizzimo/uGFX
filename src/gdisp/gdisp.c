@@ -21,7 +21,11 @@
 
 #if 1
 	#undef INLINE
-	#define INLINE	inline
+	#if defined(__KEIL__) || defined(__C51__)
+		#define INLINE	__inline
+	#else
+		#define INLINE	inline
+	#endif
 #else
 	#undef INLINE
 	#define INLINE

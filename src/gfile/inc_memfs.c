@@ -26,8 +26,10 @@ static const GFILEVMT FsMemVMT = {
 	0, 0, 0, 0,
 	0, 0, MEMRead, MEMWrite,
 	MEMSetpos, 0, 0,
-	0, 0, 
-	0
+	0, 0, 0,
+	#if GFILE_NEED_FILELISTS
+		0, 0, 0,
+	#endif
 };
 
 static int MEMRead(GFILE *f, void *buf, int size) {
@@ -42,4 +44,19 @@ static bool_t MEMSetpos(GFILE *f, long int pos) {
 	(void) f;
 	(void) pos;
 	return TRUE;
+}
+
+GFILE *	gfileOpenMemory(void *memptr, const char *mode) {
+	GFILE	*f;
+
+	// Get an empty file and set the flags
+	if (!(f = findemptyfile(mode)))
+		return 0;
+
+	// File is open - fill in all the details
+	f->vmt = &FsMemVMT;
+	f->obj = memptr;
+	f->pos = 0;
+	f->flags |= GFILEFLG_OPEN|GFILEFLG_CANSEEK;
+	return f;
 }

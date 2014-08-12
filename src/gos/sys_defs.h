@@ -439,20 +439,22 @@
  * All the above was just for the doxygen documentation. All the implementation of the above
  * (without any of the documentation overheads) is in the files below.
  */
+#elif GFX_USE_OS_RAWRTOS
+ 	#include "src/gos/gfx_rawrtos.h"
 #elif GFX_USE_OS_CHIBIOS
-	#include "src/gos/chibios.h"
+	#include "src/gos/gfx_chibios.h"
 #elif GFX_USE_OS_FREERTOS
-	#include "src/gos/freertos.h"
+	#include "src/gos/gfx_freertos.h"
 #elif GFX_USE_OS_WIN32
-	#include "src/gos/win32.h"
+	#include "src/gos/gfx_win32.h"
 #elif GFX_USE_OS_LINUX
-	#include "src/gos/linux.h"
+	#include "src/gos/gfx_linux.h"
 #elif GFX_USE_OS_OSX
-	#include "src/gos/osx.h"
+	#include "src/gos/gfx_osx.h"
 #elif GFX_USE_OS_RAW32
-	#include "src/gos/raw32.h"
+	#include "src/gos/gfx_raw32.h"
 #elif GFX_USE_OS_ECOS
-	#include "src/gos/ecos.h"
+	#include "src/gos/gfx_ecos.h"
 #else
 	#error "Your operating system is not supported yet"
 #endif

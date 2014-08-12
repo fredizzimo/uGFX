@@ -86,6 +86,7 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 	#define pte		((GEventToggle *)pe)
 	#define pde		((GEventDial *)pe)
 
+	GHandle				h;
 	GHandle				gh;
 	#if GFX_USE_GINPUT && (GINPUT_NEED_TOGGLE || GINPUT_NEED_DIAL)
 		uint16_t		role;
@@ -99,32 +100,38 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 	case GEVENT_MOUSE:
 	case GEVENT_TOUCH:
 		// Cycle through all windows
-		for(gh = gwinGetNextWindow(0); gh; gh = gwinGetNextWindow(gh)) {
+		for(gh = 0, h = gwinGetNextWindow(0); h; h = gwinGetNextWindow(h)) {
 
-			// check if the widget matches this display
-			if (gh->display != pme->display)
+			// The window must be on this display and visible to be relevant
+			if (h->display != pme->display || !(h->flags & GWIN_FLG_SYSVISIBLE))
 				continue;
 
-			// check if it is a widget that is enabled and visible
-			if ((gh->flags & (GWIN_FLG_WIDGET|GWIN_FLG_SYSENABLED|GWIN_FLG_SYSVISIBLE)) != (GWIN_FLG_WIDGET|GWIN_FLG_SYSENABLED|GWIN_FLG_SYSVISIBLE))
-				continue;
-
-			// Are we captured?
-			if ((gw->g.flags & GWIN_FLG_MOUSECAPTURE)) {
+			// Is the mouse currently captured by this widget?
+			if ((h->flags & (GWIN_FLG_WIDGET|GWIN_FLG_MOUSECAPTURE)) == (GWIN_FLG_WIDGET|GWIN_FLG_MOUSECAPTURE)) {
+				gh = h;
 				if ((pme->last_buttons & ~pme->current_buttons & GINPUT_MOUSE_BTN_LEFT)) {
-					gw->g.flags &= ~GWIN_FLG_MOUSECAPTURE;
+					gh->flags &= ~GWIN_FLG_MOUSECAPTURE;
 					if (wvmt->MouseUp)
-						wvmt->MouseUp(gw, pme->x - gw->g.x, pme->y - gw->g.y);
+						wvmt->MouseUp(gw, pme->x - gh->x, pme->y - gh->y);
 				} else if (wvmt->MouseMove)
-					wvmt->MouseMove(gw, pme->x - gw->g.x, pme->y - gw->g.y);
+					wvmt->MouseMove(gw, pme->x - gh->x, pme->y - gh->y);
 
-			// We are not captured - look for mouse downs over the widget
-			} else if ((~pme->last_buttons & pme->current_buttons & GINPUT_MOUSE_BTN_LEFT)
-					&& pme->x >= gw->g.x && pme->x < gw->g.x + gw->g.width
-					&& pme->y >= gw->g.y && pme->y < gw->g.y + gw->g.height) {
-				gw->g.flags |= GWIN_FLG_MOUSECAPTURE;
+				// There is only ever one captured mouse. Prevent normal mouse processing if there is a captured mouse
+				gh = 0;
+				break;
+			}
+
+			// Save the highest z-order window that the mouse is over
+			if (pme->x >= h->x && pme->x < h->x + h->width && pme->y >= h->y && pme->y < h->y + h->height)
+				gh = h;
+		}
+
+		// Process any mouse down over the highest order window if it is an enabled widget
+		if (gh && (gh->flags & (GWIN_FLG_WIDGET|GWIN_FLG_SYSENABLED)) == (GWIN_FLG_WIDGET|GWIN_FLG_SYSENABLED)) {
+			if ((~pme->last_buttons & pme->current_buttons & GINPUT_MOUSE_BTN_LEFT)) {
+				gh->flags |= GWIN_FLG_MOUSECAPTURE;
 				if (wvmt->MouseDown)
-					wvmt->MouseDown(gw, pme->x - gw->g.x, pme->y - gw->g.y);
+					wvmt->MouseDown(gw, pme->x - gh->x, pme->y - gh->y);
 			}
 		}
 		break;
@@ -242,6 +249,9 @@ GHandle _gwidgetCreate(GDisplay *g, GWidgetObject *pgw, const GWidgetInit *pInit
 	pgw->fnDraw = pInit->customDraw ? pInit->customDraw : vmt->DefaultDraw;
 	pgw->fnParam = pInit->customParam;
 	pgw->pstyle = pInit->customStyle ? pInit->customStyle : defaultStyle;
+	#if GWIN_WIDGET_TAGS
+			pgw->tag = pInit->tag;
+	#endif
 
 	return 	&pgw->g;
 }
@@ -470,6 +480,17 @@ bool_t gwinAttachListener(GListener *pl) {
 		// Assign the new
 		wvmt->DialAssign(gw, role, instance);
 		return geventAttachSource(&gl, gsh, 0);
+	}
+#endif
+
+#if GWIN_WIDGET_TAGS
+	void gwinSetTag(GHandle gh, WidgetTag tag) {
+		if ((gh->flags & GWIN_FLG_WIDGET))
+			gw->tag = tag;
+	}
+
+	WidgetTag gwinGetTag(GHandle gh) {
+		return ((gh->flags & GWIN_FLG_WIDGET)) ? gw->tag : 0;
 	}
 #endif
 

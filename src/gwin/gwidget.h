@@ -73,6 +73,11 @@ extern const GWidgetStyle WhiteWidgetStyle;
 typedef void (*CustomWidgetDrawFunction)(struct GWidgetObject *gw, void *param);
 
 /**
+ * @brief	Defines a the type of a tag on a widget
+ */
+typedef uint16_t	WidgetTag;
+
+/**
  * @brief	The structure to initialise a widget.
  *
  * @note	Some widgets may have extra parameters.
@@ -92,6 +97,9 @@ typedef struct GWidgetInit {
 	CustomWidgetDrawFunction	customDraw;				// @< A custom draw function - use NULL for the standard
 	void *						customParam;			// @< A parameter for the custom draw function (default = NULL)
 	const GWidgetStyle *		customStyle;			// @< A custom style to use - use NULL for the default style
+	#if GWIN_WIDGET_TAGS || defined(__DOXYGEN__)
+		WidgetTag				tag;					// @< The tag to associate with the widget
+	#endif
 } GWidgetInit;
 /** @} */
 
@@ -110,6 +118,9 @@ typedef struct GWidgetObject {
 	CustomWidgetDrawFunction	fnDraw;				// @< The current draw function
 	void *						fnParam;			// @< A parameter for the current draw function
 	const GWidgetStyle *		pstyle;				// @< The current widget style colors
+	#if GWIN_WIDGET_TAGS || defined(__DOXYGEN__)
+		WidgetTag				tag;				// @< The widget tag
+	#endif
 } GWidgetObject;
 /** @} */
 
@@ -187,6 +198,34 @@ void gwinSetText(GHandle gh, const char *text, bool_t useAlloc);
  */
 const char *gwinGetText(GHandle gh);
 
+#if GWIN_WIDGET_TAGS || defined(__DOXYGEN__)
+	/**
+	 * @brief   Set the tag of a widget.
+	 *
+	 * @param[in] gh		The widget handle
+	 * @param[in] tag		The tag to set.
+	 *
+	 * @note				Non-widgets will ignore this call.
+	 *
+	 * @pre					Requires GWIN_WIDGET_TAGS to be TRUE
+	 *
+	 * @api
+	 */
+	void gwinSetTag(GHandle gh, WidgetTag tag);
+
+	/**
+	 * @brief   Get the tag of a widget.
+	 * @return	The widget tag value (or 0 if it is not a widget)
+	 *
+	 * @param[in] gh		The widget handle
+	 *
+	 * @pre					Requires GWIN_WIDGET_TAGS to be TRUE
+	 *
+	 * @api
+	 */
+	WidgetTag gwinGetTag(GHandle gh);
+#endif
+
 /**
  * @brief   Set the style of a widget.
  *
@@ -235,7 +274,7 @@ void gwinSetCustomDraw(GHandle gh, CustomWidgetDrawFunction fn, void *param);
  */
 bool_t gwinAttachListener(GListener *pl);
 
-#if GFX_USE_GINPUT && GINPUT_NEED_MOUSE
+#if (GFX_USE_GINPUT && GINPUT_NEED_MOUSE) || defined(__DOXYGEN__)
 	/**
 	 * @brief	Set the mouse to be used to control the widgets
 	 * @return	TRUE on success
@@ -249,7 +288,7 @@ bool_t gwinAttachListener(GListener *pl);
 	bool_t gwinAttachMouse(uint16_t instance);
 #endif
 
-#if GFX_USE_GINPUT && GINPUT_NEED_TOGGLE
+#if (GFX_USE_GINPUT && GINPUT_NEED_TOGGLE) || defined(__DOXYGEN__)
 	/**
 	 * @brief	Attach a toggle to a widget
 	 * @return	TRUE on success
@@ -267,7 +306,7 @@ bool_t gwinAttachListener(GListener *pl);
 	bool_t gwinAttachToggle(GHandle gh, uint16_t role, uint16_t instance);
 #endif
 
-#if GFX_USE_GINPUT && GINPUT_NEED_DIAL
+#if (GFX_USE_GINPUT && GINPUT_NEED_DIAL) || defined(__DOXYGEN__)
 	/**
 	 * @brief	Attach a toggle to a widget
 	 * @return	TRUE on success

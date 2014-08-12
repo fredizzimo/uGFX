@@ -42,14 +42,20 @@
 /*===========================================================================*/
 
 typedef unsigned char	bool_t;
-typedef char			int8_t;
-typedef unsigned char	uint8_t;
-typedef short			int16_t;
-typedef unsigned short	uint16_t;
-typedef int				int32_t;
-typedef unsigned int	uint32_t;
 
-typedef uint32_t		size_t;
+#ifndef _STDINT_H
+	typedef char			int8_t;
+	typedef unsigned char	uint8_t;
+	typedef short			int16_t;
+	typedef unsigned short	uint16_t;
+	typedef int				int32_t;
+	typedef unsigned int	uint32_t;
+#endif
+
+#if !defined (__need_size_t) && !defined (_STDDEF_H_)
+	typedef uint32_t		size_t;
+#endif
+
 typedef uint32_t		delaytime_t;
 typedef uint32_t		systemticks_t;
 typedef short			semcount_t;

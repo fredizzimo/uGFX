@@ -38,6 +38,9 @@
 //    #define INTERRUPTS_OFF()                         optional_code
 //    #define INTERRUPTS_ON()                          optional_code
 
+// Options that (should where relevant) apply to all operating systems
+//    #define GFX_NO_OS_INIT                           FALSE
+
 
 ///////////////////////////////////////////////////////////////////////////
 // GDISP                                                                 //
@@ -166,6 +169,7 @@
 //    #define GWIN_NEED_PROGRESSBAR                    FALSE
 //        #define GWIN_PROGRESSBAR_AUTO                FALSE
 //    #define GWIN_FLAT_STYLING                        FALSE
+//    #define GWIN_WIDGET_TAGS                         FALSE
 
 //#define GWIN_NEED_CONTAINERS                         FALSE
 //    #define GWIN_NEED_CONTAINER                      FALSE
@@ -220,10 +224,8 @@
 //#define GFILE_NEED_PRINTG                            FALSE
 //#define GFILE_NEED_SCANG                             FALSE
 //#define GFILE_NEED_STRINGS                           FALSE
+//#define GFILE_NEED_FILELISTS                         FALSE
 //#define GFILE_NEED_STDIO                             FALSE
-//    #define GFILE_ALLOW_FLOATS                       FALSE
-//    #define GFILE_ALLOW_DEVICESPECIFIC               FALSE
-//    #define GFILE_MAX_GFILES                         3
 //#define GFILE_NEED_NOAUTOMOUNT                       FALSE
 //#define GFILE_NEED_NOAUTOSYNC                        FALSE
 
@@ -234,6 +236,9 @@
 //#define GFILE_NEED_NATIVEFS                          FALSE
 //#define GFILE_NEED_CHBIOSFS                          FALSE
 
+//#define GFILE_ALLOW_FLOATS                           FALSE
+//#define GFILE_ALLOW_DEVICESPECIFIC                   FALSE
+//#define GFILE_MAX_GFILES                             3
 
 ///////////////////////////////////////////////////////////////////////////
 // GADC                                                                  //

@@ -38,6 +38,9 @@ static void SendRadioEvent(GWidgetObject *gw) {
 		pbe->type = GEVENT_GWIN_RADIO;
 		pbe->radio = (GHandle)gw;
 		pbe->group = ((GRadioObject *)gw)->group;
+		#if GWIN_WIDGET_TAGS
+			pbe->tag = gw->tag;
+		#endif
 		geventSendEvent(psl);
 	}
 

@@ -46,6 +46,7 @@
 	/**
 	 * @brief   Include printg, fprintg etc functions
 	 * @details	Defaults to FALSE
+	 * @pre		To get the string sprintg functions you also need to define @p GFILE_NEED_STRINGS
 	 */
 	#ifndef GFILE_NEED_PRINTG
 		#define GFILE_NEED_PRINTG		FALSE
@@ -53,15 +54,14 @@
 	/**
 	 * @brief   Include scang, fscang etc functions
 	 * @details	Defaults to FALSE
+	 * @pre		To get the string sscang functions you also need to define @p GFILE_NEED_STRINGS
 	 */
 	#ifndef GFILE_NEED_SCANG
 		#define GFILE_NEED_SCANG		FALSE
 	#endif
 	/**
-	 * @brief   Include the string sprintg/sscang functions
+	 * @brief   Include the string based file functions
 	 * @details	Defaults to FALSE
-	 * @pre		To get sprintg functions you also need to define @p GFILE_NEED_PRINTG
-	 * @pre		To get sscang functions you also need to define @p GFILE_NEED_SCANG
 	 */
 	#ifndef GFILE_NEED_STRINGS
 		#define GFILE_NEED_STRINGS		FALSE
@@ -145,6 +145,14 @@
 	 */
 	#ifndef GFILE_NEED_MEMFS
 		#define GFILE_NEED_MEMFS		FALSE
+	#endif
+	/**
+	 * @brief   Include support for file list functions
+	 * @details	Defaults to FALSE
+	 * @note	Adds support for @p gfileOpenFileList(), @p gfileReadFileList() and @p gfileCloseFileList().
+	 */
+	#ifndef GFILE_NEED_FILELISTS
+		#define GFILE_NEED_FILELISTS	FALSE
 	#endif
 /**
  * @}

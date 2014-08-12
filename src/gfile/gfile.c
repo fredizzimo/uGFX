@@ -35,6 +35,11 @@ struct GFILE {
 	long int				pos;
 };
 
+struct gfileList {
+	const struct GFILEVMT *	vmt;
+	bool_t					dirs;
+};
+
 typedef struct GFILEVMT {
 	const struct GFILEVMT *	next;
 	uint8_t					flags;
@@ -59,6 +64,11 @@ typedef struct GFILEVMT {
 	bool_t		(*mount)	(const char *drive);
 	bool_t		(*unmount)	(const char *drive);
 	bool_t		(*sync)		(GFILE *f);
+	#if GFILE_NEED_FILELISTS
+		gfileList *	(*flopen)	(const char *path, bool_t dirs);
+		const char *(*flread)	(gfileList *pfl);
+		void		(*flclose)	(gfileList *pfl);
+	#endif
 } GFILEVMT;
 
 // The chain of FileSystems
@@ -69,6 +79,9 @@ static GFILE gfileArr[GFILE_MAX_GFILES];
 GFILE *gfileStdIn;
 GFILE *gfileStdOut;
 GFILE *gfileStdErr;
+
+// Forward definition used by some special open calls
+static GFILE *findemptyfile(const char *mode);
 
 /**
  * The order of the file-systems below determines the order
@@ -116,6 +129,34 @@ GFILE *gfileStdErr;
  ********************************************************/
 #if GFILE_NEED_ROMFS
 	#include "src/gfile/inc_romfs.c"
+#endif
+
+/********************************************************
+ * The virtual string file VMT
+ ********************************************************/
+#if GFILE_NEED_STRINGS
+	#include "src/gfile/inc_strings.c"
+#endif
+
+/********************************************************
+ * Printg Routines
+ ********************************************************/
+#if GFILE_NEED_PRINTG
+	#include "src/gfile/inc_printg.c"
+#endif
+
+/********************************************************
+ * Scang Routines
+ ********************************************************/
+#if GFILE_NEED_SCANG
+	#include "src/gfile/inc_scang.c"
+#endif
+
+/********************************************************
+ * Stdio Emulation Routines
+ ********************************************************/
+#if GFILE_NEED_STDIO
+	#include "src/gfile/inc_stdio.c"
 #endif
 
 /********************************************************
@@ -251,39 +292,48 @@ bool_t gfileRename(const char *oldname, const char *newname) {
 	return FALSE;
 }
 
-static uint16_t mode2flags(const char *mode) {
-	uint16_t	flags;
+static GFILE *findemptyfile(const char *mode) {
+	GFILE *			f;
 
-	switch(mode[0]) {
-	case 'r':
-		flags = GFILEFLG_READ|GFILEFLG_MUSTEXIST;
-		while (*++mode) {
+	// First find an available GFILE slot.
+	for (f = gfileArr; f < &gfileArr[GFILE_MAX_GFILES]; f++) {
+		if (!(f->flags & GFILEFLG_OPEN)) {
+			// Get the flags
 			switch(mode[0]) {
-			case '+':	flags |= GFILEFLG_WRITE;		break;
-			case 'b':	flags |= GFILEFLG_BINARY;		break;
+			case 'r':
+				f->flags = GFILEFLG_READ|GFILEFLG_MUSTEXIST;
+				while (*++mode) {
+					switch(mode[0]) {
+					case '+':	f->flags |= GFILEFLG_WRITE;			break;
+					case 'b':	f->flags |= GFILEFLG_BINARY;		break;
+					}
+				}
+				break;
+			case 'w':
+				f->flags = GFILEFLG_WRITE|GFILEFLG_TRUNC;
+				while (*++mode) {
+					switch(mode[0]) {
+					case '+':	f->flags |= GFILEFLG_READ;			break;
+					case 'b':	f->flags |= GFILEFLG_BINARY;		break;
+					case 'x':	f->flags |= GFILEFLG_MUSTNOTEXIST;	break;
+					}
+				}
+				break;
+			case 'a':
+				f->flags = GFILEFLG_WRITE|GFILEFLG_APPEND;
+				while (*++mode) {
+					switch(mode[0]) {
+					case '+':	f->flags |= GFILEFLG_READ;			break;
+					case 'b':	f->flags |= GFILEFLG_BINARY;		break;
+					case 'x':	f->flags |= GFILEFLG_MUSTNOTEXIST;	break;
+					}
+				}
+				break;
+			default:
+				return 0;
 			}
+			return f;
 		}
-		return flags;
-	case 'w':
-		flags = GFILEFLG_WRITE|GFILEFLG_TRUNC;
-		while (*++mode) {
-			switch(mode[0]) {
-			case '+':	flags |= GFILEFLG_READ;			break;
-			case 'b':	flags |= GFILEFLG_BINARY;		break;
-			case 'x':	flags |= GFILEFLG_MUSTNOTEXIST;	break;
-			}
-		}
-		return flags;
-	case 'a':
-		flags = GFILEFLG_WRITE|GFILEFLG_APPEND;
-		while (*++mode) {
-			switch(mode[0]) {
-			case '+':	flags |= GFILEFLG_READ;			break;
-			case 'b':	flags |= GFILEFLG_BINARY;		break;
-			case 'x':	flags |= GFILEFLG_MUSTNOTEXIST;	break;
-			}
-		}
-		return flags;
 	}
 	return 0;
 }
@@ -307,111 +357,33 @@ static bool_t testopen(const GFILEVMT *p, GFILE *f, const char *fname) {
 }
 
 GFILE *gfileOpen(const char *fname, const char *mode) {
-	uint16_t		flags;
 	GFILE *			f;
 	const GFILEVMT *p;
 
-	// Get the requested mode
-	if (!(flags = mode2flags(mode)))
+	// Get an empty file and set the flags
+	if (!(f = findemptyfile(mode)))
 		return 0;
 
 	#if GFILE_ALLOW_DEVICESPECIFIC
 		if (fname[0] && fname[1] == '|') {
-			// First find an available GFILE slot.
-			for (f = gfileArr; f < &gfileArr[GFILE_MAX_GFILES]; f++) {
-				if (!(f->flags & GFILEFLG_OPEN)) {
-					// Try to open the file
-					f->flags = flags;
-					for(p = FsChain; p; p = p->next) {
-						if (p->prefix == fname[0])
-							return testopen(p, f, fname+2) ? f : 0;
-					}
-					// File not found
-					break;
-				}
+			for(p = FsChain; p; p = p->next) {
+				if (p->prefix == fname[0])
+					return testopen(p, f, fname+2) ? f : 0;
 			}
 
-			// No available slot
+			// File not found
 			return 0;
 		}
 	#endif
 
-	// First find an available GFILE slot.
-	for (f = gfileArr; f < &gfileArr[GFILE_MAX_GFILES]; f++) {
-		if (!(f->flags & GFILEFLG_OPEN)) {
-
-			// Try to open the file
-			f->flags = flags;
-			for(p = FsChain; p; p = p->next) {
-				if (testopen(p, f, fname))
-					return f;
-			}
-			// File not found
-			break;
-		}
+	for(p = FsChain; p; p = p->next) {
+		if (testopen(p, f, fname))
+			return f;
 	}
 
-	// No available slot
+	// File not found
 	return 0;
 }
-
-#if GFILE_NEED_CHIBIOSFS && GFX_USE_OS_CHIBIOS
-	GFILE *		gfileOpenBaseFileStream(void *BaseFileStreamPtr, const char *mode) {
-		GFILE *			f;
-
-		// First find an available GFILE slot.
-		for (f = gfileArr; f < &gfileArr[GFILE_MAX_GFILES]; f++) {
-			if (!(f->flags & GFILEFLG_OPEN)) {
-				// Get the flags
-				if (!(f->flags = mode2flags(mode)))
-					return 0;
-
-				// If we want write but the fs doesn't allow it then return
-				if ((f->flags & GFILEFLG_WRITE) && !(FsCHIBIOSVMT.flags & GFSFLG_WRITEABLE))
-					return 0;
-
-				// File is open - fill in all the details
-				f->vmt = &FsCHIBIOSVMT;
-				f->obj = BaseFileStreamPtr;
-				f->pos = 0;
-				f->flags |= GFILEFLG_OPEN|GFILEFLG_CANSEEK;
-				return f;
-			}
-		}
-
-		// No available slot
-		return 0;
-	}
-#endif
-
-#if GFILE_NEED_MEMFS
-	GFILE *		gfileOpenMemory(void *memptr, const char *mode) {
-		GFILE *			f;
-
-		// First find an available GFILE slot.
-		for (f = gfileArr; f < &gfileArr[GFILE_MAX_GFILES]; f++) {
-			if (!(f->flags & GFILEFLG_OPEN)) {
-				// Get the flags
-				if (!(f->flags = mode2flags(mode)))
-					return 0;
-
-				// If we want write but the fs doesn't allow it then return
-				if ((f->flags & GFILEFLG_WRITE) && !(FsMemVMT.flags & GFSFLG_WRITEABLE))
-					return 0;
-
-				// File is open - fill in all the details
-				f->vmt = &FsMemVMT;
-				f->obj = memptr;
-				f->pos = 0;
-				f->flags |= GFILEFLG_OPEN|GFILEFLG_CANSEEK;
-				return f;
-			}
-		}
-
-		// No available slot
-		return 0;
-	}
-#endif
 
 void gfileClose(GFILE *f) {
 	if (!f || !(f->flags & GFILEFLG_OPEN))
@@ -512,578 +484,34 @@ bool_t gfileSync(GFILE *f) {
 	return f->vmt->sync(f);
 }
 
-/********************************************************
- * String VMT routines
- ********************************************************/
-#if GFILE_NEED_STRINGS && (GFILE_NEED_PRINTG || GFILE_NEED_SCANG)
-	#include <string.h>
+#if GFILE_NEED_FILELISTS
+	gfileList *gfileOpenFileList(char fs, const char *path, bool_t dirs) {
+		const GFILEVMT *p;
+		gfileList *		pfl;
 
-	// Special String VMT
-	static int StringRead(GFILE *f, void *buf, int size) {
-		(void) size;
-
-		// size must be 1 for a complete read
-		if (!((char *)f->obj)[f->pos])
-			return 0;
-		((char *)buf)[0] = ((char *)f->obj)[f->pos];
-		return 1;
-	}
-	static int StringWrite(GFILE *f, const void *buf, int size) {
-		(void) size;
-
-		// size must be 1 for a complete write
-		((char *)f->obj)[f->pos] = ((char *)buf)[0];
-		return 1;
-	}
-	static const GFILEVMT StringVMT = {
-		0,								// next
-		0,								// flags
-		'_',							// prefix
-		0, 0, 0, 0,
-		0, 0, StringRead, StringWrite,
-		0, 0, 0,
-		0, 0
-	};
-#endif
-
-/********************************************************
- * printg routines
- ********************************************************/
-#if GFILE_NEED_PRINTG
-	#include <stdarg.h>
-
-	#define MAX_FILLER		11
-	#define FLOAT_PRECISION 100000
-
-	int fnprintg(GFILE *f, int maxlen, const char *fmt, ...) {
-		int		res;
-		va_list	ap;
-
-		va_start(ap, fmt);
-		res = vfnprintg(f, maxlen, fmt, ap);
-		va_end(ap);
-		return res;
-	}
-
-	static char *ltoa_wd(char *p, long num, unsigned radix, long divisor) {
-		int		i;
-		char *	q;
-
-		if (!divisor) divisor = num;
-
-		q = p + MAX_FILLER;
-		do {
-			i = (int)(num % radix);
-			i += '0';
-			if (i > '9')
-			  i += 'A' - '0' - 10;
-			*--q = i;
-			num /= radix;
-		} while ((divisor /= radix) != 0);
-
-		i = (int)(p + MAX_FILLER - q);
-		do {
-			*p++ = *q++;
-		} while (--i);
-
-		return p;
-	}
-
-	int vfnprintg(GFILE *f, int maxlen, const char *fmt, va_list arg) {
-		int		ret;
-		char	*p, *s, c, filler;
-		int		i, precision, width;
-		bool_t	is_long, left_align;
-		long	l;
-		#if GFILE_ALLOW_FLOATS
-			float	f;
-			char	tmpbuf[2*MAX_FILLER + 1];
-		#else
-			char	tmpbuf[MAX_FILLER + 1];
-		#endif
-
-		ret = 0;
-		if (maxlen < 0)
-			return 0;
-		if (!maxlen)
-			maxlen = -1;
-
-		while (*fmt) {
-			if (*fmt != '%') {
-				gfileWrite(f, fmt, 1);
-				ret++; if (!--maxlen) return ret;
-				fmt++;
-				continue;
-			}
-			fmt++;
-
-			p = s = tmpbuf;
-			left_align = FALSE;
-			filler = ' ';
-			width = 0;
-			precision = 0;
-
-			if (*fmt == '-') {
-				fmt++;
-				left_align = TRUE;
-			}
-			if (*fmt == '.') {
-				fmt++;
-				filler = '0';
-			}
-
-			while (1) {
-				c = *fmt++;
-				if (c >= '0' && c <= '9') {
-					c -= '0';
-					width = width * 10 + c;
-				} else if (c == '*')
-					width = va_arg(arg, int);
-				else
-					break;
-			}
-			if (c == '.') {
-				while (1) {
-					c = *fmt++;
-					if (c >= '0' && c <= '9') {
-						c -= '0';
-						precision = precision * 10 + c;
-					} else if (c == '*')
-						precision = va_arg(arg, int);
-					else
-						break;
-				}
-			}
-			/* Long modifier.*/
-			if (c == 'l' || c == 'L') {
-				is_long = TRUE;
-				if (*fmt)
-					c = *fmt++;
-			}
-			else
-				is_long = (c >= 'A') && (c <= 'Z');
-
-			/* Command decoding.*/
-			switch (c) {
-			case 0:
-				return ret;
-			case 'c':
-				filler = ' ';
-				*p++ = va_arg(arg, int);
-				break;
-			case 's':
-				filler = ' ';
-				if ((s = va_arg(arg, char *)) == 0)
-					s = "(null)";
-				if (precision == 0)
-					precision = 32767;
-				for (p = s; *p && (--precision >= 0); p++);
-				break;
-			case 'D':
-			case 'd':
-				if (is_long)
-					l = va_arg(arg, long);
-				else
-					l = va_arg(arg, int);
-				if (l < 0) {
-					*p++ = '-';
-					l = -l;
-				}
-				p = ltoa_wd(p, l, 10, 0);
-				break;
-			#if GFILE_ALLOW_FLOATS
-				case 'f':
-					f = (float) va_arg(arg, double);
-					if (f < 0) {
-						*p++ = '-';
-						f = -f;
-					}
-					l = f;
-					p = ltoa_wd(p, l, 10, 0);
-					*p++ = '.';
-					l = (f - l) * FLOAT_PRECISION;
-					p = ltoa_wd(p, l, 10, FLOAT_PRECISION / 10);
-					break;
-			#endif
-			case 'X':
-			case 'x':
-				c = 16;
-				goto unsigned_common;
-			case 'U':
-			case 'u':
-				c = 10;
-				goto unsigned_common;
-			case 'O':
-			case 'o':
-				c = 8;
-			unsigned_common:
-				if (is_long)
-					l = va_arg(arg, long);
-				else
-					l = va_arg(arg, int);
-				p = ltoa_wd(p, l, c, 0);
-				break;
-			default:
-				*p++ = c;
-				break;
-			}
-
-			i = (int)(p - s);
-			if ((width -= i) < 0)
-				width = 0;
-			if (left_align == FALSE)
-				width = -width;
-			if (width < 0) {
-				if (*s == '-' && filler == '0') {
-					gfileWrite(f, s++, 1);
-					ret++; if (!--maxlen) return ret;
-					i--;
-				}
-				do {
-					gfileWrite(f, &filler, 1);
-					ret++; if (!--maxlen) return ret;
-				} while (++width != 0);
-			}
-			while (--i >= 0) {
-				gfileWrite(f, s++, 1);
-				ret++; if (!--maxlen) return ret;
-			}
-			while (width) {
-				gfileWrite(f, &filler, 1);
-				ret++; if (!--maxlen) return ret;
-				width--;
-			}
-		}
-		return ret;
-	}
-
-	#if GFILE_NEED_STRINGS
-		int snprintg(char *buf, int maxlen, const char *fmt, ...) {
-			int		res;
-			GFILE	f;
-			va_list	ap;
-
-			if (maxlen <= 1) {
-				if (maxlen == 1) {
-					*buf = 0;
+		// Find the correct VMT
+		for(p = FsChain; p; p = p->next) {
+			if (p->prefix == fs) {
+				if (!p->flopen)
 					return 0;
+				pfl = p->flopen(path, dirs);
+				if (pfl) {
+					pfl->vmt = p;
+					pfl->dirs = dirs;
 				}
-				maxlen += 1;
-			}
-			f.flags = GFILEFLG_OPEN|GFILEFLG_WRITE;
-			f.vmt = &StringVMT;
-			f.pos = 0;
-			f.obj = buf;
-			va_start(ap, fmt);
-			res = vfnprintg(&f, maxlen-1, fmt, ap);
-			va_end(ap);
-			buf[res] = 0;
-			return res;
-		}
-		int vsnprintg(char *buf, int maxlen, const char *fmt, va_list arg) {
-			int		res;
-			GFILE	f;
-
-			if (maxlen <= 1) {
-				if (maxlen == 1) {
-					*buf = 0;
-					return 0;
-				}
-				maxlen += 1;
-			}
-			f.flags = GFILEFLG_OPEN|GFILEFLG_WRITE;
-			f.vmt = &StringVMT;
-			f.pos = 0;
-			f.obj = buf;
-			res = vfnprintg(&f, maxlen-1, fmt, arg);
-			buf[res] = 0;
-			return res;
-		}
-	#endif
-#endif
-
-/********************************************************
- * scang routines
- ********************************************************/
-#if GFILE_NEED_SCANG
-	int fscang(GFILE *f, const char *fmt, ...) {
-		int		res;
-		va_list	ap;
-
-		va_start(ap, fmt);
-		res = vfscang(f, fmt, ap);
-		va_end(ap);
-		return res;
-	}
-
-	int vfscang(GFILE *f, const char *fmt, va_list arg) {
-		int		res, width, size, base;
-		unsigned long num;
-		char	c;
-		bool_t	assign, negate;
-		char	*p;
-
-		for(res = 0; *fmt; fmt++) {
-			switch(*fmt) {
-			case ' ': case '\t': case '\r': case '\n': case '\v': case '\f':
-				break;
-
-			case '%':
-				fmt++;
-				assign = TRUE;
-				negate = FALSE;
-				width = 0;
-				size = 1;
-				num = 0;
-
-				if (*fmt == '*') {
-					fmt++;
-					assign = FALSE;
-				}
-				while(*fmt >= '0' && *fmt <= '9')
-					width = width * 10 + (*fmt++ - '0');
-				if (*fmt == 'h') {
-					fmt++;
-					size = 0;
-				} else if (*fmt == 'l') {
-					fmt++;
-					size = 2;
-				} else if (*fmt == 'L') {
-					fmt++;
-					size = 3;
-				}
-				switch(*fmt) {
-				case 0:
-					return res;
-				case '%':
-					goto matchchar;
-				case 'c':
-					if (!width) {
-						while(1) {
-							if (!gfileRead(f, &c, 1))			return res;
-							switch(c) {
-							case ' ': case '\t': case '\r':
-							case '\n': case '\v': case '\f':	continue;
-							}
-							break;
-						}
-						width = 1;
-					} else {
-						if (!gfileRead(f, &c, 1)) 				return res;
-					}
-					if (assign) {
-						p = va_arg(arg, char *);
-						res++;
-						*p++ = c;
-					}
-					while(--width) {
-						if (!gfileRead(f, &c, 1)) 			return res;
-						if (assign) *p++ = c;
-					}
-					break;
-				case 's':
-					while(1) {
-						if (!gfileRead(f, &c, 1))			return res;
-						switch(c) {
-						case ' ': case '\t': case '\r':
-						case '\n': case '\v': case '\f':	continue;
-						}
-						break;
-					}
-					if (assign) {
-						p = va_arg(arg, char *);
-						res++;
-						*p++ = c;
-					}
-					if (width) {
-						while(--width) {
-							if (!gfileRead(f, &c, 1)) {
-								if (assign) *((char *)p) = 0;
-								return res;
-							}
-							if (assign) *p++ = c;
-						}
-					} else {
-						while(1) {
-							if (!gfileRead(f, &c, 1)) {
-								if (assign) *((char *)p) = 0;
-								return res;
-							}
-							switch(c) {
-							case ' ': case '\t': case '\r':
-							case '\n': case '\v': case '\f':	break;
-							default:
-								if (assign) *p++ = c;
-								continue;
-							}
-							break;
-						}
-						//ungetch(c);
-					}
-					if (assign) *p = 0;
-					break;
-				case 'd':	base = 10;	goto getnum;
-				case 'i':	base = -1;	goto getnum;
-				case 'o':	base = 8;	goto getnum;
-				case 'u':	base = 10;	goto getnum;
-				case 'x':	base = 16;	goto getnum;
-				case 'b':	base = 2;
-				getnum:
-					while(1) {
-						if (!gfileRead(f, &c, 1))			return res;
-						switch(c) {
-						case ' ': case '\t': case '\r':
-						case '\n': case '\v': case '\f':	continue;
-						}
-						break;
-					}
-					if (c == '-' && *fmt != 'u') {
-						negate = TRUE;
-						if ((width && !--width) || !gfileRead(f, &c, 1))			return res;
-					}
-					if (base == -1) {
-						if (c == '0') {
-							if ((width && !--width) || !gfileRead(f, &c, 1))		goto assignnum;
-							switch(c) {
-							case 'x': case 'X':
-								base = 16;
-								if ((width && !--width) || !gfileRead(f, &c, 1))	return res;
-								break;
-							case 'b': case 'B':
-								base = 2;
-								if ((width && !--width) || !gfileRead(f, &c, 1))	return res;
-								break;
-							default:
-								base = 8;
-								break;
-							}
-						} else
-							base = 10;
-					}
-					while(1) {
-						if (c >= '0' && c <= '9' && c - '0' < base)
-							num = num * base + (c - '0');
-						else if (c >= 'A' && c <= 'F' && base == 16)
-							num = num * base + (c - ('A'-10));
-						else if (c >= 'a' && c <= 'f' && base == 16)
-							num = num * base + (c - ('a'-10));
-						else {
-							// ungetch(c)
-							break;
-						}
-						if ((width && !--width) || !gfileRead(f, &c, 1))
-							break;
-					}
-
-				assignnum:
-					if (negate)
-						num = -num;
-
-					if (assign) {
-						switch(size) {
-						case 0:				// short
-							p = (char *)va_arg(arg, short *);
-							res++;
-							*((short *)p) = (short)num;
-						case 1:				// int
-							p = (char *)va_arg(arg, int *);
-							res++;
-							*((int *)p) = (int)num;
-						case 2: case 3:		// long
-							p = (char *)va_arg(arg, long *);
-							res++;
-							*((long *)p) = (long)num;
-						}
-				    }
-					break;
-
-				#if GFILE_ALLOW_FLOATS
-					case 'e': case 'f': case 'g':
-						// TODO
-				#endif
-				default:
-					return res;
-				}
-
-				break;
-
-			default:
-			matchchar:
-				while(1) {
-					if (!gfileRead(f, &c, 1))			return res;
-					switch(c) {
-					case ' ': case '\t': case '\r':
-					case '\n': case '\v': case '\f':	continue;
-					}
-					break;
-				}
-				if (c != *fmt) 							return res;
-				break;
+				return pfl;
 			}
 		}
-		return res;
-	}
-
-	#if GFILE_NEED_STRINGS
-		int sscang(const char *buf, const char *fmt, ...) {
-			int		res;
-			GFILE	f;
-			va_list	ap;
-
-			f.flags = GFILEFLG_OPEN|GFILEFLG_READ;
-			f.vmt = &StringVMT;
-			f.pos = 0;
-			f.obj = (void *)buf;
-			va_start(ap, fmt);
-			res = vfscang(&f, fmt, ap);
-			va_end(ap);
-			return res;
-		}
-
-		int vsscang(const char *buf, const char *fmt, va_list arg) {
-			int		res;
-			GFILE	f;
-
-			f.flags = GFILEFLG_OPEN|GFILEFLG_READ;
-			f.vmt = &StringVMT;
-			f.pos = 0;
-			f.obj = (void *)buf;
-			res = vfscang(&f, fmt, arg);
-			return res;
-		}
-	#endif
-#endif
-
-/********************************************************
- * stdio emulation routines
- ********************************************************/
-#if GFILE_NEED_STDIO
-	size_t gstdioRead(void * ptr, size_t size, size_t count, FILE *f) {
-		return gfileRead(f, ptr, size*count)/size;
-	}
-	size_t gstdioWrite(const void * ptr, size_t size, size_t count, FILE *f) {
-		return gfileWrite(f, ptr, size*count)/size;
-	}
-	int gstdioSeek(FILE *f, size_t offset, int origin) {
-		switch(origin) {
-		case SEEK_SET:
-			break;
-		case SEEK_CUR:
-			offset += f->pos;
-			break;
-		case SEEK_END:
-			offset += gfileGetSize(f);
-			break;
-		default:
-			return -1;
-		}
-		return gfileSetPos(f, offset) ? 0 : -1;
-	}
-	int gstdioGetpos(FILE *f, long int *pos) {
-		if (!(f->flags & GFILEFLG_OPEN))
-			return -1;
-		*pos = f->pos;
 		return 0;
+	}
+
+	const char *gfileReadFileList(gfileList *pfl) {
+		return pfl->vmt->flread ? pfl->vmt->flread(pfl) : 0;
+	}
+
+	void gfileCloseFileList(gfileList *pfl) {
+		if (pfl->vmt->flclose)
+			pfl->vmt->flclose(pfl);
 	}
 #endif
 

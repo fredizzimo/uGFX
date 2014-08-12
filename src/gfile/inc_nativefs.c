@@ -33,6 +33,11 @@ static int NativeWrite(GFILE *f, const void *buf, int size);
 static bool_t NativeSetpos(GFILE *f, long int pos);
 static long int NativeGetsize(GFILE *f);
 static bool_t NativeEof(GFILE *f);
+#if GFILE_NEED_FILELISTS
+	static gfileList *NativeFlOpen(const char *path, bool_t dirs);
+	static const char *NativeFlRead(gfileList *pfl);
+	static void NativeFlClose(gfileList *pfl);
+#endif
 
 static const GFILEVMT FsNativeVMT = {
 	GFILE_CHAINHEAD,									// next
@@ -46,8 +51,10 @@ static const GFILEVMT FsNativeVMT = {
 	NativeDel, NativeExists, NativeFilesize, NativeRen,
 	NativeOpen, NativeClose, NativeRead, NativeWrite,
 	NativeSetpos, NativeGetsize, NativeEof,
-	0, 0,
-	0
+	0, 0, 0,
+	#if GFILE_NEED_FILELISTS
+		NativeFlOpen, NativeFlRead, NativeFlClose
+	#endif
 };
 #undef GFILE_CHAINHEAD
 #define GFILE_CHAINHEAD		&FsNativeVMT
@@ -102,3 +109,108 @@ static long int NativeGetsize(GFILE *f) {
 	if (fstat(fileno((FILE *)f->obj), &st)) return -1;
 	return st.st_size;
 }
+
+#if GFILE_NEED_FILELISTS
+	#if defined(WIN32) || GFX_USE_OS_WIN32
+		typedef struct NativeFileList {
+			gfileList			fl;
+			HANDLE				d;
+			WIN32_FIND_DATA		f;
+			bool_t				first;
+		} NativeFileList;
+
+		static gfileList *NativeFlOpen(const char *path, bool_t dirs) {
+			NativeFileList		*p;
+			(void)				dirs;
+
+			if (!(p = gfxAlloc(sizeof(NativeFileList))))
+				return 0;
+			if ((p->d = FindFirstFile(path, &p->f)) == INVALID_HANDLE_VALUE) {
+				gfxFree(p);
+				return 0;
+			}
+			p->first = TRUE;
+			return &p->fl;
+		}
+
+		static const char *NativeFlRead(gfileList *pfl) {
+			#define nfl		((NativeFileList *)pfl)
+			while(1) {
+				if (!nfl->first && !FindNextFile(nfl->d, &nfl->f))
+					return 0;
+				nfl->first = FALSE;
+				if (nfl->f.cFileName[0] == '.')
+					continue;
+				if (nfl->fl.dirs) {
+					if ((nfl->f.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+						break;
+				} else {
+					if (!(nfl->f.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+						break;
+				}
+			}
+			return nfl->f.cFileName;
+			#undef nfl
+		}
+
+		static void NativeFlClose(gfileList *pfl) {
+			CloseHandle(((NativeFileList *)pfl)->d);
+			gfxFree(pfl);
+		}
+
+	#else
+		#include <dirent.h>
+
+		typedef struct NativeFileList {
+			gfileList			fl;
+			DIR *				d;
+			struct dirent *		f;
+		} NativeFileList;
+
+		static gfileList *NativeFlOpen(const char *path, bool_t dirs) {
+			NativeFileList		*p;
+			(void)				dirs;
+
+			if (!(p = gfxAlloc(sizeof(NativeFileList))))
+				return 0;
+			if (!(p->d = opendir(path))) {
+				gfxFree(p);
+				return 0;
+			}
+			return &p->fl;
+		}
+
+		static const char *NativeFlRead(gfileList *pfl) {
+			#define nfl		((NativeFileList *)pfl)
+			while(1) {
+				if (!(nfl->f = readdir(nfl->d)))
+					return 0;
+				if (nfl->f->d_name[0] == '.')
+					continue;
+
+				#ifdef _DIRENT_HAVE_D_TYPE
+					if (nfl->fl.dirs) {
+						if (nfl->f->d_type == DT_DIR)
+							break;
+					} else {
+						if (nfl->f->d_type == DT_REG)
+							break;
+					}
+				#else
+					// Oops - no type field. We could use stat() here but that would mean
+					//			concatting the supplied path to the found filename.
+					//			That all just seems too hard. Instead we just don't
+					//			distinguish between files and directories.
+					break;
+				#endif
+			}
+			return nfl->f->d_name;
+			#undef nfl
+		}
+
+		static void NativeFlClose(gfileList *pfl) {
+			closedir(((NativeFileList *)pfl)->d);
+			gfxFree(pfl);
+		}
+	#endif
+#endif

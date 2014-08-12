@@ -30,6 +30,9 @@ typedef struct GEventGWinSlider {
 	GEventType		type;				// The type of this event (GEVENT_GWIN_BUTTON)
 	GHandle			slider;				// The slider that is returning results
 	int				position;
+	#if GWIN_WIDGET_TAGS
+		WidgetTag	tag;				// The slider tag
+	#endif
 } GEventGWinSlider;
 
 // There are currently no GEventGWinSlider listening flags - use 0

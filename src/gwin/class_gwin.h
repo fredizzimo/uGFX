@@ -23,6 +23,10 @@
 
 #if GFX_USE_GWIN || defined(__DOXYGEN__)
 
+#if defined(__KEIL__) || defined(__C51__)
+	#pragma anon_unions
+#endif
+
 /**
  * @brief	The predefined flags for a Window
  * @{

@@ -39,6 +39,9 @@ static void SendButtonEvent(GWidgetObject *gw) {
 			continue;
 		pbe->type = GEVENT_GWIN_BUTTON;
 		pbe->button = (GHandle)gw;
+		#if GWIN_WIDGET_TAGS
+			pbe->tag = gw->tag;
+		#endif
 		geventSendEvent(psl);
 	}
 

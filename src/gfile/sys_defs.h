@@ -33,8 +33,10 @@
 
 #ifndef GFILE_IMPLEMENTATION
 	typedef void GFILE;
+	typedef void gfileList;
 #else
 	typedef struct GFILE GFILE;
+	typedef struct gfileList gfileList;
 #endif
 
 extern GFILE *gfileStdIn;
@@ -98,13 +100,32 @@ extern "C" {
 	/**
 	 * @brief					Open file
 	 * @details					A file must be opened before it can be accessed
-	 * @details					ToDo (document possible modes)
 	 * @details					The resulting GFILE will be used for all functions that access the file.
 	 *
 	 * @param[in] fname			The file name
-	 * @param[in] mode			The mode
+	 * @param[in] mode			The mode.
 	 *
 	 * @return					Valid GFILE on success, 0 otherwise
+	 *
+	 * @note					The modes follow the c library fopen() standard.
+	 * 							The valid modes are:<br/>
+	 * 							<ul><li>r   - Open for read, the file must exist</li>
+	 * 								<li>w   - Open for write, the file is truncated if it exists</li>
+	 * 								<li>wx  - Open for write, the file must not exist</li>
+	 * 								<li>a   - Open for append, the file is truncated if it exists</li>
+	 * 								<li>ax  - Open for append, the file must not exists</li>
+	 * 							</ul><br/>
+	 * 							THe following flags can also be added to the above modes:<br/>
+	 * 							<ul><li>+   - Open for both read and write</li>
+	 * 								<li>b   - Open as a binary file rather than a text file</li>
+	 * 							<ul>
+	 * @note					Not all file-systems support all modes. For example, write
+	 * 							is not available with the ROM file-system. Similarly few platforms
+	 * 							distinguish between binary and text files.
+	 * @note					Even though binary vs text is relevant only for a small number of platforms
+	 * 							the "b" flag should always be specified for binary files such as images.
+	 * 							This ensures portability to other platforms. The extra flag will be ignored
+	 * 							on platforms where it is not relevant.
 	 *
 	 * @api
 	 */	
@@ -239,15 +260,118 @@ extern "C" {
 	 */
 	bool_t gfileSync(GFILE *f);
 
-	#if GFILE_NEED_CHIBIOSFS && GFX_USE_OS_CHIBIOS
+	#if GFILE_NEED_FILELISTS || defined(__DOXYGEN__)
+		/**
+		 * @brief				Open a file list
+		 *
+		 * @param[in] fs		The file system (F for FatFS)
+		 * @param[in] path		Path information to pass to the file system
+		 * @param[in] dirs		Pass TRUE to get directories only, FALSE to get files only
+		 *
+		 * @return				A pointer to a file list on success, NULL otherwise
+		 *
+		 * @note				The path parameter is handled in a file-system specific way. It could be
+		 * 						treated as a directory name, it may be treated as a file pattern, or it
+		 * 						may be ignored. Passing NULL will always return the full list of files
+		 * 						in at least the top level directory.
+		 * @note				For file systems that do not support directories, passing TRUE for dirs
+		 * 						will return an error.
+		 * @note				You must call @p gfileCloseFileList() when you have finished with the
+		 * 						file list in order to free resources.
+		 *
+		 * @api
+		 */
+		gfileList *gfileOpenFileList(char fs, const char *path, bool_t dirs);
+
+		/**
+		 * @brief				Get the next file in a file list.
+		 *
+		 * @param[in] pfl		Pointer to a file list returned by @p gfileOpenFileList()
+		 *
+		 * @return				A pointer to a file (or directory) name. Returns NULL if there are no more.
+		 *
+		 * @note				The file name may contain the full directory path or may not depending
+		 * 						on how the file system treats directories.
+		 * @note				The returned buffer may be destroyed by the next call to any of
+		 * 						@p gfileOpenFileList(), @p gfileReadFileList() or @p gfileCloseFileList().
+		 * 						Do not use this pointer after one of those calls.
+		 *
+		 * @api
+		 */
+		const char *gfileReadFileList(gfileList *pfl);
+
+		/**
+		 * @brief				Close a file list.
+		 *
+		 * @param[in] pfl		Pointer to a file list returned by @p gfileOpenFileList()
+		 *
+		 * @api
+		 */
+		void gfileCloseFileList(gfileList *pfl);
+	#endif
+
+	#if (GFILE_NEED_CHIBIOSFS && GFX_USE_OS_CHIBIOS) || defined(__DOXYGEN__)
+		/**
+		 * @brief					Open file from a ChibiOS BaseFileStream
+		 *
+		 * @param[in] BaseFileStreamPtr	The BaseFileStream to open as a GFILE
+		 * @param[in] mode			The mode.
+		 *
+		 * @return					Valid GFILE on success, 0 otherwise
+		 *
+		 * @note					The modes are the same modes as in @p gfileOpen(). The
+		 * 							open mode is NOT compared against the BaseFileStream capabilities.
+		 * @note					Supported operations are: read, write, getpos, setpos, eof and getsize
+		 *
+		 * @api
+		 */
 		GFILE *		gfileOpenBaseFileStream(void *BaseFileStreamPtr, const char *mode);
 	#endif
 
-	#if GFILE_NEED_MEMFS
+	#if GFILE_NEED_MEMFS || defined(__DOXYGEN__)
+		/**
+		 * @brief					Open file from a memory pointer
+		 *
+		 * @param[in] memptr		The pointer to the memory
+		 * @param[in] mode			The mode.
+		 *
+		 * @return					Valid GFILE on success, 0 otherwise
+		 *
+		 * @note					The modes are the same modes as in @p gfileOpen(). Note there is
+		 * 							no concept of file-size. Be careful not to overwrite other memory or
+		 * 							to read from inaccessible sections of memory.
+		 * @note					Supported operations are: read, write, getpos, setpos
+		 *
+		 * @api
+		 */
 		GFILE *		gfileOpenMemory(void *memptr, const char *mode);
 	#endif
 
-	#if GFILE_NEED_PRINTG
+	#if GFILE_NEED_STRINGS || defined(__DOXYGEN__)
+		/**
+		 * @brief					Open file from a null terminated C string
+		 *
+		 * @param[in] memptr		The pointer to the string or string buffer
+		 * @param[in] mode			The mode.
+		 *
+		 * @return					Valid GFILE on success, 0 otherwise
+		 *
+		 * @note					The modes are the same modes as in @p gfileOpen(). Note there is
+		 * 							no concept of file-size. Be careful not to overwrite other memory or
+		 * 							to read from inaccessible sections of memory.
+		 * @note					Reading will return EOF when the NULL character is reached.
+		 * @note					Writing will always place a NULL in the next character effectively terminating the
+		 * 							string at the character just written.
+		 * @note					Supported operations are: read, write, append, getpos, setpos
+		 * @note					Be careful with setpos and getpos. They do not check for the end of the string.
+		 * @note					Reading and Writing will read/write a maximum of one character at a time.
+		 *
+		 * @api
+		 */
+		GFILE *		gfileOpenString(char *str, const char *mode);
+	#endif
+
+	#if GFILE_NEED_PRINTG || defined(__DOXYGEN__)
 		#include <stdarg.h>
 
 		int vfnprintg(GFILE *f, int maxlen, const char *fmt, va_list arg);
@@ -265,7 +389,7 @@ extern "C" {
 		#endif
 	#endif
 
-	#if GFILE_NEED_SCANG
+	#if GFILE_NEED_SCANG || defined(__DOXYGEN__)
 		#include <stdarg.h>
 
 		int vfscang(GFILE *f, const char *fmt, va_list arg);

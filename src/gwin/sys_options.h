@@ -128,6 +128,15 @@
  * @{
  */
 	/**
+	 * @brief   Add a tag to each widget
+	 * @details	Defaults to FALSE
+	 * @note	Adds a tag member to each widget. Any events created include this tag.
+	 * 			The enables switch based application logic to detect the event source.
+	 */
+	#ifndef GWIN_WIDGET_TAGS
+		#define GWIN_WIDGET_TAGS		FALSE
+	#endif
+	/**
 	 * @brief   Use flat styling for controls rather than a 3D look
 	 * @details	Defaults to FALSE
 	 * @note	This may appear better on color-restricted displays

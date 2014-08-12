@@ -15,6 +15,15 @@ FEATURE:	Added support for eCos
 FEATURE:	Added PCF8812 gdisp driver
 FEATURE:	Added PCD8544 gdisp driver
 FEATURE:	Added Raspberry Pi board support
+FEATURE:	Added R61505U gdisp driver
+FIX:		Fix threading issues in GEvent for callbacks
+FEATURE:	Added geventEventComplete()
+FEATURE:	Added support for the RawOS real time operating system
+FEATURE:	Operating System initialisation is now optional
+FEATURE:	Added optional transparency to container
+FEATURE:	Prevent mouse events going to obscured widgets
+FEATURE:	Add GFILE support for file lists
+FEATURE:	Add GFILE support for C strings as files
 
 
 *** Release 2.1 ***
