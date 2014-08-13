@@ -9,8 +9,7 @@
  * This file is included by src/gfile/gfile.c
  */
 
-#include "ff.h"
-#include "ffconf.h"
+#include "fatfs_wrapper.h"
 
 /********************************************************
  * The FAT file-system VMT
@@ -30,7 +29,7 @@ static bool_t fatfsEOF(GFILE* f);
 static bool_t fatfsMount(const char* drive);
 static bool_t fatfsUnmount(const char* drive);
 static bool_t fatfsSync(GFILE* f);
-#if _FS_MINIMIZE <= 1 && GFILE_NEED_FILELISTS
+#if GFILE_NEED_FILELISTS && _FS_MINIMIZE <= 1
 	static gfileList *fatfsFlOpen(const char *path, bool_t dirs);
 	static const char *fatfsFlRead(gfileList *pfl);
 	static void fatfsFlClose(gfileList *pfl);
@@ -265,7 +264,7 @@ static bool_t fatfsSync(GFILE *f)
 	return TRUE;
 }
 
-#if _FS_MINIMIZE <= 1 && GFILE_NEED_FILELISTS
+#if GFILE_NEED_FILELISTS && _FS_MINIMIZE <= 1
 	static gfileList *fatfsFlOpen(const char *path, bool_t dirs) {
 		fatfsList	*p;
 		(void) dirs;
