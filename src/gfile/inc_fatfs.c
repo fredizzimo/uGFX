@@ -175,8 +175,8 @@ static bool_t fatfsOpen(GFILE* f, const char* fname)
 static void fatfsClose(GFILE* f)
 {
 	if ((FIL*)f->obj != 0) { 
-		gfxFree( (FIL*)f->obj );
 		f_close( (FIL*)f->obj );
+		gfxFree( (FIL*)f->obj );
 	}
 }
 
