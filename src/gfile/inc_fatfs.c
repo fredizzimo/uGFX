@@ -5,10 +5,15 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * This file is included by src/gfile/gfile.c
- */
+/********************************************************
+ * The FATFS file-system
+ ********************************************************/
 
+#include "gfx.h"
+
+#if GFX_USE_GFILE && GFILE_NEED_FATFS
+
+#include "gfile_fs.h"
 #include "fatfs_wrapper.h"
 
 /********************************************************
@@ -35,8 +40,7 @@ static bool_t fatfsSync(GFILE* f);
 	static void fatfsFlClose(gfileList *pfl);
 #endif
 
-static const GFILEVMT FsFatFSVMT = {
-	GFILE_CHAINHEAD,
+const GFILEVMT FsFatFSVMT = {
 	GFSFLG_WRITEABLE | GFSFLG_SEEKABLE,
 	'F',
 	fatfsDel,
@@ -59,9 +63,6 @@ static const GFILEVMT FsFatFSVMT = {
 		#endif
 	#endif
 };
-
-#undef GFILE_CHAINHEAD
-#define GFILE_CHAINHEAD &FsFatFSVMT
 
 // Our directory list structure
 typedef struct fatfsList {
@@ -319,3 +320,6 @@ static bool_t fatfsSync(GFILE *f)
 	}
 
 #endif
+
+#endif //GFX_USE_GFILE && GFILE_NEED_FATFS
+

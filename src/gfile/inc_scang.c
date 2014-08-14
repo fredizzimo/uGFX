@@ -5,13 +5,13 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * This file is included by src/gfile/gfile.c
- */
-
 /********************************************************
  * Scang Routines
  ********************************************************/
+
+#include "gfx.h"
+
+#if GFX_USE_GFILE && GFILE_NEED_SCANG
 
 int fscang(GFILE *f, const char *fmt, ...) {
 	int		res;
@@ -231,27 +231,4 @@ int vfscang(GFILE *f, const char *fmt, va_list arg) {
 	return res;
 }
 
-#if GFILE_NEED_STRINGS
-	int sscang(const char *buf, const char *fmt, ...) {
-		int		res;
-		GFILE	f;
-		va_list	ap;
-
-		f.flags = GFILEFLG_READ;
-		gfileOpenStringFromStaticGFILE(&f, (char *)buf);
-
-		va_start(ap, fmt);
-		res = vfscang(&f, fmt, ap);
-		va_end(ap);
-		return res;
-	}
-
-	int vsscang(const char *buf, const char *fmt, va_list arg) {
-		GFILE	f;
-
-		f.flags = GFILEFLG_READ;
-		gfileOpenStringFromStaticGFILE(&f, (char *)buf);
-
-		return vfscang(&f, fmt, arg);
-	}
-#endif
+#endif //GFX_USE_GFILE && GFILE_NEED_SCANG

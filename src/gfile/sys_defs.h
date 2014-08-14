@@ -31,13 +31,8 @@
  * @brief	A file pointer
  */
 
-#ifndef GFILE_IMPLEMENTATION
-	typedef void GFILE;
-	typedef void gfileList;
-#else
-	typedef struct GFILE GFILE;
-	typedef struct gfileList gfileList;
-#endif
+typedef struct GFILE GFILE;
+typedef struct gfileList gfileList;
 
 extern GFILE *gfileStdIn;
 extern GFILE *gfileStdErr;

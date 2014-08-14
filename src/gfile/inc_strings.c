@@ -5,13 +5,15 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * This file is included by src/gfile/gfile.c
- */
-
 /********************************************************
- * The virtual string file VMT
+ * The virtual string file
  ********************************************************/
+
+#include "gfx.h"
+
+#if GFX_USE_GFILE && GFILE_NEED_STRINGS
+
+#include "gfile_fs.h"
 
 #include <string.h>
 
@@ -34,8 +36,8 @@ static int StringWrite(GFILE *f, const void *buf, int size) {
 	((char *)f->obj)[f->pos+size] = 0;
 	return size;
 }
+
 static const GFILEVMT StringVMT = {
-	0,								// next
 	0,								// flags
 	'_',							// prefix
 	0, 0, 0, 0,
@@ -60,10 +62,77 @@ GFILE *gfileOpenString(char *str, const char *mode) {
 	GFILE	*f;
 
 	// Get an empty file and set the flags
-	if (!(f = findemptyfile(mode)))
+	if (!(f = _gfileFindSlot(mode)))
 		return 0;
 
 	// File is open - fill in all the details
 	gfileOpenStringFromStaticGFILE(f, str);
 	return f;
 }
+
+#if GFILE_NEED_PRINTG
+	int snprintg(char *buf, int maxlen, const char *fmt, ...) {
+		int		res;
+		GFILE	f;
+		va_list	ap;
+
+		if (maxlen <= 1) {
+			if (maxlen == 1) {
+				*buf = 0;
+				return 0;
+			}
+			maxlen += 1;
+		}
+
+		f.flags = GFILEFLG_WRITE|GFILEFLG_TRUNC;
+		gfileOpenStringFromStaticGFILE(&f, buf);
+
+		va_start(ap, fmt);
+		res = vfnprintg(&f, maxlen-1, fmt, ap);
+		va_end(ap);
+		return res;
+	}
+	int vsnprintg(char *buf, int maxlen, const char *fmt, va_list arg) {
+		GFILE	f;
+
+		if (maxlen <= 1) {
+			if (maxlen == 1) {
+				*buf = 0;
+				return 0;
+			}
+			maxlen += 1;
+		}
+
+		f.flags = GFILEFLG_WRITE|GFILEFLG_TRUNC;
+		gfileOpenStringFromStaticGFILE(&f, buf);
+
+		return vfnprintg(&f, maxlen-1, fmt, arg);
+	}
+#endif
+
+#if GFILE_NEED_SCANG
+	int sscang(const char *buf, const char *fmt, ...) {
+		int		res;
+		GFILE	f;
+		va_list	ap;
+
+		f.flags = GFILEFLG_READ;
+		gfileOpenStringFromStaticGFILE(&f, (char *)buf);
+
+		va_start(ap, fmt);
+		res = vfscang(&f, fmt, ap);
+		va_end(ap);
+		return res;
+	}
+
+	int vsscang(const char *buf, const char *fmt, va_list arg) {
+		GFILE	f;
+
+		f.flags = GFILEFLG_READ;
+		gfileOpenStringFromStaticGFILE(&f, (char *)buf);
+
+		return vfscang(&f, fmt, arg);
+	}
+#endif
+
+#endif //GFX_USE_GFILE && GFILE_NEED_STRINGS

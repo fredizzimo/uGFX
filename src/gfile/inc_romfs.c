@@ -5,13 +5,15 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * This file is included by src/gfile/gfile.c
- */
-
 /********************************************************
- * The ROM file-system VMT
+ * The ROM file-system
  ********************************************************/
+
+#include "gfx.h"
+
+#if GFX_USE_GFILE && GFILE_NEED_ROMFS
+
+#include "gfile_fs.h"
 
 #include <string.h>
 
@@ -54,8 +56,7 @@ static bool_t ROMEof(GFILE *f);
 	static void ROMFlClose(gfileList *pfl);
 #endif
 
-static const GFILEVMT FsROMVMT = {
-	GFILE_CHAINHEAD,									// next
+const GFILEVMT FsROMVMT = {
 	GFSFLG_CASESENSITIVE|GFSFLG_SEEKABLE|GFSFLG_FAST,	// flags
 	'S',												// prefix
 	0, ROMExists, ROMFilesize, 0,
@@ -66,8 +67,6 @@ static const GFILEVMT FsROMVMT = {
 		ROMFlOpen, ROMFlRead, ROMFlClose
 	#endif
 };
-#undef GFILE_CHAINHEAD
-#define GFILE_CHAINHEAD		&FsROMVMT
 
 static const ROMFS_DIRENTRY *ROMFindFile(const char *fname)
 {
@@ -175,3 +174,5 @@ static bool_t ROMEof(GFILE *f)
 		gfxFree(pfl);
 	}
 #endif
+
+#endif //GFX_USE_GFILE && GFILE_NEED_ROMFS

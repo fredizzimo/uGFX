@@ -5,13 +5,15 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * This file is included by src/gfile/gfile.c
- */
-
 /********************************************************
- * The Memory pointer file-system VMT
+ * The virtual memory file-system
  ********************************************************/
+
+#include "gfx.h"
+
+#if GFX_USE_GFILE && GFILE_NEED_MEMFS
+
+#include "gfile_fs.h"
 
 #include <string.h>
 
@@ -20,7 +22,6 @@ static int MEMWrite(GFILE *f, const void *buf, int size);
 static bool_t MEMSetpos(GFILE *f, long int pos);
 
 static const GFILEVMT FsMemVMT = {
-	0,													// next
 	GFSFLG_SEEKABLE|GFSFLG_WRITEABLE,					// flags
 	0,													// prefix
 	0, 0, 0, 0,
@@ -50,7 +51,7 @@ GFILE *	gfileOpenMemory(void *memptr, const char *mode) {
 	GFILE	*f;
 
 	// Get an empty file and set the flags
-	if (!(f = findemptyfile(mode)))
+	if (!(f = _gfileFindSlot(mode)))
 		return 0;
 
 	// File is open - fill in all the details
@@ -60,3 +61,5 @@ GFILE *	gfileOpenMemory(void *memptr, const char *mode) {
 	f->flags |= GFILEFLG_OPEN|GFILEFLG_CANSEEK;
 	return f;
 }
+
+#endif //GFX_USE_GFILE && GFILE_NEED_MEMFS
