@@ -101,14 +101,32 @@
 		#define GFILE_NEED_RAMFS		FALSE
 	#endif
 	/**
-	 * @brief   Include the FAT file system driver
+	 * @brief   Include the FAT file system driver based on the FATFS library
 	 * @details	Defaults to FALSE
 	 * @note	If GFILE_ALLOW_DEVICESPECIFIC is on then you can ensure that you are
 	 * 			opening a file on the FAT file system by prefixing
 	 * 			its name with "F|" (the letter 'F', followed by a vertical bar).
-	 * @note	You must separately include the FATFS library and code.
+	 * @note	FATFS and PETITFS offer the same FAT file system support. They just use
+	 * 			different constraints. PETITFS is smaller but has less features. Only
+	 * 			one can be used at a time. The block interfaces are also different.
 	 */
 	#ifndef GFILE_NEED_FATFS
+		#define GFILE_NEED_FATFS		FALSE
+	#endif
+	/**
+	 * @brief   Include the FAT file system driver based on the PETITFS library
+	 * @details	Defaults to FALSE
+	 * @note	If GFILE_ALLOW_DEVICESPECIFIC is on then you can ensure that you are
+	 * 			opening a file on the FAT file system by prefixing
+	 * 			its name with "F|" (the letter 'F', followed by a vertical bar).
+	 * @note	FATFS and PETITFS offer the same FAT file system support. They just use
+	 * 			different constraints. PETITFS is smaller but has less features. Only
+	 * 			one can be used at a time. The block interfaces are also different.
+	 * @note	Due to the restrictions on the PETITFS library on writing, we do not implement
+	 * 			writing.
+	 * @note	PETITFS can only have one file open at a time.
+	 */
+	#ifndef GFILE_NEED_PETITFS
 		#define GFILE_NEED_FATFS		FALSE
 	#endif
 	/**
