@@ -634,9 +634,6 @@ static void WM_Redraw(GHandle gh) {
 				gh->vmt->AfterClear(gh);
 		}
 
-		// A real window manager would also redraw frame borders here for top level windows
-		// For non-top level windows their parent is responsible for any borders
-
 		// Redraw is done
 		gh->flags &= ~(GWIN_FLG_NEEDREDRAW|GWIN_FLG_BGREDRAW|GWIN_FLG_PARENTREVEAL);
 
@@ -651,6 +648,8 @@ static void WM_Redraw(GHandle gh) {
 		#endif
 	} else {
 		if ((gh->flags & GWIN_FLG_BGREDRAW)) {
+			GHandle		gx;
+
 			#if GWIN_NEED_CONTAINERS
 				if (gh->parent) {
 					// Child redraw is done
@@ -662,7 +661,22 @@ static void WM_Redraw(GHandle gh) {
 					goto redo_redraw;
 				}
 			#endif
+
+			// Clear the area to the background color
 			gdispGFillArea(gh->display, gh->x, gh->y, gh->width, gh->height, gwinGetDefaultBgColor());
+
+			// Now loop over all windows looking for overlaps. Redraw them if they overlap the newly exposed area.
+			for(gx = gwinGetNextWindow(0); gx; gx = gwinGetNextWindow(gx)) {
+				if ((gx->flags & GWIN_FLG_SYSVISIBLE)
+						&& gx->display == gh->display
+						&& gx->x < gh->x+gh->width && gx->y < gh->y+gh->height && gx->x+gx->width >= gh->x && gx->y+gx->height >= gh->y) {
+					if (gx->vmt->Redraw)
+						gx->vmt->Redraw(gx);
+					else
+						// We can't redraw this window but we want full coverage so just clear the area
+						gdispGFillArea(gx->display, gx->x, gx->y, gx->width, gx->height, gx->bgcolor);
+				}
+			}
 		}
 
 		// Redraw is done
