@@ -32,6 +32,7 @@
  * @{
  */
 #define GWIN_FIRST_CONTROL_FLAG			0x00000001			// @< 8 bits free for the control to use
+#define GWIN_LAST_CONTROL_FLAG			0x00000080			// @< 8 bits free for the control to use
 #define GWIN_FLG_VISIBLE				0x00000100			// @< The window is "visible"
 #define GWIN_FLG_SYSVISIBLE				0x00000200			// @< The window is visible after parents are tested
 #define GWIN_FLG_ENABLED				0x00000400			// @< The window is "enabled"
@@ -47,6 +48,7 @@
 #define GWIN_FLG_MAXIMIZED				0x00200000			// @< The window is maximized
 #define GWIN_FLG_MOUSECAPTURE			0x00400000			// @< The window has captured the mouse
 #define GWIN_FIRST_WM_FLAG				0x01000000			// @< 8 bits free for the window manager to use
+#define GWIN_LAST_WM_FLAG				0x80000000			// @< 8 bits free for the window manager to use
 /** @} */
 
 /**
