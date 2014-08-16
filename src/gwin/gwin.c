@@ -152,12 +152,15 @@ GHandle gwinGWindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pI
 	return pgw;
 }
 
-void gwinDestroy(GHandle gh) {
+void _gwinDestroy(GHandle gh, GRedrawMethod how) {
 	if (!gh)
 		return;
 
 	// Make the window invisible
 	gwinSetVisible(gh, FALSE);
+
+	// Make sure it is flushed first - must be REDRAW_WAIT or REDRAW_INSESSION
+	_gwinFlushRedraws(how);
 
 	#if GWIN_NEED_CONTAINERS
 		// Notify the parent it is about to be deleted
@@ -180,6 +183,10 @@ void gwinDestroy(GHandle gh) {
 		gfxFree((void *)gh);
 	} else
 		gh->flags = 0;							// To be sure, to be sure
+}
+
+void gwinDestroy(GHandle gh) {
+	_gwinDestroy(gh, REDRAW_WAIT);
 }
 
 const char *gwinGetClassName(GHandle gh) {

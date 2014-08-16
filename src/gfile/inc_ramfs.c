@@ -5,11 +5,28 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * This file is included by src/gfile/gfile.c
- */
-
 /********************************************************
- * The RAM file-system VMT
+ * The RAM file-system
  ********************************************************/
+
+#include "gfx.h"
+
+#if GFX_USE_GFILE && GFILE_NEED_RAMFS
+
+#include "gfile_fs.h"
+
 #error "GFILE: RAMFS Not implemented yet"
+
+const GFILEVMT FsRAMVMT = {
+	0,								// flags
+	'R',							// prefix
+	0, 0, 0, 0,
+	0, 0, 0, 0,
+	0, 0, 0,
+	0, 0, 0,
+	#if GFILE_NEED_FILELISTS
+		0, 0, 0,
+	#endif
+};
+
+#endif //GFX_USE_GFILE && GFILE_NEED_RAMFS

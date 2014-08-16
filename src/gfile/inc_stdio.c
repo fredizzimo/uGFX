@@ -5,13 +5,13 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * This file is included by src/gfile/gfile.c
- */
-
 /********************************************************
  * Stdio Emulation Routines
  ********************************************************/
+
+#include "gfx.h"
+
+#if GFX_USE_GFILE && GFILE_NEED_STDIO
 
 size_t gstdioRead(void * ptr, size_t size, size_t count, FILE *f) {
 	return gfileRead(f, ptr, size*count)/size;
@@ -43,3 +43,5 @@ int gstdioGetpos(FILE *f, long int *pos) {
 	*pos = f->pos;
 	return 0;
 }
+
+#endif //GFX_USE_GFILE && GFILE_NEED_STDIO

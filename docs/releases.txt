@@ -24,6 +24,7 @@ FEATURE:	Added optional transparency to container
 FEATURE:	Prevent mouse events going to obscured widgets
 FEATURE:	Add GFILE support for file lists
 FEATURE:	Add GFILE support for C strings as files
+FEATURE:	Add GFILE support for PetitFS
 
 
 *** Release 2.1 ***

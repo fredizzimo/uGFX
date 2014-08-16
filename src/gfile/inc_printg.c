@@ -5,13 +5,13 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * This file is included by src/gfile/gfile.c
- */
-
 /********************************************************
  * Printg Routines
  ********************************************************/
+
+#include "gfx.h"
+
+#if GFX_USE_GFILE && GFILE_NEED_PRINTG
 
 #include <stdarg.h>
 
@@ -220,42 +220,4 @@ int vfnprintg(GFILE *f, int maxlen, const char *fmt, va_list arg) {
 	return ret;
 }
 
-#if GFILE_NEED_STRINGS
-	int snprintg(char *buf, int maxlen, const char *fmt, ...) {
-		int		res;
-		GFILE	f;
-		va_list	ap;
-
-		if (maxlen <= 1) {
-			if (maxlen == 1) {
-				*buf = 0;
-				return 0;
-			}
-			maxlen += 1;
-		}
-
-		f.flags = GFILEFLG_WRITE|GFILEFLG_TRUNC;
-		gfileOpenStringFromStaticGFILE(&f, buf);
-
-		va_start(ap, fmt);
-		res = vfnprintg(&f, maxlen-1, fmt, ap);
-		va_end(ap);
-		return res;
-	}
-	int vsnprintg(char *buf, int maxlen, const char *fmt, va_list arg) {
-		GFILE	f;
-
-		if (maxlen <= 1) {
-			if (maxlen == 1) {
-				*buf = 0;
-				return 0;
-			}
-			maxlen += 1;
-		}
-
-		f.flags = GFILEFLG_WRITE|GFILEFLG_TRUNC;
-		gfileOpenStringFromStaticGFILE(&f, buf);
-
-		return vfnprintg(&f, maxlen-1, fmt, arg);
-	}
-#endif
+#endif //GFX_USE_GFILE && GFILE_NEED_PRINTG

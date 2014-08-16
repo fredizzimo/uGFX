@@ -5,22 +5,20 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * This file is included by src/gfile/gfile.c
- */
-
 /********************************************************
  * The native file-system
  ********************************************************/
+
+#include "gfx.h"
+
+#if GFX_USE_GFILE && GFILE_NEED_NATIVEFS
+
+#include "gfile_fs.h"
 
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 //#include <unistd.h>
-
-static GFILE NativeStdIn;
-static GFILE NativeStdOut;
-static GFILE NativeStdErr;
 
 static bool_t NativeDel(const char *fname);
 static bool_t NativeExists(const char *fname);
@@ -39,8 +37,7 @@ static bool_t NativeEof(GFILE *f);
 	static void NativeFlClose(gfileList *pfl);
 #endif
 
-static const GFILEVMT FsNativeVMT = {
-	GFILE_CHAINHEAD,									// next
+const GFILEVMT FsNativeVMT = {
 	#if defined(WIN32) || GFX_USE_OS_WIN32
 		GFSFLG_TEXTMODES|
 	#else
@@ -56,8 +53,28 @@ static const GFILEVMT FsNativeVMT = {
 		NativeFlOpen, NativeFlRead, NativeFlClose
 	#endif
 };
-#undef GFILE_CHAINHEAD
-#define GFILE_CHAINHEAD		&FsNativeVMT
+
+void _gfileNativeAssignStdio(void) {
+	static GFILE NativeStdIn;
+	static GFILE NativeStdOut;
+	static GFILE NativeStdErr;
+
+	NativeStdIn.flags = GFILEFLG_OPEN|GFILEFLG_READ;
+	NativeStdIn.vmt = &FsNativeVMT;
+	NativeStdIn.obj = (void *)stdin;
+	NativeStdIn.pos = 0;
+	gfileStdIn = &NativeStdIn;
+	NativeStdOut.flags = GFILEFLG_OPEN|GFILEFLG_WRITE|GFILEFLG_APPEND;
+	NativeStdOut.vmt = &FsNativeVMT;
+	NativeStdOut.obj = (void *)stdout;
+	NativeStdOut.pos = 0;
+	gfileStdOut = &NativeStdOut;
+	NativeStdErr.flags = GFILEFLG_OPEN|GFILEFLG_WRITE|GFILEFLG_APPEND;
+	NativeStdErr.vmt = &FsNativeVMT;
+	NativeStdErr.obj = (void *)stderr;
+	NativeStdErr.pos = 0;
+	gfileStdErr = &NativeStdErr;
+}
 
 static void Native_flags2mode(char *buf, uint16_t flags) {
 	if (flags & GFILEFLG_MUSTEXIST)
@@ -214,3 +231,5 @@ static long int NativeGetsize(GFILE *f) {
 		}
 	#endif
 #endif
+
+#endif //GFX_USE_GFILE && GFILE_NEED_NATIVEFS

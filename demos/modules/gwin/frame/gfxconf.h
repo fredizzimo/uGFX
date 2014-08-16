@@ -46,6 +46,7 @@
 #define GWIN_NEED_WINDOWMANAGER                      TRUE
 
 #define GWIN_NEED_WIDGET                             TRUE
+    #define GWIN_NEED_LABEL                          TRUE
     #define GWIN_NEED_BUTTON                         TRUE
     #define GWIN_NEED_SLIDER                         TRUE
 #define GWIN_NEED_CONTAINERS                         TRUE

@@ -26,6 +26,7 @@
 #define GLISTENER_EVENTBUSY			0x0001			// The event buffer is busy
 #define GLISTENER_WAITING			0x0002			// The listener is waiting for a signal
 #define GLISTENER_WITHSOURCE		0x0004			// The listener is being looked at by a source for a possible event
+#define GLISTENER_PENDING			0x0008			// There is an event waiting ready to go without a current listener
 
 /* This mutex protects access to our tables */
 static gfxMutex	geventMutex;
@@ -131,10 +132,28 @@ GEvent *geventEventWait(GListener *pl, delaytime_t timeout) {
 		gfxMutexExit(&geventMutex);
 		return 0;
 	}
+
+	// Check to see if there is a pending event ready for us
+	if ((pl->flags & GLISTENER_PENDING)) {
+		pl->flags &= ~GLISTENER_PENDING;				// We have now got this
+		pl->flags |= GLISTENER_EVENTBUSY;				// Event buffer is definitely busy
+		gfxMutexExit(&geventMutex);
+		return &pl->event;
+	}
+
+	// No - wait for one.
 	pl->flags &= ~GLISTENER_EVENTBUSY;				// Event buffer is definitely not busy
 	pl->flags |= GLISTENER_WAITING;					// We will now be waiting on the thread
 	gfxMutexExit(&geventMutex);
-	return gfxSemWait(&pl->waitqueue, timeout) ? &pl->event : 0;
+	if (gfxSemWait(&pl->waitqueue, timeout))
+		return &pl->event;
+
+	// Timeout - clear the waiting flag.
+	// We know this is safe as any other thread will still think there is someone waiting.
+	gfxMutexEnter(&geventMutex);
+	pl->flags &= ~GLISTENER_WAITING;
+	gfxMutexExit(&geventMutex);
+	return 0;
 }
 
 void geventEventComplete(GListener *pl) {
@@ -197,7 +216,7 @@ void geventSendEvent(GSourceListener *psl) {
 
 		// Mark it back as free and as sent. This is early to be marking as free but it protects
 		//	if the callback alters the listener in any way
-		psl->pListener->flags &= ~(GLISTENER_WITHSOURCE|GLISTENER_EVENTBUSY);
+		psl->pListener->flags &= ~(GLISTENER_WITHSOURCE|GLISTENER_EVENTBUSY|GLISTENER_PENDING);
 		gfxMutexExit(&geventMutex);
 
 		// Do the callback
@@ -205,11 +224,14 @@ void geventSendEvent(GSourceListener *psl) {
 
 	} else {
 		// Wake up the listener
+		psl->pListener->flags &= ~GLISTENER_WITHSOURCE;
 		if ((psl->pListener->flags & GLISTENER_WAITING)) {
-			psl->pListener->flags &= ~(GLISTENER_WITHSOURCE|GLISTENER_WAITING);
+			psl->pListener->flags &= ~(GLISTENER_WAITING|GLISTENER_PENDING);
 			gfxSemSignal(&psl->pListener->waitqueue);
-			// The listener thread will free the event buffer when ready
-		}
+		} else
+			psl->pListener->flags |= GLISTENER_PENDING;
+
+		// The listener thread will free the event buffer when ready
 		gfxMutexExit(&geventMutex);
 	}
 }

@@ -25,6 +25,14 @@ static void _createWidgets(void) {
     gwinWidgetClearInit(&wi);
     wi.g.show = TRUE;
 
+    // Create a surprise label behind the frame window
+    wi.g.width = 100;
+    wi.g.height = 20;
+    wi.g.y = 100;
+    wi.g.x = 150;
+    wi.text = "Surprise!";
+    gwinLabelCreate(0, &wi);
+
     // Apply the frame parameters    
     wi.g.width = 300;
     wi.g.height = 200;

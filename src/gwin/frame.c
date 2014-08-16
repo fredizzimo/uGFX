@@ -16,93 +16,146 @@
 
 #include "src/gwin/class_gwin.h"
 
-#if GWIN_FRAME_BORDER != GWIN_FIRST_CONTROL_FLAG
+/* Some position values */
+#define BUTTON_X		18					// Button Width
+#define BUTTON_Y		18					// Button Height
+#define BUTTON_I		3					// Button inner margin
+#define BUTTON_T		2					// Gap from top of window to button
+#define BUTTON_B		2					// Gap from button to the bottom of the frame title area
+#define BORDER_L		2					// Left Border
+#define BORDER_R		2					// Right Border
+#define BORDER_T		(BUTTON_Y+BUTTON_T+BUTTON_B)	// Top Border (Title area)
+#define BORDER_B		2					// Bottom Border
+
+/* Internal state flags */
+#define GWIN_FRAME_USER_FLAGS		(GWIN_FRAME_CLOSE_BTN|GWIN_FRAME_MINMAX_BTN)
+#define GWIN_FRAME_CLOSE_PRESSED	(GWIN_FRAME_MINMAX_BTN << 1)
+#define GWIN_FRAME_MIN_PRESSED		(GWIN_FRAME_MINMAX_BTN << 2)
+#define GWIN_FRAME_MAX_PRESSED		(GWIN_FRAME_MINMAX_BTN << 3)
+#define GWIN_FRAME_REDRAW_FRAME		(GWIN_FRAME_MINMAX_BTN << 4)		// Only redraw the frame
+#if GWIN_FRAME_CLOSE_BTN < GWIN_FIRST_CONTROL_FLAG
+	#error "GWIN Frame: - Flag definitions don't match"
+#endif
+#if GWIN_FRAME_REDRAW_FRAME > GWIN_LAST_CONTROL_FLAG
 	#error "GWIN Frame: - Flag definitions don't match"
 #endif
 
-/* Some values for the default render */
-#define BORDER_X		5
-#define BORDER_Y		30
-#define BUTTON_X		20
-#define BUTTON_Y		20
+static coord_t BorderSizeL(GHandle gh)	{ (void)gh; return BORDER_L; }
+static coord_t BorderSizeR(GHandle gh)	{ (void)gh; return BORDER_R; }
+static coord_t BorderSizeT(GHandle gh)	{ (void)gh; return BORDER_T; }
+static coord_t BorderSizeB(GHandle gh)	{ (void)gh; return BORDER_B; }
 
-/* Some useful macros for data type conversions */
-#define gh2obj			((GFrameObject *)gh)
-
-/* Forware declarations */
-static void gwinFrameDraw_Std(GWidgetObject *gw, void *param);
-static void _callbackBtn(void *param, GEvent *pe);
-
-static coord_t BorderSizeLRB(GHandle gh)	{ return (gh->flags & GWIN_FRAME_BORDER) ? BORDER_X : 0; }
-static coord_t BorderSizeT(GHandle gh)		{ return (gh->flags & GWIN_FRAME_BORDER) ? BORDER_Y : 0; }
-
-static void _frameDestroy(GHandle gh) {
-	/* Deregister the button callback */
-	if ((gh->flags & (GWIN_FRAME_CLOSE_BTN|GWIN_FRAME_MINMAX_BTN))) {
-		geventRegisterCallback(&gh2obj->gl, NULL, NULL);
-		geventDetachSource(&gh2obj->gl, NULL);
-	}
-
-	/* call the gcontainer standard destroy routine */
-	_gcontainerDestroy(gh);
+static void forceFrameRedraw(GWidgetObject *gw) {
+	// Force a redraw of just the frame.
+	// This is a big naughty but who really cares.
+	gw->g.flags |= GWIN_FRAME_REDRAW_FRAME;
+	gw->fnDraw(gw, gw->fnParam);
+	gw->g.flags &= ~GWIN_FRAME_REDRAW_FRAME;
 }
 
-static void _closeBtnDraw(struct GWidgetObject *gw, void *param) {
-	(void) param;
+#if GINPUT_NEED_MOUSE
+	static void mouseDown(GWidgetObject *gw, coord_t x, coord_t y) {
+		coord_t		pos;
 
-	// the background
-	if (gwinButtonIsPressed( (GHandle)gw)) {
-		gdispFillArea(gw->g.x, gw->g.y, gw->g.width, gw->g.height, gdispBlendColor(Black, HTML2COLOR(0xC55152), 50));
-	} else {
-		gdispFillArea(gw->g.x, gw->g.y, gw->g.width, gw->g.height, HTML2COLOR(0xC55152));
+		// We must be clicking on the frame button area to be of interest
+		if (y < BUTTON_T && y >= BUTTON_T+BUTTON_Y)
+			return;
+
+		pos = gw->g.width - (BORDER_R+BUTTON_X);
+		if ((gw->g.flags & GWIN_FRAME_CLOSE_BTN)) {
+			if (x >= pos && x < pos+BUTTON_X) {
+				// Close is pressed - force redraw the frame only
+				gw->g.flags |= GWIN_FRAME_CLOSE_PRESSED;
+				forceFrameRedraw(gw);
+				return;
+			}
+			pos -= BUTTON_X;
+		}
+		if ((gw->g.flags & GWIN_FRAME_MINMAX_BTN)) {
+			if (x >= pos && x < pos+BUTTON_X) {
+				// Close is pressed - force redraw the frame only
+				gw->g.flags |= GWIN_FRAME_MAX_PRESSED;
+				forceFrameRedraw(gw);
+				return;
+			}
+			pos -= BUTTON_X;
+			if (x >= pos && x < pos+BUTTON_X) {
+				// Close is pressed - force redraw the frame only
+				gw->g.flags |= GWIN_FRAME_MIN_PRESSED;
+				forceFrameRedraw(gw);
+				return;
+			}
+			pos -= BUTTON_X;
+		}
 	}
 
-	// the cross
-	gdispDrawLine(gw->g.x+4, gw->g.y+4, gw->g.x+gw->g.width-5, gw->g.y+gw->g.height-5, White);
-	gdispDrawLine(gw->g.x+gw->g.width-5, gw->g.y+4, gw->g.x+4, gw->g.y+gw->g.height-5, White);
-}
+	static void mouseUp(GWidgetObject *gw, coord_t x, coord_t y) {
+		#if GWIN_BUTTON_LAZY_RELEASE
+			if ((gw->g.flags & GWIN_FRAME_CLOSE_PRESSED)) {
+				// Close is released - destroy the window
+				gw->g.flags &= ~(GWIN_FRAME_CLOSE_PRESSED|GWIN_FRAME_MAX_PRESSED|GWIN_FRAME_MIN_PRESSED);
+				forceFrameRedraw(gw);
+				gwinDestroy(&gw->g);
+				return;
+			}
+			if ((gw->g.flags & GWIN_FRAME_MAX_PRESSED)) {
+				// Max is released - maximize the window
+				gw->g.flags &= ~(GWIN_FRAME_CLOSE_PRESSED|GWIN_FRAME_MAX_PRESSED|GWIN_FRAME_MIN_PRESSED);
+				forceFrameRedraw(gw);
+				gwinSetMinMax(&gw->g, GWIN_MAXIMIZE);
+				return;
+			}
+			if ((gw->g.flags & GWIN_FRAME_MIN_PRESSED)) {
+				// Min is released - minimize the window
+				gw->g.flags &= ~(GWIN_FRAME_CLOSE_PRESSED|GWIN_FRAME_MAX_PRESSED|GWIN_FRAME_MIN_PRESSED);
+				forceFrameRedraw(gw);
+				gwinSetMinMax(&gw->g, GWIN_MINIMIZE);
+				return;
+			}
+		#else
+			// If nothing is pressed we have nothing to do.
+			if (!(gw->g.flags & (GWIN_FRAME_CLOSE_PRESSED|GWIN_FRAME_MAX_PRESSED|GWIN_FRAME_MIN_PRESSED)))
+				return;
 
-static void _closeBtnMin(struct GWidgetObject *gw, void *param) {
-	(void) param;
+			// We must be releasing over the button
+			if (y >= BUTTON_T && y < BUTTON_T+BUTTON_Y) {
+				coord_t		pos;
 
-	// the background
-	if (gwinButtonIsPressed( (GHandle)gw)) {
-		gdispFillArea(gw->g.x, gw->g.y, gw->g.width, gw->g.height, gdispBlendColor(Black, Grey, 50));
-	} else {
-		gdispFillArea(gw->g.x, gw->g.y, gw->g.width, gw->g.height, gdispBlendColor(White, Grey, 50));
-	}
+				pos = gw->g.width - (BORDER_R+BUTTON_X);
+				if ((gw->g.flags & GWIN_FRAME_CLOSE_BTN)) {
+					if ((gw->g.flags & GWIN_FRAME_CLOSE_PRESSED) && x >= pos && x <= pos+BUTTON_X) {
+						// Close is released - destroy the window. This is tricky as we already have the drawing lock.
+						gw->g.flags &= ~(GWIN_FRAME_CLOSE_PRESSED|GWIN_FRAME_MAX_PRESSED|GWIN_FRAME_MIN_PRESSED);
+						forceFrameRedraw(gw);
+						_gwinDestroy(&gw->g, REDRAW_INSESSION);
+						return;
+					}
+					pos -= BUTTON_X;
+				}
+				if ((gw->g.flags & GWIN_FRAME_MINMAX_BTN)) {
+					if ((gw->g.flags & GWIN_FRAME_MAX_PRESSED) && x >= pos && x <= pos+BUTTON_X) {
+						// Max is released - maximize the window
+						gw->g.flags &= ~(GWIN_FRAME_CLOSE_PRESSED|GWIN_FRAME_MAX_PRESSED|GWIN_FRAME_MIN_PRESSED);
+						forceFrameRedraw(gw);
+						gwinSetMinMax(&gw->g, GWIN_MAXIMIZE);
+						return;
+					}
+					pos -= BUTTON_X;
+					if ((gw->g.flags & GWIN_FRAME_MIN_PRESSED) && x >= pos && x <= pos+BUTTON_X) {
+						// Min is released - minimize the window
+						gw->g.flags &= ~(GWIN_FRAME_CLOSE_PRESSED|GWIN_FRAME_MAX_PRESSED|GWIN_FRAME_MIN_PRESSED);
+						forceFrameRedraw(gw);
+						gwinSetMinMax(&gw->g, GWIN_MINIMIZE);
+						return;
+					}
+					pos -= BUTTON_X;
+				}
+			}
 
-	// the symbol
-	gdispDrawLine(gw->g.x+5, gw->g.y+gw->g.height-5, gw->g.x+gw->g.width-5, gw->g.y+gw->g.height-5, White);
-}
-
-static void _closeBtnMax(struct GWidgetObject *gw, void *param) {
-	(void) param;
-
-	// the background
-	if (gwinButtonIsPressed( (GHandle)gw)) {
-		gdispFillArea(gw->g.x, gw->g.y, gw->g.width, gw->g.height, gdispBlendColor(Black, Grey, 50));
-	} else {
-		gdispFillArea(gw->g.x, gw->g.y, gw->g.width, gw->g.height, gdispBlendColor(White, Grey, 50));
-	}
-
-	// the symbol
-	gdispDrawBox(gw->g.x+4, gw->g.y+4, gw->g.width-8, gw->g.height-8, White);
-	gdispDrawLine(gw->g.x+4, gw->g.y+5, gw->g.x+gw->g.width-5, gw->g.y+5, White);
-	gdispDrawLine(gw->g.x+4, gw->g.y+6, gw->g.x+gw->g.width-5, gw->g.y+6, White);
-}
-
-#if 0 && GINPUT_NEED_MOUSE
-	static void _mouseDown(GWidgetObject *gw, coord_t x, coord_t y) {
-	
-	}
-
-	static void _mouseUp(GWidgetObject *gw, coord_t x, coord_t y) {
-
-	}
-
-	static void _mouseMove(GWidgetObject *gw, coord_t x, coord_t y) {
-	
+			// Clear any flags and redraw the frame
+			gw->g.flags &= ~(GWIN_FRAME_CLOSE_PRESSED|GWIN_FRAME_MAX_PRESSED|GWIN_FRAME_MIN_PRESSED);
+			forceFrameRedraw(gw);
+		#endif
 	}
 #endif
 
@@ -111,16 +164,16 @@ static const gcontainerVMT frameVMT = {
 		{
 			"Frame",					// The classname
 			sizeof(GFrameObject),		// The object size
-			_frameDestroy,				// The destroy routie
+			_gcontainerDestroy,			// The destroy routine
 			_gcontainerRedraw,			// The redraw routine
 			0,							// The after-clear routine
 		},
 		gwinFrameDraw_Std,				// The default drawing routine
 		#if GINPUT_NEED_MOUSE
 			{
-				0,//_mouseDown,				// Process mouse down event
-				0,//_mouseUp,				// Process mouse up events
-				0,//_mouseMove,				// Process mouse move events
+				mouseDown,				// Process mouse down event
+				mouseUp,				// Process mouse up events
+				0,						// Process mouse move events
 			},
 		#endif
 		#if GINPUT_NEED_TOGGLE
@@ -141,136 +194,128 @@ static const gcontainerVMT frameVMT = {
 			},
 		#endif
 	},
-	BorderSizeLRB,						// The size of the left border (mandatory)
+	BorderSizeL,						// The size of the left border (mandatory)
 	BorderSizeT,						// The size of the top border (mandatory)
-	BorderSizeLRB,						// The size of the right border (mandatory)
-	BorderSizeLRB,						// The size of the bottom border (mandatory)
+	BorderSizeR,						// The size of the right border (mandatory)
+	BorderSizeB,						// The size of the bottom border (mandatory)
 	0,									// A child has been added (optional)
 	0,									// A child has been deleted (optional)
 };
 
 GHandle gwinGFrameCreate(GDisplay *g, GFrameObject *fo, GWidgetInit *pInit, uint32_t flags) {
-	if (!(fo = (GFrameObject *)_gcontainerCreate(g, &fo->gc, pInit, &frameVMT)))
+	if (!(fo = (GFrameObject *)_gcontainerCreate(g, (GContainerObject *)fo, pInit, &frameVMT)))
 		return 0;
 
-	fo->btnClose = 0;
-	fo->btnMin = 0;
-	fo->btnMax = 0;
-
-	/* Buttons require a border */
-	if ((flags & (GWIN_FRAME_CLOSE_BTN|GWIN_FRAME_MINMAX_BTN)))
-		flags |= GWIN_FRAME_BORDER;
-
-	/* create and initialize the listener if any button is present. */
-	if ((flags & (GWIN_FRAME_CLOSE_BTN|GWIN_FRAME_MINMAX_BTN))) {
-		geventListenerInit(&fo->gl);
-		gwinAttachListener(&fo->gl);
-		geventRegisterCallback(&fo->gl, _callbackBtn, (GHandle)fo);
-	}
-
-	/* create close button if necessary */
-	if ((flags & GWIN_FRAME_CLOSE_BTN)) {
-		GWidgetInit wi;
-
-		gwinWidgetClearInit(&wi);
-		wi.g.show = TRUE;
-		wi.g.parent = &fo->gc.g;
-
-		wi.g.x = fo->gc.g.width - BORDER_X - BUTTON_X;
-		wi.g.y = (BORDER_Y - BUTTON_Y) / 2;
-		wi.g.width = BUTTON_X;
-		wi.g.height = BUTTON_Y;
-		wi.text = "Frame Close Button";
-		wi.customDraw = _closeBtnDraw;
-		fo->btnClose = gwinGButtonCreate(g, 0, &wi);
-	}
-
-	/* create minimize and maximize buttons if necessary */
-	if ((flags & GWIN_FRAME_MINMAX_BTN)) {
-		GWidgetInit wi;
-
-		gwinWidgetClearInit(&wi);
-		wi.g.show = TRUE;
-		wi.g.parent = &fo->gc.g;
-
-		wi.g.x = (flags & GWIN_FRAME_CLOSE_BTN) ? fo->gc.g.width - 2*BORDER_X - 2*BUTTON_X : fo->gc.g.width - BORDER_X - BUTTON_X;
-		wi.g.y = (BORDER_Y - BUTTON_Y) / 2;
-		wi.g.width = BUTTON_X;
-		wi.g.height = BUTTON_Y;
-		wi.text = "Frame Max Button";
-		wi.customDraw = _closeBtnMax;
-		fo->btnMax = gwinGButtonCreate(g, 0, &wi);
-
-		wi.g.x = (flags & GWIN_FRAME_CLOSE_BTN) ? fo->gc.g.width - 3*BORDER_X - 3*BUTTON_X : fo->gc.g.width - BORDER_X - BUTTON_X;
-		wi.g.y = (BORDER_Y - BUTTON_Y) / 2;
-		wi.g.width = BUTTON_X;
-		wi.g.height = BUTTON_Y;
-		wi.text = "Frame Min Button";
-		wi.customDraw = _closeBtnMin;
-		fo->btnMin = gwinGButtonCreate(g, 0, &wi);
-	}
+	// Make sure we only have "safe" flags.
+	flags &= GWIN_FRAME_USER_FLAGS;
 
 	/* Apply flags. We apply these here so the controls above are outside the child area */
-	fo->gc.g.flags |= flags;
+	fo->g.flags |= flags;
 
-	gwinSetVisible(&fo->gc.g, pInit->g.show);
+	gwinSetVisible(&fo->g, pInit->g.show);
 
-	return &fo->gc.g;
-}
-
-/* Process a button event */
-static void _callbackBtn(void *param, GEvent *pe) {
-	switch (pe->type) {
-		case GEVENT_GWIN_BUTTON:
-			if (((GEventGWinButton *)pe)->button == ((GFrameObject*)(GHandle)param)->btnClose)
-				gwinDestroy((GHandle)param);
-
-			else if (((GEventGWinButton *)pe)->button == ((GFrameObject*)(GHandle)param)->btnMin) {
-				;/* ToDo */
-
-			} else if (((GEventGWinButton *)pe)->button == ((GFrameObject*)(GHandle)param)->btnMax) {
-				;/* ToDo */
-			}
-
-			break;
-
-		default:
-			break;
-	}
+	return &fo->g;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Default render routines                                                                       //
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const GColorSet* _getDrawColors(GWidgetObject *gw) {
-	if (!(gw->g.flags & GWIN_FLG_SYSENABLED))
-		return &gw->pstyle->disabled;
-	//if ((gw->g.flags & GBUTTON_FLG_PRESSED))
-	//	return &gw->pstyle->pressed;
-
-	return &gw->pstyle->enabled;
-}
-
-static void gwinFrameDraw_Std(GWidgetObject *gw, void *param) {
+void gwinFrameDraw_Transparent(GWidgetObject *gw, void *param) {
 	const GColorSet		*pcol;
+	coord_t				pos;
+	color_t				contrast;
+	color_t				btn;
 	(void)param;
 
 	if (gw->g.vmt != (gwinVMT *)&frameVMT)
 		return;
 
-	pcol = _getDrawColors(gw);
+	pcol = 	(gw->g.flags & GWIN_FLG_SYSENABLED) ? &gw->pstyle->enabled : &gw->pstyle->disabled;
+	contrast = gdispContrastColor(pcol->edge);
+	btn = gdispBlendColor(pcol->edge, contrast, 128);
 
-	// Render the actual frame (with border, if any)
-	if (gw->g.flags & GWIN_FRAME_BORDER) {
-		gdispGFillArea(gw->g.display, gw->g.x + BORDER_X, gw->g.y + BORDER_Y, gw->g.width - 2*BORDER_X, gw->g.height - BORDER_Y - BORDER_X, gw->pstyle->background);
-		gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, BORDER_Y, gw->text, gw->g.font, gdispContrastColor(pcol->edge), pcol->edge, justifyCenter);
-		gdispGFillArea(gw->g.display, gw->g.x, gw->g.y+BORDER_Y, BORDER_X, gw->g.height-(BORDER_Y+BORDER_X), pcol->edge);
-		gdispGFillArea(gw->g.display, gw->g.x+gw->g.width-BORDER_X, gw->g.y+BORDER_Y, BORDER_X, gw->g.height-(BORDER_Y+BORDER_X), pcol->edge);
-		gdispGFillArea(gw->g.display, gw->g.x, gw->g.y+gw->g.height-BORDER_X, gw->g.width, BORDER_X, pcol->edge);
-	} else {
-		gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->pstyle->background);
+	// Render the frame
+	gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, BORDER_T, gw->text, gw->g.font, contrast, pcol->edge, justifyCenter);
+	gdispGFillArea(gw->g.display, gw->g.x, gw->g.y+BORDER_T, BORDER_L, gw->g.height-(BORDER_T+BORDER_B), pcol->edge);
+	gdispGFillArea(gw->g.display, gw->g.x+gw->g.width-BORDER_R, gw->g.y+BORDER_T, BORDER_R, gw->g.height-(BORDER_T+BORDER_B), pcol->edge);
+	gdispGFillArea(gw->g.display, gw->g.x, gw->g.y+gw->g.height-BORDER_B, gw->g.width, BORDER_B, pcol->edge);
+
+	// Add the buttons
+	pos = gw->g.x+gw->g.width - (BORDER_R+BUTTON_X);
+
+	if ((gw->g.flags & GWIN_FRAME_CLOSE_BTN)) {
+		if ((gw->g.flags & GWIN_FRAME_CLOSE_PRESSED))
+			gdispFillArea(pos, gw->g.y+BUTTON_T, BUTTON_X, BUTTON_Y, btn);
+		gdispDrawLine(pos+BUTTON_I, gw->g.y+(BUTTON_T+BUTTON_I), pos+(BUTTON_X-BUTTON_I-1), gw->g.y+(BUTTON_T+BUTTON_Y-BUTTON_I-1), contrast);
+		gdispDrawLine(pos+(BUTTON_X-BUTTON_I-1), gw->g.y+(BUTTON_T+BUTTON_I), pos+BUTTON_I, gw->g.y+(BUTTON_T+BUTTON_Y-BUTTON_I-1), contrast);
+		pos -= BUTTON_X;
 	}
+
+	if ((gw->g.flags & GWIN_FRAME_MINMAX_BTN)) {
+		if ((gw->g.flags & GWIN_FRAME_MAX_PRESSED))
+			gdispFillArea(pos, gw->g.y+BUTTON_T, BUTTON_X, BUTTON_Y, btn);
+		// the symbol
+		gdispDrawBox(pos+BUTTON_I, gw->g.y+(BUTTON_T+BUTTON_I), BUTTON_X-2*BUTTON_I, BUTTON_Y-2*BUTTON_I, contrast);
+		gdispDrawLine(pos+(BUTTON_I+1), gw->g.y+(BUTTON_T+BUTTON_I+1), pos+(BUTTON_X-BUTTON_I-2), gw->g.y+(BUTTON_T+BUTTON_I+1), contrast);
+		gdispDrawLine(pos+(BUTTON_I+1), gw->g.y+(BUTTON_T+BUTTON_I+2), pos+(BUTTON_X-BUTTON_I-2), gw->g.y+(BUTTON_T+BUTTON_I+2), contrast);
+		pos -= BUTTON_X;
+		if ((gw->g.flags & GWIN_FRAME_MIN_PRESSED))
+			gdispFillArea(pos, gw->g.y+BUTTON_T, BUTTON_X, BUTTON_Y, btn);
+		gdispDrawLine(pos+BUTTON_I, gw->g.y+(BUTTON_T+BUTTON_Y-BUTTON_I-1), pos+(BUTTON_X-BUTTON_I-1), gw->g.y+(BUTTON_T+BUTTON_Y-BUTTON_I-1), contrast);
+		pos -= BUTTON_X;
+	}
+
+	// Don't touch the client area
 }
+
+void gwinFrameDraw_Std(GWidgetObject *gw, void *param) {
+	(void)param;
+
+	if (gw->g.vmt != (gwinVMT *)&frameVMT)
+		return;
+
+	// Draw the frame
+	gwinFrameDraw_Transparent(gw, param);
+
+	// Drop out if that is all we want to draw
+	if ((gw->g.flags & GWIN_FRAME_REDRAW_FRAME))
+		return;
+
+	// Draw the client area
+	gdispGFillArea(gw->g.display, gw->g.x + BORDER_L, gw->g.y + BORDER_T, gw->g.width - (BORDER_L+BORDER_R), gw->g.height - (BORDER_T+BORDER_B), gw->pstyle->background);
+}
+
+#if GDISP_NEED_IMAGE
+	void gwinFrameDraw_Image(GWidgetObject *gw, void *param) {
+		#define gi			((gdispImage *)param)
+		coord_t				x, y, iw, ih, mx, my;
+
+		if (gw->g.vmt != (gwinVMT *)&frameVMT)
+			return;
+
+		// Draw the frame
+		gwinFrameDraw_Transparent(gw, param);
+
+		// Drop out if that is all we want to draw
+		if ((gw->g.flags & GWIN_FRAME_REDRAW_FRAME))
+			return;
+
+		// Draw the client area by tiling the image
+		mx = gw->g.x+gw->g.width - BORDER_R;
+		my = gw->g.y+gw->g.height - BORDER_B;
+		for(y = gw->g.y+BORDER_T, ih=gi->height; y < my; y += ih) {
+			if (ih > my - y)
+				ih = my - y;
+			for(x = gw->g.x+BORDER_L; iw=gi->width; x < mx; x += iw) {
+				if (iw > mx - x)
+					iw = mx - x;
+				gdispGImageDraw(gw->g.display, gi, x, y, ih, iw, 0, 0);
+			}
+		}
+
+		#undef gi
+	}
+#endif
 
 #endif  /* (GFX_USE_GWIN && GWIN_NEED_FRAME) || defined(__DOXYGEN__) */

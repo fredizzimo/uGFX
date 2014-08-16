@@ -32,6 +32,7 @@
  * @{
  */
 #define GWIN_FIRST_CONTROL_FLAG			0x00000001			// @< 8 bits free for the control to use
+#define GWIN_LAST_CONTROL_FLAG			0x00000080			// @< 8 bits free for the control to use
 #define GWIN_FLG_VISIBLE				0x00000100			// @< The window is "visible"
 #define GWIN_FLG_SYSVISIBLE				0x00000200			// @< The window is visible after parents are tested
 #define GWIN_FLG_ENABLED				0x00000400			// @< The window is "enabled"
@@ -47,6 +48,7 @@
 #define GWIN_FLG_MAXIMIZED				0x00200000			// @< The window is maximized
 #define GWIN_FLG_MOUSECAPTURE			0x00400000			// @< The window has captured the mouse
 #define GWIN_FIRST_WM_FLAG				0x01000000			// @< 8 bits free for the window manager to use
+#define GWIN_LAST_WM_FLAG				0x80000000			// @< 8 bits free for the window manager to use
 /** @} */
 
 /**
@@ -209,7 +211,7 @@ typedef enum GRedrawMethod { REDRAW_WAIT, REDRAW_NOWAIT, REDRAW_INSESSION }	GRed
 /**
  * @brief	Flush any pending redraws in the system.
  *
- * @param[in]	doWait		Do we wait for the lock?
+ * @param[in]	how		Do we wait for the lock?
  *
  * @note	This call will attempt to flush any pending redraws
  * 			in the system. The doWait parameter tells this call
@@ -239,6 +241,20 @@ bool_t _gwinDrawStart(GHandle gh);
  * @param[in]	gh		The window
  */
 void _gwinDrawEnd(GHandle gh);
+
+/**
+ * @brief	Flush any pending redraws in the system.
+ *
+ * @param[in]	gh		The window
+ * @param[in]	how		Do we wait for the lock?
+ *
+ * @note	This call will delete the window. If called without the
+ * 			drawing lock 'how' must be REDRAW_WAIT. If called with the drawing
+ * 			lock 'how' must be REDRAW_INSESSION.
+ *
+ * @notapi
+ */
+void _gwinDestroy(GHandle gh, GRedrawMethod how);
 
 /**
  * @brief	Add a window to the window manager and set its position and size

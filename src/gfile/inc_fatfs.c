@@ -5,12 +5,16 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * This file is included by src/gfile/gfile.c
- */
+/********************************************************
+ * The FATFS file-system
+ ********************************************************/
 
-#include "ff.h"
-#include "ffconf.h"
+#include "gfx.h"
+
+#if GFX_USE_GFILE && GFILE_NEED_FATFS
+
+#include "gfile_fs.h"
+#include "fatfs_wrapper.h"
 
 /********************************************************
  * The FAT file-system VMT
@@ -30,14 +34,13 @@ static bool_t fatfsEOF(GFILE* f);
 static bool_t fatfsMount(const char* drive);
 static bool_t fatfsUnmount(const char* drive);
 static bool_t fatfsSync(GFILE* f);
-#if _FS_MINIMIZE <= 1 && GFILE_NEED_FILELISTS
+#if GFILE_NEED_FILELISTS && _FS_MINIMIZE <= 1
 	static gfileList *fatfsFlOpen(const char *path, bool_t dirs);
 	static const char *fatfsFlRead(gfileList *pfl);
 	static void fatfsFlClose(gfileList *pfl);
 #endif
 
-static const GFILEVMT FsFatFSVMT = {
-	GFILE_CHAINHEAD,
+const GFILEVMT FsFatFSVMT = {
 	GFSFLG_WRITEABLE | GFSFLG_SEEKABLE,
 	'F',
 	fatfsDel,
@@ -60,9 +63,6 @@ static const GFILEVMT FsFatFSVMT = {
 		#endif
 	#endif
 };
-
-#undef GFILE_CHAINHEAD
-#define GFILE_CHAINHEAD &FsFatFSVMT
 
 // Our directory list structure
 typedef struct fatfsList {
@@ -175,8 +175,8 @@ static bool_t fatfsOpen(GFILE* f, const char* fname)
 static void fatfsClose(GFILE* f)
 {
 	if ((FIL*)f->obj != 0) { 
-		gfxFree( (FIL*)f->obj );
 		f_close( (FIL*)f->obj );
+		gfxFree( (FIL*)f->obj );
 	}
 }
 
@@ -265,7 +265,7 @@ static bool_t fatfsSync(GFILE *f)
 	return TRUE;
 }
 
-#if _FS_MINIMIZE <= 1 && GFILE_NEED_FILELISTS
+#if GFILE_NEED_FILELISTS && _FS_MINIMIZE <= 1
 	static gfileList *fatfsFlOpen(const char *path, bool_t dirs) {
 		fatfsList	*p;
 		(void) dirs;
@@ -320,3 +320,6 @@ static bool_t fatfsSync(GFILE *f)
 	}
 
 #endif
+
+#endif //GFX_USE_GFILE && GFILE_NEED_FATFS
+

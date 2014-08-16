@@ -105,7 +105,6 @@ extern "C" {
 	 * @{
 	 */
 	#define GWIN_CONTAINER_BORDER		0x00000001
-	#define GWIN_CONTAINER_TRANSPARENT	0x00000002
 	/** @} */
 
 	/**
@@ -121,6 +120,33 @@ extern "C" {
 	 */
 	GHandle gwinGContainerCreate(GDisplay *g, GContainerObject *gw, const GWidgetInit *pInit, uint32_t flags);
 	#define gwinContainerCreate(gc, pInit, flags)			gwinGContainerCreate(GDISP, gc, pInit, flags)
+
+	/**
+	 * @brief				The custom draw routines for a simple container
+	 * @details				These function may be passed to @p gwinSetCustomDraw() to get different frame drawing styles
+	 *
+	 * @param[in] gw		The widget object (in this case a frame)
+	 * @param[in] param		A parameter passed in from the user
+	 *
+	 * @note				In your own custom drawing function you may optionally call these
+	 * 						standard functions and then draw your extra details on top.
+	 *
+	 * @note				gwinContainerDraw_Std() will fill the client area with the background color.<br/>
+	 * 						gwinContainerDraw_Transparent() will not fill the client area at all.<br/>
+	 * 						gwinContainerDraw_Image() will tile the image throughout the client area.<br/>
+	 * 						All these drawing functions draw the frame itself the same way.
+	 *
+	 * @note				The standard functions below ignore the param parameter except for @p gwinContainerDraw_Image().
+	 * @note				The image custom draw function  @p gwinContainerDraw_Image() uses param to pass in the gdispImage pointer.
+	 * 						The image must be already opened before calling  @p gwinSetCustomDraw().
+	 *
+	 * @api
+	 * @{
+	 */
+	void gwinContainerDraw_Std(GWidgetObject *gw, void *param);
+	void gwinContainerDraw_Transparent(GWidgetObject *gw, void *param);
+	void gwinContainerDraw_Image(GWidgetObject *gw, void *param);
+	/** @} */
 
 #ifdef __cplusplus
 }
