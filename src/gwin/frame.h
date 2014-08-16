@@ -27,42 +27,68 @@
  * @brief	 Flags for gwinFrameCreate()
  * @{
  */
-#define GWIN_FRAME_BORDER			0x00000001
-#define GWIN_FRAME_CLOSE_BTN		0x00000002
-#define GWIN_FRAME_MINMAX_BTN		0x00000004
+#define GWIN_FRAME_BORDER			0x00000000		// Deprecated. A border is always shown with a frame window now.
+#define GWIN_FRAME_CLOSE_BTN		0x00000001
+#define GWIN_FRAME_MINMAX_BTN		0x00000002
 /** @} */
 
-typedef struct GFrameObject {
-	GContainerObject	gc;
+typedef GContainerObject GFrameObject;
 
-	GListener			gl;			// internal listener for the buttons
-	// These could probably be removed... I have to think harder later
-	GHandle				btnClose;
-	GHandle				btnMin;
-	GHandle				btnMax;
-} GFrameObject;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-/**
- * @brief				Create a frame widget
- *
- * @details				This widget provides a window like we know it from desktop systems.
- *
- * @param[in] g			The GDisplay to display this window on
- * @param[in] fo		The GFrameObject structure to initialize. If this is NULL the structure is dynamically allocated.
- * @param[in] pInit		The initialization parameters
- * @param[in] flags		Some flags, see notes.
- *
- * @note				Possible flags are: GWIN_FRAME_BORDER, GWIN_FRAME_CLOSE_BTN, GWIN_FRAME_MINMAX_BTN.
- *						When the close or the minimize/maximize buttons are used, the boarder is automatically invoked.
- * @note				These frame buttons are processed internally. The close button will invoke a gwinDestroy() which will
- *						destroy the window itself and EVERY child it contains (also children of children).
- *
- * @return				NULL if there is no resulting widget. A valid GHandle otherwise.
- *
- * @api
- */
-GHandle gwinGFrameCreate(GDisplay *g, GFrameObject *fo, GWidgetInit *pInit, uint32_t flags);
-#define gwinFrameCreate(fo, pInit, flags)	gwinGFrameCreate(GDISP, fo, pInit, flags);
+	/**
+	 * @brief				Create a frame widget
+	 *
+	 * @details				This widget provides a window like we know it from desktop systems.
+	 *
+	 * @param[in] g			The GDisplay to display this window on
+	 * @param[in] fo		The GFrameObject structure to initialize. If this is NULL the structure is dynamically allocated.
+	 * @param[in] pInit		The initialization parameters
+	 * @param[in] flags		Some flags, see notes.
+	 *
+	 * @note				Possible flags are: GWIN_FRAME_CLOSE_BTN, GWIN_FRAME_MINMAX_BTN.
+	 * @note				These frame buttons are processed internally. The close button will invoke a gwinDestroy() which will
+	 *						destroy the window itself and EVERY child it contains (also children of children).
+	 *
+	 * @return				NULL if there is no resulting widget. A valid GHandle otherwise.
+	 *
+	 * @api
+	 */
+	GHandle gwinGFrameCreate(GDisplay *g, GFrameObject *fo, GWidgetInit *pInit, uint32_t flags);
+	#define gwinFrameCreate(fo, pInit, flags)	gwinGFrameCreate(GDISP, fo, pInit, flags);
+
+	/**
+	 * @brief				The custom draw routines for a frame window
+	 * @details				These function may be passed to @p gwinSetCustomDraw() to get different frame drawing styles
+	 *
+	 * @param[in] gw		The widget object (in this case a frame)
+	 * @param[in] param		A parameter passed in from the user
+	 *
+	 * @note				In your own custom drawing function you may optionally call these
+	 * 						standard functions and then draw your extra details on top.
+	 *
+	 * @note				gwinFrameDraw_Std() will fill the client area with the background color.<br/>
+	 * 						gwinFrameDraw_Transparent() will not fill the client area at all.<br/>
+	 * 						gwinFrameDraw_Image() will tile the image throughout the client area.<br/>
+	 * 						All these drawing functions draw the frame itself the same way.
+	 *
+	 * @note				The standard functions below ignore the param parameter except for @p gwinFrameDraw_Image().
+	 * @note				The image custom draw function  @p gwinFrameDraw_Image() uses param to pass in the gdispImage pointer.
+	 * 						The image must be already opened before calling  @p gwinSetCustomDraw().
+	 *
+	 * @api
+	 * @{
+	 */
+	void gwinFrameDraw_Std(GWidgetObject *gw, void *param);
+	void gwinFrameDraw_Transparent(GWidgetObject *gw, void *param);
+	void gwinFrameDraw_Image(GWidgetObject *gw, void *param);
+	/** @} */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _GWIN_FRAME_H */
 /** @} */
