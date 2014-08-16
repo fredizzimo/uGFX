@@ -90,17 +90,9 @@ coord_t gwinGetInnerHeight(GHandle gh) {
 	#error "GWIN Container: - Flag definitions don't match"
 #endif
 
-static coord_t BorderSize(GHandle gh)	{ return (gh->flags & GWIN_CONTAINER_BORDER) ? 2 : 0; }
+#define BORDER_WIDTH		2
 
-static void DrawSimpleContainer(GWidgetObject *gw, void *param) {
-    (void)param;
-
-    if (!(gw->g.flags & GWIN_CONTAINER_TRANSPARENT))
-        gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->pstyle->background);
-
-    if ((gw->g.flags & GWIN_CONTAINER_BORDER))
-        gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, (gw->g.flags & GWIN_FLG_SYSENABLED) ? gw->pstyle->enabled.edge : gw->pstyle->disabled.edge);
-} 
+static coord_t BorderSize(GHandle gh)	{ return (gh->flags & GWIN_CONTAINER_BORDER) ? BORDER_WIDTH : 0; }
 
 // The container VMT table
 static const gcontainerVMT containerVMT = {
@@ -112,7 +104,7 @@ static const gcontainerVMT containerVMT = {
 			_gcontainerRedraw,			// The redraw routine
 			0,							// The after-clear routine
 		},
-		DrawSimpleContainer,			// The default drawing routine
+		gwinContainerDraw_Std,			// The default drawing routine
 		#if GINPUT_NEED_MOUSE
 			{
 				0, 0, 0,				// No mouse
@@ -141,10 +133,69 @@ GHandle gwinGContainerCreate(GDisplay *g, GContainerObject *gc, const GWidgetIni
 	if (!(gc = (GContainerObject *)_gcontainerCreate(g, gc, pInit, &containerVMT)))
 		return 0;
 
-	gc->g.flags |= flags;
+	gc->g.flags |= (flags & GWIN_CONTAINER_BORDER);
 
 	gwinSetVisible((GHandle)gc, pInit->g.show);
 	return (GHandle)gc;
 }
+
+void gwinContainerDraw_Transparent(GWidgetObject *gw, void *param) {
+	(void)param;
+
+	if (gw->g.vmt != (gwinVMT *)&containerVMT)
+		return;
+
+	if ((gw->g.flags & GWIN_CONTAINER_BORDER))
+		gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, (gw->g.flags & GWIN_FLG_SYSENABLED) ? gw->pstyle->enabled.edge : gw->pstyle->disabled.edge);
+
+	// Don't touch the client area
+}
+
+void gwinContainerDraw_Std(GWidgetObject *gw, void *param) {
+	(void)param;
+
+	if (gw->g.vmt != (gwinVMT *)&containerVMT)
+		return;
+
+	gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->pstyle->background);
+	gwinContainerDraw_Transparent(gw, param);
+}
+
+#if GDISP_NEED_IMAGE
+	void gwinContainerDraw_Image(GWidgetObject *gw, void *param) {
+		#define gi			((gdispImage *)param)
+		coord_t				x, y, iw, ih, mx, my;
+
+		if (gw->g.vmt != (gwinVMT *)&containerVMT)
+			return;
+
+		// Draw the frame
+		gwinContainerDraw_Transparent(gw, param);
+
+		// Draw the client area by tiling the image
+		mx = gw->g.x+gw->g.width;
+		my = gw->g.y+gw->g.height;
+		y = gw->g.y;
+		if ((gw->g.flags & GWIN_CONTAINER_BORDER)) {
+			mx--;
+			my--;
+			y++;
+		}
+		for(ih=gi->height; y < my; y += ih) {
+			if (ih > my - y)
+				ih = my - y;
+			x = gw->g.x;
+			if ((gw->g.flags & GWIN_CONTAINER_BORDER))
+				x++;
+			for(iw=gi->width; x < mx; x += iw) {
+				if (iw > mx - x)
+					iw = mx - x;
+				gdispGImageDraw(gw->g.display, gi, x, y, ih, iw, 0, 0);
+			}
+		}
+
+		#undef gi
+	}
+#endif
 
 #endif
