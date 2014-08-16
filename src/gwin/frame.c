@@ -124,10 +124,10 @@ static void forceFrameRedraw(GWidgetObject *gw) {
 				pos = gw->g.width - (BORDER_R+BUTTON_X);
 				if ((gw->g.flags & GWIN_FRAME_CLOSE_BTN)) {
 					if ((gw->g.flags & GWIN_FRAME_CLOSE_PRESSED) && x >= pos && x <= pos+BUTTON_X) {
-						// Close is released - destroy the window
+						// Close is released - destroy the window. This is tricky as we already have the drawing lock.
 						gw->g.flags &= ~(GWIN_FRAME_CLOSE_PRESSED|GWIN_FRAME_MAX_PRESSED|GWIN_FRAME_MIN_PRESSED);
 						forceFrameRedraw(gw);
-						gwinDestroy(&gw->g);
+						_gwinDestroy(&gw->g, REDRAW_INSESSION);
 						return;
 					}
 					pos -= BUTTON_X;
@@ -225,6 +225,7 @@ void gwinFrameDraw_Transparent(GWidgetObject *gw, void *param) {
 	const GColorSet		*pcol;
 	coord_t				pos;
 	color_t				contrast;
+	color_t				btn;
 	(void)param;
 
 	if (gw->g.vmt != (gwinVMT *)&frameVMT)
@@ -232,6 +233,7 @@ void gwinFrameDraw_Transparent(GWidgetObject *gw, void *param) {
 
 	pcol = 	(gw->g.flags & GWIN_FLG_SYSENABLED) ? &gw->pstyle->enabled : &gw->pstyle->disabled;
 	contrast = gdispContrastColor(pcol->edge);
+	btn = gdispBlendColor(pcol->edge, contrast, 128);
 
 	// Render the frame
 	gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, BORDER_T, gw->text, gw->g.font, contrast, pcol->edge, justifyCenter);
@@ -244,7 +246,7 @@ void gwinFrameDraw_Transparent(GWidgetObject *gw, void *param) {
 
 	if ((gw->g.flags & GWIN_FRAME_CLOSE_BTN)) {
 		if ((gw->g.flags & GWIN_FRAME_CLOSE_PRESSED))
-			gdispFillArea(pos, gw->g.y+BUTTON_T, BUTTON_X, BUTTON_Y, gdispBlendColor(pcol->edge, contrast, 192));
+			gdispFillArea(pos, gw->g.y+BUTTON_T, BUTTON_X, BUTTON_Y, btn);
 		gdispDrawLine(pos+BUTTON_I, gw->g.y+(BUTTON_T+BUTTON_I), pos+(BUTTON_X-BUTTON_I-1), gw->g.y+(BUTTON_T+BUTTON_Y-BUTTON_I-1), contrast);
 		gdispDrawLine(pos+(BUTTON_X-BUTTON_I-1), gw->g.y+(BUTTON_T+BUTTON_I), pos+BUTTON_I, gw->g.y+(BUTTON_T+BUTTON_Y-BUTTON_I-1), contrast);
 		pos -= BUTTON_X;
@@ -252,14 +254,14 @@ void gwinFrameDraw_Transparent(GWidgetObject *gw, void *param) {
 
 	if ((gw->g.flags & GWIN_FRAME_MINMAX_BTN)) {
 		if ((gw->g.flags & GWIN_FRAME_MAX_PRESSED))
-			gdispFillArea(pos, gw->g.y+BUTTON_T, BUTTON_X, BUTTON_Y, gdispBlendColor(pcol->edge, contrast, 192));
+			gdispFillArea(pos, gw->g.y+BUTTON_T, BUTTON_X, BUTTON_Y, btn);
 		// the symbol
 		gdispDrawBox(pos+BUTTON_I, gw->g.y+(BUTTON_T+BUTTON_I), BUTTON_X-2*BUTTON_I, BUTTON_Y-2*BUTTON_I, contrast);
 		gdispDrawLine(pos+(BUTTON_I+1), gw->g.y+(BUTTON_T+BUTTON_I+1), pos+(BUTTON_X-BUTTON_I-2), gw->g.y+(BUTTON_T+BUTTON_I+1), contrast);
 		gdispDrawLine(pos+(BUTTON_I+1), gw->g.y+(BUTTON_T+BUTTON_I+2), pos+(BUTTON_X-BUTTON_I-2), gw->g.y+(BUTTON_T+BUTTON_I+2), contrast);
 		pos -= BUTTON_X;
 		if ((gw->g.flags & GWIN_FRAME_MIN_PRESSED))
-			gdispFillArea(pos, gw->g.y+BUTTON_T, BUTTON_X, BUTTON_Y, gdispBlendColor(pcol->edge, contrast, 192));
+			gdispFillArea(pos, gw->g.y+BUTTON_T, BUTTON_X, BUTTON_Y, btn);
 		gdispDrawLine(pos+BUTTON_I, gw->g.y+(BUTTON_T+BUTTON_Y-BUTTON_I-1), pos+(BUTTON_X-BUTTON_I-1), gw->g.y+(BUTTON_T+BUTTON_Y-BUTTON_I-1), contrast);
 		pos -= BUTTON_X;
 	}
@@ -300,8 +302,8 @@ void gwinFrameDraw_Std(GWidgetObject *gw, void *param) {
 			return;
 
 		// Draw the client area by tiling the image
-		mx = gw->x+gw->g.width - BORDER_R;
-		my = gw->y+gw->g.height - BORDER_B;
+		mx = gw->g.x+gw->g.width - BORDER_R;
+		my = gw->g.y+gw->g.height - BORDER_B;
 		for(y = gw->g.y+BORDER_T, ih=gi->height; y < my; y += ih) {
 			if (ih > my - y)
 				ih = my - y;
