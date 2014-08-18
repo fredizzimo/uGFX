@@ -304,10 +304,10 @@ void gwinFrameDraw_Std(GWidgetObject *gw, void *param) {
 		// Draw the client area by tiling the image
 		mx = gw->g.x+gw->g.width - BORDER_R;
 		my = gw->g.y+gw->g.height - BORDER_B;
-		for(y = gw->g.y+BORDER_T, ih=gi->height; y < my; y += ih) {
+		for(y = gw->g.y+BORDER_T, ih = gi->height; y < my; y += ih) {
 			if (ih > my - y)
 				ih = my - y;
-			for(x = gw->g.x+BORDER_L; iw=gi->width; x < mx; x += iw) {
+			for(x = gw->g.x+BORDER_L; iw = gi->width; x < mx; x += iw) {
 				if (iw > mx - x)
 					iw = mx - x;
 				gdispGImageDraw(gw->g.display, gi, x, y, ih, iw, 0, 0);
