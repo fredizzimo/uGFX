@@ -3,7 +3,9 @@
  * the license was not distributed with this file, you can obtain one at:
  *
  *              http://ugfx.org/license.html
- *
+ */
+
+/*
  *	Driver for display from Nokia 1616 phone
  *	based on the work of axillent@gmail.com (http://radiokot.ru/articles/53/)
  *	adapted by shilow@ukr.net with the help of Federico Reds <fede.677387@hotmail.it>
