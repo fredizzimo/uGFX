@@ -962,13 +962,14 @@ extern "C" {
 	#if GWIN_NEED_CONSOLE || defined(__DOXYGEN__)
 		#include "src/gwin/console.h"
 	#endif
-
 	#if GWIN_NEED_GRAPH || defined(__DOXYGEN__)
 		#include "src/gwin/graph.h"
 	#endif
-
 	#if GWIN_NEED_IMAGE || defined(__DOXYGEN__)
 		#include "src/gwin/gimage.h"
+	#endif
+	#if GWIN_NEED_GL3D || defined(__DOXYGEN__)
+		#include "src/gwin/gwin_gl3d.h"
 	#endif
 
 #endif /* GFX_USE_GWIN */

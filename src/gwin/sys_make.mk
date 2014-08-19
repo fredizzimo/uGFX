@@ -13,4 +13,6 @@ GFXSRC +=   $(GFXLIB)/src/gwin/gwin.c \
 			$(GFXLIB)/src/gwin/progressbar.c \
 			$(GFXLIB)/src/gwin/gcontainer.c \
 			$(GFXLIB)/src/gwin/frame.c \
-	
+			$(GFXLIB)/src/gwin/gwin_gl3d.c \
+
+GFXINC +=	$(GFXLIB)/3rdparty/tinygl-0.4-ugfx/include	

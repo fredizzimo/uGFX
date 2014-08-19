@@ -153,6 +153,7 @@
 //    #define GWIN_CONSOLE_USE_BASESTREAM              FALSE
 //    #define GWIN_CONSOLE_USE_FLOAT                   FALSE
 //#define GWIN_NEED_GRAPH                              FALSE
+//#define GWIN_NEED_GL3D                               FALSE
 
 //#define GWIN_NEED_WIDGET                             FALSE
 //    #define GWIN_NEED_LABEL                          FALSE
