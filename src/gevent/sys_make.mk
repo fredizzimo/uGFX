@@ -1,1 +1,1 @@
-GFXSRC +=   $(GFXLIB)/src/gevent/gevent.c
+GFXSRC +=   $(GFXLIB)/src/gevent/gevent_gevent.c

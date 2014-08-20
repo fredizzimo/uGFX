@@ -141,13 +141,13 @@ int main(void) {
 
         switch(pe->type) {
             case GEVENT_GWIN_CHECKBOX:
-                if (((GEventGWinCheckbox*)pe)->checkbox == ghCheckbox1) {
+                if (((GEventGWinCheckbox*)pe)->gwin == ghCheckbox1) {
                     gwinSetVisible(ghContainer2, gwinCheckboxIsChecked(ghCheckbox1));
                 }
-                else if (((GEventGWinCheckbox*)pe)->checkbox == ghCheckbox2) {
+                else if (((GEventGWinCheckbox*)pe)->gwin == ghCheckbox2) {
                     gwinSetVisible(ghContainer3, gwinCheckboxIsChecked(ghCheckbox2));
                 }
-                else if (((GEventGWinCheckbox*)pe)->checkbox == ghCheckbox3) {
+                else if (((GEventGWinCheckbox*)pe)->gwin == ghCheckbox3) {
                     gwinSetVisible(ghContainer1, gwinCheckboxIsChecked(ghCheckbox3));
                 }
                 break;

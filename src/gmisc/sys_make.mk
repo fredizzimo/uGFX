@@ -1,3 +1,3 @@
-GFXSRC +=   $(GFXLIB)/src/gmisc/gmisc.c	\
-			$(GFXLIB)/src/gmisc/arrayops.c	\
-			$(GFXLIB)/src/gmisc/trig.c
+GFXSRC +=   $(GFXLIB)/src/gmisc/gmisc_gmisc.c	\
+			$(GFXLIB)/src/gmisc/gmisc_arrayops.c	\
+			$(GFXLIB)/src/gmisc/gmisc_trig.c

@@ -1,1 +1,1 @@
-GFXSRC +=   $(GFXLIB)/src/gaudio/gaudio.c
+GFXSRC +=   $(GFXLIB)/src/gaudio/gaudio_gaudio.c

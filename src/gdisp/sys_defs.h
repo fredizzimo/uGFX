@@ -185,7 +185,7 @@ extern GDisplay	*GDISP;
 /*===========================================================================*/
 
 /* Load our color definitions and pixel formats */
-#include "colors.h"
+#include "gdisp_colors.h"
 
 /**
  * @brief   The type of a pixel.
@@ -995,7 +995,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 #endif
 
 #if GDISP_NEED_IMAGE || defined(__DOXYGEN__)
-	#include "src/gdisp/image.h"
+	#include "gdisp_image.h"
 #endif
 
 #endif /* GFX_USE_GDISP */

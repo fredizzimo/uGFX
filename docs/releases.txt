@@ -20,11 +20,16 @@ FIX:		Fix threading issues in GEvent for callbacks
 FEATURE:	Added geventEventComplete()
 FEATURE:	Added support for the RawOS real time operating system
 FEATURE:	Operating System initialisation is now optional
-FEATURE:	Added optional transparency to container
 FEATURE:	Prevent mouse events going to obscured widgets
 FEATURE:	Add GFILE support for file lists
 FEATURE:	Add GFILE support for C strings as files
 FEATURE:	Add GFILE support for PetitFS
+FEATURE:	Added SPFD54124B GDISP driver by user shilow
+FEATURE:	Added GWIN GL3D window type
+FEATURE:	Generalised all GWIN events to use a common prefix structure.
+FIX:		Improve memory usage for the GWIN Frame widget.
+FEATURE:	Added transparent custom draws for GWIN containers and frame widgets
+FEATURE:	Added image custom draws for GWIN containers and frame widgets
 
 
 *** Release 2.1 ***

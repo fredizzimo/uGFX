@@ -77,7 +77,7 @@ int main(void) {
 
 		switch(pe->type) {
 			case GEVENT_GWIN_CHECKBOX:
-				if (((GEventGWinCheckbox*)pe)->checkbox == ghCheckbox1) {
+				if (((GEventGWinCheckbox*)pe)->gwin == ghCheckbox1) {
 					// The state of our checkbox has changed
 					//printf("Checkbox state: %d\r\n", ((GEventGWinCheckbox*)pe)->isChecked);
 				}

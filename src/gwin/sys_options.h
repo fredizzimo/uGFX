@@ -73,6 +73,13 @@
 		#define GWIN_NEED_GRAPH		FALSE
 	#endif
 	/**
+	 * @brief   Should gl3d functions be included.
+	 * @details	Defaults to FALSE
+	 */
+	#ifndef GWIN_NEED_GL3D
+		#define GWIN_NEED_GL3D		FALSE
+	#endif
+	/**
 	 * @brief   Should button functions be included.
 	 * @details	Defaults to FALSE
 	 */

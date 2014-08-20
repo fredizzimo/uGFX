@@ -1,16 +1,18 @@
-GFXSRC +=   $(GFXLIB)/src/gwin/gwin.c \
-			$(GFXLIB)/src/gwin/gwidget.c \
-			$(GFXLIB)/src/gwin/gwm.c \
-			$(GFXLIB)/src/gwin/console.c \
-			$(GFXLIB)/src/gwin/graph.c \
-			$(GFXLIB)/src/gwin/button.c \
-			$(GFXLIB)/src/gwin/slider.c \
-			$(GFXLIB)/src/gwin/checkbox.c \
-			$(GFXLIB)/src/gwin/gimage.c \
-			$(GFXLIB)/src/gwin/label.c \
-			$(GFXLIB)/src/gwin/radio.c \
-			$(GFXLIB)/src/gwin/list.c \
-			$(GFXLIB)/src/gwin/progressbar.c \
-			$(GFXLIB)/src/gwin/gcontainer.c \
-			$(GFXLIB)/src/gwin/frame.c \
-	
+GFXSRC +=   $(GFXLIB)/src/gwin/gwin_gwin.c \
+			$(GFXLIB)/src/gwin/gwin_widget.c \
+			$(GFXLIB)/src/gwin/gwin_wm.c \
+			$(GFXLIB)/src/gwin/gwin_console.c \
+			$(GFXLIB)/src/gwin/gwin_graph.c \
+			$(GFXLIB)/src/gwin/gwin_button.c \
+			$(GFXLIB)/src/gwin/gwin_slider.c \
+			$(GFXLIB)/src/gwin/gwin_checkbox.c \
+			$(GFXLIB)/src/gwin/gwin_image.c \
+			$(GFXLIB)/src/gwin/gwin_label.c \
+			$(GFXLIB)/src/gwin/gwin_radio.c \
+			$(GFXLIB)/src/gwin/gwin_list.c \
+			$(GFXLIB)/src/gwin/gwin_progressbar.c \
+			$(GFXLIB)/src/gwin/gwin_container.c \
+			$(GFXLIB)/src/gwin/gwin_frame.c \
+			$(GFXLIB)/src/gwin/gwin_gl3d.c \
+
+GFXINC +=	$(GFXLIB)/3rdparty/tinygl-0.4-ugfx/include	

@@ -459,39 +459,39 @@ int main(void) {
 
 		switch(pe->type) {
 		case GEVENT_GWIN_BUTTON:
-			gwinPrintf(ghConsole, "Button %s\n", gwinGetText(((GEventGWinButton *)pe)->button));
+			gwinPrintf(ghConsole, "Button %s\n", gwinGetText(((GEventGWinButton *)pe)->gwin));
 			break;
 
 		case GEVENT_GWIN_SLIDER:
-			gwinPrintf(ghConsole, "Slider %s=%d\n", gwinGetText(((GEventGWinSlider *)pe)->slider), ((GEventGWinSlider *)pe)->position);
+			gwinPrintf(ghConsole, "Slider %s=%d\n", gwinGetText(((GEventGWinSlider *)pe)->gwin), ((GEventGWinSlider *)pe)->position);
 			break;
 
 		case GEVENT_GWIN_CHECKBOX:
-			gwinPrintf(ghConsole, "Checkbox %s=%s\n", gwinGetText(((GEventGWinCheckbox *)pe)->checkbox), ((GEventGWinCheckbox *)pe)->isChecked ? "Checked" : "UnChecked");
+			gwinPrintf(ghConsole, "Checkbox %s=%s\n", gwinGetText(((GEventGWinCheckbox *)pe)->gwin), ((GEventGWinCheckbox *)pe)->isChecked ? "Checked" : "UnChecked");
 
 			// If it is the Disable All checkbox then do that.
-			if (((GEventGWinCheckbox *)pe)->checkbox == ghCheckDisableAll) {
+			if (((GEventGWinCheckbox *)pe)->gwin == ghCheckDisableAll) {
 				gwinPrintf(ghConsole, "%s All\n", ((GEventGWinCheckbox *)pe)->isChecked ? "Disable" : "Enable");
 				setEnabled(!((GEventGWinCheckbox *)pe)->isChecked);
 			}
 			break;
 
 		case GEVENT_GWIN_LIST:
-			gwinPrintf(ghConsole, "List %s Item %d %s\n", gwinGetText(((GEventGWinList *)pe)->list), ((GEventGWinList *)pe)->item,
-					gwinListItemIsSelected(((GEventGWinList *)pe)->list, ((GEventGWinList *)pe)->item) ? "Selected" : "Unselected");
+			gwinPrintf(ghConsole, "List %s Item %d %s\n", gwinGetText(((GEventGWinList *)pe)->gwin), ((GEventGWinList *)pe)->item,
+					gwinListItemIsSelected(((GEventGWinList *)pe)->gwin, ((GEventGWinList *)pe)->item) ? "Selected" : "Unselected");
 			break;
 
 		case GEVENT_GWIN_RADIO:
-			gwinPrintf(ghConsole, "Radio Group %u=%s\n", ((GEventGWinRadio *)pe)->group, gwinGetText(((GEventGWinRadio *)pe)->radio));
+			gwinPrintf(ghConsole, "Radio Group %u=%s\n", ((GEventGWinRadio *)pe)->group, gwinGetText(((GEventGWinRadio *)pe)->gwin));
 
 			switch(((GEventGWinRadio *)pe)->group) {
 			case GROUP_TABS:
 
 				// Set control visibility depending on the tab selected
-				setTab(((GEventGWinRadio *)pe)->radio);
+				setTab(((GEventGWinRadio *)pe)->gwin);
 
 				// We show the state of some of the GUI elements here
-				if (((GEventGWinRadio *)pe)->radio == ghTabLabels) {
+				if (((GEventGWinRadio *)pe)->gwin == ghTabLabels) {
 					char tmp[20];
 
 					// The sliders
@@ -519,9 +519,9 @@ int main(void) {
 
 					gwinPrintf(ghConsole, "Change Color Scheme\n");
 
-					if (((GEventGWinRadio *)pe)->radio == ghRadioYellow)
+					if (((GEventGWinRadio *)pe)->gwin == ghRadioYellow)
 						pstyle = &YellowWidgetStyle;
-					else if (((GEventGWinRadio *)pe)->radio == ghRadioBlack)
+					else if (((GEventGWinRadio *)pe)->gwin == ghRadioBlack)
 						pstyle = &BlackWidgetStyle;
 					else
 						pstyle = &WhiteWidgetStyle;
