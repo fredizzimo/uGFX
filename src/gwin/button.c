@@ -26,28 +26,6 @@
 // Our pressed state
 #define GBUTTON_FLG_PRESSED		(GWIN_FIRST_CONTROL_FLAG<<0)
 
-// Send the button event
-static void SendButtonEvent(GWidgetObject *gw) {
-	GSourceListener	*	psl;
-	GEvent *			pe;
-	#define pbe			((GEventGWinButton *)pe)
-
-	// Trigger a GWIN Button Event
-	psl = 0;
-	while ((psl = geventGetSourceListener(GWIDGET_SOURCE, psl))) {
-		if (!(pe = geventGetEventBuffer(psl)))
-			continue;
-		pbe->type = GEVENT_GWIN_BUTTON;
-		pbe->button = (GHandle)gw;
-		#if GWIN_WIDGET_TAGS
-			pbe->tag = gw->tag;
-		#endif
-		geventSendEvent(psl);
-	}
-
-	#undef pbe
-}
-
 #if GINPUT_NEED_MOUSE
 	// A mouse down has occurred over the button
 	static void MouseDown(GWidgetObject *gw, coord_t x, coord_t y) {
@@ -68,7 +46,7 @@ static void SendButtonEvent(GWidgetObject *gw) {
 				return;
 		#endif
 
-		SendButtonEvent(gw);
+		_gwinSendEvent(&gw->g, GEVENT_GWIN_BUTTON);
 	}
 #endif
 
@@ -86,7 +64,7 @@ static void SendButtonEvent(GWidgetObject *gw) {
 		gw->g.flags |= GBUTTON_FLG_PRESSED;
 		_gwinUpdate((GHandle)gw);
 		// Trigger the event on button down (different than for mouse/touch)
-		SendButtonEvent(gw);
+		_gwinSendEvent(&gw->g, GEVENT_GWIN_BUTTON);
 	}
 
 	static void ToggleAssign(GWidgetObject *gw, uint16_t role, uint16_t instance) {

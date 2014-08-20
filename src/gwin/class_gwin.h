@@ -243,7 +243,7 @@ bool_t _gwinDrawStart(GHandle gh);
 void _gwinDrawEnd(GHandle gh);
 
 /**
- * @brief	Flush any pending redraws in the system.
+ * @brief	Destroy a window.
  *
  * @param[in]	gh		The window
  * @param[in]	how		Do we wait for the lock?
@@ -301,6 +301,18 @@ bool_t _gwinWMAdd(GHandle gh, const GWindowInit *pInit);
 	 * @notapi
 	 */
 	void _gwidgetRedraw(GHandle gh);
+
+	/**
+	 * @brief	Send a standard GWIN event.
+	 *
+	 * @param[in]	gh		The window
+	 * @param[in]	type	The event type
+	 *
+	 * @note		No consideration is given to recording EVENT LOST statuses.
+	 *
+	 * @notapi
+	 */
+	void _gwinSendEvent(GHandle gh, GEventType type);
 #endif
 
 #if GWIN_NEED_CONTAINERS || defined(__DOXYGEN__)

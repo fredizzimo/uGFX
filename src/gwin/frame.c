@@ -95,6 +95,7 @@ static void forceFrameRedraw(GWidgetObject *gw) {
 				// Close is released - destroy the window
 				gw->g.flags &= ~(GWIN_FRAME_CLOSE_PRESSED|GWIN_FRAME_MAX_PRESSED|GWIN_FRAME_MIN_PRESSED);
 				forceFrameRedraw(gw);
+				_gwinSendEvent(&gw->g, GEVENT_GWIN_CLOSE);
 				gwinDestroy(&gw->g);
 				return;
 			}

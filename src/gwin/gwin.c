@@ -101,6 +101,40 @@ GHandle _gwindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pInit
 	return (GHandle)pgw;
 }
 
+// Internal routine for use by GWIN components only
+void _gwinDestroy(GHandle gh, GRedrawMethod how) {
+	if (!gh)
+		return;
+
+	// Make the window invisible
+	gwinSetVisible(gh, FALSE);
+
+	// Make sure it is flushed first - must be REDRAW_WAIT or REDRAW_INSESSION
+	_gwinFlushRedraws(how);
+
+	#if GWIN_NEED_CONTAINERS
+		// Notify the parent it is about to be deleted
+		if (gh->parent && ((gcontainerVMT *)gh->parent->vmt)->NotifyDelete)
+			((gcontainerVMT *)gh->parent->vmt)->NotifyDelete(gh->parent, gh);
+	#endif
+
+	// Remove from the window manager
+	#if GWIN_NEED_WINDOWMANAGER
+		_GWINwm->vmt->Delete(gh);
+	#endif
+
+	// Class destroy routine
+	if (gh->vmt->Destroy)
+		gh->vmt->Destroy(gh);
+
+	// Clean up the structure
+	if (gh->flags & GWIN_FLG_DYNAMIC) {
+		gh->flags = 0;							// To be sure, to be sure
+		gfxFree((void *)gh);
+	} else
+		gh->flags = 0;							// To be sure, to be sure
+}
+
 /*-----------------------------------------------
  * Routines that affect all windows
  *-----------------------------------------------*/
@@ -150,39 +184,6 @@ GHandle gwinGWindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pI
 	gwinSetVisible(pgw, pInit->show);
 
 	return pgw;
-}
-
-void _gwinDestroy(GHandle gh, GRedrawMethod how) {
-	if (!gh)
-		return;
-
-	// Make the window invisible
-	gwinSetVisible(gh, FALSE);
-
-	// Make sure it is flushed first - must be REDRAW_WAIT or REDRAW_INSESSION
-	_gwinFlushRedraws(how);
-
-	#if GWIN_NEED_CONTAINERS
-		// Notify the parent it is about to be deleted
-		if (gh->parent && ((gcontainerVMT *)gh->parent->vmt)->NotifyDelete)
-			((gcontainerVMT *)gh->parent->vmt)->NotifyDelete(gh->parent, gh);
-	#endif
-
-	// Remove from the window manager
-	#if GWIN_NEED_WINDOWMANAGER
-		_GWINwm->vmt->Delete(gh);
-	#endif
-
-	// Class destroy routine
-	if (gh->vmt->Destroy)
-		gh->vmt->Destroy(gh);
-
-	// Clean up the structure
-	if (gh->flags & GWIN_FLG_DYNAMIC) {
-		gh->flags = 0;							// To be sure, to be sure
-		gfxFree((void *)gh);
-	} else
-		gh->flags = 0;							// To be sure, to be sure
 }
 
 void gwinDestroy(GHandle gh) {

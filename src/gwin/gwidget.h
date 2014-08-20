@@ -135,6 +135,36 @@ typedef struct GWidgetObject {
  * won't support it even with special flags.
  */
 
+/**
+ * @brief	A Generic GWIN Event
+ * @note	All gwin windows when sending events will either use this structure or a
+ * 			structure that is 100% compatible except that it may also have extra fields.
+ * @note	There are currently no GEventGWin listening flags - use 0 as the flags to @p gwinAttachListener()
+ *
+ * @{
+ */
+typedef struct GEventGWin {
+	GEventType		type;				// The type of this event
+	GHandle			gwin;				// The gwin window handle
+	#if GWIN_NEED_WIDGET && GWIN_WIDGET_TAGS
+		WidgetTag	tag;				// The tag (if applicable)
+	#endif
+} GEventGWin;
+/** @} */
+
+/**
+ * @brief	The list of predefined GWIN events.
+ * @note	The definition of an event type does not mean it is always sent. For example,
+ * 			close events are sent by Frame windows but by little else. They are normally
+ * 			only sent if there is a specific reason that the event should be sent.
+ * @{
+ */
+#define GEVENT_GWIN_OPEN		(GEVENT_GWIN_FIRST+0x00)
+#define GEVENT_GWIN_CLOSE		(GEVENT_GWIN_FIRST+0x01)
+#define GEVENT_GWIN_RESIZE		(GEVENT_GWIN_FIRST+0x02)
+#define GEVENT_GWIN_CTRL_FIRST	(GEVENT_GWIN_FIRST+0x40)
+/** @} */
+
 #ifdef __cplusplus
 extern "C" {
 #endif

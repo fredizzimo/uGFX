@@ -28,7 +28,7 @@
 /* Driver constants.														 */
 /*===========================================================================*/
 
-#define GEVENT_GWIN_CHECKBOX		(GEVENT_GWIN_FIRST+2)
+#define GEVENT_GWIN_CHECKBOX		(GEVENT_GWIN_CTRL_FIRST+2)
 
 /*===========================================================================*/
 /* Type definitions                                                          */
@@ -36,11 +36,11 @@
 
 typedef struct GEventGWinCheckbox {
 	GEventType		type;			// The type of this event (GEVENT_GWIN_CHECKBOX)
-	GHandle			checkbox;		// The checkbox that has been depressed (actually triggered on release)
-	bool_t			isChecked;		// Is the checkbox currently checked or unchecked?
+	GHandle			gwin;			// The checkbox that has been depressed (actually triggered on release)
 	#if GWIN_WIDGET_TAGS
 		WidgetTag	tag;			// The checkbox tag
 	#endif
+	bool_t			isChecked;		// Is the checkbox currently checked or unchecked?
 } GEventGWinCheckbox;
 
 /* A Checkbox window */

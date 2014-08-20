@@ -302,6 +302,24 @@ void _gwidgetRedraw(GHandle gh) {
 	gw->fnDraw(gw, gw->fnParam);
 }
 
+void _gwinSendEvent(GHandle gh, GEventType type) {
+	GSourceListener	*	psl;
+	GEventGWin *		pge;
+
+	// Trigger a GWIN Event
+	psl = 0;
+	while ((psl = geventGetSourceListener(GWIDGET_SOURCE, psl))) {
+		if (!(pge = (GEventGWin *)geventGetEventBuffer(psl)))
+			continue;
+		pge->type = type;
+		pge->gwin = gh;
+		#if GWIN_WIDGET_TAGS
+			pge->tag = (gh->flags & GWIN_FLG_WIDGET) ? ((GWidgetObject *)gh)->tag : 0;
+		#endif
+		geventSendEvent(psl);
+	}
+}
+
 void gwinWidgetClearInit(GWidgetInit *pwi) {
 	char		*p;
 	unsigned	len;

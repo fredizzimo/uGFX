@@ -27,7 +27,7 @@
 /**
  * @brief	The Event Type for a Radio Event
  */
-#define GEVENT_GWIN_RADIO		(GEVENT_GWIN_FIRST+3)
+#define GEVENT_GWIN_RADIO		(GEVENT_GWIN_CTRL_FIRST+3)
 
 /**
  * @brief	A Button Event
@@ -35,11 +35,11 @@
  */
 typedef struct GEventGWinRadio {
 	GEventType		type;				// The type of this event (GEVENT_GWIN_RADIO)
-	GHandle			radio;				// The radio button that has been depressed
-	uint16_t		group;				// The group for this radio button
+	GHandle			gwin;				// The radio button that has been depressed
 	#if GWIN_WIDGET_TAGS
 		WidgetTag	tag;				// The radio tag
 	#endif
+	uint16_t		group;				// The group for this radio button
 } GEventGWinRadio;
 
 /**

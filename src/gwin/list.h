@@ -31,18 +31,18 @@
 /**
  * @brief	The event type for a list event
  */
-#define GEVENT_GWIN_LIST	(GEVENT_GWIN_FIRST+4)
+#define GEVENT_GWIN_LIST	(GEVENT_GWIN_CTRL_FIRST+4)
 
 /**
  * @brief	A list event
  */
 typedef struct GEventGWinList {
 	GEventType		type;		// The type of this event (GEVENT_GWIN_LIST)
-	GHandle			list;		// The list
-	int				item;		// The item that has been selected (or unselected in a multi-select listbox)
+	GHandle			gwin;		// The list
 	#if GWIN_WIDGET_TAGS
 		WidgetTag	tag;		// The list tag
 	#endif
+	int				item;		// The item that has been selected (or unselected in a multi-select listbox)
 } GEventGWinList;
 
 // A list window

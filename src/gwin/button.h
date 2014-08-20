@@ -29,19 +29,13 @@
 /**
  * @brief	The Event Type for a Button Event
  */
-#define GEVENT_GWIN_BUTTON		(GEVENT_GWIN_FIRST+0)
+#define GEVENT_GWIN_BUTTON		(GEVENT_GWIN_CTRL_FIRST+0)
 
 /**
  * @brief	A Button Event
  * @note	There are currently no GEventGWinButton listening flags - use 0 as the flags to @p gwinAttachListener()
  */
-typedef struct GEventGWinButton {
-	GEventType		type;				// The type of this event (GEVENT_GWIN_BUTTON)
-	GHandle			button;				// The button that has been depressed (actually triggered on release)
-	#if GWIN_WIDGET_TAGS
-		WidgetTag	tag;				// The button tag
-	#endif
-} GEventGWinButton;
+typedef GEventGWin		GEventGWinButton;
 
 /**
  * @brief	The button widget structure

@@ -36,7 +36,7 @@ static void SendSliderEvent(GWidgetObject *gw) {
 		if (!(pe = geventGetEventBuffer(psl)))
 			continue;
 		pse->type = GEVENT_GWIN_SLIDER;
-		pse->slider = (GHandle)gw;
+		pse->gwin = (GHandle)gw;
 		pse->position = ((GSliderObject *)gw)->pos;
 		#if GWIN_WIDGET_TAGS
 			pse->tag = gw->tag;

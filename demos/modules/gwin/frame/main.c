@@ -138,19 +138,19 @@ int main(void) {
 
         switch(pe->type) {
             case GEVENT_GWIN_SLIDER:
-                if (((GEventGWinSlider *)pe)->slider == ghSliderR || \
-                                                        ghSliderG || \
-                                                        ghSliderB ) {
+                if (((GEventGWinSlider *)pe)->gwin == ghSliderR || \
+                                                      ghSliderG || \
+                                                      ghSliderB ) {
                     _updateColor();
                 }
                 break;
 
             case GEVENT_GWIN_BUTTON:
-                if (((GEventGWinButton *)pe)->button == ghButton1) {
+                if (((GEventGWinButton *)pe)->gwin == ghButton1) {
                     gwinSliderSetPosition(ghSliderR, rand() % 256);
-                } else if (((GEventGWinButton *)pe)->button == ghButton2) {
+                } else if (((GEventGWinButton *)pe)->gwin == ghButton2) {
                     gwinSliderSetPosition(ghSliderG, rand() % 256);
-                } else if (((GEventGWinButton *)pe)->button == ghButton3) {
+                } else if (((GEventGWinButton *)pe)->gwin == ghButton3) {
                     gwinSliderSetPosition(ghSliderB, rand() % 256);
                 }
 

@@ -24,15 +24,15 @@
 
 /* This file is included within "gwin/gwidget.h" */
 
-#define GEVENT_GWIN_SLIDER		(GEVENT_GWIN_FIRST+1)
+#define GEVENT_GWIN_SLIDER		(GEVENT_GWIN_CTRL_FIRST+1)
 
 typedef struct GEventGWinSlider {
 	GEventType		type;				// The type of this event (GEVENT_GWIN_BUTTON)
-	GHandle			slider;				// The slider that is returning results
-	int				position;
+	GHandle			gwin;				// The slider that is returning results
 	#if GWIN_WIDGET_TAGS
 		WidgetTag	tag;				// The slider tag
 	#endif
+	int				position;
 } GEventGWinSlider;
 
 // There are currently no GEventGWinSlider listening flags - use 0

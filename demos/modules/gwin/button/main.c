@@ -83,7 +83,7 @@ int main(void) {
 
 		switch(pe->type) {
 			case GEVENT_GWIN_BUTTON:
-				if (((GEventGWinButton*)pe)->button == ghButton1) {
+				if (((GEventGWinButton*)pe)->gwin == ghButton1) {
 					// Our button has been pressed
 					if (++which >= sizeof(orients)/sizeof(orients[0]))
 						which = 0;
