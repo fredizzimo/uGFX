@@ -29,7 +29,7 @@
 
 #include "gfx.h"
 
-/* The handles for our two Windows */
+/* The handle for our Window */
 GHandle gh;
 
 static GLfloat Xrot, Xstep;
@@ -107,7 +107,7 @@ static void draw( void )
 }
 
 
-static void idle( void )
+static void spin( void )
 {
    Xrot += Xstep;
    Yrot += Ystep;
@@ -138,19 +138,11 @@ int main(void) {
     	GWindowInit	wi;
 
 		gwinClearInit(&wi);
-    	wi.show = TRUE; wi.x = 20; wi.y = 10; wi.width = 200; wi.height = 150;
+    	wi.show = TRUE; wi.x = 8; wi.y = 8; wi.width = gdispGetWidth()-16; wi.height = gdispGetHeight()-16;
         gh = gwinGL3DCreate(0, &wi);
     }
 
-    /* Set fore- and background colors */
-    gwinSetColor(gh, White);
-    gwinSetBgColor(gh, Blue);
-
-    /* Clear the window */
-    gwinClear(gh);
-
     /* Init the 3D stuff */
-    glViewport(0, 0, (GLint)gwinGetWidth(gh), (GLint)gwinGetHeight(gh));
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glFrustum( -1.0, 1.0, -1.0, 1.0, 5.0, 15.0 );
@@ -158,10 +150,10 @@ int main(void) {
 
     Object = make_object();
     glCullFace( GL_BACK );
-   	//   glEnable( GL_CULL_FACE );
+   	//glEnable( GL_CULL_FACE );
     glDisable( GL_DITHER );
     glShadeModel( GL_FLAT );
-   	//   glEnable( GL_DEPTH_TEST );
+   	//glEnable( GL_DEPTH_TEST );
     Xrot = Yrot = Zrot = 0.0;
     Xstep = Step;
     Ystep = Zstep = 0.0;
@@ -173,7 +165,7 @@ int main(void) {
     	gfxSleepMilliseconds(10);
 
     	// move and redraw
-    	idle();
+    	spin();
     }   
 }
 
