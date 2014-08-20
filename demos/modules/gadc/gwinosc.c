@@ -36,7 +36,7 @@
 #include "gwinosc.h"
 
 /* Include internal GWIN routines so we can build our own superset class */
-#include "src/gwin/class_gwin.h"
+#include "src/gwin/gwin_class.h"
 
 /* How many flat-line sample before we trigger */
 #define FLATLINE_SAMPLES		8

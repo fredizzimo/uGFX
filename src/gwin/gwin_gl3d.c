@@ -18,7 +18,7 @@
 	#error "GWIN: GL3D only support GDISP_PIXELFORMAT_RGB565 color format (TinyGL limitation)"
 #endif
 
-#include "src/gwin/class_gwin.h"
+#include "gwin_class.h"
 
 #include "3rdparty/tinygl-0.4-ugfx/src/zgl.h"
 

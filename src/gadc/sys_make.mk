@@ -1,1 +1,1 @@
-GFXSRC +=   $(GFXLIB)/src/gadc/gadc.c
+GFXSRC +=   $(GFXLIB)/src/gadc/gadc_gadc.c

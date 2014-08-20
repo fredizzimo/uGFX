@@ -39,10 +39,10 @@
 */
 
 // Include various ginput types
-#include "src/ginput/mouse.h"
-#include "src/ginput/keyboard.h"
-#include "src/ginput/toggle.h"
-#include "src/ginput/dial.h"
+#include "ginput_mouse.h"
+#include "ginput_keyboard.h"
+#include "ginput_toggle.h"
+#include "ginput_dial.h"
 
 #endif /* GFX_USE_GINPUT */
 

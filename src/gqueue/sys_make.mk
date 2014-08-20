@@ -1,1 +1,1 @@
-GFXSRC +=   $(GFXLIB)/src/gqueue/gqueue.c
+GFXSRC +=   $(GFXLIB)/src/gqueue/gqueue_gqueue.c

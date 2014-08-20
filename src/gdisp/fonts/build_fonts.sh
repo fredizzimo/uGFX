@@ -72,7 +72,7 @@ for file in *.c; do
 	defname='GDISP_INCLUDE_FONT_'$upper
 	echo '#if defined('$defname') && '$defname >> fonts.h
 	echo '#define GDISP_FONT_FOUND' >> fonts.h
-	echo '#include "src/gdisp/fonts/'$file'"' >> fonts.h
+	echo '#include "'$file'"' >> fonts.h
 	echo '#endif' >> fonts.h
 done
 

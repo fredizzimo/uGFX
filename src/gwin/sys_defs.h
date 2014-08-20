@@ -950,26 +950,26 @@ extern "C" {
 
 	/* Include widgets */
 	#if GWIN_NEED_WIDGET || defined(__DOXYGEN__)
-		#include "src/gwin/gwidget.h"
+		#include "gwin_widget.h"
 	#endif
 
 	/* Include containers */
 	#if GWIN_NEED_CONTAINERS || defined(__DOXYGEN__)
-		#include "src/gwin/gcontainer.h"
+		#include "gwin_container.h"
 	#endif
 
 	/* Include vanilla window objects */
 	#if GWIN_NEED_CONSOLE || defined(__DOXYGEN__)
-		#include "src/gwin/console.h"
+		#include "gwin_console.h"
 	#endif
 	#if GWIN_NEED_GRAPH || defined(__DOXYGEN__)
-		#include "src/gwin/graph.h"
+		#include "gwin_graph.h"
 	#endif
 	#if GWIN_NEED_IMAGE || defined(__DOXYGEN__)
-		#include "src/gwin/gimage.h"
+		#include "gwin_image.h"
 	#endif
 	#if GWIN_NEED_GL3D || defined(__DOXYGEN__)
-		#include "src/gwin/gwin_gl3d.h"
+		#include "gwin_gl3d.h"
 	#endif
 
 #endif /* GFX_USE_GWIN */

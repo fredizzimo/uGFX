@@ -1,1 +1,1 @@
-GFXSRC +=   $(GFXLIB)/src/gtimer/gtimer.c
+GFXSRC +=   $(GFXLIB)/src/gtimer/gtimer_gtimer.c
