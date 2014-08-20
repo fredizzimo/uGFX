@@ -29,6 +29,9 @@
 
 #include "gfx.h"
 
+#define GL3D_WINDOW_SIZE		120		// Limits zbuffer size to program runs in 192k limit on STMF407
+#define FRAME_DELAY				20		// 20ms should be approx 50 frames per second less CPU overheads.
+
 #include <math.h>
 #ifndef M_PI
 #  define M_PI 3.14159265
@@ -267,7 +270,7 @@ int main(void) {
     	GWindowInit	wi;
 
 		gwinClearInit(&wi);
-    	wi.show = TRUE; wi.x = 8; wi.y = 8; wi.width = gdispGetWidth()-16; wi.height = gdispGetHeight()-16;
+    	wi.show = TRUE; wi.x = (gdispGetWidth()-GL3D_WINDOW_SIZE)/2; wi.y = (gdispGetHeight()-GL3D_WINDOW_SIZE)/2; wi.width = GL3D_WINDOW_SIZE; wi.height = GL3D_WINDOW_SIZE;
         gh = gwinGL3DCreate(0, &wi);
     }
 
@@ -278,7 +281,7 @@ int main(void) {
     while(TRUE) {
 
     	// rate control
-    	gfxSleepMilliseconds(10);
+    	gfxSleepMilliseconds(FRAME_DELAY);
 
     	// move and redraw
     	spin();
