@@ -96,7 +96,7 @@ static void forceFrameRedraw(GWidgetObject *gw) {
 				gw->g.flags &= ~(GWIN_FRAME_CLOSE_PRESSED|GWIN_FRAME_MAX_PRESSED|GWIN_FRAME_MIN_PRESSED);
 				forceFrameRedraw(gw);
 				_gwinSendEvent(&gw->g, GEVENT_GWIN_CLOSE);
-				gwinDestroy(&gw->g);
+				_gwinDestroy(&gw->g, REDRAW_INSESSION);
 				return;
 			}
 			if ((gw->g.flags & GWIN_FRAME_MAX_PRESSED)) {
@@ -128,6 +128,7 @@ static void forceFrameRedraw(GWidgetObject *gw) {
 						// Close is released - destroy the window. This is tricky as we already have the drawing lock.
 						gw->g.flags &= ~(GWIN_FRAME_CLOSE_PRESSED|GWIN_FRAME_MAX_PRESSED|GWIN_FRAME_MIN_PRESSED);
 						forceFrameRedraw(gw);
+						_gwinSendEvent(&gw->g, GEVENT_GWIN_CLOSE);
 						_gwinDestroy(&gw->g, REDRAW_INSESSION);
 						return;
 					}
@@ -308,7 +309,7 @@ void gwinFrameDraw_Std(GWidgetObject *gw, void *param) {
 		for(y = gw->g.y+BORDER_T, ih = gi->height; y < my; y += ih) {
 			if (ih > my - y)
 				ih = my - y;
-			for(x = gw->g.x+BORDER_L; iw = gi->width; x < mx; x += iw) {
+			for(x = gw->g.x+BORDER_L, iw = gi->width; x < mx; x += iw) {
 				if (iw > mx - x)
 					iw = mx - x;
 				gdispGImageDraw(gw->g.display, gi, x, y, ih, iw, 0, 0);
