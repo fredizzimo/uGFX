@@ -107,8 +107,10 @@
 //#define GDISP_LINEBUF_SIZE                           128
 
 //#define GDISP_TOTAL_DISPLAYS                         1
-//    #if GDISP_TOTAL_DISPLAYS > 1
-//        // For code and speed optimization define as TRUE or FALSE if all displays have the same capability
+
+//#define GDISP_TOTAL_CONTROLLERS                      1
+//    #if GDISP_TOTAL_CONTROLLERS > 1
+//        // For code and speed optimization define as TRUE or FALSE if all controllers have the same capability
 //        #define GDISP_HARDWARE_STREAM_WRITE          FALSE
 //        #define GDISP_HARDWARE_STREAM_READ           FALSE
 //        #define GDISP_HARDWARE_STREAM_POS            FALSE
@@ -121,10 +123,7 @@
 //        #define GDISP_HARDWARE_CONTROL               FALSE
 //        #define GDISP_HARDWARE_QUERY                 FALSE
 //        #define GDISP_HARDWARE_CLIP                  FALSE
-//    #endif
 
-//#define GDISP_TOTAL_CONTROLLERS                      1
-//    #if GDISP_TOTAL_CONTROLLERS > 1
 //        #define GDISP_CONTROLLER_LIST                GDISPVMT_Win32, GDISPVMT_Win32
 //        #define GDISP_CONTROLLER_DISPLAYS            1, 1
 //        #define GDISP_PIXELFORMAT                    GDISP_PIXELFORMAT_RGB888
