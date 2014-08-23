@@ -45,20 +45,11 @@
 /* Driver local variables.                                                   */
 /*===========================================================================*/
 
-// The controller array, the display array and the default display
-#if GDISP_TOTAL_CONTROLLERS > 1
-	typedef const struct GDISPVMT const	VMTEL[1];
-	extern VMTEL			GDISP_CONTROLLER_LIST;
-	static const struct GDISPVMT const *	ControllerList[GDISP_TOTAL_CONTROLLERS] = {GDISP_CONTROLLER_LIST};
-	static const unsigned					DisplayCountList[GDISP_TOTAL_CONTROLLERS] = {GDISP_CONTROLLER_DISPLAYS};
-#endif
-
 #if GDISP_NEED_TIMERFLUSH
 	static GTimer	FlushTimer;
 #endif
 
-static GDisplay GDisplayArray[GDISP_TOTAL_DISPLAYS];
-GDisplay	*GDISP = GDisplayArray;
+GDisplay	*GDISP;
 
 #if GDISP_NEED_MULTITHREAD
 	#define MUTEX_INIT(g)		gfxMutexInit(&(g)->mutex)
@@ -76,7 +67,7 @@ GDisplay	*GDISP = GDisplayArray;
 	#define TEST_CLIP_AREA(g)
 #elif GDISP_HARDWARE_CLIP == HARDWARE_AUTODETECT
 	#define TEST_CLIP_AREA(g)																					\
-			if (!g->vmt->setclip) {																				\
+			if (!gvmt(g)->setclip) {																				\
 				if ((g)->p.x < (g)->clipx0) { (g)->p.cx -= (g)->clipx0 - (g)->p.x; (g)->p.x = (g)->clipx0; }	\
 				if ((g)->p.y < (g)->clipy0) { (g)->p.cy -= (g)->clipy0 - (g)->p.y; (g)->p.y = (g)->clipy0; }	\
 				if ((g)->p.x + (g)->p.cx > (g)->clipx1)	(g)->p.cx = (g)->clipx1 - (g)->p.x;						\
@@ -109,7 +100,7 @@ GDisplay	*GDISP = GDisplayArray;
 #endif
 
 #if GDISP_NEED_AUTOFLUSH && GDISP_HARDWARE_FLUSH == HARDWARE_AUTODETECT
-	#define autoflush_stopdone(g)	if (g->vmt->flush) gdisp_lld_flush(g)
+	#define autoflush_stopdone(g)	if (gvmt(g)->flush) gdisp_lld_flush(g)
 #elif GDISP_NEED_AUTOFLUSH && GDISP_HARDWARE_FLUSH
 	#define autoflush_stopdone(g)	gdisp_lld_flush(g)
 #else
@@ -138,7 +129,7 @@ static INLINE void drawpixel(GDisplay *g) {
 	// Best is hardware accelerated pixel draw
 	#if GDISP_HARDWARE_DRAWPIXEL
 		#if GDISP_HARDWARE_DRAWPIXEL == HARDWARE_AUTODETECT
-			if (g->vmt->pixel)
+			if (gvmt(g)->pixel)
 		#endif
 		{
 			gdisp_lld_draw_pixel(g);
@@ -149,7 +140,7 @@ static INLINE void drawpixel(GDisplay *g) {
 	// Next best is cursor based streaming
 	#if GDISP_HARDWARE_DRAWPIXEL != TRUE && GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
 		#if GDISP_HARDWARE_STREAM_POS == HARDWARE_AUTODETECT
-			if (g->vmt->writepos)
+			if (gvmt(g)->writepos)
 		#endif
 		{
 			if (!(g->flags & GDISP_FLG_SCRSTREAM))
@@ -164,7 +155,7 @@ static INLINE void drawpixel(GDisplay *g) {
 	#if GDISP_HARDWARE_DRAWPIXEL != TRUE && GDISP_HARDWARE_STREAM_POS != TRUE && GDISP_HARDWARE_STREAM_WRITE
 		// The following test is unneeded because we are guaranteed to have streaming if we don't have drawpixel
 		//#if GDISP_HARDWARE_STREAM_WRITE == HARDWARE_AUTODETECT
-		//	if (g->vmt->writestart)
+		//	if (gvmt(g)->writestart)
 		//#endif
 		{
 			g->p.cx = g->p.cy = 1;
@@ -182,7 +173,7 @@ static INLINE void drawpixel(GDisplay *g) {
 #if NEED_CLIPPING
 	static INLINE void drawpixel_clip(GDisplay *g) {
 		#if GDISP_HARDWARE_CLIP == HARDWARE_AUTODETECT
-			if (!g->vmt->setclip)
+			if (!gvmt(g)->setclip)
 		#endif
 		{
 			if (g->p.x < g->clipx0 || g->p.x >= g->clipx1 || g->p.y < g->clipy0 || g->p.y >= g->clipy1)
@@ -204,7 +195,7 @@ static INLINE void fillarea(GDisplay *g) {
 	// Best is hardware accelerated area fill
 	#if GDISP_HARDWARE_FILLS
 		#if GDISP_HARDWARE_FILLS == HARDWARE_AUTODETECT
-			if (g->vmt->fill)
+			if (gvmt(g)->fill)
 		#endif
 		{
 			gdisp_lld_fill_area(g);
@@ -215,7 +206,7 @@ static INLINE void fillarea(GDisplay *g) {
 	// Next best is hardware streaming
 	#if GDISP_HARDWARE_FILLS != TRUE && GDISP_HARDWARE_STREAM_WRITE
 		#if GDISP_HARDWARE_STREAM_WRITE == HARDWARE_AUTODETECT
-			if (g->vmt->writestart)
+			if (gvmt(g)->writestart)
 		#endif
 		{
 			uint32_t	area;
@@ -231,7 +222,7 @@ static INLINE void fillarea(GDisplay *g) {
 			gdisp_lld_write_start(g);
 			#if GDISP_HARDWARE_STREAM_POS
 				#if GDISP_HARDWARE_STREAM_POS == HARDWARE_AUTODETECT
-					if (g->vmt->writepos)
+					if (gvmt(g)->writepos)
 				#endif
 				gdisp_lld_write_pos(g);
 			#endif
@@ -246,7 +237,7 @@ static INLINE void fillarea(GDisplay *g) {
 	#if GDISP_HARDWARE_FILLS != TRUE && GDISP_HARDWARE_STREAM_WRITE != TRUE && GDISP_HARDWARE_DRAWPIXEL
 		// The following test is unneeded because we are guaranteed to have draw pixel if we don't have streaming
 		//#if GDISP_HARDWARE_DRAWPIXEL == HARDWARE_AUTODETECT
-		//	if (g->vmt->pixel)
+		//	if (gvmt(g)->pixel)
 		//#endif
 		{
 			coord_t x0, y0, x1, y1;
@@ -277,7 +268,7 @@ static void hline_clip(GDisplay *g) {
 	// Clipping
 	#if NEED_CLIPPING
 		#if GDISP_HARDWARE_CLIP == HARDWARE_AUTODETECT
-			if (!g->vmt->setclip)
+			if (!gvmt(g)->setclip)
 		#endif
 		{
 			if (g->p.y < g->clipy0 || g->p.y >= g->clipy1) return;
@@ -300,7 +291,7 @@ static void hline_clip(GDisplay *g) {
 	// Best is hardware accelerated area fill
 	#if GDISP_HARDWARE_FILLS
 		#if GDISP_HARDWARE_FILLS == HARDWARE_AUTODETECT
-			if (g->vmt->fill)
+			if (gvmt(g)->fill)
 		#endif
 		{
 			g->p.cx = g->p.x1 - g->p.x + 1;
@@ -313,7 +304,7 @@ static void hline_clip(GDisplay *g) {
 	// Next best is cursor based streaming
 	#if GDISP_HARDWARE_FILLS != TRUE && GDISP_HARDWARE_STREAM_POS && GDISP_HARDWARE_STREAM_WRITE
 		#if GDISP_HARDWARE_STREAM_POS == HARDWARE_AUTODETECT
-			if (g->vmt->writepos)
+			if (gvmt(g)->writepos)
 		#endif
 		{
 			if (!(g->flags & GDISP_FLG_SCRSTREAM))
@@ -328,7 +319,7 @@ static void hline_clip(GDisplay *g) {
 	// Next best is streaming
 	#if GDISP_HARDWARE_FILLS != TRUE && GDISP_HARDWARE_STREAM_POS != TRUE && GDISP_HARDWARE_STREAM_WRITE
 		#if GDISP_HARDWARE_STREAM_WRITE == HARDWARE_AUTODETECT
-			if (g->vmt->writestart)
+			if (gvmt(g)->writestart)
 		#endif
 		{
 			g->p.cx = g->p.x1 - g->p.x + 1;
@@ -344,7 +335,7 @@ static void hline_clip(GDisplay *g) {
 	#if GDISP_HARDWARE_FILLS != TRUE && GDISP_HARDWARE_STREAM_WRITE != TRUE && GDISP_HARDWARE_DRAWPIXEL
 		// The following test is unneeded because we are guaranteed to have draw pixel if we don't have streaming
 		//#if GDISP_HARDWARE_DRAWPIXEL == HARDWARE_AUTODETECT
-		//	if (g->vmt->pixel)
+		//	if (gvmt(g)->pixel)
 		//#endif
 		{
 			for(; g->p.x <= g->p.x1; g->p.x++)
@@ -365,7 +356,7 @@ static void vline_clip(GDisplay *g) {
 	// Clipping
 	#if NEED_CLIPPING
 		#if GDISP_HARDWARE_CLIP == HARDWARE_AUTODETECT
-			if (!g->vmt->setclip)
+			if (!gvmt(g)->setclip)
 		#endif
 		{
 			if (g->p.x < g->clipx0 || g->p.x >= g->clipx1) return;
@@ -388,7 +379,7 @@ static void vline_clip(GDisplay *g) {
 	// Best is hardware accelerated area fill
 	#if GDISP_HARDWARE_FILLS
 		#if GDISP_HARDWARE_FILLS == HARDWARE_AUTODETECT
-			if (g->vmt->fill)
+			if (gvmt(g)->fill)
 		#endif
 		{
 			g->p.cy = g->p.y1 - g->p.y + 1;
@@ -401,7 +392,7 @@ static void vline_clip(GDisplay *g) {
 	// Next best is streaming
 	#if GDISP_HARDWARE_FILLS != TRUE && GDISP_HARDWARE_STREAM_WRITE
 		#if GDISP_HARDWARE_STREAM_WRITE == HARDWARE_AUTODETECT
-			if (g->vmt->writestart)
+			if (gvmt(g)->writestart)
 		#endif
 		{
 			#if GDISP_HARDWARE_STREAM_POS
@@ -415,7 +406,7 @@ static void vline_clip(GDisplay *g) {
 			gdisp_lld_write_start(g);
 			#if GDISP_HARDWARE_STREAM_POS
 				#if GDISP_HARDWARE_STREAM_POS == HARDWARE_AUTODETECT
-					if (g->vmt->writepos)
+					if (gvmt(g)->writepos)
 				#endif
 				gdisp_lld_write_pos(g);
 			#endif
@@ -429,7 +420,7 @@ static void vline_clip(GDisplay *g) {
 	#if GDISP_HARDWARE_FILLS != TRUE && GDISP_HARDWARE_STREAM_WRITE != TRUE && GDISP_HARDWARE_DRAWPIXEL
 		// The following test is unneeded because we are guaranteed to have draw pixel if we don't have streaming
 		//#if GDISP_HARDWARE_DRAWPIXEL == HARDWARE_AUTODETECT
-		//	if (g->vmt->pixel)
+		//	if (gvmt(g)->pixel)
 		//#endif
 		{
 			for(; g->p.y <= g->p.y1; g->p.y++)
@@ -517,6 +508,7 @@ static void line_clip(GDisplay *g) {
 }
 
 #if GDISP_STARTUP_LOGO_TIMEOUT > 0
+	static bool_t	initDone;
 	static void StartupLogoDisplay(GDisplay *g) {
 		coord_t			x, y, w;
 		const coord_t *	p;
@@ -561,7 +553,7 @@ static void line_clip(GDisplay *g) {
 		GDisplay *	g;
 		(void)		param;
 
-		for(g = GDisplayArray; g < &GDisplayArray[GDISP_TOTAL_DISPLAYS]; g++)
+		for(g = (GDisplay *)gdriverGetNext(GDRIVER_TYPE_DISPLAY, 0); g; g = (GDisplay *)gdriverGetNext(GDRIVER_TYPE_DISPLAY, (GDriver *)g))
 			gdispGFlush(g);
 	}
 #endif
@@ -572,51 +564,14 @@ static void line_clip(GDisplay *g) {
 
 void _gdispInit(void)
 {
-	GDisplay		*g;
-	uint16_t		i;
-
-	/* Initialise all controllers */
-	#if GDISP_TOTAL_CONTROLLERS > 1
-		uint16_t	j;
-
-		for(g = GDisplayArray, j=0; j < GDISP_TOTAL_CONTROLLERS; j++)
-			for(i = 0; i < DisplayCountList[j]; g++, i++) {
-				g->vmt = ControllerList[j];
-				g->systemdisplay = j*GDISP_TOTAL_CONTROLLERS+i;
-				g->controllerdisplay = i;
-	#else
-		for(g = GDisplayArray, i = 0; i < GDISP_TOTAL_DISPLAYS; g++, i++) {
-			g->systemdisplay = i;
-			g->controllerdisplay = i;
-	#endif
-			MUTEX_INIT(g);
-			MUTEX_ENTER(g);
-			g->flags = 0;
-			gdisp_lld_init(g);
-			MUTEX_EXIT(g);
-	}
-
-	// Set the orientation, the clipping area, clear all the displays (and add the logo if required)
-	for(g = GDisplayArray, i = 0; i < GDISP_TOTAL_DISPLAYS; g++, i++) {
-		#if defined(GDISP_DEFAULT_ORIENTATION) && GDISP_NEED_CONTROL && GDISP_HARDWARE_CONTROL
-			gdispGControl(g, GDISP_CONTROL_ORIENTATION, (void *)GDISP_DEFAULT_ORIENTATION);
-		#endif
-		#if GDISP_NEED_VALIDATION || GDISP_NEED_CLIP
-			gdispGSetClip(g, 0, 0, g->g.Width, g->g.Height);
-		#endif
-		gdispGClear(g, GDISP_STARTUP_COLOR);
-		#if GDISP_STARTUP_LOGO_TIMEOUT > 0
-			StartupLogoDisplay(g);
-		#endif
-		#if GDISP_HARDWARE_FLUSH
-			gdispGFlush(g);
-		#endif
-	}
-
 	// Re-clear the display after the timeout if we added the logo
 	#if GDISP_STARTUP_LOGO_TIMEOUT > 0
+		GDisplay	*g;
+
 		gfxSleepMilliseconds(GDISP_STARTUP_LOGO_TIMEOUT);
-		for(g = GDisplayArray, i = 0; i < GDISP_TOTAL_DISPLAYS; g++, i++) {
+		initDone = TRUE;
+
+		for(g = (GDisplay *)gdriverGetNext(GDRIVER_TYPE_DISPLAY, 0); g; g = (GDisplay *)gdriverGetNext(GDRIVER_TYPE_DISPLAY, (GDriver *)g)) {
 			gdispGClear(g, GDISP_STARTUP_COLOR);
 			#if GDISP_HARDWARE_FLUSH
 				gdispGFlush(g);
@@ -636,20 +591,73 @@ void _gdispDeinit(void)
 	/* ToDo */
 }
 
+bool_t _gdispInitDriver(GDriver *g, int driverinstance, int systeminstance) {
+	#define		gd		((GDisplay *)g)
+	bool_t		ret;
+
+	// Intialise fields
+	gd->systemdisplay = systeminstance;
+	gd->controllerdisplay = driverinstance;
+	gd->flags = 0;
+	MUTEX_INIT(gd);
+
+	// Call the driver init
+	MUTEX_ENTER(gd);
+	ret = gdisp_lld_init(gd);
+	MUTEX_EXIT(gd);
+	if (!ret) return FALSE;
+
+	// Set orientation, clip, blankscreen, startup logo and then flush
+	#if defined(GDISP_DEFAULT_ORIENTATION) && GDISP_NEED_CONTROL && GDISP_HARDWARE_CONTROL
+		gdispGControl(gd, GDISP_CONTROL_ORIENTATION, (void *)GDISP_DEFAULT_ORIENTATION);
+	#endif
+	#if GDISP_NEED_VALIDATION || GDISP_NEED_CLIP
+		gdispGSetClip(gd, 0, 0, gd->g.Width, gd->g.Height);
+	#endif
+	gdispGClear(gd, GDISP_STARTUP_COLOR);
+
+	#if GDISP_STARTUP_LOGO_TIMEOUT > 0
+		if (!initDone)
+			StartupLogoDisplay(gd);
+	#endif
+
+	#if GDISP_HARDWARE_FLUSH
+		gdispGFlush(gd);
+	#endif
+
+	// If this is the first driver set GDISP
+	if (!GDISP)
+		GDISP = gd;
+
+	return TRUE;
+
+	#undef gd
+}
+
+void _gdispDeinitDriver(GDriver *g) {
+	(void) g;
+	// For now do nothing
+}
+
 GDisplay *gdispGetDisplay(unsigned display) {
-	if (display >= GDISP_TOTAL_DISPLAYS)
-		return 0;
-	return &GDisplayArray[display];
+	return (GDisplay *)gdriverGetInstance(GDRIVER_TYPE_DISPLAY, display);
 }
 
 void gdispSetDisplay(GDisplay *g) {
 	if (g) GDISP = g;
 }
 
+coord_t gdispGGetWidth(GDisplay *g)				{ return g->g.Width; }
+coord_t gdispGGetHeight(GDisplay *g)			{ return g->g.Height; }
+powermode_t gdispGGetPowerMode(GDisplay *g)		{ return g->g.Powermode; }
+orientation_t gdispGGetOrientation(GDisplay *g)	{ return g->g.Orientation; }
+uint8_t gdispGGetBacklight(GDisplay *g)			{ return g->g.Backlight; }
+uint8_t gdispGGetContrast(GDisplay *g)			{ return g->g.Contrast; }
+
 void gdispGFlush(GDisplay *g) {
 	#if GDISP_HARDWARE_FLUSH
 		#if GDISP_HARDWARE_FLUSH == HARDWARE_AUTODETECT
-			if (g->vmt->flush)
+			if (gvmt(g)->flush)
 		#endif
 		{
 			MUTEX_ENTER(g);
@@ -667,7 +675,7 @@ void gdispGFlush(GDisplay *g) {
 
 		#if NEED_CLIPPING
 			#if GDISP_HARDWARE_CLIP == HARDWARE_AUTODETECT
-				if (!g->vmt->setclip)
+				if (!gvmt(g)->setclip)
 			#endif
 			// Test if the area is valid - if not then exit
 			if (x < g->clipx0 || x+cx > g->clipx1 || y < g->clipy0 || y+cy > g->clipy1) {
@@ -681,7 +689,7 @@ void gdispGFlush(GDisplay *g) {
 		// Best is hardware streaming
 		#if GDISP_HARDWARE_STREAM_WRITE
 			#if GDISP_HARDWARE_STREAM_WRITE == HARDWARE_AUTODETECT
-				if (g->vmt->writestart)
+				if (gvmt(g)->writestart)
 			#endif
 			{
 				g->p.x = x;
@@ -691,7 +699,7 @@ void gdispGFlush(GDisplay *g) {
 				gdisp_lld_write_start(g);
 				#if GDISP_HARDWARE_STREAM_POS
 					#if GDISP_HARDWARE_STREAM_POS == HARDWARE_AUTODETECT
-						if (g->vmt->writepos)
+						if (gvmt(g)->writepos)
 					#endif
 					gdisp_lld_write_pos(g);
 				#endif
@@ -703,7 +711,7 @@ void gdispGFlush(GDisplay *g) {
 		#if GDISP_HARDWARE_STREAM_WRITE != TRUE && GDISP_HARDWARE_DRAWPIXEL
 			// The following test is unneeded because we are guaranteed to have draw pixel if we don't have streaming
 			//#if GDISP_HARDWARE_DRAWPIXEL == HARDWARE_AUTODETECT
-			//	if (g->vmt->pixel)
+			//	if (gvmt(g)->pixel)
 			//#endif
 			{
 				// Use x,y as the current position, x1,y1 as the save position and x2,y2 as the end position, cx = bufpos
@@ -736,7 +744,7 @@ void gdispGFlush(GDisplay *g) {
 		// Best is hardware streaming
 		#if GDISP_HARDWARE_STREAM_WRITE
 			#if GDISP_HARDWARE_STREAM_WRITE == HARDWARE_AUTODETECT
-				if (g->vmt->writestart)
+				if (gvmt(g)->writestart)
 			#endif
 			{
 				g->p.color = color;
@@ -748,7 +756,7 @@ void gdispGFlush(GDisplay *g) {
 		// Next best is to use bitfills with our line buffer
 		#if GDISP_HARDWARE_STREAM_WRITE != TRUE && GDISP_LINEBUF_SIZE != 0 && GDISP_HARDWARE_BITFILLS
 			#if GDISP_HARDWARE_BITFILLS == HARDWARE_AUTODETECT
-				if (g->vmt->blit)
+				if (gvmt(g)->blit)
 			#endif
 			{
 				g->linebuf[g->p.cx++] = color;
@@ -789,7 +797,7 @@ void gdispGFlush(GDisplay *g) {
 		#if GDISP_HARDWARE_STREAM_WRITE != TRUE && (GDISP_LINEBUF_SIZE == 0 || GDISP_HARDWARE_BITFILLS != TRUE) && GDISP_HARDWARE_FILLS
 			// We don't need to test for auto-detect on drawpixel as we know we have it because we don't have streaming.
 			#if GDISP_HARDWARE_FILLS == HARDWARE_AUTODETECT
-				if (g->vmt->fill)
+				if (gvmt(g)->fill)
 			#endif
 			{
 				if (!g->p.cx || g->p.color == color) {
@@ -825,7 +833,7 @@ void gdispGFlush(GDisplay *g) {
 		#if GDISP_HARDWARE_STREAM_WRITE != TRUE && (GDISP_LINEBUF_SIZE == 0 || GDISP_HARDWARE_BITFILLS != TRUE) && GDISP_HARDWARE_FILLS != TRUE && GDISP_HARDWARE_DRAWPIXEL
 			// The following test is unneeded because we are guaranteed to have draw pixel if we don't have streaming
 			//#if GDISP_HARDWARE_DRAWPIXEL == HARDWARE_AUTODETECT
-			//	if (g->vmt->pixel)
+			//	if (gvmt(g)->pixel)
 			//#endif
 			{
 				g->p.color = color;
@@ -854,7 +862,7 @@ void gdispGFlush(GDisplay *g) {
 
 		#if GDISP_HARDWARE_STREAM_WRITE
 			#if GDISP_HARDWARE_STREAM_WRITE == HARDWARE_AUTODETECT
-				if (g->vmt->writestart)
+				if (gvmt(g)->writestart)
 			#endif
 			{
 					gdisp_lld_write_stop(g);
@@ -866,7 +874,7 @@ void gdispGFlush(GDisplay *g) {
 
 		#if GDISP_HARDWARE_STREAM_WRITE != TRUE && GDISP_LINEBUF_SIZE != 0 && GDISP_HARDWARE_BITFILLS
 			#if GDISP_HARDWARE_BITFILLS == HARDWARE_AUTODETECT
-				if (g->vmt->blit)
+				if (gvmt(g)->blit)
 			#endif
 			{
 				if (g->p.cx) {
@@ -884,7 +892,7 @@ void gdispGFlush(GDisplay *g) {
 		#if GDISP_HARDWARE_STREAM_WRITE != TRUE && (GDISP_LINEBUF_SIZE == 0 || GDISP_HARDWARE_BITFILLS != TRUE) && GDISP_HARDWARE_FILLS
 			// We don't need to test for auto-detect on drawpixel as we know we have it because we don't have streaming.
 			#if GDISP_HARDWARE_FILLS == HARDWARE_AUTODETECT
-				if (g->vmt->fill)
+				if (gvmt(g)->fill)
 			#endif
 			{
 				if (g->p.cx) {
@@ -937,7 +945,7 @@ void gdispGClear(GDisplay *g, color_t color) {
 	// Best is hardware accelerated clear
 	#if GDISP_HARDWARE_CLEARS
 		#if GDISP_HARDWARE_CLEARS == HARDWARE_AUTODETECT
-			if (g->vmt->clear)
+			if (gvmt(g)->clear)
 		#endif
 		{
 			g->p.color = color;
@@ -951,7 +959,7 @@ void gdispGClear(GDisplay *g, color_t color) {
 	// Next best is hardware accelerated area fill
 	#if GDISP_HARDWARE_CLEARS != TRUE && GDISP_HARDWARE_FILLS
 		#if GDISP_HARDWARE_FILLS == HARDWARE_AUTODETECT
-			if (g->vmt->fill)
+			if (gvmt(g)->fill)
 		#endif
 		{
 			g->p.x = g->p.y = 0;
@@ -968,7 +976,7 @@ void gdispGClear(GDisplay *g, color_t color) {
 	// Next best is streaming
 	#if GDISP_HARDWARE_CLEARS != TRUE && GDISP_HARDWARE_FILLS != TRUE && GDISP_HARDWARE_STREAM_WRITE
 		#if GDISP_HARDWARE_STREAM_WRITE == HARDWARE_AUTODETECT
-			if (g->vmt->writestart)
+			if (gvmt(g)->writestart)
 		#endif
 		{
 			uint32_t	area;
@@ -982,7 +990,7 @@ void gdispGClear(GDisplay *g, color_t color) {
 			gdisp_lld_write_start(g);
 			#if GDISP_HARDWARE_STREAM_POS
 				#if GDISP_HARDWARE_STREAM_POS == HARDWARE_AUTODETECT
-					if (g->vmt->writepos)
+					if (gvmt(g)->writepos)
 				#endif
 				gdisp_lld_write_pos(g);
 			#endif
@@ -999,7 +1007,7 @@ void gdispGClear(GDisplay *g, color_t color) {
 	#if GDISP_HARDWARE_CLEARS != TRUE && GDISP_HARDWARE_FILLS != TRUE && GDISP_HARDWARE_STREAM_WRITE != TRUE && GDISP_HARDWARE_DRAWPIXEL
 		// The following test is unneeded because we are guaranteed to have draw pixel if we don't have streaming
 		//#if GDISP_HARDWARE_DRAWPIXEL == HARDWARE_AUTODETECT
-		//	if (g->vmt->pixel)
+		//	if (gvmt(g)->pixel)
 		//#endif
 		{
 			g->p.color = color;
@@ -1032,7 +1040,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 
 	#if NEED_CLIPPING
 		#if GDISP_HARDWARE_CLIP == HARDWARE_AUTODETECT
-			if (!g->vmt->setclip)
+			if (!gvmt(g)->setclip)
 		#endif
 		{
 			// This is a different clipping to fillarea(g) as it needs to take into account srcx,srcy
@@ -1048,7 +1056,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 	// Best is hardware bitfills
 	#if GDISP_HARDWARE_BITFILLS
 		#if GDISP_HARDWARE_BITFILLS == HARDWARE_AUTODETECT
-			if (g->vmt->blit)
+			if (gvmt(g)->blit)
 		#endif
 		{
 			g->p.x = x;
@@ -1069,7 +1077,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 	// Next best is hardware streaming
 	#if GDISP_HARDWARE_BITFILLS != TRUE && GDISP_HARDWARE_STREAM_WRITE
 		#if GDISP_HARDWARE_STREAM_WRITE == HARDWARE_AUTODETECT
-			if (g->vmt->writestart)
+			if (gvmt(g)->writestart)
 		#endif
 		{
 			// Translate buffer to the real image data, use srcx,srcy as the end point, srccx as the buffer line gap
@@ -1085,7 +1093,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 			gdisp_lld_write_start(g);
 			#if GDISP_HARDWARE_STREAM_POS
 				#if GDISP_HARDWARE_STREAM_POS == HARDWARE_AUTODETECT
-					if (g->vmt->writepos)
+					if (gvmt(g)->writepos)
 				#endif
 				gdisp_lld_write_pos(g);
 			#endif
@@ -1106,7 +1114,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 	#if GDISP_HARDWARE_BITFILLS != TRUE && GDISP_HARDWARE_STREAM_WRITE != TRUE && GDISP_HARDWARE_FILLS
 		// We don't need to test for auto-detect on drawpixel as we know we have it because we don't have streaming.
 		#if GDISP_HARDWARE_FILLS == HARDWARE_AUTODETECT
-			if (g->vmt->fill)
+			if (gvmt(g)->fill)
 		#endif
 		{
 			// Translate buffer to the real image data, use srcx,srcy as the end point, srccx as the buffer line gap
@@ -1141,7 +1149,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 	#if GDISP_HARDWARE_BITFILLS != TRUE && GDISP_HARDWARE_STREAM_WRITE != TRUE && GDISP_HARDWARE_FILLS != TRUE && GDISP_HARDWARE_DRAWPIXEL
 		// The following test is unneeded because we are guaranteed to have draw pixel if we don't have streaming
 		//#if GDISP_HARDWARE_DRAWPIXEL == HARDWARE_AUTODETECT
-		//	if (g->vmt->pixel)
+		//	if (gvmt(g)->pixel)
 		//#endif
 		{
 			// Translate buffer to the real image data, use srcx,srcy as the end point, srccx as the buffer line gap
@@ -1170,7 +1178,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 		// Best is using hardware clipping
 		#if GDISP_HARDWARE_CLIP
 			#if GDISP_HARDWARE_CLIP == HARDWARE_AUTODETECT
-				if (g->vmt->setclip)
+				if (gvmt(g)->setclip)
 			#endif
 			{
 				g->p.x = x;
@@ -2083,7 +2091,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 		MUTEX_ENTER(g);
 		#if GDISP_HARDWARE_PIXELREAD
 			#if GDISP_HARDWARE_PIXELREAD == HARDWARE_AUTODETECT
-				if (g->vmt->get)
+				if (gvmt(g)->get)
 			#endif
 			{
 				// Best is direct pixel read
@@ -2096,7 +2104,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 		#endif
 		#if GDISP_HARDWARE_PIXELREAD != TRUE && GDISP_HARDWARE_STREAM_READ
 			#if GDISP_HARDWARE_STREAM_READ == HARDWARE_AUTODETECT
-				if (g->vmt->readcolor)
+				if (gvmt(g)->readcolor)
 			#endif
 			{
 				// Next best is hardware streaming
@@ -2132,7 +2140,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 		MUTEX_ENTER(g);
 		#if NEED_CLIPPING
 			#if GDISP_HARDWARE_CLIP == HARDWARE_AUTODETECT
-				if (!g->vmt->setclip)
+				if (!gvmt(g)->setclip)
 			#endif
 			{
 				if (x < g->clipx0) { cx -= g->clipx0 - x; x = g->clipx0; }
@@ -2151,7 +2159,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 			// Best is hardware scroll
 			#if GDISP_HARDWARE_SCROLL
 				#if GDISP_HARDWARE_SCROLL == HARDWARE_AUTODETECT
-					if (g->vmt->vscroll)
+					if (gvmt(g)->vscroll)
 				#endif
 				{
 					g->p.x = x;
@@ -2197,7 +2205,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 							// Best line read is hardware streaming
 							#if GDISP_HARDWARE_STREAM_READ
 								#if GDISP_HARDWARE_STREAM_READ == HARDWARE_AUTODETECT
-									if (g->vmt->readstart)
+									if (gvmt(g)->readstart)
 								#endif
 								{
 									g->p.x = x+ix;
@@ -2217,7 +2225,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 							// Next best line read is single pixel reads
 							#if GDISP_HARDWARE_STREAM_READ != TRUE && GDISP_HARDWARE_PIXELREAD
 								#if GDISP_HARDWARE_PIXELREAD == HARDWARE_AUTODETECT
-									if (g->vmt->get)
+									if (gvmt(g)->get)
 								#endif
 								{
 									for(j=0; j < fx; j++) {
@@ -2245,7 +2253,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 							// Best line write is hardware bitfills
 							#if GDISP_HARDWARE_BITFILLS
 								#if GDISP_HARDWARE_BITFILLS == HARDWARE_AUTODETECT
-									if (g->vmt->blit)
+									if (gvmt(g)->blit)
 								#endif
 								{
 									g->p.x = x+ix;
@@ -2266,7 +2274,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 							// Next best line write is hardware streaming
 							#if GDISP_HARDWARE_BITFILLS != TRUE && GDISP_HARDWARE_STREAM_WRITE
 								#if GDISP_HARDWARE_STREAM_WRITE == HARDWARE_AUTODETECT
-									if (g->vmt->writestart)
+									if (gvmt(g)->writestart)
 								#endif
 								{
 									g->p.x = x+ix;
@@ -2292,7 +2300,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 							#if GDISP_HARDWARE_BITFILLS != TRUE && GDISP_HARDWARE_STREAM_WRITE != TRUE && GDISP_HARDWARE_FILLS && GDISP_HARDWARE_DRAWPIXEL
 								// We don't need to test for auto-detect on drawpixel as we know we have it because we don't have streaming.
 								#if GDISP_HARDWARE_FILLS == HARDWARE_AUTODETECT
-									if (g->vmt->fill)
+									if (gvmt(g)->fill)
 								#endif
 								{
 									g->p.y = fy;
@@ -2324,7 +2332,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 							#if GDISP_HARDWARE_BITFILLS != TRUE && GDISP_HARDWARE_STREAM_WRITE != TRUE && GDISP_HARDWARE_FILLS != TRUE && GDISP_HARDWARE_DRAWPIXEL
 								// The following test is unneeded because we are guaranteed to have draw pixel if we don't have streaming
 								//#if GDISP_HARDWARE_DRAWPIXEL == HARDWARE_AUTODETECT
-								//	if (g->vmt->pixel)
+								//	if (gvmt(g)->pixel)
 								//#endif
 								{
 									g->p.y = fy;
@@ -2356,7 +2364,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 	#if GDISP_HARDWARE_CONTROL
 		void gdispGControl(GDisplay *g, unsigned what, void *value) {
 			#if GDISP_HARDWARE_CONTROL == HARDWARE_AUTODETECT
-				if (!g->vmt->control)
+				if (!gvmt(g)->control)
 					return;
 			#endif
 			MUTEX_ENTER(g);
@@ -2380,7 +2388,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 					// Best is hardware clipping
 					#if GDISP_HARDWARE_CLIP
 						#if GDISP_HARDWARE_CLIP == HARDWARE_AUTODETECT
-							if (g->vmt->setclip)
+							if (gvmt(g)->setclip)
 						#endif
 						{
 							g->p.x = 0;
@@ -2423,7 +2431,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 			void *res;
 
 			#if GDISP_HARDWARE_QUERY == HARDWARE_AUTODETECT
-				if (!g->vmt->query)
+				if (!gvmt(g)->query)
 					return -1;
 			#endif
 			MUTEX_ENTER(g);
@@ -3052,46 +3060,6 @@ color_t gdispContrastColor(color_t color) {
 			#error "GDISP: Packed pixels not supported yet"
 		#elif
 			#error "GDISP: Unsupported packed pixel format"
-		#endif
-	}
-#endif
-
-#if GDISP_PIXELFORMAT != GDISP_LLD_PIXELFORMAT
-	LLDCOLOR_TYPE gdispColor2Native(color_t c) {
-		#if COLOR_SYSTEM == GDISP_COLORSYSTEM_GRAYSCALE || LLDCOLOR_SYSTEM == GDISP_COLORSYSTEM_GRAYSCALE
-			#if GDISP_HARDWARE_USE_EXACT_COLOR
-				return LLDLUMA2COLOR(EXACT_LUMA_OF(c));
-			#else
-				return LLDLUMA2COLOR(LUMA_OF(c));
-			#endif
-		#elif COLOR_SYSTEM == GDISP_COLORSYSTEM_TRUECOLOR && LLDCOLOR_SYSTEM == GDISP_COLORSYSTEM_TRUECOLOR
-			#if GDISP_HARDWARE_USE_EXACT_COLOR
-				return LLDRGB2COLOR(EXACT_RED_OF(c), EXACT_GREEN_OF(c), EXACT_BLUE_OF(c));
-			#else
-				return LLDRGB2COLOR(RED_OF(c), GREEN_OF(c), BLUE_OF(c));
-			#endif
-		#else
-			#error "GDISP: This pixel format conversion is not supported yet"
-		#endif
-	}
-#endif
-
-#if GDISP_PIXELFORMAT != GDISP_LLD_PIXELFORMAT
-	color_t gdispNative2Color(LLDCOLOR_TYPE c) {
-		#if COLOR_SYSTEM == GDISP_COLORSYSTEM_GRAYSCALE || LLDCOLOR_SYSTEM == GDISP_COLORSYSTEM_GRAYSCALE
-			#if GDISP_HARDWARE_USE_EXACT_COLOR
-				return LUMA2COLOR(LLDEXACT_LUMA_OF(c));
-			#else
-				return LUMA2COLOR(LLDLUMA_OF(c));
-			#endif
-		#elif COLOR_SYSTEM == GDISP_COLORSYSTEM_TRUECOLOR && LLDCOLOR_SYSTEM == GDISP_COLORSYSTEM_TRUECOLOR
-			#if GDISP_HARDWARE_USE_EXACT_COLOR
-				return RGB2COLOR(LLDEXACT_RED_OF(c), LLDEXACT_GREEN_OF(c), LLDEXACT_BLUE_OF(c));
-			#else
-				return RGB2COLOR(LLDRED_OF(c), LLDGREEN_OF(c), LLDBLUE_OF(c));
-			#endif
-		#else
-			#error "GDISP: This pixel format conversion is not supported yet"
 		#endif
 	}
 #endif

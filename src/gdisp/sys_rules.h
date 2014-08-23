@@ -17,6 +17,13 @@
 #define _GDISP_RULES_H
 
 #if GFX_USE_GDISP
+	#if !GFX_USE_GDRIVER
+		#if GFX_DISPLAY_RULE_WARNINGS
+			#warning "GDISP: GFX_USE_GDRIVER is required. GFX_USE_GDRIVER has turned on for you."
+		#endif
+		#undef GFX_USE_GDRIVER
+		#define GFX_USE_GDRIVER				TRUE
+	#endif
 	#if GDISP_TOTAL_CONTROLLERS > 1
 		#ifndef GDISP_CONTROLLER_LIST
 			#error "GDISP Multiple Controllers: You must specify a value for GDISP_CONTROLLER_LIST"

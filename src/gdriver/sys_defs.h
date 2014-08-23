@@ -34,7 +34,7 @@
 #ifndef _GDRIVER_H
 #define _GDRIVER_H
 
-#if GFX_NEED_GDRIVER || defined(__DOXYGEN__)
+#if GFX_USE_GDRIVER || defined(__DOXYGEN__)
 
 /*===========================================================================*/
 /* Type definitions                                                          */
@@ -56,7 +56,7 @@
  * 			dynamically by the system for each driver instance.
  */
 typedef struct GDriver {
-	GDriver *					driverchain;
+	struct GDriver *			driverchain;
 	const struct GDriverVMT *	vmt;
 } GDriver;
 
@@ -64,13 +64,13 @@ typedef struct GDriver {
  * @brief	All driver VMT's start with this structure.
  */
 typedef struct GDriverVMT {
-	uint16_t	type;															// @< What type of driver this is
-	uint16_t	flags;															// @< Flags for the driver. Meaning is specific to each driver type.
-	uint32_t	objsize;														// @< How big the runtime driver structure is
-	bool_t		(*init)(void *driver, int driverinstance, int systeminstance);	// @< Initialise the driver.
-																				//		driverinstance is the instance 0..n of this driver.
-																				//		systeminstance is the instance 0..n of this type of device.
-	void		(*deinit)(void *driver);										// @< De-initialise the driver
+	uint16_t	type;																// @< What type of driver this is
+	uint16_t	flags;																// @< Flags for the driver. Meaning is specific to each driver type.
+	uint32_t	objsize;															// @< How big the runtime driver structure is
+	bool_t		(*init)(GDriver *driver, int driverinstance, int systeminstance);	// @< Initialise the driver.
+																					//		driverinstance is the instance 0..n of this driver.
+																					//		systeminstance is the instance 0..n of this type of device.
+	void		(*deinit)(GDriver *driver);											// @< De-initialise the driver
 } GDriverVMT;
 
 /*===========================================================================*/
@@ -115,11 +115,20 @@ extern "C" {
 	 */
 	int gdriverInstanceCount(uint16_t type);
 
+	/**
+	 * @brief	Get the next driver for a type of device
+	 * @return	The runtime driver structure or NULL if there are no more.
+	 *
+	 * @param[in]	type		The type of driver to find
+	 * @param[in]	driver		The last driver returned or NULL to start again
+	 */
+	GDriver *gdriverGetNext(uint16_t type, GDriver *driver);
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* GFX_NEED_GDRIVER */
+#endif /* GFX_USE_GDRIVER */
 
 #endif /* _GDRIVER_H */
 /** @} */

@@ -7,42 +7,72 @@
 
 #include "gfx.h"
 
-#if GFX_NEED_GDRIVER
+#if GFX_USE_GDRIVER
 
-// Some HACKS as these aren't supported yet
-#ifndef GINPUT_NEED_STRING
-	#define GINPUT_NEED_STRING	FALSE
-#endif
-#ifndef GFX_USE_GBLOCK
-	#define GFX_USE_GBLOCK	FALSE
-#endif
+#include "sys_defs.h"
 
 // Define the tables to hold the driver instances.
 static GDriver *dhead;
 
+// Definition that allows getting addresses of structures
+typedef const struct GDriverVMT const	VMT_EL[1];
+
 // The system initialization.
 void _gdriverInit(void) {
-	const GDriverAutoStart const *pa;
-	int		cnt;
-
 	#if GFX_USE_GDISP
-		#ifdef GDISP_DRIVER_LIST
-			{
-				static const struct {
-					const struct GDISPVMT const *	vmt;
-					int								instances;
-				} drivers[] = {GDISP_DRIVER_LIST};
+	{
+		// Both GDISP_CONTROLLER_LIST and GDISP_CONTROLLER_DISPLAYS are defined - create the required numbers of each controller
+		#if defined(GDISP_CONTROLLER_LIST) && defined(GDISP_CONTROLLER_DISPLAYS)
+			int		i, cnt;
 
-				for(pa = drivers; pa < &drivers[sizeof(drivers)/sizeof(drivers[0])]) {
-					for(cnt = pa->instances; cnt; cnt--)
-						gdriverRegister(pa->vmt);
-				}
+
+			extern VMT_EL							GDISP_CONTROLLER_LIST;
+			static const struct GDriverVMT const *	dclist[GDISP_TOTAL_CONTROLLERS] = {GDISP_CONTROLLER_LIST};
+			static const unsigned					dnlist[GDISP_TOTAL_CONTROLLERS] = {GDISP_CONTROLLER_DISPLAYS};
+			for(i = 0; i < GDISP_TOTAL_CONTROLLERS; i++) {
+				for(cnt = dnlist[i]; cnt; cnt--)
+					gdriverRegister(dclist[i]);
 			}
+
+		// Only GDISP_CONTROLLER_LIST is defined - create one of each controller
+		#elif defined(GDISP_CONTROLLER_LIST)
+			int		i;
+
+
+			extern VMT_EL							GDISP_CONTROLLER_LIST;
+			static const struct GDriverVMT const *	dclist[GDISP_TOTAL_CONTROLLERS] = {GDISP_CONTROLLER_LIST};
+			for(i = 0; i < GDISP_TOTAL_CONTROLLERS; i++)
+				gdriverRegister(dclist[i]);
+
+		// Only GDISP_TOTAL_DISPLAYS is defined - create the required number of the one controller
+		#elif GDISP_TOTAL_DISPLAYS > 1
+			int		cnt;
+
+			extern VMT_EL GDISPVMT_OnlyOne;
+			for(cnt = 0; cnt < GDISP_TOTAL_DISPLAYS; cnt++)
+				gdriverRegister(GDISPVMT_OnlyOne);
+
+		// One and only one display
 		#else
-			extern struct GDISPVMT GDISP_VMT;
-			gdriverRegister((GDriver *)&GDISP_VMT);
+			extern VMT_EL GDISPVMT_OnlyOne;
+			gdriverRegister(GDISPVMT_OnlyOne);
 		#endif
+	}
 	#endif
+
+	// Drivers not loaded yet
+	// GINPUT_NEED_MOUSE
+	// GINPUT_NEED_DIAL
+	// GINPUT_NEED_TOGGLE
+	// GINPUT_NEED_KEYBOARD
+	// GINPUT_NEED_STRING
+	// GFX_USE_GBLOCK
+}
+
+// The system de-initialization.
+void _gdriverDeinit(void) {
+	while(dhead)
+		gdriverUnRegister(dhead);
 }
 
 
@@ -76,6 +106,8 @@ GDriver *gdriverRegister(const GDriverVMT *vmt) {
 		dtail->driverchain = pd;
 	else
 		dhead = pd;
+
+	return pd;
 }
 
 void gdriverUnRegister(GDriver *driver) {
@@ -99,7 +131,7 @@ void gdriverUnRegister(GDriver *driver) {
 
 	// Call the deinit()
 	if (driver->vmt->deinit)
-		driver->vmt->dinit(driver);
+		driver->vmt->deinit(driver);
 
 	// Cleanup
 	gfxFree(driver);
@@ -134,4 +166,13 @@ int gdriverInstanceCount(uint16_t type) {
 	return sinstance;
 }
 
-#endif /* GFX_NEED_GDRIVER */
+GDriver *gdriverGetNext(uint16_t type, GDriver *driver) {
+	driver = driver ? driver->driverchain : dhead;
+
+	while(driver && driver->vmt->type != type)
+		driver = driver->driverchain;
+
+	return driver;
+}
+
+#endif /* GFX_USE_GDRIVER */
