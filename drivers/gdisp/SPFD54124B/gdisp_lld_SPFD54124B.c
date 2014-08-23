@@ -214,7 +214,7 @@ LLDSPEC void gdisp_lld_control(GDisplay *g)
 				case GDISP_ROTATE_0:
 					acquire_bus(g);
 					write_index(g, SPFD54124B_CMD_MADCTR);
-					write_index(g, 0x00);
+					write_index(g, 0x0100);
 					release_bus(g);
 					g->g.Height = GDISP_SCREEN_HEIGHT;
 					g->g.Width = GDISP_SCREEN_WIDTH;
@@ -223,7 +223,7 @@ LLDSPEC void gdisp_lld_control(GDisplay *g)
 				case GDISP_ROTATE_90:
 					acquire_bus(g);
 					write_index(g, SPFD54124B_CMD_MADCTR);
-					write_index(g, 0xA0);
+					write_index(g, 0x01A0);
 					release_bus(g);
 					g->g.Height = GDISP_SCREEN_WIDTH;
 					g->g.Width = GDISP_SCREEN_HEIGHT;
@@ -232,7 +232,7 @@ LLDSPEC void gdisp_lld_control(GDisplay *g)
 				case GDISP_ROTATE_180:
 					acquire_bus(g);
 					write_index(g, SPFD54124B_CMD_MADCTR);
-					write_index(g, 0xC0);
+					write_index(g, 0x01C0);
 					release_bus(g);
 					g->g.Height = GDISP_SCREEN_HEIGHT;
 					g->g.Width = GDISP_SCREEN_WIDTH;
@@ -241,31 +241,14 @@ LLDSPEC void gdisp_lld_control(GDisplay *g)
 				case GDISP_ROTATE_270:
 					acquire_bus(g);
 					write_index(g, SPFD54124B_CMD_MADCTR);
-					write_index(g, 0x60);
+					write_index(g, 0x0160);
 					release_bus(g);
 					g->g.Height = GDISP_SCREEN_WIDTH;
 					g->g.Width = GDISP_SCREEN_HEIGHT;
 					break;
 
-				case GDISP_ROTATE_PORTRAIT:
-					acquire_bus(g);
-					write_index(g, SPFD54124B_CMD_MADCTR);
-					write_index(g, 0x00);
-					release_bus(g);
-					g->g.Height = GDISP_SCREEN_HEIGHT;
-					g->g.Width = GDISP_SCREEN_WIDTH;
-					break;
-
-				case GDISP_ROTATE_LANDSCAPE:
-					acquire_bus(g);
-					write_index(g, SPFD54124B_CMD_MADCTR);
-					write_index(g, 0xA0);
-					release_bus(g);
-					g->g.Height = GDISP_SCREEN_WIDTH;
-					g->g.Width = GDISP_SCREEN_HEIGHT;
-					break;
-	
 				default:
+					// GDISP_ROTATE_PORTRAIT and GDISP_ROTATE_LANDSCAPE are handled by the higher level code
 					return;
 			}
 

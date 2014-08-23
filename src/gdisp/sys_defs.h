@@ -72,22 +72,7 @@ typedef enum orientation { GDISP_ROTATE_0=0, GDISP_ROTATE_90=90, GDISP_ROTATE_18
 typedef enum powermode { powerOff, powerSleep, powerDeepSleep, powerOn } powermode_t;
 
 /*
- * This is not documented in Doxygen as it is meant to be a black-box.
- * Applications should always use the routines and macros defined
- * below to access it in case the implementation ever changed.
- */
-typedef struct GDISPControl {
-	coord_t				Width;
-	coord_t				Height;
-	orientation_t		Orientation;
-	powermode_t			Powermode;
-	uint8_t				Backlight;
-	uint8_t				Contrast;
-} GDISPControl;
-
-/*
- * Our black box display structure. We know only one thing about it...
- * The first member is a GDISPControl structure.
+ * Our black box display structure.
  */
 typedef struct GDisplay		GDisplay;
 
@@ -126,7 +111,7 @@ extern GDisplay	*GDISP;
 /* Defines relating to the display hardware									 */
 /*===========================================================================*/
 
-#if !defined(GDISP_TOTAL_CONTROLLERS) || GDISP_TOTAL_CONTROLLERS == 1
+#if GDISP_TOTAL_CONTROLLERS <= 1
 	// Pull in the default hardware configuration for a single controller.
 	// If we have multiple controllers the settings must be set in the
 	// users gfxconf.h file.
@@ -149,7 +134,7 @@ extern GDisplay	*GDISP;
 	 * @note	This doesn't need to match the hardware pixel format.
 	 * 			It is definitely more efficient when it does.
 	 * @note	When GDISP_TOTAL_CONTROLLERS > 1, this must
-	 * 			be explicitly defined and should ensure the best match
+	 * 			be explicitly defined and you should ensure the best match
 	 * 			with your hardware across all devices.
 	 */
 	#ifndef GDISP_PIXELFORMAT
@@ -196,7 +181,7 @@ typedef color_t		pixel_t;
 extern "C" {
 #endif
 
-/* Base Functions */
+/* Color Utility Functions */
 
 /**
  * @brief   Blend 2 colors according to the alpha
@@ -219,6 +204,8 @@ color_t gdispBlendColor(color_t fg, color_t bg, uint8_t alpha);
  * @api
  */
 color_t gdispContrastColor(color_t color);
+
+/* Base Functions */
 
 /**
  * @brief   Get the specified display
@@ -247,6 +234,68 @@ GDisplay *gdispGetDisplay(unsigned display);
  * @api
  */
 void gdispSetDisplay(GDisplay *g);
+
+/* Property Functions */
+
+/**
+ * @brief   Get the display width in pixels.
+ *
+ * @param[in] g 		The display to use
+ *
+ * @api
+ */
+coord_t gdispGGetWidth(GDisplay *g);
+#define gdispGetWidth()								gdispGGetWidth(GDISP)
+
+/**
+ * @brief   Get the display height in pixels.
+ *
+ * @param[in] g 		The display to use
+ *
+ * @api
+ */
+coord_t gdispGGetHeight(GDisplay *g);
+#define gdispGetHeight()							gdispGGetHeight(GDISP)
+
+/**
+ * @brief   Get the current display power mode.
+ *
+ * @param[in] g 		The display to use
+ *
+ * @api
+ */
+powermode_t gdispGGetPowerMode(GDisplay *g);
+#define gdispGetPowerMode()							gdispGGetPowerMode(GDISP)
+
+/**
+ * @brief   Get the current display orientation.
+ *
+ * @param[in] g 		The display to use
+ *
+ * @api
+ */
+orientation_t gdispGGetOrientation(GDisplay *g);
+#define gdispGetOrientation()						gdispGGetOrientation(GDISP)
+
+/**
+ * @brief   Get the current display backlight brightness.
+ *
+ * @param[in] g 		The display to use
+ *
+ * @api
+ */
+uint8_t gdispGGetBacklight(GDisplay *g);
+#define gdispGetBacklight()							gdispGGetBacklight(GDISP)
+
+/**
+ * @brief   Get the current display contrast.
+ *
+ * @param[in] g 		The display to use
+ *
+ * @api
+ */
+uint8_t gdispGGetContrast(GDisplay *g);
+#define gdispGetContrast()							gdispGGetContrast(GDISP)
 
 /* Drawing Functions */
 
@@ -917,66 +966,6 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
  */
 #define gdispGSetContrast(g, percent)				gdispGControl((g), GDISP_CONTROL_CONTRAST, (void *)(unsigned)(percent))
 #define gdispSetContrast(percent)					gdispGControl(GDISP, GDISP_CONTROL_CONTRAST, (void *)(unsigned)(percent))
-
-/**
- * @brief   Get the display width in pixels.
- *
- * @param[in] g 		The display to use
- *
- * @api
- */
-#define gdispGGetWidth(g)							(((GDISPControl *)(g))->Width)
-#define gdispGetWidth()								gdispGGetWidth(GDISP)
-
-/**
- * @brief   Get the display height in pixels.
- *
- * @param[in] g 		The display to use
- *
- * @api
- */
-#define gdispGGetHeight(g)							(((GDISPControl *)(g))->Height)
-#define gdispGetHeight()							gdispGGetHeight(GDISP)
-
-/**
- * @brief   Get the current display power mode.
- *
- * @param[in] g 		The display to use
- *
- * @api
- */
-#define gdispGGetPowerMode(g)						(((GDISPControl *)(g))->Powermode)
-#define gdispGetPowerMode()							gdispGGetPowerMode(GDISP)
-
-/**
- * @brief   Get the current display orientation.
- *
- * @param[in] g 		The display to use
- *
- * @api
- */
-#define gdispGGetOrientation(g)						(((GDISPControl *)(g))->Orientation)
-#define gdispGetOrientation()						gdispGGetOrientation(GDISP)
-
-/**
- * @brief   Get the current display backlight brightness.
- *
- * @param[in] g 		The display to use
- *
- * @api
- */
-#define gdispGGetBacklight(g)						(((GDISPControl *)(g))->Backlight)
-#define gdispGetBacklight()							gdispGGetBacklight(GDISP)
-
-/**
- * @brief   Get the current display contrast.
- *
- * @param[in] g 		The display to use
- *
- * @api
- */
-#define gdispGGetContrast(g)						(((GDISPControl *)(g))->Contrast)
-#define gdispGetContrast()							gdispGGetContrast(GDISP)
 
 /* More interesting macro's */
 

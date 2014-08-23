@@ -2,6 +2,7 @@ GFXINC +=   $(GFXLIB)
 GFXSRC +=	$(GFXLIB)/src/gfx.c
 
 include $(GFXLIB)/src/gos/sys_make.mk
+include $(GFXLIB)/src/gdriver/sys_make.mk
 include $(GFXLIB)/src/gqueue/sys_make.mk
 include $(GFXLIB)/src/gdisp/sys_make.mk
 include $(GFXLIB)/src/gevent/sys_make.mk

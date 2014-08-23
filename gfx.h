@@ -59,6 +59,14 @@
  * @{
  */
 	/**
+	 * @brief   GFX Driver API
+	 * @details	Defaults to TRUE
+	 * @note	Not much useful can be done without a driver
+	 */
+	#ifndef GFX_USE_GDRIVER
+		#define GFX_USE_GDRIVER	TRUE
+	#endif
+	/**
 	 * @brief   GFX Graphics Display Basic API
 	 * @details	Defaults to FALSE
 	 * @note	Also add the specific hardware driver to your makefile.
@@ -154,6 +162,7 @@
  *
  */
 #include "src/gos/sys_options.h"
+#include "src/gdriver/sys_options.h"
 #include "src/gfile/sys_options.h"
 #include "src/gmisc/sys_options.h"
 #include "src/gqueue/sys_options.h"
@@ -183,12 +192,14 @@
 #include "src/gqueue/sys_rules.h"
 #include "src/gmisc/sys_rules.h"
 #include "src/gfile/sys_rules.h"
+#include "src/gdriver/sys_rules.h"
 #include "src/gos/sys_rules.h"
 
 /**
  *  Include the sub-system header files
  */
 #include "src/gos/sys_defs.h"
+//#include "src/gdriver/sys_defs.h"			// This module is only included by source that needs it.
 #include "src/gfile/sys_defs.h"
 #include "src/gmisc/sys_defs.h"
 #include "src/gqueue/sys_defs.h"

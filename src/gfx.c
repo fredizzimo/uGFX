@@ -20,6 +20,10 @@ static bool_t initDone = FALSE;
 /* These init functions are defined by each module but not published */
 extern void _gosInit(void);
 extern void _gosDeinit(void);
+#if GFX_USE_GDRIVER
+	extern void _gdriverInit(void);
+	extern void _gdriverDeinit(void);
+#endif
 #if GFX_USE_GDISP
 	extern void _gdispInit(void);
 	extern void _gdispDeinit(void);
@@ -79,6 +83,9 @@ void gfxInit(void)
 	#if GFX_USE_GTIMER
 		_gtimerInit();
 	#endif
+	#if GFX_USE_GDRIVER
+		_gdriverInit();
+	#endif
 	#if GFX_USE_GDISP
 		_gdispInit();
 	#endif
@@ -117,6 +124,9 @@ void gfxDeinit(void)
 	#endif
 	#if GFX_USE_GDISP
 		_gdispDeinit();
+	#endif
+	#if GFX_USE_GDRIVER
+		_gdriverDeinit();
 	#endif
 	#if GFX_USE_GTIMER
 		_gtimerDeinit();

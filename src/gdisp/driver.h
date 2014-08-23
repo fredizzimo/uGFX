@@ -16,17 +16,19 @@
 #ifndef _GDISP_LLD_H
 #define _GDISP_LLD_H
 
-#if GFX_USE_GDISP // || defined(__DOXYGEN__)
+#if GFX_USE_GDISP
 
-/*===========================================================================*/
-/* Error checks.                                                             */
-/*===========================================================================*/
+// Include the GDRIVER infrastructure
+#include "src/gdriver/sys_defs.h"
+
+// Our special auto-detect hardware code which uses the VMT.
+#define HARDWARE_AUTODETECT		2
 
 #if GDISP_TOTAL_CONTROLLERS > 1 && !defined(GDISP_DRIVER_VMT)
-	#define HARDWARE_AUTODETECT		2
+	// Multiple controllers the default is to hardware detect
 	#define HARDWARE_DEFAULT		HARDWARE_AUTODETECT
 #else
-	#define HARDWARE_AUTODETECT		2
+	// The default is to call the routines directly
 	#define HARDWARE_DEFAULT		FALSE
 #endif
 
@@ -182,13 +184,47 @@
 /* External declarations.                                                    */
 /*===========================================================================*/
 
-struct GDisplay {
-	// The public GDISP stuff - must be the first element
-	GDISPControl				g;
+/* Verify information for packed pixels and define a non-packed pixel macro */
+#if !GDISP_PACKED_PIXELS
+	#define gdispPackPixels(buf,cx,x,y,c)	{ ((color_t *)(buf))[(y)*(cx)+(x)] = (c); }
+#elif !GDISP_HARDWARE_BITFILLS
+	#error "GDISP: packed pixel formats are only supported for hardware accelerated drivers."
+#elif GDISP_PIXELFORMAT != GDISP_PIXELFORMAT_RGB888 \
+		&& GDISP_PIXELFORMAT != GDISP_PIXELFORMAT_RGB444 \
+		&& GDISP_PIXELFORMAT != GDISP_PIXELFORMAT_RGB666 \
+		&& GDISP_PIXELFORMAT != GDISP_PIXELFORMAT_CUSTOM
+	#error "GDISP: A packed pixel format has been specified for an unsupported pixel format."
+#endif
 
-	#if GDISP_TOTAL_CONTROLLERS > 1
-		const struct GDISPVMT const *	vmt;		// The Virtual Method Table
-	#endif
+/* Support routine for packed pixel formats */
+#if !defined(gdispPackPixels) || defined(__DOXYGEN__)
+	/**
+	 * @brief   Pack a pixel into a pixel buffer.
+	 * @note    This function performs no buffer boundary checking
+	 *			regardless of whether GDISP_NEED_CLIP has been specified.
+	 *
+	 * @param[in] buf		The buffer to put the pixel in
+	 * @param[in] cx		The width of a pixel line
+	 * @param[in] x, y		The location of the pixel to place
+	 * @param[in] color		The color to put into the buffer
+	 *
+	 * @api
+	 */
+	void gdispPackPixels(const pixel_t *buf, coord_t cx, coord_t x, coord_t y, color_t color);
+#endif
+
+struct GDisplay {
+	struct GDriver				d;					// This must be the first element
+		#define gvmt(g)		((const GDISPVMT const *)(g)->d.vmt)	// For ease of access to the vmt member
+
+	struct GDISPControl {
+		coord_t					Width;
+		coord_t					Height;
+		orientation_t			Orientation;
+		powermode_t				Powermode;
+		uint8_t					Backlight;
+		uint8_t					Contrast;
+	} g;
 
 	void *						priv;				// A private area just for the drivers use.
 	void *						board;				// A private area just for the board interfaces use.
@@ -237,24 +273,47 @@ struct GDisplay {
 		// A pixel line buffer
 		color_t		linebuf[GDISP_LINEBUF_SIZE];
 	#endif
-
 };
 
-#if GDISP_TOTAL_CONTROLLERS == 1 || defined(GDISP_DRIVER_VMT) || defined(__DOXYGEN__)
-	#if GDISP_TOTAL_CONTROLLERS > 1
-		#define LLDSPEC			static
-	#else
-		#define LLDSPEC
-	#endif
+typedef struct GDISPVMT {
+	GDriverVMT	vmtdriver;
+	bool_t (*init)(GDisplay *g);
+	void (*writestart)(GDisplay *g);				// Uses p.x,p.y  p.cx,p.cy
+	void (*writepos)(GDisplay *g);					// Uses p.x,p.y
+	void (*writecolor)(GDisplay *g);				// Uses p.color
+	void (*writestop)(GDisplay *g);					// Uses no parameters
+	void (*readstart)(GDisplay *g);					// Uses p.x,p.y  p.cx,p.cy
+	color_t (*readcolor)(GDisplay *g);				// Uses no parameters
+	void (*readstop)(GDisplay *g);					// Uses no parameters
+	void (*pixel)(GDisplay *g);						// Uses p.x,p.y  p.color
+	void (*clear)(GDisplay *g);						// Uses p.color
+	void (*fill)(GDisplay *g);						// Uses p.x,p.y  p.cx,p.cy  p.color
+	void (*blit)(GDisplay *g);						// Uses p.x,p.y  p.cx,p.cy  p.x1,p.y1 (=srcx,srcy)  p.x2 (=srccx), p.ptr (=buffer)
+	color_t (*get)(GDisplay *g);					// Uses p.x,p.y
+	void (*vscroll)(GDisplay *g);					// Uses p.x,p.y  p.cx,p.cy, p.y1 (=lines) p.color
+	void (*control)(GDisplay *g);					// Uses p.x (=what)  p.ptr (=value)
+	void *(*query)(GDisplay *g);					// Uses p.x (=what);
+	void (*setclip)(GDisplay *g);					// Uses p.x,p.y  p.cx,p.cy
+	void (*flush)(GDisplay *g);						// Uses no parameters
+} GDISPVMT;
 
+// Do we need function definitions or macro's (via the VMT)
+#if GDISP_TOTAL_CONTROLLERS <= 1 || defined(GDISP_DRIVER_VMT) || defined(__DOXYGEN__)
 	#ifdef __cplusplus
 	extern "C" {
+	#endif
+
+	// Should the driver routines should be static or not
+	#if GDISP_TOTAL_CONTROLLERS <= 1
+		#define LLDSPEC
+	#else
+		#define LLDSPEC			static
 	#endif
 
 	/**
 	 * @brief   Initialize the driver.
 	 * @return	TRUE if successful.
-	 * @param[in]	g		The driver structure
+	 * @param[in]	g				The driver structure
 	 * @param[out]	g->g	The driver must fill in the GDISPControl structure
 	 */
 	LLDSPEC	bool_t gdisp_lld_init(GDisplay *g);
@@ -497,374 +556,368 @@ struct GDisplay {
 	#ifdef __cplusplus
 	}
 	#endif
-#endif  // GDISP_TOTAL_CONTROLLERS == 1 || defined(GDISP_DRIVER_VMT)
 
+#else
+	#define gdisp_lld_init(g)				gvmt(g)->init(g)
+	#define gdisp_lld_flush(g)				gvmt(g)->flush(g)
+	#define gdisp_lld_write_start(g)		gvmt(g)->writestart(g)
+	#define gdisp_lld_write_pos(g)			gvmt(g)->writepos(g)
+	#define gdisp_lld_write_color(g)		gvmt(g)->writecolor(g)
+	#define gdisp_lld_write_stop(g)			gvmt(g)->writestop(g)
+	#define gdisp_lld_read_start(g)			gvmt(g)->readstart(g)
+	#define gdisp_lld_read_color(g)			gvmt(g)->readcolor(g)
+	#define gdisp_lld_read_stop(g)			gvmt(g)->readstop(g)
+	#define gdisp_lld_draw_pixel(g)			gvmt(g)->pixel(g)
+	#define gdisp_lld_clear(g)				gvmt(g)->clear(g)
+	#define gdisp_lld_fill_area(g)			gvmt(g)->fill(g)
+	#define gdisp_lld_blit_area(g)			gvmt(g)->blit(g)
+	#define gdisp_lld_get_pixel_color(g)	gvmt(g)->get(g)
+	#define gdisp_lld_vertical_scroll(g)	gvmt(g)->vscroll(g)
+	#define gdisp_lld_control(g)			gvmt(g)->control(g)
+	#define gdisp_lld_query(g)				gvmt(g)->query(g)
+	#define gdisp_lld_set_clip(g)			gvmt(g)->setclip(g)
+#endif
 
-#if GDISP_TOTAL_CONTROLLERS > 1
+// If compiling the driver then build the VMT and set the low level driver color macros.
+#ifdef GDISP_DRIVER_VMT
 
-	typedef struct GDISPVMT {
-		bool_t (*init)(GDisplay *g);
-		void (*writestart)(GDisplay *g);				// Uses p.x,p.y  p.cx,p.cy
-		void (*writepos)(GDisplay *g);					// Uses p.x,p.y
-		void (*writecolor)(GDisplay *g);				// Uses p.color
-		void (*writestop)(GDisplay *g);					// Uses no parameters
-		void (*readstart)(GDisplay *g);					// Uses p.x,p.y  p.cx,p.cy
-		color_t (*readcolor)(GDisplay *g);				// Uses no parameters
-		void (*readstop)(GDisplay *g);					// Uses no parameters
-		void (*pixel)(GDisplay *g);						// Uses p.x,p.y  p.color
-		void (*clear)(GDisplay *g);						// Uses p.color
-		void (*fill)(GDisplay *g);						// Uses p.x,p.y  p.cx,p.cy  p.color
-		void (*blit)(GDisplay *g);						// Uses p.x,p.y  p.cx,p.cy  p.x1,p.y1 (=srcx,srcy)  p.x2 (=srccx), p.ptr (=buffer)
-		color_t (*get)(GDisplay *g);					// Uses p.x,p.y
-		void (*vscroll)(GDisplay *g);					// Uses p.x,p.y  p.cx,p.cy, p.y1 (=lines) p.color
-		void (*control)(GDisplay *g);					// Uses p.x (=what)  p.ptr (=value)
-		void *(*query)(GDisplay *g);					// Uses p.x (=what);
-		void (*setclip)(GDisplay *g);					// Uses p.x,p.y  p.cx,p.cy
-		void (*flush)(GDisplay *g);						// Uses no parameters
-	} GDISPVMT;
+	// Make sure the driver has a valid model
+	#if !GDISP_HARDWARE_STREAM_WRITE && !GDISP_HARDWARE_DRAWPIXEL
+		#error "GDISP Driver: Either GDISP_HARDWARE_STREAM_WRITE or GDISP_HARDWARE_DRAWPIXEL must be TRUE"
+	#endif
 
-	#if defined(GDISP_DRIVER_VMT)
-		#if !GDISP_HARDWARE_STREAM_WRITE && !GDISP_HARDWARE_DRAWPIXEL
-			#error "GDISP Driver: Either GDISP_HARDWARE_STREAM_WRITE or GDISP_HARDWARE_DRAWPIXEL must be TRUE"
+	// If we are not using multiple displays then hard-code the VMT name
+	#ifndef GDISP_CONTROLLER_LIST
+		#undef GDISP_DRIVER_VMT
+		#define GDISP_DRIVER_VMT		GDISPVMT_OnlyOne
+	#endif
+
+	// Routines needed by the general driver VMT
+	bool_t _gdispInitDriver(GDriver *g, int driverinstance, int systeminstance);
+	void _gdispDeinitDriver(GDriver *g);
+
+	// Build the VMT
+	const GDISPVMT const GDISP_DRIVER_VMT[1] = {{
+		{ GDRIVER_TYPE_DISPLAY, 0, sizeof(GDisplay), _gdispInitDriver, _gdispDeinitDriver },
+		gdisp_lld_init,
+		#if GDISP_HARDWARE_STREAM_WRITE
+			gdisp_lld_write_start,
+			#if GDISP_HARDWARE_STREAM_POS
+				gdisp_lld_write_pos,
+			#else
+				0,
+			#endif
+			gdisp_lld_write_color,
+			gdisp_lld_write_stop,
+		#else
+			0, 0, 0, 0,
 		#endif
-		const GDISPVMT const GDISP_DRIVER_VMT[1] = {{
-			gdisp_lld_init,
-			#if GDISP_HARDWARE_FLUSH
-				gdisp_lld_flush,
-			#else
-				0,
-			#endif
-			#if GDISP_HARDWARE_STREAM_WRITE
-				gdisp_lld_write_start,
-				#if GDISP_HARDWARE_STREAM_POS
-					gdisp_lld_write_pos,
-				#else
-					0,
-				#endif
-				gdisp_lld_write_color,
-				gdisp_lld_write_stop,
-			#else
-				0, 0, 0, 0,
-			#endif
-			#if GDISP_HARDWARE_STREAM_READ
-				gdisp_lld_read_start,
-				gdisp_lld_read_color,
-				gdisp_lld_read_stop,
-			#else
-				0, 0, 0,
-			#endif
-			#if GDISP_HARDWARE_DRAWPIXEL
-				gdisp_lld_draw_pixel,
-			#else
-				0,
-			#endif
-			#if GDISP_HARDWARE_CLEARS
-				gdisp_lld_clear,
-			#else
-				0,
-			#endif
-			#if GDISP_HARDWARE_FILLS
-				gdisp_lld_fill_area,
-			#else
-				0,
-			#endif
-			#if GDISP_HARDWARE_BITFILLS
-				gdisp_lld_blit_area,
-			#else
-				0,
-			#endif
-			#if GDISP_HARDWARE_PIXELREAD
-				gdisp_lld_get_pixel_color,
-			#else
-				0,
-			#endif
-			#if GDISP_HARDWARE_SCROLL && GDISP_NEED_SCROLL
-				gdisp_lld_vertical_scroll,
-			#else
-				0,
-			#endif
-			#if GDISP_HARDWARE_CONTROL && GDISP_NEED_CONTROL
-				gdisp_lld_control,
-			#else
-				0,
-			#endif
-			#if GDISP_HARDWARE_QUERY && GDISP_NEED_QUERY
-				gdisp_lld_query,
-			#else
-				0,
-			#endif
-			#if GDISP_HARDWARE_CLIP && (GDISP_NEED_CLIP || GDISP_NEED_VALIDATION)
-				gdisp_lld_set_clip,
-			#else
-				0,
-			#endif
-		}};
+		#if GDISP_HARDWARE_STREAM_READ
+			gdisp_lld_read_start,
+			gdisp_lld_read_color,
+			gdisp_lld_read_stop,
+		#else
+			0, 0, 0,
+		#endif
+		#if GDISP_HARDWARE_DRAWPIXEL
+			gdisp_lld_draw_pixel,
+		#else
+			0,
+		#endif
+		#if GDISP_HARDWARE_CLEARS
+			gdisp_lld_clear,
+		#else
+			0,
+		#endif
+		#if GDISP_HARDWARE_FILLS
+			gdisp_lld_fill_area,
+		#else
+			0,
+		#endif
+		#if GDISP_HARDWARE_BITFILLS
+			gdisp_lld_blit_area,
+		#else
+			0,
+		#endif
+		#if GDISP_HARDWARE_PIXELREAD
+			gdisp_lld_get_pixel_color,
+		#else
+			0,
+		#endif
+		#if GDISP_HARDWARE_SCROLL && GDISP_NEED_SCROLL
+			gdisp_lld_vertical_scroll,
+		#else
+			0,
+		#endif
+		#if GDISP_HARDWARE_CONTROL && GDISP_NEED_CONTROL
+			gdisp_lld_control,
+		#else
+			0,
+		#endif
+		#if GDISP_HARDWARE_QUERY && GDISP_NEED_QUERY
+			gdisp_lld_query,
+		#else
+			0,
+		#endif
+		#if GDISP_HARDWARE_CLIP && (GDISP_NEED_CLIP || GDISP_NEED_VALIDATION)
+			gdisp_lld_set_clip,
+		#else
+			0,
+		#endif
+		#if GDISP_HARDWARE_FLUSH
+			gdisp_lld_flush,
+		#else
+			0,
+		#endif
+	}};
 
-	#else
-		#define gdisp_lld_init(g)				g->vmt->init(g)
-		#define gdisp_lld_flush(g)				g->vmt->flush(g)
-		#define gdisp_lld_write_start(g)		g->vmt->writestart(g)
-		#define gdisp_lld_write_pos(g)			g->vmt->writepos(g)
-		#define gdisp_lld_write_color(g)		g->vmt->writecolor(g)
-		#define gdisp_lld_write_stop(g)			g->vmt->writestop(g)
-		#define gdisp_lld_read_start(g)			g->vmt->readstart(g)
-		#define gdisp_lld_read_color(g)			g->vmt->readcolor(g)
-		#define gdisp_lld_read_stop(g)			g->vmt->readstop(g)
-		#define gdisp_lld_draw_pixel(g)			g->vmt->pixel(g)
-		#define gdisp_lld_clear(g)				g->vmt->clear(g)
-		#define gdisp_lld_fill_area(g)			g->vmt->fill(g)
-		#define gdisp_lld_blit_area(g)			g->vmt->blit(g)
-		#define gdisp_lld_get_pixel_color(g)	g->vmt->get(g)
-		#define gdisp_lld_vertical_scroll(g)	g->vmt->vscroll(g)
-		#define gdisp_lld_control(g)			g->vmt->control(g)
-		#define gdisp_lld_query(g)				g->vmt->query(g)
-		#define gdisp_lld_set_clip(g)			g->vmt->setclip(g)
-	#endif	// GDISP_LLD_DECLARATIONS
+	/* Low level driver pixel format information */
+	//-------------------------
+	//	True-Color color system
+	//-------------------------
+	#if GDISP_LLD_PIXELFORMAT & GDISP_COLORSYSTEM_TRUECOLOR
+		#define LLDCOLOR_SYSTEM			GDISP_COLORSYSTEM_TRUECOLOR
 
-#endif		// GDISP_TOTAL_CONTROLLERS > 1
+		// Calculate the number of bits
+		#define LLDCOLOR_BITS_R			((GDISP_LLD_PIXELFORMAT>>8) & 0x0F)
+		#define LLDCOLOR_BITS_G			((GDISP_LLD_PIXELFORMAT>>4) & 0x0F)
+		#define LLDCOLOR_BITS_B			((GDISP_LLD_PIXELFORMAT>>0) & 0x0F)
+		#define LLDCOLOR_BITS			(LLDCOLOR_BITS_R + LLDCOLOR_BITS_G + LLDCOLOR_BITS_B)
 
-/* Verify information for packed pixels and define a non-packed pixel macro */
-#if !GDISP_PACKED_PIXELS
-	#define gdispPackPixels(buf,cx,x,y,c)	{ ((color_t *)(buf))[(y)*(cx)+(x)] = (c); }
-#elif !GDISP_HARDWARE_BITFILLS
-	#error "GDISP: packed pixel formats are only supported for hardware accelerated drivers."
-#elif GDISP_PIXELFORMAT != GDISP_PIXELFORMAT_RGB888 \
-		&& GDISP_PIXELFORMAT != GDISP_PIXELFORMAT_RGB444 \
-		&& GDISP_PIXELFORMAT != GDISP_PIXELFORMAT_RGB666 \
-		&& GDISP_PIXELFORMAT != GDISP_PIXELFORMAT_CUSTOM
-	#error "GDISP: A packed pixel format has been specified for an unsupported pixel format."
-#endif
+		// From the number of bits determine COLOR_TYPE, COLOR_TYPE_BITS and masking
+		#if LLDCOLOR_BITS <= 8
+			#define LLDCOLOR_TYPE			uint8_t
+			#define LLDCOLOR_TYPE_BITS		8
+		#elif LLDCOLOR_BITS <= 16
+			#define LLDCOLOR_TYPE			uint16_t
+			#define LLDCOLOR_TYPE_BITS		16
+		#elif LLDCOLOR_BITS <= 32
+			#define LLDCOLOR_TYPE			uint32_t
+			#define LLDCOLOR_TYPE_BITS		32
+		#else
+			#error "GDISP: Cannot define low level driver color types with more than 32 bits"
+		#endif
+		#if LLDCOLOR_TYPE_BITS == LLDCOLOR_BITS
+			#define LLDCOLOR_NEEDS_MASK	FALSE
+		#else
+			#define LLDCOLOR_NEEDS_MASK	TRUE
+		#endif
+		#define LLDCOLOR_MASK()			((1 << LLDCOLOR_BITS)-1)
 
-/* Support routine for packed pixel formats */
-#if !defined(gdispPackPixels) || defined(__DOXYGEN__)
-	/**
-	 * @brief   Pack a pixel into a pixel buffer.
-	 * @note    This function performs no buffer boundary checking
-	 *			regardless of whether GDISP_NEED_CLIP has been specified.
-	 *
-	 * @param[in] buf		The buffer to put the pixel in
-	 * @param[in] cx		The width of a pixel line
-	 * @param[in] x, y		The location of the pixel to place
-	 * @param[in] color		The color to put into the buffer
-	 *
-	 * @api
-	 */
-	void gdispPackPixels(const pixel_t *buf, coord_t cx, coord_t x, coord_t y, color_t color);
-#endif
+		// Calculate the component bit shifts
+		#if (GDISP_LLD_PIXELFORMAT & GDISP_COLORSYSTEM_MASK) == GDISP_COLORSYSTEM_RGB
+			#define LLDCOLOR_SHIFT_R		(LLDCOLOR_BITS_B+LLDCOLOR_BITS_G)
+			#define LLDCOLOR_SHIFT_G		LLDCOLOR_BITS_B
+			#define LLDCOLOR_SHIFT_B		0
+		#else
+			#define LLDCOLOR_SHIFT_B		(LLDCOLOR_BITS_R+LLDCOLOR_BITS_G)
+			#define LLDCOLOR_SHIFT_G		LLDCOLOR_BITS_R
+			#define LLDCOLOR_SHIFT_R		0
+		#endif
 
-/* Low level driver pixel format information */
-//-------------------------
-//	True-Color color system
-//-------------------------
-#if GDISP_LLD_PIXELFORMAT & GDISP_COLORSYSTEM_TRUECOLOR
-	#define LLDCOLOR_SYSTEM			GDISP_COLORSYSTEM_TRUECOLOR
+		// Calculate LLDRED_OF, LLDGREEN_OF, LLDBLUE_OF and LLDRGB2COLOR
+		#if LLDCOLOR_BITS_R + LLDCOLOR_SHIFT_R == 8
+			#define LLDRED_OF(c)			((c) & (((1<<LLDCOLOR_BITS_R)-1) << LLDCOLOR_SHIFT_R))
+			#define LLDRGB2COLOR_R(r)		((LLDCOLOR_TYPE)((r) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_R))-1))))
+		#elif LLDCOLOR_BITS_R + LLDCOLOR_SHIFT_R > 8
+			#define LLDRED_OF(c)			(((c) & (((1<<LLDCOLOR_BITS_R)-1) << LLDCOLOR_SHIFT_R)) >> (LLDCOLOR_BITS_R+LLDCOLOR_SHIFT_R-8))
+			#define LLDRGB2COLOR_R(r)		(((LLDCOLOR_TYPE)((r) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_R))-1)))) << (LLDCOLOR_BITS_R+LLDCOLOR_SHIFT_R-8))
+		#else // LLDCOLOR_BITS_R + LLDCOLOR_SHIFT_R < 8
+			#define LLDRED_OF(c)			(((c) & (((1<<LLDCOLOR_BITS_R)-1) << LLDCOLOR_SHIFT_R)) << (8-(LLDCOLOR_BITS_R+LLDCOLOR_SHIFT_R)))
+			#define LLDRGB2COLOR_R(r)		(((LLDCOLOR_TYPE)((r) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_R))-1)))) >> (8-(LLDCOLOR_BITS_R+LLDCOLOR_SHIFT_R)))
+		#endif
+		#if LLDCOLOR_BITS_G + LLDCOLOR_SHIFT_G == 8
+			#define LLDGREEN_OF(c)			((c) & (((1<<LLDCOLOR_BITS_G)-1) << LLDCOLOR_SHIFT_G))
+			#define LLDRGB2COLOR_G(g)		((LLDCOLOR_TYPE)((g) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_G))-1))))
+		#elif LLDCOLOR_BITS_G + LLDCOLOR_SHIFT_G > 8
+			#define LLDGREEN_OF(c)			(((c) & (((1<<LLDCOLOR_BITS_G)-1) << LLDCOLOR_SHIFT_G)) >> (LLDCOLOR_BITS_G+LLDCOLOR_SHIFT_G-8))
+			#define LLDRGB2COLOR_G(g)		(((LLDCOLOR_TYPE)((g) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_G))-1)))) << (LLDCOLOR_BITS_G+LLDCOLOR_SHIFT_G-8))
+		#else // LLDCOLOR_BITS_G + LLDCOLOR_SHIFT_G < 8
+			#define LLDGREEN_OF(c)			(((c) & (((1<<LLDCOLOR_BITS_G)-1) << LLDCOLOR_SHIFT_G)) << (8-(LLDCOLOR_BITS_G+LLDCOLOR_SHIFT_G)))
+			#define LLDRGB2COLOR_G(g)		(((LLDCOLOR_TYPE)((g) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_G))-1)))) >> (8-(LLDCOLOR_BITS_LLDG+COLOR_SHIFT_G)))
+		#endif
+		#if LLDCOLOR_BITS_B + LLDCOLOR_SHIFT_B == 8
+			#define LLDBLUE_OF(c)			((c) & (((1<<LLDCOLOR_BITS_B)-1) << LLDCOLOR_SHIFT_B))
+			#define LLDRGB2COLOR_B(b)		((LLDCOLOR_TYPE)((b) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_B))-1))))
+		#elif LLDCOLOR_BITS_B + LLDCOLOR_SHIFT_B > 8
+			#define LLDBLUE_OF(c)			(((c) & (((1<<LLDCOLOR_BITS_B)-1) << LLDCOLOR_SHIFT_B)) >> (LLDCOLOR_BITS_B+LLDCOLOR_SHIFT_B-8))
+			#define LLDRGB2COLOR_B(b)		(((LLDCOLOR_TYPE)((b) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_B))-1)))) << (LLDCOLOR_BITS_B+LLDCOLOR_SHIFT_B-8))
+		#else // LLDCOLOR_BITS_B + LLDCOLOR_SHIFT_B < 8
+			#define LLDBLUE_OF(c)			(((c) & (((1<<LLDCOLOR_BITS_B)-1) << LLDCOLOR_SHIFT_B)) << (8-(LLDCOLOR_BITS_B+LLDCOLOR_SHIFT_B)))
+			#define LLDRGB2COLOR_B(b)		(((COLOR_TYPE)((b) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_B))-1)))) >> (8-(LLDCOLOR_BITS_B+LLDCOLOR_SHIFT_B)))
+		#endif
+		#define LLDLUMA_OF(c)				((LLDRED_OF(c)+((uint16_t)LLDGREEN_OF(c)<<1)+LLDBLUE_OF(c))>>2)
+		#define LLDEXACT_RED_OF(c)			(((uint16_t)(((c)>>LLDCOLOR_SHIFT_R)&((1<<LLDCOLOR_BITS_R)-1))*255)/((1<<LLDCOLOR_BITS_R)-1))
+		#define LLDEXACT_GREEN_OF(c)		(((uint16_t)(((c)>>LLDCOLOR_SHIFT_G)&((1<<LLDCOLOR_BITS_G)-1))*255)/((1<<LLDCOLOR_BITS_G)-1))
+		#define LLDEXACT_BLUE_OF(c)			(((uint16_t)(((c)>>LLDCOLOR_SHIFT_B)&((1<<LLDCOLOR_BITS_B)-1))*255)/((1<<LLDCOLOR_BITS_B)-1))
+		#define LLDEXACT_LUMA_OF(c)			((LLDEXACT_RED_OF(c)+((uint16_t)LLDEXACT_GREEN_OF(c)<<1)+LLDEXACT_BLUE_OF(c))>>2)
+		#define LLDLUMA2COLOR(l)			(LLDRGB2COLOR_R(l) | LLDRGB2COLOR_G(l) | LLDRGB2COLOR_B(l))
+		#define LLDRGB2COLOR(r,g,b)			(LLDRGB2COLOR_R(r) | LLDRGB2COLOR_G(g) | LLDRGB2COLOR_B(b))
 
-	// Calculate the number of bits
-	#define LLDCOLOR_BITS_R			((GDISP_LLD_PIXELFORMAT>>8) & 0x0F)
-	#define LLDCOLOR_BITS_G			((GDISP_LLD_PIXELFORMAT>>4) & 0x0F)
-	#define LLDCOLOR_BITS_B			((GDISP_LLD_PIXELFORMAT>>0) & 0x0F)
-	#define LLDCOLOR_BITS			(LLDCOLOR_BITS_R + LLDCOLOR_BITS_G + LLDCOLOR_BITS_B)
+		// Calculate LLDHTML2COLOR
+		#if LLDCOLOR_BITS_R + LLDCOLOR_SHIFT_R == 24
+			#define LLDHTML2COLOR_R(h)		((h) & ((0xFF & ~((1<<(8-LLDCOLOR_BITS_R))-1))<<16))
+		#elif COLOR_BITS_R + COLOR_SHIFT_R > 24
+			#define LLDHTML2COLOR_R(h)		(((h) & ((0xFF & ~((1<<(8-LLDCOLOR_BITS_R))-1))<<16)) << (LLDCOLOR_BITS_R+LLDCOLOR_SHIFT_R-24))
+		#else // COLOR_BITS_R + COLOR_SHIFT_R < 24
+			#define LLDHTML2COLOR_R(h)		(((h) & ((0xFF & ~((1<<(8-LLDCOLOR_BITS_R))-1))<<16)) >> (24-(LLDCOLOR_BITS_R+LLDCOLOR_SHIFT_R)))
+		#endif
+		#if LLDCOLOR_BITS_G + LLDCOLOR_SHIFT_G == 16
+			#define LLDHTML2COLOR_G(h)		((h) & ((0xFF & ~((1<<(8-LLDCOLOR_BITS_G))-1))<<8))
+		#elif LLDCOLOR_BITS_G + LLDCOLOR_SHIFT_G > 16
+			#define LLDHTML2COLOR_G(h)		(((h) & ((0xFF & ~((1<<(8-LLDCOLOR_BITS_G))-1))<<8)) << (LLDCOLOR_BITS_G+LLDCOLOR_SHIFT_G-16))
+		#else // LLDCOLOR_BITS_G + LLDCOLOR_SHIFT_G < 16
+			#define LLDHTML2COLOR_G(h)		(((h) & ((0xFF & ~((1<<(8-LLDCOLOR_BITS_G))-1))<<8)) >> (16-(LLDCOLOR_BITS_G+LLDCOLOR_SHIFT_G)))
+		#endif
+		#if LLDCOLOR_BITS_B + LLDCOLOR_SHIFT_B == 8
+			#define LLDHTML2COLOR_B(h)		((h) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_B))-1)))
+		#elif LLDCOLOR_BITS_B + LLDCOLOR_SHIFT_B > 8
+			#define LLDHTML2COLOR_B(h)		(((h) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_B))-1))) << (LLDCOLOR_BITS_B+LLDCOLOR_SHIFT_B-8))
+		#else // LLDCOLOR_BITS_B + LLDCOLOR_SHIFT_B < 8
+			#define LLDHTML2COLOR_B(h)		(((h) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_B))-1))) >> (8-(LLDCOLOR_BITS_B+LLDCOLOR_SHIFT_B)))
+		#endif
+		#define LLDHTML2COLOR(h)		((LLDCOLOR_TYPE)(LLDHTML2COLOR_R(h) | LLDHTML2COLOR_G(h) | LLDHTML2COLOR_B(h)))
 
-	// From the number of bits determine COLOR_TYPE, COLOR_TYPE_BITS and masking
-	#if LLDCOLOR_BITS <= 8
-		#define LLDCOLOR_TYPE			uint8_t
-		#define LLDCOLOR_TYPE_BITS		8
-	#elif LLDCOLOR_BITS <= 16
-		#define LLDCOLOR_TYPE			uint16_t
-		#define LLDCOLOR_TYPE_BITS		16
-	#elif LLDCOLOR_BITS <= 32
-		#define LLDCOLOR_TYPE			uint32_t
-		#define LLDCOLOR_TYPE_BITS		32
-	#else
-		#error "GDISP: Cannot define low level driver color types with more than 32 bits"
-	#endif
-	#if LLDCOLOR_TYPE_BITS == LLDCOLOR_BITS
-		#define LLDCOLOR_NEEDS_MASK	FALSE
-	#else
-		#define LLDCOLOR_NEEDS_MASK	TRUE
-	#endif
-	#define LLDCOLOR_MASK()			((1 << LLDCOLOR_BITS)-1)
+	//-------------------------
+	//	Gray-scale color system
+	//-------------------------
+	#elif (GDISP_LLD_PIXELFORMAT & GDISP_COLORSYSTEM_MASK) == GDISP_COLORSYSTEM_GRAYSCALE
+		#define LLDCOLOR_SYSTEM			GDISP_COLORSYSTEM_GRAYSCALE
 
-	// Calculate the component bit shifts
-	#if (GDISP_LLD_PIXELFORMAT & GDISP_COLORSYSTEM_MASK) == GDISP_COLORSYSTEM_RGB
-		#define LLDCOLOR_SHIFT_R		(LLDCOLOR_BITS_B+LLDCOLOR_BITS_G)
-		#define LLDCOLOR_SHIFT_G		LLDCOLOR_BITS_B
-		#define LLDCOLOR_SHIFT_B		0
-	#else
-		#define LLDCOLOR_SHIFT_B		(LLDCOLOR_BITS_R+LLDCOLOR_BITS_G)
-		#define LLDCOLOR_SHIFT_G		LLDCOLOR_BITS_R
+		// Calculate the number of bits and shifts
+		#define LLDCOLOR_BITS			(GDISP_LLD_PIXELFORMAT & 0xFF)
+		#define LLDCOLOR_BITS_R			LLDCOLOR_BITS
+		#define LLDCOLOR_BITS_G			LLDCOLOR_BITS
+		#define LLDCOLOR_BITS_B			LLDCOLOR_BITS
 		#define LLDCOLOR_SHIFT_R		0
-	#endif
+		#define LLDCOLOR_SHIFT_G		0
+		#define LLDCOLOR_SHIFT_B		0
 
-	// Calculate LLDRED_OF, LLDGREEN_OF, LLDBLUE_OF and LLDRGB2COLOR
-	#if LLDCOLOR_BITS_R + LLDCOLOR_SHIFT_R == 8
-		#define LLDRED_OF(c)			((c) & (((1<<LLDCOLOR_BITS_R)-1) << LLDCOLOR_SHIFT_R))
-		#define LLDRGB2COLOR_R(r)		((LLDCOLOR_TYPE)((r) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_R))-1))))
-	#elif LLDCOLOR_BITS_R + LLDCOLOR_SHIFT_R > 8
-		#define LLDRED_OF(c)			(((c) & (((1<<LLDCOLOR_BITS_R)-1) << LLDCOLOR_SHIFT_R)) >> (LLDCOLOR_BITS_R+LLDCOLOR_SHIFT_R-8))
-		#define LLDRGB2COLOR_R(r)		(((LLDCOLOR_TYPE)((r) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_R))-1)))) << (LLDCOLOR_BITS_R+LLDCOLOR_SHIFT_R-8))
-	#else // LLDCOLOR_BITS_R + LLDCOLOR_SHIFT_R < 8
-		#define LLDRED_OF(c)			(((c) & (((1<<LLDCOLOR_BITS_R)-1) << LLDCOLOR_SHIFT_R)) << (8-(LLDCOLOR_BITS_R+LLDCOLOR_SHIFT_R)))
-		#define LLDRGB2COLOR_R(r)		(((LLDCOLOR_TYPE)((r) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_R))-1)))) >> (8-(LLDCOLOR_BITS_R+LLDCOLOR_SHIFT_R)))
-	#endif
-	#if LLDCOLOR_BITS_G + LLDCOLOR_SHIFT_G == 8
-		#define LLDGREEN_OF(c)			((c) & (((1<<LLDCOLOR_BITS_G)-1) << LLDCOLOR_SHIFT_G))
-		#define LLDRGB2COLOR_G(g)		((LLDCOLOR_TYPE)((g) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_G))-1))))
-	#elif LLDCOLOR_BITS_G + LLDCOLOR_SHIFT_G > 8
-		#define LLDGREEN_OF(c)			(((c) & (((1<<LLDCOLOR_BITS_G)-1) << LLDCOLOR_SHIFT_G)) >> (LLDCOLOR_BITS_G+LLDCOLOR_SHIFT_G-8))
-		#define LLDRGB2COLOR_G(g)		(((LLDCOLOR_TYPE)((g) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_G))-1)))) << (LLDCOLOR_BITS_G+LLDCOLOR_SHIFT_G-8))
-	#else // LLDCOLOR_BITS_G + LLDCOLOR_SHIFT_G < 8
-		#define LLDGREEN_OF(c)			(((c) & (((1<<LLDCOLOR_BITS_G)-1) << LLDCOLOR_SHIFT_G)) << (8-(LLDCOLOR_BITS_G+LLDCOLOR_SHIFT_G)))
-		#define LLDRGB2COLOR_G(g)		(((LLDCOLOR_TYPE)((g) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_G))-1)))) >> (8-(LLDCOLOR_BITS_LLDG+COLOR_SHIFT_G)))
-	#endif
-	#if LLDCOLOR_BITS_B + LLDCOLOR_SHIFT_B == 8
-		#define LLDBLUE_OF(c)			((c) & (((1<<LLDCOLOR_BITS_B)-1) << LLDCOLOR_SHIFT_B))
-		#define LLDRGB2COLOR_B(b)		((LLDCOLOR_TYPE)((b) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_B))-1))))
-	#elif LLDCOLOR_BITS_B + LLDCOLOR_SHIFT_B > 8
-		#define LLDBLUE_OF(c)			(((c) & (((1<<LLDCOLOR_BITS_B)-1) << LLDCOLOR_SHIFT_B)) >> (LLDCOLOR_BITS_B+LLDCOLOR_SHIFT_B-8))
-		#define LLDRGB2COLOR_B(b)		(((LLDCOLOR_TYPE)((b) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_B))-1)))) << (LLDCOLOR_BITS_B+LLDCOLOR_SHIFT_B-8))
-	#else // LLDCOLOR_BITS_B + LLDCOLOR_SHIFT_B < 8
-		#define LLDBLUE_OF(c)			(((c) & (((1<<LLDCOLOR_BITS_B)-1) << LLDCOLOR_SHIFT_B)) << (8-(LLDCOLOR_BITS_B+LLDCOLOR_SHIFT_B)))
-		#define LLDRGB2COLOR_B(b)		(((COLOR_TYPE)((b) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_B))-1)))) >> (8-(LLDCOLOR_BITS_B+LLDCOLOR_SHIFT_B)))
-	#endif
-	#define LLDLUMA_OF(c)				((LLDRED_OF(c)+((uint16_t)LLDGREEN_OF(c)<<1)+LLDBLUE_OF(c))>>2)
-	#define LLDEXACT_RED_OF(c)			(((uint16_t)(((c)>>LLDCOLOR_SHIFT_R)&((1<<LLDCOLOR_BITS_R)-1))*255)/((1<<LLDCOLOR_BITS_R)-1))
-	#define LLDEXACT_GREEN_OF(c)		(((uint16_t)(((c)>>LLDCOLOR_SHIFT_G)&((1<<LLDCOLOR_BITS_G)-1))*255)/((1<<LLDCOLOR_BITS_G)-1))
-	#define LLDEXACT_BLUE_OF(c)			(((uint16_t)(((c)>>LLDCOLOR_SHIFT_B)&((1<<LLDCOLOR_BITS_B)-1))*255)/((1<<LLDCOLOR_BITS_B)-1))
-	#define LLDEXACT_LUMA_OF(c)			((LLDEXACT_RED_OF(c)+((uint16_t)LLDEXACT_GREEN_OF(c)<<1)+LLDEXACT_BLUE_OF(c))>>2)
-	#define LLDLUMA2COLOR(l)			(LLDRGB2COLOR_R(l) | LLDRGB2COLOR_G(l) | LLDRGB2COLOR_B(l))
-	#define LLDRGB2COLOR(r,g,b)			(LLDRGB2COLOR_R(r) | LLDRGB2COLOR_G(g) | LLDRGB2COLOR_B(b))
+		// From the number of bits determine COLOR_TYPE, COLOR_TYPE_BITS and masking
+		#if LLDCOLOR_BITS <= 8
+			#define LLDCOLOR_TYPE		uint8_t
+			#define LLDCOLOR_TYPE_BITS	8
+		#else
+			#error "GDISP: Cannot define gray-scale low level driver color types with more than 8 bits"
+		#endif
+		#if LLDCOLOR_TYPE_BITS == LLDCOLOR_BITS
+			#define LLDCOLOR_NEEDS_MASK	FALSE
+		#else
+			#define LLDCOLOR_NEEDS_MASK	TRUE
+		#endif
+		#define LLDCOLOR_MASK()			((1 << LLDCOLOR_BITS)-1)
 
-	// Calculate LLDHTML2COLOR
-	#if LLDCOLOR_BITS_R + LLDCOLOR_SHIFT_R == 24
-		#define LLDHTML2COLOR_R(h)		((h) & ((0xFF & ~((1<<(8-LLDCOLOR_BITS_R))-1))<<16))
-	#elif COLOR_BITS_R + COLOR_SHIFT_R > 24
-		#define LLDHTML2COLOR_R(h)		(((h) & ((0xFF & ~((1<<(8-LLDCOLOR_BITS_R))-1))<<16)) << (LLDCOLOR_BITS_R+LLDCOLOR_SHIFT_R-24))
-	#else // COLOR_BITS_R + COLOR_SHIFT_R < 24
-		#define LLDHTML2COLOR_R(h)		(((h) & ((0xFF & ~((1<<(8-LLDCOLOR_BITS_R))-1))<<16)) >> (24-(LLDCOLOR_BITS_R+LLDCOLOR_SHIFT_R)))
-	#endif
-	#if LLDCOLOR_BITS_G + LLDCOLOR_SHIFT_G == 16
-		#define LLDHTML2COLOR_G(h)		((h) & ((0xFF & ~((1<<(8-LLDCOLOR_BITS_G))-1))<<8))
-	#elif LLDCOLOR_BITS_G + LLDCOLOR_SHIFT_G > 16
-		#define LLDHTML2COLOR_G(h)		(((h) & ((0xFF & ~((1<<(8-LLDCOLOR_BITS_G))-1))<<8)) << (LLDCOLOR_BITS_G+LLDCOLOR_SHIFT_G-16))
-	#else // LLDCOLOR_BITS_G + LLDCOLOR_SHIFT_G < 16
-		#define LLDHTML2COLOR_G(h)		(((h) & ((0xFF & ~((1<<(8-LLDCOLOR_BITS_G))-1))<<8)) >> (16-(LLDCOLOR_BITS_G+LLDCOLOR_SHIFT_G)))
-	#endif
-	#if LLDCOLOR_BITS_B + LLDCOLOR_SHIFT_B == 8
-		#define LLDHTML2COLOR_B(h)		((h) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_B))-1)))
-	#elif LLDCOLOR_BITS_B + LLDCOLOR_SHIFT_B > 8
-		#define LLDHTML2COLOR_B(h)		(((h) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_B))-1))) << (LLDCOLOR_BITS_B+LLDCOLOR_SHIFT_B-8))
-	#else // LLDCOLOR_BITS_B + LLDCOLOR_SHIFT_B < 8
-		#define LLDHTML2COLOR_B(h)		(((h) & (0xFF & ~((1<<(8-LLDCOLOR_BITS_B))-1))) >> (8-(LLDCOLOR_BITS_B+LLDCOLOR_SHIFT_B)))
-	#endif
-	#define LLDHTML2COLOR(h)		((LLDCOLOR_TYPE)(LLDHTML2COLOR_R(h) | LLDHTML2COLOR_G(h) | LLDHTML2COLOR_B(h)))
+		#if COLOR_BITS == 1
+			#define LLDRGB2COLOR(r,g,b)		(((r)|(g)|(b)) ? 1 : 0)
+			#define LLDLUMA2COLOR(l)		((l) ? 1 : 0)
+			#define LLDHTML2COLOR(h)		((h) ? 1 : 0)
+			#define LLDLUMA_OF(c)			((c) ? 255 : 0)
+			#define LLDEXACT_LUMA_OF(c)		LLDLUMA_OF(c)
+		#else
+			// They eye is more sensitive to green
+			#define LLDRGB2COLOR(r,g,b)		((LLDCOLOR_TYPE)(((uint16_t)(r)+(g)+(g)+(b)) >> (10-LLDCOLOR_BITS)))
+			#define LLDLUMA2COLOR(l)		((LLDCOLOR_TYPE)((l)>>(8-LLDCOLOR_BITS)))
+			#define LLDHTML2COLOR(h)		((LLDCOLOR_TYPE)(((((h)&0xFF0000)>>16)+(((h)&0x00FF00)>>7)+((h)&0x0000FF)) >> (10-LLDCOLOR_BITS)))
+			#define LLDLUMA_OF(c)			(((c) & ((1<<LLDCOLOR_BITS)-1)) << (8-LLDCOLOR_BITS))
+			#define LLDEXACT_LUMA_OF(c)		((((uint16_t)(c) & ((1<<LLDCOLOR_BITS)-1))*255)/((1<<LLDCOLOR_BITS)-1))
+		#endif
 
-//-------------------------
-//	Gray-scale color system
-//-------------------------
-#elif (GDISP_LLD_PIXELFORMAT & GDISP_COLORSYSTEM_MASK) == GDISP_COLORSYSTEM_GRAYSCALE
-	#define LLDCOLOR_SYSTEM			GDISP_COLORSYSTEM_GRAYSCALE
+		#define LLDRED_OF(c)			LLDLUMA_OF(c)
+		#define LLDGREEN_OF(c)			LLDLUMA_OF(c)
+		#define LLDBLUE_OF(c)			LLDLUMA_OF(c)
+		#define LLDEXACT_RED_OF(c)		LLDEXACT_LUMA_OF(c)
+		#define LLDEXACT_GREEN_OF(c)	LLDEXACT_LUMA_OF(c)
+		#define LLDEXACT_BLUE_OF(c)		LLDEXACT_LUMA_OF(c)
 
-	// Calculate the number of bits and shifts
-	#define LLDCOLOR_BITS			(GDISP_LLD_PIXELFORMAT & 0xFF)
-	#define LLDCOLOR_BITS_R			LLDCOLOR_BITS
-	#define LLDCOLOR_BITS_G			LLDCOLOR_BITS
-	#define LLDCOLOR_BITS_B			LLDCOLOR_BITS
-	#define LLDCOLOR_SHIFT_R		0
-	#define LLDCOLOR_SHIFT_G		0
-	#define LLDCOLOR_SHIFT_B		0
+	//-------------------------
+	//	Palette color system
+	//-------------------------
+	#elif (GDISP_LLD_PIXELFORMAT & GDISP_COLORSYSTEM_MASK) == GDISP_COLORSYSTEM_PALETTE
+		#define LLDCOLOR_SYSTEM			GDISP_COLORSYSTEM_PALETTE
 
-	// From the number of bits determine COLOR_TYPE, COLOR_TYPE_BITS and masking
-	#if LLDCOLOR_BITS <= 8
-		#define LLDCOLOR_TYPE		uint8_t
-		#define LLDCOLOR_TYPE_BITS	8
+		#error "GDISP: A palette color system for low level drivers is not currently supported"
+
+	//-------------------------
+	//	Some other color system
+	//-------------------------
 	#else
-		#error "GDISP: Cannot define gray-scale low level driver color types with more than 8 bits"
+		#error "GDISP: Unsupported color system for low level drivers"
 	#endif
-	#if LLDCOLOR_TYPE_BITS == LLDCOLOR_BITS
-		#define LLDCOLOR_NEEDS_MASK	FALSE
+
+	/* Which is the larger color type */
+	#if COLOR_BITS > LLDCOLOR_BITS
+		#define LARGER_COLOR_BITS	COLOR_BITS
+		#define LARGER_COLOR_TYPE	COLOR_TYPE
 	#else
-		#define LLDCOLOR_NEEDS_MASK	TRUE
-	#endif
-	#define LLDCOLOR_MASK()			((1 << LLDCOLOR_BITS)-1)
-
-	#if COLOR_BITS == 1
-		#define LLDRGB2COLOR(r,g,b)		(((r)|(g)|(b)) ? 1 : 0)
-		#define LLDLUMA2COLOR(l)		((l) ? 1 : 0)
-		#define LLDHTML2COLOR(h)		((h) ? 1 : 0)
-		#define LLDLUMA_OF(c)			((c) ? 255 : 0)
-		#define LLDEXACT_LUMA_OF(c)		LLDLUMA_OF(c)
-	#else
-		// They eye is more sensitive to green
-		#define LLDRGB2COLOR(r,g,b)		((LLDCOLOR_TYPE)(((uint16_t)(r)+(g)+(g)+(b)) >> (10-LLDCOLOR_BITS)))
-		#define LLDLUMA2COLOR(l)		((LLDCOLOR_TYPE)((l)>>(8-LLDCOLOR_BITS)))
-		#define LLDHTML2COLOR(h)		((LLDCOLOR_TYPE)(((((h)&0xFF0000)>>16)+(((h)&0x00FF00)>>7)+((h)&0x0000FF)) >> (10-LLDCOLOR_BITS)))
-		#define LLDLUMA_OF(c)			(((c) & ((1<<LLDCOLOR_BITS)-1)) << (8-LLDCOLOR_BITS))
-		#define LLDEXACT_LUMA_OF(c)		((((uint16_t)(c) & ((1<<LLDCOLOR_BITS)-1))*255)/((1<<LLDCOLOR_BITS)-1))
+		#define LARGER_COLOR_BITS	LLDCOLOR_BITS
+		#define LARGER_COLOR_TYPE	LLDCOLOR_TYPE
 	#endif
 
-	#define LLDRED_OF(c)			LLDLUMA_OF(c)
-	#define LLDGREEN_OF(c)			LLDLUMA_OF(c)
-	#define LLDBLUE_OF(c)			LLDLUMA_OF(c)
-	#define LLDEXACT_RED_OF(c)		LLDEXACT_LUMA_OF(c)
-	#define LLDEXACT_GREEN_OF(c)	LLDEXACT_LUMA_OF(c)
-	#define LLDEXACT_BLUE_OF(c)		LLDEXACT_LUMA_OF(c)
-
-//-------------------------
-//	Palette color system
-//-------------------------
-#elif (GDISP_LLD_PIXELFORMAT & GDISP_COLORSYSTEM_MASK) == GDISP_COLORSYSTEM_PALETTE
-	#define LLDCOLOR_SYSTEM			GDISP_COLORSYSTEM_PALETTE
-
-	#error "GDISP: A palette color system for low level drivers is not currently supported"
-
-//-------------------------
-//	Some other color system
-//-------------------------
-#else
-	#error "GDISP: Unsupported color system for low level drivers"
-#endif
-
-/* Which is the larger color type */
-#if COLOR_BITS > LLDCOLOR_BITS
-	#define LARGER_COLOR_BITS	COLOR_BITS
-	#define LARGER_COLOR_TYPE	COLOR_TYPE
-#else
-	#define LARGER_COLOR_BITS	LLDCOLOR_BITS
-	#define LARGER_COLOR_TYPE	LLDCOLOR_TYPE
-#endif
-
-/**
- * @brief	Controls color conversion accuracy for a low level driver
- * @details	Should higher precision be used when converting colors.
- * @note	Color conversion is only necessary if GDISP_PIXELFORMAT != GDISP_LLD_PIXELFORMAT
- * @note	It only makes sense to turn this on if you have a high bit depth display but
- * 			are running the application in low bit depths.
- * @note	To achieve higher color accuracy bit shifting is replaced with multiplies and divides.
- */
-#ifndef GDISP_HARDWARE_USE_EXACT_COLOR
-	#if LLDCOLOR_BITS_R - COLOR_BITS_R >= LLDCOLOR_BITS_R/2 || LLDCOLOR_BITS_G - COLOR_BITS_G >= LLDCOLOR_BITS_G/2 || LLDCOLOR_BITS_B - COLOR_BITS_B >= LLDCOLOR_BITS_B/2
-		#define GDISP_HARDWARE_USE_EXACT_COLOR	TRUE
-	#else
-		#define GDISP_HARDWARE_USE_EXACT_COLOR	FALSE
-	#endif
-#endif
-
-/* Low level driver pixel format conversion functions */
-#if GDISP_PIXELFORMAT == GDISP_LLD_PIXELFORMAT || defined(__DOXYGEN__)
 	/**
-	 * @brief	Convert from a standard color format to the low level driver pixel format
-	 * @note	For use only by low level drivers
+	 * @brief	Controls color conversion accuracy for a low level driver
+	 * @details	Should higher precision be used when converting colors.
+	 * @note	Color conversion is only necessary if GDISP_PIXELFORMAT != GDISP_LLD_PIXELFORMAT
+	 * @note	It only makes sense to turn this on if you have a high bit depth display but
+	 * 			are running the application in low bit depths.
+	 * @note	To achieve higher color accuracy bit shifting is replaced with multiplies and divides.
 	 */
-	#define gdispColor2Native(c)	(c)
-	/**
-	 * @brief	Convert from a low level driver pixel format to the standard color format
-	 * @note	For use only by low level drivers
-	 */
-	#define gdispNative2Color(c)	(c)
-#else
-	LLDCOLOR_TYPE gdispColor2Native(color_t c);
-	color_t gdispNative2Color(LLDCOLOR_TYPE c);
+	#ifndef GDISP_HARDWARE_USE_EXACT_COLOR
+		#if LLDCOLOR_BITS_R - COLOR_BITS_R >= LLDCOLOR_BITS_R/2 || LLDCOLOR_BITS_G - COLOR_BITS_G >= LLDCOLOR_BITS_G/2 || LLDCOLOR_BITS_B - COLOR_BITS_B >= LLDCOLOR_BITS_B/2
+			#define GDISP_HARDWARE_USE_EXACT_COLOR	TRUE
+		#else
+			#define GDISP_HARDWARE_USE_EXACT_COLOR	FALSE
+		#endif
+	#endif
+
+	/* Low level driver pixel format conversion functions */
+	#if GDISP_PIXELFORMAT == GDISP_LLD_PIXELFORMAT || defined(__DOXYGEN__)
+		/**
+		 * @brief	Convert from a standard color format to the low level driver pixel format
+		 * @note	For use only by low level drivers
+		 */
+		#define gdispColor2Native(c)	(c)
+		/**
+		 * @brief	Convert from a low level driver pixel format to the standard color format
+		 * @note	For use only by low level drivers
+		 */
+		#define gdispNative2Color(c)	(c)
+	#else
+		static LLDCOLOR_TYPE gdispColor2Native(color_t c) {
+			#if COLOR_SYSTEM == GDISP_COLORSYSTEM_GRAYSCALE || LLDCOLOR_SYSTEM == GDISP_COLORSYSTEM_GRAYSCALE
+				#if GDISP_HARDWARE_USE_EXACT_COLOR
+					return LLDLUMA2COLOR(EXACT_LUMA_OF(c));
+				#else
+					return LLDLUMA2COLOR(LUMA_OF(c));
+				#endif
+			#elif COLOR_SYSTEM == GDISP_COLORSYSTEM_TRUECOLOR && LLDCOLOR_SYSTEM == GDISP_COLORSYSTEM_TRUECOLOR
+				#if GDISP_HARDWARE_USE_EXACT_COLOR
+					return LLDRGB2COLOR(EXACT_RED_OF(c), EXACT_GREEN_OF(c), EXACT_BLUE_OF(c));
+				#else
+					return LLDRGB2COLOR(RED_OF(c), GREEN_OF(c), BLUE_OF(c));
+				#endif
+			#else
+				#error "GDISP: This pixel format conversion is not supported yet"
+			#endif
+		}
+		static color_t gdispNative2Color(LLDCOLOR_TYPE c) {
+			#if COLOR_SYSTEM == GDISP_COLORSYSTEM_GRAYSCALE || LLDCOLOR_SYSTEM == GDISP_COLORSYSTEM_GRAYSCALE
+				#if GDISP_HARDWARE_USE_EXACT_COLOR
+					return LUMA2COLOR(LLDEXACT_LUMA_OF(c));
+				#else
+					return LUMA2COLOR(LLDLUMA_OF(c));
+				#endif
+			#elif COLOR_SYSTEM == GDISP_COLORSYSTEM_TRUECOLOR && LLDCOLOR_SYSTEM == GDISP_COLORSYSTEM_TRUECOLOR
+				#if GDISP_HARDWARE_USE_EXACT_COLOR
+					return RGB2COLOR(LLDEXACT_RED_OF(c), LLDEXACT_GREEN_OF(c), LLDEXACT_BLUE_OF(c));
+				#else
+					return RGB2COLOR(LLDRED_OF(c), LLDGREEN_OF(c), LLDBLUE_OF(c));
+				#endif
+			#else
+				#error "GDISP: This pixel format conversion is not supported yet"
+			#endif
+		}
+	#endif
+
 #endif
 
 #endif	/* GFX_USE_GDISP */
