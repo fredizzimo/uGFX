@@ -31,10 +31,10 @@
 typedef struct GEventKeyboard_t {
 	GEventType		type;				// The type of this event (GEVENT_KEYBOARD)
 	uint16_t		instance;			// The keyboard instance
-	char			c;					// The Ascii code for the current key press.
+	char			c;					// The ASCII code for the current key press.
 										//		The only possible values are 0(NUL), 8(BS), 9(TAB), 13(CR), 27(ESC), 32(SPACE) to 126(~), 127(DEL)
 										//		0 indicates an extended only key.
-	uint16_t		code;				// An extended keyboard code. Codes less than 128 match their ascii equivelent.
+	uint16_t		code;				// An extended keyboard code. Codes less than 128 match their ASCII equivalent.
 		#define GKEY_NULL		0
 		#define GKEY_BACKSPACE	8
 		#define GKEY_TAB		9
