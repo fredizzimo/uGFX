@@ -12,7 +12,7 @@
 #define GDISP_DRIVER_VMT			GDISPVMT_uGFXnet
 #include "drivers/multiple/uGFXnet/gdisp_lld_config.h"
 #include "src/gdisp/driver.h"
-#include "drivers/multiple/uGFXnet/uGFXnetProtocol.h"
+#include "uGFXnetProtocol.h"
 
 #ifndef GDISP_SCREEN_WIDTH
 	#define GDISP_SCREEN_WIDTH	640
@@ -47,6 +47,7 @@
 #if defined(WIN32) || GFX_USE_OS_WIN32
 	#include <winsock.h>
 	#define SOCKET_TYPE				SOCKET
+	#define socklen_t		int
 
 	static void StopSockets(void) {
 		WSACleanup();

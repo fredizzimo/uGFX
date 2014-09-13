@@ -14,51 +14,8 @@
 // Define the tables to hold the driver instances.
 static GDriver *dhead;
 
-// Definition that allows getting addresses of structures
-typedef const struct GDriverVMT const	VMT_EL[1];
-
 // The system initialization.
 void _gdriverInit(void) {
-	#if GFX_USE_GDISP
-	{
-		// Both GDISP_CONTROLLER_LIST and GDISP_CONTROLLER_DISPLAYS are defined - create the required numbers of each controller
-		#if defined(GDISP_CONTROLLER_LIST) && defined(GDISP_CONTROLLER_DISPLAYS)
-			int		i, cnt;
-
-
-			extern VMT_EL							GDISP_CONTROLLER_LIST;
-			static const struct GDriverVMT const *	dclist[GDISP_TOTAL_CONTROLLERS] = {GDISP_CONTROLLER_LIST};
-			static const unsigned					dnlist[GDISP_TOTAL_CONTROLLERS] = {GDISP_CONTROLLER_DISPLAYS};
-			for(i = 0; i < GDISP_TOTAL_CONTROLLERS; i++) {
-				for(cnt = dnlist[i]; cnt; cnt--)
-					gdriverRegister(dclist[i]);
-			}
-
-		// Only GDISP_CONTROLLER_LIST is defined - create one of each controller
-		#elif defined(GDISP_CONTROLLER_LIST)
-			int		i;
-
-
-			extern VMT_EL							GDISP_CONTROLLER_LIST;
-			static const struct GDriverVMT const *	dclist[GDISP_TOTAL_CONTROLLERS] = {GDISP_CONTROLLER_LIST};
-			for(i = 0; i < GDISP_TOTAL_CONTROLLERS; i++)
-				gdriverRegister(dclist[i]);
-
-		// Only GDISP_TOTAL_DISPLAYS is defined - create the required number of the one controller
-		#elif GDISP_TOTAL_DISPLAYS > 1
-			int		cnt;
-
-			extern VMT_EL GDISPVMT_OnlyOne;
-			for(cnt = 0; cnt < GDISP_TOTAL_DISPLAYS; cnt++)
-				gdriverRegister(GDISPVMT_OnlyOne);
-
-		// One and only one display
-		#else
-			extern VMT_EL GDISPVMT_OnlyOne;
-			gdriverRegister(GDISPVMT_OnlyOne);
-		#endif
-	}
-	#endif
 
 	// Drivers not loaded yet
 	// GINPUT_NEED_MOUSE
@@ -106,6 +63,10 @@ GDriver *gdriverRegister(const GDriverVMT *vmt) {
 		dtail->driverchain = pd;
 	else
 		dhead = pd;
+
+	// Do the post init
+	if (vmt->postinit)
+		vmt->postinit(pd);
 
 	return pd;
 }
