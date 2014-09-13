@@ -30,6 +30,7 @@ FEATURE:	Generalised all GWIN events to use a common prefix structure.
 FIX:		Improve memory usage for the GWIN Frame widget.
 FEATURE:	Added transparent custom draws for GWIN containers and frame widgets
 FEATURE:	Added image custom draws for GWIN containers and frame widgets
+FEATURE:	Added GDRIVER infrastructure. Ported GDISP to use it.
 
 
 *** Release 2.1 ***
