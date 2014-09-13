@@ -37,6 +37,17 @@
  * @{
  */
 	/**
+	 * @brief   The display hardware can benefit from being de-initialized when usage is complete.
+	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
+	 *
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
+	 * @note	This is most useful for displays such as remote network displays.
+	 */
+	#ifndef GDISP_HARDWARE_DEINIT
+		#define GDISP_HARDWARE_DEINIT		HARDWARE_DEFAULT
+	#endif
+
+	/**
 	 * @brief   The display hardware can benefit from being flushed.
 	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
 	 *
@@ -215,7 +226,7 @@
 
 struct GDisplay {
 	struct GDriver				d;					// This must be the first element
-		#define gvmt(g)		((const GDISPVMT const *)(g)->d.vmt)	// For ease of access to the vmt member
+		#define gvmt(g)		((const GDISPVMT const *)((g)->d.vmt))	// For ease of access to the vmt member
 
 	struct GDISPControl {
 		coord_t					Width;
@@ -278,6 +289,7 @@ struct GDisplay {
 typedef struct GDISPVMT {
 	GDriverVMT	vmtdriver;
 	bool_t (*init)(GDisplay *g);
+	void (*deinit)(GDisplay *g);
 	void (*writestart)(GDisplay *g);				// Uses p.x,p.y  p.cx,p.cy
 	void (*writepos)(GDisplay *g);					// Uses p.x,p.y
 	void (*writecolor)(GDisplay *g);				// Uses p.color
@@ -317,6 +329,17 @@ typedef struct GDISPVMT {
 	 * @param[out]	g->g	The driver must fill in the GDISPControl structure
 	 */
 	LLDSPEC	bool_t gdisp_lld_init(GDisplay *g);
+
+	#if GDISP_HARDWARE_DEINIT || defined(__DOXYGEN__)
+		/**
+		 * @brief   The driver is being de-initialized
+		 * @pre		GDISP_HARDWARE_FLUSH is TRUE
+		 *
+		 * @param[in]	g				The driver structure
+		 *
+		 */
+		LLDSPEC	void gdisp_lld_deinit(GDisplay *g);
+	#endif
 
 	#if GDISP_HARDWARE_FLUSH || defined(__DOXYGEN__)
 		/**
@@ -559,6 +582,7 @@ typedef struct GDISPVMT {
 
 #else
 	#define gdisp_lld_init(g)				gvmt(g)->init(g)
+	#define gdisp_lld_deinit(g)				gvmt(g)->deinit(g)
 	#define gdisp_lld_flush(g)				gvmt(g)->flush(g)
 	#define gdisp_lld_write_start(g)		gvmt(g)->writestart(g)
 	#define gdisp_lld_write_pos(g)			gvmt(g)->writepos(g)
@@ -594,12 +618,18 @@ typedef struct GDISPVMT {
 
 	// Routines needed by the general driver VMT
 	bool_t _gdispInitDriver(GDriver *g, int driverinstance, int systeminstance);
-	void _gdispDeinitDriver(GDriver *g);
+	void _gdispPostInitDriver(GDriver *g);
+	void _gdispDeInitDriver(GDriver *g);
 
 	// Build the VMT
 	const GDISPVMT const GDISP_DRIVER_VMT[1] = {{
-		{ GDRIVER_TYPE_DISPLAY, 0, sizeof(GDisplay), _gdispInitDriver, _gdispDeinitDriver },
+		{ GDRIVER_TYPE_DISPLAY, 0, sizeof(GDisplay), _gdispInitDriver, _gdispPostInitDriver, _gdispDeInitDriver },
 		gdisp_lld_init,
+		#if GDISP_HARDWARE_DEINIT
+			gdisp_lld_deinit,
+		#else
+			0,
+		#endif
 		#if GDISP_HARDWARE_STREAM_WRITE
 			gdisp_lld_write_start,
 			#if GDISP_HARDWARE_STREAM_POS

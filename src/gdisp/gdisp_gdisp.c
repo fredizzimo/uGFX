@@ -55,10 +55,12 @@ GDisplay	*GDISP;
 	#define MUTEX_INIT(g)		gfxMutexInit(&(g)->mutex)
 	#define MUTEX_ENTER(g)		gfxMutexEnter(&(g)->mutex)
 	#define MUTEX_EXIT(g)		gfxMutexExit(&(g)->mutex)
+	#define MUTEX_DEINIT(g)		gfxMutexDestroy(&(g)->mutex)
 #else
 	#define MUTEX_INIT(g)
 	#define MUTEX_ENTER(g)
 	#define MUTEX_EXIT(g)
+	#define MUTEX_DEINIT(g)
 #endif
 
 #define NEED_CLIPPING	(GDISP_HARDWARE_CLIP != TRUE && (GDISP_NEED_VALIDATION || GDISP_NEED_CLIP))
@@ -564,18 +566,68 @@ static void line_clip(GDisplay *g) {
 
 void _gdispInit(void)
 {
+	// Both GDISP_CONTROLLER_LIST and GDISP_CONTROLLER_DISPLAYS are defined - create the required numbers of each controller
+	#if defined(GDISP_CONTROLLER_LIST) && defined(GDISP_CONTROLLER_DISPLAYS)
+		{
+			int		i, cnt;
+
+			extern GDriverVMTList					GDISP_CONTROLLER_LIST;
+			static const struct GDriverVMT const *	dclist[GDISP_TOTAL_CONTROLLERS] = {GDISP_CONTROLLER_LIST};
+			static const unsigned					dnlist[GDISP_TOTAL_CONTROLLERS] = {GDISP_CONTROLLER_DISPLAYS};
+
+			for(i = 0; i < GDISP_TOTAL_CONTROLLERS; i++) {
+				for(cnt = dnlist[i]; cnt; cnt--)
+					gdriverRegister(dclist[i]);
+			}
+		}
+
+	// Only GDISP_CONTROLLER_LIST is defined - create one of each controller
+	#elif defined(GDISP_CONTROLLER_LIST)
+		{
+			int		i;
+
+			extern GDriverVMTList					GDISP_CONTROLLER_LIST;
+			static const struct GDriverVMT const *	dclist[GDISP_TOTAL_CONTROLLERS] = {GDISP_CONTROLLER_LIST};
+
+			for(i = 0; i < GDISP_TOTAL_CONTROLLERS; i++)
+				gdriverRegister(dclist[i]);
+		}
+
+	// Only GDISP_TOTAL_DISPLAYS is defined - create the required number of the one controller
+	#elif GDISP_TOTAL_DISPLAYS > 1
+		{
+			int		cnt;
+
+			extern GDriverVMTList 					GDISPVMT_OnlyOne;
+
+			for(cnt = 0; cnt < GDISP_TOTAL_DISPLAYS; cnt++)
+				gdriverRegister(GDISPVMT_OnlyOne);
+		}
+
+	// One and only one display
+	#else
+		{
+			extern GDriverVMTList					GDISPVMT_OnlyOne;
+
+			gdriverRegister(GDISPVMT_OnlyOne);
+		}
+	#endif
+
 	// Re-clear the display after the timeout if we added the logo
 	#if GDISP_STARTUP_LOGO_TIMEOUT > 0
-		GDisplay	*g;
+		{
+			GDisplay	*g;
 
-		gfxSleepMilliseconds(GDISP_STARTUP_LOGO_TIMEOUT);
-		initDone = TRUE;
+			gfxSleepMilliseconds(GDISP_STARTUP_LOGO_TIMEOUT);
 
-		for(g = (GDisplay *)gdriverGetNext(GDRIVER_TYPE_DISPLAY, 0); g; g = (GDisplay *)gdriverGetNext(GDRIVER_TYPE_DISPLAY, (GDriver *)g)) {
-			gdispGClear(g, GDISP_STARTUP_COLOR);
-			#if GDISP_HARDWARE_FLUSH
-				gdispGFlush(g);
-			#endif
+			for(g = (GDisplay *)gdriverGetNext(GDRIVER_TYPE_DISPLAY, 0); g; g = (GDisplay *)gdriverGetNext(GDRIVER_TYPE_DISPLAY, (GDriver *)g)) {
+				gdispGClear(g, GDISP_STARTUP_COLOR);
+				#if GDISP_HARDWARE_FLUSH
+					gdispGFlush(g);
+				#endif
+			}
+
+			initDone = TRUE;
 		}
 	#endif
 
@@ -605,22 +657,32 @@ bool_t _gdispInitDriver(GDriver *g, int driverinstance, int systeminstance) {
 	MUTEX_ENTER(gd);
 	ret = gdisp_lld_init(gd);
 	MUTEX_EXIT(gd);
-	if (!ret) return FALSE;
+	return ret;
 
-	// Set orientation, clip, blankscreen, startup logo and then flush
+	#undef gd
+}
+
+void _gdispPostInitDriver(GDriver *g) {
+	#define		gd		((GDisplay *)g)
+
+	// Set orientation, clip
 	#if defined(GDISP_DEFAULT_ORIENTATION) && GDISP_NEED_CONTROL && GDISP_HARDWARE_CONTROL
 		gdispGControl(gd, GDISP_CONTROL_ORIENTATION, (void *)GDISP_DEFAULT_ORIENTATION);
 	#endif
 	#if GDISP_NEED_VALIDATION || GDISP_NEED_CLIP
 		gdispGSetClip(gd, 0, 0, gd->g.Width, gd->g.Height);
 	#endif
+
+	// Clear the Screen
 	gdispGClear(gd, GDISP_STARTUP_COLOR);
 
+	// Display the startup logo if this is a static initialised display
 	#if GDISP_STARTUP_LOGO_TIMEOUT > 0
 		if (!initDone)
 			StartupLogoDisplay(gd);
 	#endif
 
+	// Flush
 	#if GDISP_HARDWARE_FLUSH
 		gdispGFlush(gd);
 	#endif
@@ -629,14 +691,28 @@ bool_t _gdispInitDriver(GDriver *g, int driverinstance, int systeminstance) {
 	if (!GDISP)
 		GDISP = gd;
 
-	return TRUE;
-
 	#undef gd
 }
 
-void _gdispDeinitDriver(GDriver *g) {
-	(void) g;
-	// For now do nothing
+void _gdispDeInitDriver(GDriver *g) {
+	#define		gd		((GDisplay *)g)
+
+	if (GDISP == gd)
+		GDISP = (GDisplay *)gdriverGetInstance(GDRIVER_TYPE_DISPLAY, 0);
+
+	#if GDISP_HARDWARE_DEINIT
+		#if GDISP_HARDWARE_DEINIT == HARDWARE_AUTODETECT
+			if (gvmt(gd)->deinit)
+		#endif
+		{
+			MUTEX_ENTER(gd);
+			gdisp_lld_deinit(gd);
+			MUTEX_EXIT(gd);
+		}
+	#endif
+	MUTEX_DEINIT(gd);
+
+	#undef gd
 }
 
 GDisplay *gdispGetDisplay(unsigned display) {

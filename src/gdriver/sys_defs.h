@@ -67,11 +67,26 @@ typedef struct GDriverVMT {
 	uint16_t	type;																// @< What type of driver this is
 	uint16_t	flags;																// @< Flags for the driver. Meaning is specific to each driver type.
 	uint32_t	objsize;															// @< How big the runtime driver structure is
-	bool_t		(*init)(GDriver *driver, int driverinstance, int systeminstance);	// @< Initialise the driver.
+	bool_t		(*init)(GDriver *driver, int driverinstance, int systeminstance);	// @< Initialise the driver. Returns TRUE if OK.
 																					//		driverinstance is the instance 0..n of this driver.
 																					//		systeminstance is the instance 0..n of this type of device.
+	void		(*postinit)(GDriver *driver);										// @< Called once the driver is registered.
 	void		(*deinit)(GDriver *driver);											// @< De-initialise the driver
 } GDriverVMT;
+
+/**
+ * @brief	A definition that allows getting addresses of GDriverVMT structures to put into a list.
+ * @note	eg. <code>
+ * 				const MyDriverVMTtype a[1] = {{...}};
+ * 				const MyDriverVMTtype b[1] = {{...}};
+ * 				...
+ * 				#define DRIVER_LIST		a, b
+ * 				extern GDriverVMTList	DRIVER_LIST;	// Now treated as single element arrays of GDriverVMT
+ * 				const GDriverVMT const * mylist = { DRIVER_LIST };
+ * 				</code>
+ *
+ */
+typedef const struct GDriverVMT const	GDriverVMTList[1];
 
 /*===========================================================================*/
 /* External declarations.                                                    */
