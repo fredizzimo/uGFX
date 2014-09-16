@@ -566,45 +566,24 @@ static void line_clip(GDisplay *g) {
 
 void _gdispInit(void)
 {
-	// Both GDISP_CONTROLLER_LIST and GDISP_CONTROLLER_DISPLAYS are defined - create the required numbers of each controller
-	#if defined(GDISP_CONTROLLER_LIST) && defined(GDISP_CONTROLLER_DISPLAYS)
-		{
-			int		i, cnt;
-
-			extern GDriverVMTList					GDISP_CONTROLLER_LIST;
-			static const struct GDriverVMT const *	dclist[GDISP_TOTAL_CONTROLLERS] = {GDISP_CONTROLLER_LIST};
-			static const unsigned					dnlist[GDISP_TOTAL_CONTROLLERS] = {GDISP_CONTROLLER_DISPLAYS};
-
-			for(i = 0; i < GDISP_TOTAL_CONTROLLERS; i++) {
-				for(cnt = dnlist[i]; cnt; cnt--)
-					gdriverRegister(dclist[i]);
-			}
-		}
-
-	// Only GDISP_CONTROLLER_LIST is defined - create one of each controller
-	#elif defined(GDISP_CONTROLLER_LIST)
+	// GDISP_DRIVER_LIST is defined - create each driver instance
+	#if defined(GDISP_DRIVER_LIST)
 		{
 			int		i;
 
-			extern GDriverVMTList					GDISP_CONTROLLER_LIST;
-			static const struct GDriverVMT const *	dclist[GDISP_TOTAL_CONTROLLERS] = {GDISP_CONTROLLER_LIST};
+			extern GDriverVMTList					GDISP_DRIVER_LIST;
+			static const struct GDriverVMT const *	dclist[] = {GDISP_DRIVER_LIST};
 
-			for(i = 0; i < GDISP_TOTAL_CONTROLLERS; i++)
+			for(i = 0; i < sizeof(dclist)/sizeof(dclist[0]); i++)
 				gdriverRegister(dclist[i]);
 		}
-
-	// Only GDISP_TOTAL_DISPLAYS is defined - create the required number of the one controller
 	#elif GDISP_TOTAL_DISPLAYS > 1
 		{
-			int		cnt;
+			int		i;
 
-			extern GDriverVMTList 					GDISPVMT_OnlyOne;
-
-			for(cnt = 0; cnt < GDISP_TOTAL_DISPLAYS; cnt++)
+			for(i = 0; i < GDISP_TOTAL_DISPLAYS; i++)
 				gdriverRegister(GDISPVMT_OnlyOne);
 		}
-
-	// One and only one display
 	#else
 		{
 			extern GDriverVMTList					GDISPVMT_OnlyOne;
@@ -713,10 +692,6 @@ void _gdispDeInitDriver(GDriver *g) {
 	MUTEX_DEINIT(gd);
 
 	#undef gd
-}
-
-GDisplay *gdispGetDisplay(unsigned display) {
-	return (GDisplay *)gdriverGetInstance(GDRIVER_TYPE_DISPLAY, display);
 }
 
 void gdispSetDisplay(GDisplay *g) {
@@ -1001,7 +976,7 @@ void gdispGDrawPixel(GDisplay *g, coord_t x, coord_t y, color_t color) {
 	autoflush(g);
 	MUTEX_EXIT(g);
 }
-	
+
 void gdispGDrawLine(GDisplay *g, coord_t x0, coord_t y0, coord_t x1, coord_t y1, color_t color) {
 	MUTEX_ENTER(g);
 	g->p.x = x0;
@@ -1110,7 +1085,7 @@ void gdispGFillArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 	autoflush_stopdone(g);
 	MUTEX_EXIT(g);
 }
-	
+
 void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx, coord_t srcy, coord_t srccx, const pixel_t *buffer) {
 	MUTEX_ENTER(g);
 
@@ -1246,7 +1221,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 		}
 	#endif
 }
-	
+
 #if GDISP_NEED_CLIP || GDISP_NEED_VALIDATION
 	void gdispGSetClip(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy) {
 		MUTEX_ENTER(g);
@@ -1400,7 +1375,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 		MUTEX_EXIT(g);
 	}
 #endif
-	
+
 #if GDISP_NEED_ELLIPSE
 	void gdispGFillEllipse(GDisplay *g, coord_t x, coord_t y, coord_t a, coord_t b, color_t color) {
 		coord_t	dx, dy;
@@ -2662,7 +2637,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 			}
 		}
 	}
-	
+
 	static int32_t rounding_div(const int32_t n, const int32_t d)
 	{
 		if ((n < 0) != (d < 0))
@@ -2670,23 +2645,23 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 		else
 			return (n + d/2) / d;
 	}
-	
+
 	/* Find a vector (nx, ny) that is perpendicular to (dx, dy) and has length
 	 * equal to 'norm'. */
 	static void get_normal_vector(coord_t dx, coord_t dy, coord_t norm, coord_t *nx, coord_t *ny)
 	{
 		int32_t dx2, dy2, len_sq, norm_sq, norm_sq2;
 		int div, step, best, delta, abs_delta;
-		
+
 		dx2 = dx; dy2 = dy;
 		norm_sq = (int32_t)norm * norm;
 		norm_sq2 = norm_sq * 512;
-		
+
 		/* Scale dx2 and dy2 so that
 		 *     len_sq / 2 <= norm_sq * 512 <= len_sq * 2.
 		 * The scaling by 512 is to yield higher accuracy in division later. */
 		len_sq = dx2 * dx2 + dy2 * dy2;
-		
+
 		if (len_sq < norm_sq2)
 		{
 			while (len_sq && len_sq < norm_sq2)
@@ -2701,69 +2676,69 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 				len_sq >>= 2; dx2 >>= 1; dy2 >>= 1;
 			}
 		}
-		
+
 		/* Now find the divider div so that
 		 *     len_sq / div^2 == norm_sq   i.e.  div = sqrt(len_sq / norm_sq)
 		 *
 		 * This is done using bisection search to avoid the need for floating
 		 * point sqrt.
-		 * 
+		 *
 		 * Based on previous scaling, we know that
 		 *     len_sq / 2 <= norm_sq * 512   <=>   div <= sqrt(1024) = 32
 		 *     len_sq * 2 >= norm_sq * 512   <=>   div >= sqrt(256) = 16
 		 */
 		div = 24; step = 8;
 		best = 256;
-		
+
 		for (;;)
 		{
 			dx = dx2 / div;
 			dy = dy2 / div;
 			len_sq = dx*dx + dy*dy;
-			
+
 			delta = len_sq - norm_sq;
-			
+
 			abs_delta = (delta >= 0) ? delta : -delta;
-			
+
 			if (abs_delta < best)
 			{
 				*nx = dy;
 				*ny = -dx;
 				best = abs_delta;
 			}
-			
+
 			if (delta > 0)
 				div += step;
 			else if (delta < 0)
 				div -= step;
 			else if (delta == 0)
 				break;
-			
+
 			if (step == 0)
 				break;
 			else
 				step >>= 1; /* Do one round with step = 0 to calculate final result. */
 		}
 	}
-	
+
 	void gdispGDrawThickLine(GDisplay *g, coord_t x0, coord_t y0, coord_t x1, coord_t y1, color_t color, coord_t width, bool_t round) {
 		coord_t dx, dy, nx = 0, ny = 0;
-		
+
 		/* Compute the direction vector for the line */
 		dx = x1 - x0;
 		dy = y1 - y0;
-		
+
 		/* Draw a small dot if the line length is zero. */
 		if (dx == 0 && dy == 0)
 			dx += 1;
-		
+
 		/* Compute a normal vector with length 'width'. */
 		get_normal_vector(dx, dy, width, &nx, &ny);
-		
+
 		/* Handle 1px wide lines gracefully */
 		if (nx == 0 && ny == 0)
 			nx = 1;
-		
+
 		/* Offset the x0,y0 by half the width of the line. This way we
 		 * can keep the width of the line accurate even if it is not evenly
 		 * divisible by 2.
@@ -2772,11 +2747,11 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 			x0 -= rounding_div(nx, 2);
 			y0 -= rounding_div(ny, 2);
 		}
-		
+
 		/* Fill in the point array */
 		if (!round) {
 			/* We use 4 points for the basic line shape:
-			 * 
+			 *
 			 *  pt1                                      pt2
 			 * (+n) ------------------------------------ (d+n)
 			 *   |                                       |
@@ -2784,7 +2759,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 			 *  pt0                                      pt3
 			 */
 			point pntarray[4];
-			
+
 			pntarray[0].x = 0;
 			pntarray[0].y = 0;
 			pntarray[1].x = nx;
@@ -2793,7 +2768,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 			pntarray[2].y = dy + ny;
 			pntarray[3].x = dx;
 			pntarray[3].y = dy;
-			
+
 			gdispGFillConvexPoly(g, x0, y0, pntarray, 4, color);
 		} else {
 			/* We use 4 points for basic shape, plus 4 extra points for ends:
@@ -2808,26 +2783,26 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 			 */
 			point pntarray[8];
 			coord_t nx2, ny2;
-			
+
 			/* Magic numbers:
 			 * 75/256  = sin(45) / (1 + sqrt(2))		diagonal octagon segments
 			 * 106/256 = 1 / (1 + sqrt(2))				octagon side
 			 * 53/256  = 0.5 / (1 + sqrt(2))			half of octagon side
 			 * 150/256 = 1 - 1 / (1 + sqrt(2))	  		octagon height minus one side
 			 */
-			
+
 			/* Rotate the normal vector 45 deg counter-clockwise and reduce
 			 * to 1 / (1 + sqrt(2)) length, for forming octagonal ends. */
 			nx2 = rounding_div((nx * 75 + ny * 75), 256);
 			ny2 = rounding_div((-nx * 75 + ny * 75), 256);
-			
+
 			/* Offset and extend the line so that the center of the octagon
 			 * is at the specified points. */
 			x0 += ny * 53 / 256;
 			y0 -= nx * 53 / 256;
 			dx -= ny * 106 / 256;
 			dy += nx * 106 / 256;
-			
+
 			/* Now fill in the points by summing the calculated vectors. */
 			pntarray[0].x = 0;
 			pntarray[0].y = 0;
@@ -2845,7 +2820,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 			pntarray[6].y = dy + ny * 150/256 - ny2;
 			pntarray[7].x = dx;
 			pntarray[7].y = dy;
-			
+
 			gdispGFillConvexPoly(g, x0, y0, pntarray, 8, color);
 		}
 	}
@@ -3099,19 +3074,19 @@ color_t gdispBlendColor(color_t fg, color_t bg, uint8_t alpha)
 	uint16_t fg_ratio = alpha + 1;
 	uint16_t bg_ratio = 256 - alpha;
 	uint16_t r, g, b;
-	
+
 	r = RED_OF(fg) * fg_ratio;
 	g = GREEN_OF(fg) * fg_ratio;
 	b = BLUE_OF(fg) * fg_ratio;
-	
+
 	r += RED_OF(bg) * bg_ratio;
 	g += GREEN_OF(bg) * bg_ratio;
 	b += BLUE_OF(bg) * bg_ratio;
-	
+
 	r >>= 8;
 	g >>= 8;
 	b >>= 8;
-	
+
 	return RGB2COLOR(r, g, b);
 }
 

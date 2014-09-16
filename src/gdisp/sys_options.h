@@ -184,42 +184,26 @@
  * @{
  */
 	/**
-	 * @brief   The total number of displays.
-	 * @note	This can be on just one type of controller or spread across several different controllers
+	 * @brief   The total number of displays using the default driver.
+	 * @note	If you want to use multiple displays either set GDISP_TOTAL_DISPLAYS or GDISP_DRIVER_LIST
+	 *          but not both.
 	 */
 	#ifndef GDISP_TOTAL_DISPLAYS
 		#define GDISP_TOTAL_DISPLAYS		1
 	#endif
-	/**
-	 * @brief   The total number of controllers.
-	 * @note	If this is greater than one, all the hardware acceleration options below
-	 * 			and the pixel format must be manually specified in your gfxconf.h along with
-	 * 			@p GDISP_CONTROLLER_LIST. See the gdisp_lld_config.h in each driver to get a list
-	 * 			of hardware capabilities for each driver in order to work out the common set across
-	 * 			all the controllers you want to use.
-	 */
-	#ifndef GDISP_TOTAL_CONTROLLERS
-		#define GDISP_TOTAL_CONTROLLERS		1
-	#endif
-
 	#if defined(__DOXYGEN__)
 		/**
-		 * @brief   The list of controllers.
-		 * @note	This is required if @p GDISP_TOTAL_CONTROLLERS is greater than one.
-		 * @note	The number of entries must match @p GDISP_TOTAL_CONTROLLERS.
-		 * @note	See the gdisp_lld.c in each driver (near the top) to get the name of the VMT for a driver.
-		 * @note	Replace this example with your own definition in your gfxconf.h file.
+		 * @brief   The list of display drivers.
+		 * @note	Replace this example with your own definition in your gfxconf.h file. See the gdisp_lld.c
+		 *          in each driver (near the top) to get the name of the VMT for a driver.
+		 * @note    The same driver can occur more than once in the list to create an extra instance of that driver.
+		 * @note    If defining this you must also define GDISP_PIXELFORMAT for your application to use.
+         *          Choose a value that is most common accross all your drivers for efficiency.
+         * @note    If using this you may optionally define the GDISP_HARDWARE_xxx values as either TRUE or FALSE.
+         *          Doing this causes GDISP to assume that all (TRUE) or none (FALSE) of the listed drivers have that
+         *          capability. This can help improve drawing speed and efficiency.
 		 */
-		#define GDISP_CONTROLLER_LIST		GDISPVMT_Win32, GDISPVMT_SSD1963
-		/**
-		 * @brief   The number of displays for each controller.
-		 * @note	This is required if @p GDISP_TOTAL_CONTROLLERS is greater than one.
-		 * @note	The number of entries must match @p GDISP_TOTAL_CONTROLLERS.
-		 * @note	The sum of all the display counts must equal @p GDISP_TOTAL_DISPLAYS (3 for this example)
-		 * 			or bad things will happen.
-		 * @note	Replace this example with your own definition in your gfxconf.h file.
-		 */
-		#define GDISP_CONTROLLER_DISPLAYS	2, 1
+		#define GDISP_DRIVER_LIST		  GDISPVMT_Win32, GDISPVMT_SSD1963
 	#endif
 /**
  * @}
@@ -272,7 +256,7 @@
 	#endif
 /**
  * @}
- * 
+ *
  * @name	GDISP Text Rendering Options
  * @{
  */
@@ -283,7 +267,7 @@
 	#ifndef GDISP_NEED_UTF8
 		#define GDISP_NEED_UTF8					FALSE
 	#endif
-	
+
 	/**
 	 * @brief	Enable kerning for font rendering (improves character placement).
 	 * @details	Defaults to FALSE
@@ -291,7 +275,7 @@
 	#ifndef GDISP_NEED_TEXT_KERNING
 		#define GDISP_NEED_TEXT_KERNING			FALSE
 	#endif
-	
+
 	/**
 	 * @brief	Enable antialiased font support
 	 * @details	Defaults to FALSE
@@ -299,7 +283,7 @@
 	#ifndef GDISP_NEED_ANTIALIAS
 		#define GDISP_NEED_ANTIALIAS			FALSE
 	#endif
-	
+
 /**
  * @}
  *

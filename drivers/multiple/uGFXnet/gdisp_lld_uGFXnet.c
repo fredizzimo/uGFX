@@ -205,20 +205,18 @@ static DECLARE_THREAD_FUNCTION(NetThread, param) {
 			gfxHalt("GDISP: uGFXnet - Accept failed");
 
 		// Look for a display that isn't connected
-		for(disp = 0; disp < GDISP_TOTAL_DISPLAYS; disp++) {
-			if (!(g = gdispGetDisplay(disp)))
-				continue;
-			#if GDISP_TOTAL_CONTROLLERS > 1
-				// Ignore displays for other controllers
-				if (g->vmt != &GDISPVMT_uGFXnet)
-					continue;
-			#endif
+		for(g = 0; (g = (GDisplay *)gdriverGetNext(GDRIVER_TYPE_DISPLAY, (GDriver *)g));) {
+            // Ignore displays for other controllers
+            #ifdef GDISP_DRIVER_LIST
+                if (gvmt(g) != &GDISPVMT_uGFXnet)
+                    continue;
+            #endif
 			if (!(g->flags & GDISP_FLG_CONNECTED))
 				break;
 		}
 
 		// Was anything found?
-		if (disp >= GDISP_TOTAL_DISPLAYS) {
+		if (!g) {
 			// No Just close the connection
 			closesocket(clientfd);
 			gfxHalt("GDISP: uGFXnet - Can't find display for connection");
@@ -275,21 +273,19 @@ static DECLARE_THREAD_FUNCTION(NetThread, param) {
 				if((clientfd = accept(listenfd, (struct sockaddr *)&addr, &len)) == (SOCKET_TYPE)-1)
 					gfxHalt("GDISP: uGFXnet - Accept failed");
 
-				// Look for a display that isn't connected
-				for(disp = 0; disp < GDISP_TOTAL_DISPLAYS; disp++) {
-					if (!(g = gdispGetDisplay(disp)))
-						continue;
-					#if GDISP_TOTAL_CONTROLLERS > 1
-						// Ignore displays for other controllers
-						if (g->vmt != &GDISPVMT_uGFXnet)
-							continue;
-					#endif
-					if (!(g->flags & GDISP_FLG_CONNECTED))
-						break;
-				}
+                // Look for a display that isn't connected
+                for(g = 0; (g = (GDisplay *)gdriverGetNext(GDRIVER_TYPE_DISPLAY, (GDriver *)g));) {
+                    // Ignore displays for other controllers
+                    #ifdef GDISP_DRIVER_LIST
+                        if (gvmt(g) != &GDISPVMT_uGFXnet)
+                            continue;
+                    #endif
+                    if (!(g->flags & GDISP_FLG_CONNECTED))
+                        break;
+                }
 
 				// Was anything found?
-				if (disp >= GDISP_TOTAL_DISPLAYS) {
+				if (!g) {
 					// No Just close the connection
 					closesocket(clientfd);
 					//printf(New connection from %s on socket %d rejected as all displays are already connected\n", inet_ntoa(addr.sin_addr), clientfd);
@@ -332,19 +328,17 @@ static DECLARE_THREAD_FUNCTION(NetThread, param) {
 			// Handle data from a client
 
 			// Look for a display that is connected and the socket descriptor matches
-			for(disp = 0; disp < GDISP_TOTAL_DISPLAYS; disp++) {
-				if (!(g = gdispGetDisplay(disp)))
-					continue;
-				#if GDISP_TOTAL_CONTROLLERS > 1
-				// Ignore displays for other controllers
-					if (g->vmt != &GDISPVMT_uGFXnet)
-						continue;
-				#endif
+            for(g = 0; (g = (GDisplay *)gdriverGetNext(GDRIVER_TYPE_DISPLAY, (GDriver *)g));) {
+                // Ignore displays for other controllers
+                #ifdef GDISP_DRIVER_LIST
+                    if (gvmt(g) != &GDISPVMT_uGFXnet)
+                        continue;
+                #endif
 				priv = g->priv;
 				if ((g->flags & GDISP_FLG_CONNECTED) && priv->netfd == i)
 					break;
-			}
-			if (disp >= GDISP_TOTAL_DISPLAYS)
+            }
+			if (!g)
 				gfxHalt("GDISP: uGFXnet - Got data from unrecognized connection");
 
 			if ((g->flags & GDISP_FLG_HAVEDATA)) {
@@ -538,7 +532,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		// Make everything relative to the start of the line
 		buffer = g->p.ptr;
 		buffer += g->p.x2*g->p.y1;
-		
+
 		priv = g->priv;
 		buf[0] = GNETCODE_BLIT;
 		buf[1] = g->p.x;
@@ -583,7 +577,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		// Now wait for a reply
 		while(!(g->flags & GDISP_FLG_HAVEDATA) || priv->data[0] != GNETCODE_READ)
 			gfxSleepMilliseconds(1);
-		
+
 		data = gdispNative2Color(priv->data[1]);
 		g->flags &= ~GDISP_FLG_HAVEDATA;
 

@@ -111,7 +111,7 @@ extern GDisplay	*GDISP;
 /* Defines relating to the display hardware									 */
 /*===========================================================================*/
 
-#if GDISP_TOTAL_CONTROLLERS <= 1
+#if !defined(GDISP_DRIVER_LIST)
 	// Pull in the default hardware configuration for a single controller.
 	// If we have multiple controllers the settings must be set in the
 	// users gfxconf.h file.
@@ -133,7 +133,7 @@ extern GDisplay	*GDISP;
 	 * @details	It generally defaults to the hardware pixel format.
 	 * @note	This doesn't need to match the hardware pixel format.
 	 * 			It is definitely more efficient when it does.
-	 * @note	When GDISP_TOTAL_CONTROLLERS > 1, this must
+	 * @note	When GDISP_DRIVER_LIST is defined, this must
 	 * 			be explicitly defined and you should ensure the best match
 	 * 			with your hardware across all devices.
 	 */
@@ -213,13 +213,13 @@ color_t gdispContrastColor(color_t color);
  * @note	The GDISP variable contains the display used by the gdispXxxx routines
  * 			as opposed to the gdispGXxxx routines which take an explicit display
  * 			parameter.
- * @note	Displays are numbered from 0 to GDISP_TOTAL_DISPLAYS - 1
+ * @note	Displays are numbered from 0 to @p gdispGetDisplayCount() - 1
  *
  * @param[in] display	The display number (0..n)
  *
  * @api
  */
-GDisplay *gdispGetDisplay(unsigned display);
+#define gdispGetDisplay(display)     ((GDisplay *)gdriverGetInstance(GDRIVER_TYPE_DISPLAY, display))
 
 /**
  * @brief   Set the current default display to the specified display
@@ -234,6 +234,14 @@ GDisplay *gdispGetDisplay(unsigned display);
  * @api
  */
 void gdispSetDisplay(GDisplay *g);
+
+/**
+ * @brief   Get the count of currently active displays
+ * @return  The count of displays currently in the system
+ *
+ * @note	Displays are numbered from 0 to @p gdispGetDisplayCount() - 1
+ */
+#define gdispGetDisplayCount()      gdriverInstanceCount(GDRIVER_TYPE_DISPLAY)
 
 /* Property Functions */
 
@@ -683,20 +691,20 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 	 */
 	void gdispGFillConvexPoly(GDisplay *g, coord_t tx, coord_t ty, const point *pntarray, unsigned cnt, color_t color);
 	#define gdispFillConvexPoly(x,y,p,i,c)					gdispGFillConvexPoly(GDISP,x,y,p,i,c)
-	
+
 	/**
 	 * @brief   Draw a line with a specified thickness
 	 * @details The line thickness is specified in pixels. The line ends can
 	 *          be selected to be either flat or round.
 	 * @note	Uses gdispGFillConvexPoly() internally to perform the drawing.
-	 * 
+	 *
 	 * @param[in] g			The display to use
 	 * @param[in] x0,y0		The start position
 	 * @param[in] x1,y1		The end position
 	 * @param[in] color		The color to use
 	 * @param[in] width		The width of the line
 	 * @param[in] round		Use round ends for the line
-	 * 
+	 *
 	 * @api
 	 */
 	void gdispGDrawThickLine(GDisplay *g, coord_t x0, coord_t y0, coord_t x1, coord_t y1, color_t color, coord_t width, bool_t round);
@@ -857,13 +865,13 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 	 * @brief	Make a scaled copy of an existing font.
 	 * @details	Allocates memory for new font metadata using gfxAlloc, remember to close font after use!
 	 * @return	A new font or NULL if out of memory.
-	 * 
+	 *
 	 * @param[in] font	The base font to use.
 	 * @param[in] scale_x	The scale factor in horizontal direction.
 	 * @param[in] scale_y	The scale factor in vertical direction.
 	 */
 	font_t gdispScaleFont(font_t font, uint8_t scale_x, uint8_t scale_y);
-	
+
 	/**
 	 * @brief	Get the name of the specified font.
 	 * @returns	The name of the font.
@@ -907,7 +915,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 	#define gdispFillRoundedBox(x,y,cx,cy,r,c)		gdispGFillRoundedBox(GDISP,x,y,cx,cy,r,c)
 #endif
 
-/* 
+/*
  * Macro definitions
  */
 
