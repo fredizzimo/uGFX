@@ -14,7 +14,7 @@
 #if GFX_USE_GFILE && GFILE_NEED_PETITFS
 
 #include "gfile_fs.h"
-#include "petitfs_wrapper.h"
+#include "gfile_petitfs_wrapper.h"
 
 static bool_t petitfsExists(const char* fname);
 static bool_t petitfsOpen(GFILE* f, const char* fname);

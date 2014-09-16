@@ -127,7 +127,7 @@
 	 * @note	PETITFS can only have one file open at a time.
 	 */
 	#ifndef GFILE_NEED_PETITFS
-		#define GFILE_NEED_FATFS		FALSE
+		#define GFILE_NEED_PETITFS		FALSE
 	#endif
 	/**
 	 * @brief   Include the operating system's native file system
