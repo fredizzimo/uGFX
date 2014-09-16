@@ -569,7 +569,7 @@ void _gdispInit(void)
 	// GDISP_DRIVER_LIST is defined - create each driver instance
 	#if defined(GDISP_DRIVER_LIST)
 		{
-			int		i;
+			unsigned	i;
 
 			extern GDriverVMTList					GDISP_DRIVER_LIST;
 			static const struct GDriverVMT const *	dclist[] = {GDISP_DRIVER_LIST};
@@ -579,7 +579,8 @@ void _gdispInit(void)
 		}
 	#elif GDISP_TOTAL_DISPLAYS > 1
 		{
-			int		i;
+			unsigned	i;
+			extern GDriverVMTList					GDISPVMT_OnlyOne;
 
 			for(i = 0; i < GDISP_TOTAL_DISPLAYS; i++)
 				gdriverRegister(GDISPVMT_OnlyOne);
@@ -622,7 +623,7 @@ void _gdispDeinit(void)
 	/* ToDo */
 }
 
-bool_t _gdispInitDriver(GDriver *g, int driverinstance, int systeminstance) {
+bool_t _gdispInitDriver(GDriver *g, unsigned driverinstance, unsigned systeminstance) {
 	#define		gd		((GDisplay *)g)
 	bool_t		ret;
 
@@ -694,8 +695,16 @@ void _gdispDeInitDriver(GDriver *g) {
 	#undef gd
 }
 
+GDisplay *gdispGetDisplay(unsigned display) {
+	return (GDisplay *)gdriverGetInstance(GDRIVER_TYPE_DISPLAY, display);
+}
+
 void gdispSetDisplay(GDisplay *g) {
 	if (g) GDISP = g;
+}
+
+unsigned gdispGetDisplayCount(void) {
+	return gdriverInstanceCount(GDRIVER_TYPE_DISPLAY);
 }
 
 coord_t gdispGGetWidth(GDisplay *g)				{ return g->g.Width; }
