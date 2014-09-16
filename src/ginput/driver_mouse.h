@@ -57,7 +57,7 @@ typedef struct GMouse {
 	#if !GINPUT_TOUCH_NOCALIBRATE
 		GMouseCalibrationSaveRoutine	fnsavecal;			// The calibration load routine
 		GMouseCalibrationLoadRoutine	fnloadcal;			// The calibration save routine
-		MouseCalibration				caldata;			// The calibration data
+		GMouseCalibration				caldata;			// The calibration data
 	#endif
 	// Other driver specific fields may follow.
 } GMouse;
