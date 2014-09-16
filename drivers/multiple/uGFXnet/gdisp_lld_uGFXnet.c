@@ -161,7 +161,6 @@ static DECLARE_THREAD_FUNCTION(NetThread, param) {
 	SOCKET_TYPE			listenfd, fdmax, i, clientfd;
 	socklen_t			len;
 	int					leni;
-	unsigned			disp;
 	fd_set				master, read_fds;
     struct sockaddr_in	addr;
     GDisplay *			g;
