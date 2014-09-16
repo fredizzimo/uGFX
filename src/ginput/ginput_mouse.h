@@ -33,7 +33,6 @@
 /* This type definition is also used by touch */
 typedef struct GEventMouse_t {
 	GEventType		type;				// The type of this event (GEVENT_MOUSE or GEVENT_TOUCH)
-	uint16_t		instance;			// The mouse/touch instance
 	coord_t			x, y, z;			// The position of the mouse.
 										//		- For touch devices, Z is the current pressure if supported (otherwise 0)
 										//		- For mice, Z is the 3rd dimension if supported (otherwise 0)

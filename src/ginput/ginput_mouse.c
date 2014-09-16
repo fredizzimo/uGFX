@@ -26,24 +26,22 @@
 
 	#include <string.h>							// Required for memcpy
 
-	#define GINPUT_MOUSE_CALIBRATION_FONT		"* Double"
-	#define GINPUT_MOUSE_CALIBRATION_FONT2		"* Narrow"
-	#define GINPUT_MOUSE_CALIBRATION_TEXT		"Calibration"
-	#define GINPUT_MOUSE_CALIBRATION_ERROR_TEXT	"Failed - Please try again!"
-	#define GINPUT_MOUSE_CALIBRATION_SAME_TEXT	"Error: Same Reading - Check Driver!"
+	#define CALIBRATION_FONT			"* Double"
+	#define CALIBRATION_FONT2			"* Narrow"
+	#define CALIBRATION_TEXT			"Calibration"
+	#define CALIBRATION_ERROR_TEXT		"Failed - Please try again!"
+	#define CALIBRATION_SAME_TEXT		"Error: Same Reading - Check Driver!"
+	#define CALIBRATION_BACKGROUND		Blue
+	#define CALIBRATION_COLOR1			White
+	#define CALIBRATION_COLOR2			RGB2COLOR(184,158,131)
 
-	#if GINPUT_MOUSE_MAX_CALIBRATION_ERROR < 0
-		#define GINPUT_MOUSE_CALIBRATION_POINTS		3
-	#else
-		#define GINPUT_MOUSE_CALIBRATION_POINTS		4
-	#endif
-
-endif
+#endif
 
 static GTIMER_DECL(MouseTimer);
 
 #if !GINPUT_TOUCH_NOCALIBRATE
-	static inline void _tsSetIdentity(MouseCalibration *c) {
+	/*
+	static inline void CalibrationSetIdentity(MouseCalibration *c) {
 		c->ax = 1;
 		c->bx = 0;
 		c->cx = 0;
@@ -51,150 +49,142 @@ static GTIMER_DECL(MouseTimer);
 		c->by = 1;
 		c->cy = 0;
 	}
+	*/
 
-	static inline void _tsDrawCross(const point *pp) {
-		gdispGDrawLine(MouseConfig.display, pp->x-15, pp->y, pp->x-2, pp->y, White);
-		gdispGDrawLine(MouseConfig.display, pp->x+2, pp->y, pp->x+15, pp->y, White);
-		gdispGDrawLine(MouseConfig.display, pp->x, pp->y-15, pp->x, pp->y-2, White);
-		gdispGDrawLine(MouseConfig.display, pp->x, pp->y+2, pp->x, pp->y+15, White);
-
-		gdispGDrawLine(MouseConfig.display, pp->x-15, pp->y+15, pp->x-7, pp->y+15, RGB2COLOR(184,158,131));
-		gdispGDrawLine(MouseConfig.display, pp->x-15, pp->y+7, pp->x-15, pp->y+15, RGB2COLOR(184,158,131));
-
-		gdispGDrawLine(MouseConfig.display, pp->x-15, pp->y-15, pp->x-7, pp->y-15, RGB2COLOR(184,158,131));
-		gdispGDrawLine(MouseConfig.display, pp->x-15, pp->y-7, pp->x-15, pp->y-15, RGB2COLOR(184,158,131));
-
-		gdispGDrawLine(MouseConfig.display, pp->x+7, pp->y+15, pp->x+15, pp->y+15, RGB2COLOR(184,158,131));
-		gdispGDrawLine(MouseConfig.display, pp->x+15, pp->y+7, pp->x+15, pp->y+15, RGB2COLOR(184,158,131));
-
-		gdispGDrawLine(MouseConfig.display, pp->x+7, pp->y-15, pp->x+15, pp->y-15, RGB2COLOR(184,158,131));
-		gdispGDrawLine(MouseConfig.display, pp->x+15, pp->y-15, pp->x+15, pp->y-7, RGB2COLOR(184,158,131));
+	static inline void CalibrationCrossDraw(GMouse *m, const point *pp) {
+		gdispGDrawLine(m->display, pp->x-15, pp->y, pp->x-2, pp->y, CALIBRATION_COLOR1);
+		gdispGDrawLine(m->display, pp->x+2, pp->y, pp->x+15, pp->y, CALIBRATION_COLOR1);
+		gdispGDrawLine(m->display, pp->x, pp->y-15, pp->x, pp->y-2, CALIBRATION_COLOR1);
+		gdispGDrawLine(m->display, pp->x, pp->y+2, pp->x, pp->y+15, CALIBRATION_COLOR1);
+		gdispGDrawLine(m->display, pp->x-15, pp->y+15, pp->x-7, pp->y+15, CALIBRATION_COLOR2);
+		gdispGDrawLine(m->display, pp->x-15, pp->y+7, pp->x-15, pp->y+15, CALIBRATION_COLOR2);
+		gdispGDrawLine(m->display, pp->x-15, pp->y-15, pp->x-7, pp->y-15, CALIBRATION_COLOR2);
+		gdispGDrawLine(m->display, pp->x-15, pp->y-7, pp->x-15, pp->y-15, CALIBRATION_COLOR2);
+		gdispGDrawLine(m->display, pp->x+7, pp->y+15, pp->x+15, pp->y+15, CALIBRATION_COLOR2);
+		gdispGDrawLine(m->display, pp->x+15, pp->y+7, pp->x+15, pp->y+15, CALIBRATION_COLOR2);
+		gdispGDrawLine(m->display, pp->x+7, pp->y-15, pp->x+15, pp->y-15, CALIBRATION_COLOR2);
+		gdispGDrawLine(m->display, pp->x+15, pp->y-15, pp->x+15, pp->y-7, CALIBRATION_COLOR2);
 	}
 
-	static inline void _tsClearCross(const MousePoint *pp) {
-		gdispGFillArea(MouseConfig.display, pp->x - 15, pp->y - 15, 42, 42, Blue);
+	static inline void CalibrationCrossClear(GMouse *m, const point *pp) {
+		gdispGFillArea(m->display, pp->x - 15, pp->y - 15, 32, 32, CALIBRATION_BACKGROUND);
 	}
 
-	static inline void _tsTransform(MouseReading *pt, const Calibration *c) {
+	static inline void CalibrationTransform(GMouseReading *pt, const GMouseCalibration *c) {
 		pt->x = (coord_t) (c->ax * pt->x + c->bx * pt->y + c->cx);
 		pt->y = (coord_t) (c->ay * pt->x + c->by * pt->y + c->cy);
 	}
 
-	static inline void _tsDo3PointCalibration(const MousePoint *cross, const MousePoint *points, GDisplay *g, Calibration *c) {
+	static inline void CalibrationCalculate(GMouse *m, const MousePoint *cross, const MousePoint *points) {
 		float		dx;
 		coord_t		c0, c1, c2;
+		(void)		m;
+
+		// Work on x values
+		c0 = cross[0].x;
+		c1 = cross[1].x;
+		c2 = cross[2].x;
 
 		#if GDISP_NEED_CONTROL
-			/* Convert all cross points back to GDISP_ROTATE_0 convention
-			 * before calculating the calibration matrix.
-			 */
-			switch(gdispGGetOrientation(g)) {
-			case GDISP_ROTATE_90:
-				c0 = cross[0].y;
-				c1 = cross[1].y;
-				c2 = cross[2].y;
-				break;
-			case GDISP_ROTATE_180:
-				c0 = c1 = c2 = gdispGGetWidth(g) - 1;
-				c0 -= cross[0].x;
-				c1 -= cross[1].x;
-				c2 -= cross[2].x;
-				break;
-			case GDISP_ROTATE_270:
-				c0 = c1 = c2 = gdispGGetHeight(g) - 1;
-				c0 -= cross[0].y;
-				c1 -= cross[1].y;
-				c2 -= cross[2].y;
-				break;
-			case GDISP_ROTATE_0:
-			default:
-				c0 = cross[0].x;
-				c1 = cross[1].x;
-				c2 = cross[2].x;
-				break;
+			if (!(gmvmt(m)->d.flags & GMOUSE_VFLG_SELFROTATION)) {
+				/* Convert all cross points back to GDISP_ROTATE_0 convention
+				 * before calculating the calibration matrix.
+				 */
+				switch(gdispGGetOrientation(m->display)) {
+				case GDISP_ROTATE_90:
+					c0 = cross[0].y;
+					c1 = cross[1].y;
+					c2 = cross[2].y;
+					break;
+				case GDISP_ROTATE_180:
+					c0 = c1 = c2 = gdispGGetWidth(m->display) - 1;
+					c0 -= cross[0].x;
+					c1 -= cross[1].x;
+					c2 -= cross[2].x;
+					break;
+				case GDISP_ROTATE_270:
+					c0 = c1 = c2 = gdispGGetHeight(m->display) - 1;
+					c0 -= cross[0].y;
+					c1 -= cross[1].y;
+					c2 -= cross[2].y;
+					break;
+				}
 			}
-		#else
-			(void)	g;
-
-			c0 = cross[0].x;
-			c1 = cross[1].x;
-			c2 = cross[2].x;
 		#endif
 
 		/* Compute all the required determinants */
 		dx  = (float)(points[0].x - points[2].x) * (float)(points[1].y - points[2].y)
 				- (float)(points[1].x - points[2].x) * (float)(points[0].y - points[2].y);
 
-		c->ax = ((float)(c0 - c2) * (float)(points[1].y - points[2].y)
-				- (float)(c1 - c2) * (float)(points[0].y - points[2].y)) / dx;
-		c->bx = ((float)(c1 - c2) * (float)(points[0].x - points[2].x)
-				- (float)(c0 - c2) * (float)(points[1].x - points[2].x)) / dx;
-		c->cx = (c0 * ((float)points[1].x * (float)points[2].y - (float)points[2].x * (float)points[1].y)
-				- c1 * ((float)points[0].x * (float)points[2].y - (float)points[2].x * (float)points[0].y)
-				+ c2 * ((float)points[0].x * (float)points[1].y - (float)points[1].x * (float)points[0].y)) / dx;
+		m->caldata.ax = ((float)(c0 - c2) * (float)(points[1].y - points[2].y)
+							- (float)(c1 - c2) * (float)(points[0].y - points[2].y)) / dx;
+		m->caldata.bx = ((float)(c1 - c2) * (float)(points[0].x - points[2].x)
+							- (float)(c0 - c2) * (float)(points[1].x - points[2].x)) / dx;
+		m->caldata.cx = (c0 * ((float)points[1].x * (float)points[2].y - (float)points[2].x * (float)points[1].y)
+							- c1 * ((float)points[0].x * (float)points[2].y - (float)points[2].x * (float)points[0].y)
+							+ c2 * ((float)points[0].x * (float)points[1].y - (float)points[1].x * (float)points[0].y)) / dx;
+
+		// Work on y values
+		c0 = cross[0].y;
+		c1 = cross[1].y;
+		c2 = cross[2].y;
 
 		#if GDISP_NEED_CONTROL
-			switch(gdispGGetOrientation(g)) {
-			case GDISP_ROTATE_90:
-				c0 = c1 = c2 = gdispGGetWidth(g) - 1;
-				c0 -= cross[0].x;
-				c1 -= cross[1].x;
-				c2 -= cross[2].x;
-				break;
-			case GDISP_ROTATE_180:
-				c0 = c1 = c2 = gdispGGetHeight(g) - 1;
-				c0 -= cross[0].y;
-				c1 -= cross[1].y;
-				c2 -= cross[2].y;
-				break;
-			case GDISP_ROTATE_270:
-				c0 = cross[0].x;
-				c1 = cross[1].x;
-				c2 = cross[2].x;
-				break;
-			case GDISP_ROTATE_0:
-			default:
-				c0 = cross[0].y;
-				c1 = cross[1].y;
-				c2 = cross[2].y;
-				break;
+			if (!(gmvmt(m)->d.flags & GMOUSE_VFLG_SELFROTATION)) {
+				switch(gdispGGetOrientation(m->display)) {
+				case GDISP_ROTATE_90:
+					c0 = c1 = c2 = gdispGGetWidth(m->display) - 1;
+					c0 -= cross[0].x;
+					c1 -= cross[1].x;
+					c2 -= cross[2].x;
+					break;
+				case GDISP_ROTATE_180:
+					c0 = c1 = c2 = gdispGGetHeight(m->display) - 1;
+					c0 -= cross[0].y;
+					c1 -= cross[1].y;
+					c2 -= cross[2].y;
+					break;
+				case GDISP_ROTATE_270:
+					c0 = cross[0].x;
+					c1 = cross[1].x;
+					c2 = cross[2].x;
+					break;
+				}
 			}
-		#else
-			c0 = cross[0].y;
-			c1 = cross[1].y;
-			c2 = cross[2].y;
 		#endif
 
-		c->ay = ((float)(c0 - c2) * (float)(points[1].y - points[2].y)
-				- (float)(c1 - c2) * (float)(points[0].y - points[2].y)) / dx;
-		c->by = ((float)(c1 - c2) * (float)(points[0].x - points[2].x)
-				- (float)(c0 - c2) * (float)(points[1].x - points[2].x)) / dx;
-		c->cy = (c0 * ((float)points[1].x * (float)points[2].y - (float)points[2].x * (float)points[1].y)
-				- c1 * ((float)points[0].x * (float)points[2].y - (float)points[2].x * (float)points[0].y)
-				+ c2 * ((float)points[0].x * (float)points[1].y - (float)points[1].x * (float)points[0].y)) / dx;
+		m->caldata.ay = ((float)(c0 - c2) * (float)(points[1].y - points[2].y)
+							- (float)(c1 - c2) * (float)(points[0].y - points[2].y)) / dx;
+		m->caldata.by = ((float)(c1 - c2) * (float)(points[0].x - points[2].x)
+							- (float)(c0 - c2) * (float)(points[1].x - points[2].x)) / dx;
+		m->caldata.cy = (c0 * ((float)points[1].x * (float)points[2].y - (float)points[2].x * (float)points[1].y)
+							- c1 * ((float)points[0].x * (float)points[2].y - (float)points[2].x * (float)points[0].y)
+							+ c2 * ((float)points[0].x * (float)points[1].y - (float)points[1].x * (float)points[0].y)) / dx;
 	}
 #endif
 
-static void DoMouseReading(MouseInstance *pm) {
-	MouseReading	r;
+static void GetMouseReading(GMouse *m) {
+	GMouseReading	r;
 
-	pm->vmt->get(pm, &r);
+	// Get the raw reading.
+	gmvmt(m)->get(m, &r);
+	m->flags &= ~GMOUSE_FLG_NEEDREAD;
 
-	// If touch then calculate button 1 from z
-	if ((pm->vmt->flags & GMOUSE_VFLG_TOUCH)) {
-		if (pm->vmt->z_min <= pm->vmt->z_max) {
-			if (r.z >= pm->vmt->z_touchon)			r.buttons |= GINPUT_MOUSE_BTN_LEFT;
-			else if (r.z <= pm->vmt->z_touchoff)	r.buttons &= ~GINPUT_MOUSE_BTN_LEFT;
-			else									return;				// bad reading
+	// If touch then calculate button 0 from z
+	if ((gmvmt(m)->d.flags & GMOUSE_VFLG_TOUCH)) {
+		if (gmvmt(m)->z_min <= gmvmt(m)->z_max) {
+			if (r.z >= gmvmt(m)->z_touchon)			r.buttons |= GINPUT_MOUSE_BTN_LEFT;
+			else if (r.z <= gmvmt(m)->z_touchoff)	r.buttons &= ~GINPUT_MOUSE_BTN_LEFT;
+			else									return;				// bad transitional reading
 		} else {
-			if (r.z <= pm->vmt->z_touchon)			r.buttons |= GINPUT_MOUSE_BTN_LEFT;
-			else if (r.z >= pm->vmt->z_touchoff)	r.buttons &= ~GINPUT_MOUSE_BTN_LEFT;
-			else									return;				// bad reading
+			if (r.z <= gmvmt(m)->z_touchon)			r.buttons |= GINPUT_MOUSE_BTN_LEFT;
+			else if (r.z >= gmvmt(m)->z_touchoff)	r.buttons &= ~GINPUT_MOUSE_BTN_LEFT;
+			else									return;				// bad transitional reading
 		}
 	}
 
 	// Double check up & down events if needed
-	if ((pm->vmt->flags & GMOUSE_VFLG_POORUPDOWN)) {
+	if ((gmvmt(m)->d.flags & GMOUSE_VFLG_POORUPDOWN)) {
 		// Are we in a transition test
 		if ((pm->flags & GMOUSE_FLG_INDELTA)) {
 			if (!((r.buttons ^ pm->r.buttons) & GINPUT_MOUSE_BTN_LEFT)) {
@@ -213,7 +203,7 @@ static void DoMouseReading(MouseInstance *pm) {
 	}
 
 	// If the mouse is up we may need to keep our previous position
-	if ((pm->vmt->flags & GMOUSE_VFLG_ONLY_DOWN) && !(r.buttons & GINPUT_MOUSE_BTN_LEFT)) {
+	if ((gmvmt(m)->d.flags & GMOUSE_VFLG_ONLY_DOWN) && !(r.buttons & GINPUT_MOUSE_BTN_LEFT)) {
 		r.x = pm->r.x;
 		r.y = pm->r.y;
 
@@ -223,71 +213,75 @@ static void DoMouseReading(MouseInstance *pm) {
 		#if !GINPUT_TOUCH_NOCALIBRATE
 			// Do we need to calibrate the reading?
 			if ((pm->flags & GMOUSE_FLG_CALIBRATE))
-				_tsTransform(&r, &MouseConfig.caldata);
+				CalibrationTransform(&r, &m->caldata);
 		#endif
 
-		// We now need display information
-		w = gdispGGetWidth(g);
-		h = gdispGGetHeight(g);
+		// We can't clip or rotate if we don't have a display
+		if (m->display) {
 
-		#if GDISP_NEED_CONTROL
-			// Do we need to rotate the reading to match the display
-			if (!(pm->vmt->flags & GMOUSE_VFLG_SELFROTATION)) {
-				coord_t		t;
+			// We now need display information
+			w = gdispGGetWidth(m->display);
+			h = gdispGGetHeight(m->display);
 
-				switch(gdispGGetOrientation(g)) {
-					case GDISP_ROTATE_0:
-						break;
-					case GDISP_ROTATE_90:
-						t = r.x;
-						r.x = w - 1 - r.y;
-						r.y = t;
-						break;
-					case GDISP_ROTATE_180:
-						r.x = w - 1 - r.x;
-						r.y = h - 1 - r.y;
-						break;
-					case GDISP_ROTATE_270:
-						t = r.y;
-						r.y = h - 1 - r.x;
-						r.x = t;
-						break;
-					default:
-						break;
+			#if GDISP_NEED_CONTROL
+				// Do we need to rotate the reading to match the display
+				if (!(gmvmt(m)->d.flags & GMOUSE_VFLG_SELFROTATION)) {
+					coord_t		t;
+
+					switch(gdispGGetOrientation(m->display)) {
+						case GDISP_ROTATE_0:
+							break;
+						case GDISP_ROTATE_90:
+							t = r.x;
+							r.x = w - 1 - r.y;
+							r.y = t;
+							break;
+						case GDISP_ROTATE_180:
+							r.x = w - 1 - r.x;
+							r.y = h - 1 - r.y;
+							break;
+						case GDISP_ROTATE_270:
+							t = r.y;
+							r.y = h - 1 - r.x;
+							r.x = t;
+							break;
+						default:
+							break;
+					}
 				}
-			}
-		#endif
+			#endif
 
-		// Do we need to clip the reading to the display
-		if ((pm->flags & GMOUSE_FLG_CLIP)) {
-			if (r.x < 0)		r.x = 0;
-			else if (r.x >= w)	r.x = w-1;
-			if (r.y < 0)		r.y = 0;
-			else if (r.y >= h)	r.y = h-1;
+			// Do we need to clip the reading to the display
+			if ((pm->flags & GMOUSE_FLG_CLIP)) {
+				if (r.x < 0)		r.x = 0;
+				else if (r.x >= w)	r.x = w-1;
+				if (r.y < 0)		r.y = 0;
+				else if (r.y >= h)	r.y = h-1;
+			}
 		}
 	}
 
 	{
-		MouseJitter		*pj;
-		uint32_t		diff;
+		const GMouseJitter	*pj;
+		uint32_t			diff;
 
 		// Are we in pen or finger mode
-		pj = (pm->flags & GMOUSE_FLG_FINGERMODE) ? &pm->vmt->finger_jitter : &pm->vmt->pen_jitter;
+		pj = (m->flags & GMOUSE_FLG_FINGERMODE) ? &gmvmt(m)->finger_jitter : &gmvmt(m)->pen_jitter;
 
 		// Is this just movement jitter
 		if (pj->move > 0) {
-			diff = (uint32_t)(r.x - pm->r.x) * (uint32_t)(r.x - pm->r.x) + (uint32_t)(r.y - pm->r.y) * (uint32_t)(r.y - pm->r.y);
+			diff = (uint32_t)(r.x - m->r.x) * (uint32_t)(r.x - m->r.x) + (uint32_t)(r.y - m->r.y) * (uint32_t)(r.y - m->r.y);
 			if (diff > (uint32_t)pj->move * (uint32_t)pj->move) {
-				r.x = pm->r.x;
-				r.y = pm->r.y;
+				r.x = m->r.x;
+				r.y = m->r.y;
 			}
 		}
 
 		// Check if the click has moved outside the click area and if so cancel the click
-		if (pj->click > 0 && (pm->flags & GMOUSE_FLG_CLICK_TIMER)) {
-			diff = (uint32_t)(r.x - pm->clickpos.x) * (uint32_t)(r.x - pm->clickpos.x) + (uint32_t)(r.y - pm->clickpos.y) * (uint32_t)(r.y - pm->clickpos.y);
+		if (pj->click > 0 && (m->flags & GMOUSE_FLG_CLICK_TIMER)) {
+			diff = (uint32_t)(r.x - m->clickpos.x) * (uint32_t)(r.x - m->clickpos.x) + (uint32_t)(r.y - m->clickpos.y) * (uint32_t)(r.y - m->clickpos.y);
 			if (diff > (uint32_t)pj->click * (uint32_t)pj->click)
-				pm->flags &= ~GMOUSE_FLG_CLICK_TIMER;
+				m->flags &= ~GMOUSE_FLG_CLICK_TIMER;
 		}
 	}
 
@@ -298,16 +292,16 @@ static void DoMouseReading(MouseInstance *pm) {
 		uint16_t		upbtns, dnbtns;
 
 		// Calculate out new event meta value and handle CLICK and CXTCLICK
-		dnbtns = r.buttons & ~pm->r.buttons;
-		upbtns = ~r.buttons & pm->r.buttons;
+		dnbtns = r.buttons & ~m->r.buttons;
+		upbtns = ~r.buttons & m->r.buttons;
 		meta = GMETA_NONE;
 
 		// Mouse down
 		if ((dnbtns & (GINPUT_MOUSE_BTN_LEFT|GINPUT_MOUSE_BTN_RIGHT))) {
-			pm->clickpos.x = r.x;
-			pm->clickpos.y = r.y;
-			pm->clicktime = gfxSystemTicks();
-			pm->flags |= GMOUSE_FLG_CLICK_TIMER;
+			m->clickpos.x = r.x;
+			m->clickpos.y = r.y;
+			m->clicktime = gfxSystemTicks();
+			m->flags |= GMOUSE_FLG_CLICK_TIMER;
 			if ((dnbtns & GINPUT_MOUSE_BTN_LEFT))
 				meta |= GMETA_MOUSE_DOWN;
 		}
@@ -316,16 +310,16 @@ static void DoMouseReading(MouseInstance *pm) {
 		if ((upbtns & (GINPUT_MOUSE_BTN_LEFT|GINPUT_MOUSE_BTN_RIGHT))) {
 			if ((upbtns & GINPUT_MOUSE_BTN_LEFT))
 				meta |= GMETA_MOUSE_UP;
-			if ((pm->flags & GMOUSE_FLG_CLICK_TIMER)) {
+			if ((m->flags & GMOUSE_FLG_CLICK_TIMER)) {
 				if ((upbtns & GINPUT_MOUSE_BTN_LEFT)
 						#if GINPUT_TOUCH_CLICK_TIME != TIME_INFINITE
-							&& gfxSystemTicks() - pm->clicktime < gfxMillisecondsToTicks(GINPUT_TOUCH_CLICK_TIME)
+							&& gfxSystemTicks() - m->clicktime < gfxMillisecondsToTicks(GINPUT_TOUCH_CLICK_TIME)
 						#endif
 						)
 					meta |= GMETA_MOUSE_CLICK;
 				else
 					meta |= GMETA_MOUSE_CXTCLICK;
-				pm->flags &= ~GMOUSE_FLG_CLICK_TIMER;
+				m->flags &= ~GMOUSE_FLG_CLICK_TIMER;
 			}
 		}
 
@@ -340,7 +334,7 @@ static void DoMouseReading(MouseInstance *pm) {
 
 			// If we haven't really moved (and there are no meta events) don't bother sending the event
 			if (!meta && !psl->srcflags && !(psl->listenflags & GLISTEN_MOUSENOFILTER)
-					&& r.x == pm->r.x && r.y == pm->r.y	&& r.buttons == pm->r.buttons)
+					&& r.x == m->r.x && r.y == m->r.y && r.buttons == m->r.buttons)
 				continue;
 
 			// Send the event if we are listening for it
@@ -348,35 +342,38 @@ static void DoMouseReading(MouseInstance *pm) {
 					|| (!(r.buttons & GINPUT_MOUSE_BTN_LEFT) && (psl->listenflags & GLISTEN_MOUSEUPMOVES))
 					|| (meta && (psl->listenflags & GLISTEN_MOUSEMETA))) {
 				pe->type = GINPUT_MOUSE_EVENT_TYPE;
-				pe->instance = 0;
 				pe->x = r.x;
 				pe->y = r.y;
 				pe->z = r.z;
 				pe->current_buttons = r.buttons;
-				pe->last_buttons = pm->r.buttons;
+				pe->last_buttons = m->r.buttons;
 				pe->meta = meta;
 				if (psl->srcflags) {
 					pe->current_buttons |= GINPUT_MISSED_MOUSE_EVENT;
 					pe->meta |= psl->srcflags;
 					psl->srcflags = 0;
 				}
-				pe->display = pm->display;
+				pe->display = m->display;
 				geventSendEvent(psl);
 			}
 		}
 	}
 
 	// Finally save the results
-	pm->r.x = r.x;
-	pm->r.y = r.y;
-	pm->r.z = r.z;
-	pm->r.buttons = r.buttons;
+	m->r.x = r.x;
+	m->r.y = r.y;
+	m->r.z = r.z;
+	m->r.buttons = r.buttons;
 }
 
 static void MousePoll(void *param) {
-	(void) param;
+	GMouse *	m;
+	(void) 		param;
 	
-	DoMouseReading(stuff in here);
+	for(m = (GMouse *)gdriverGetNext(GDRIVER_TYPE_MOUSE, 0); m; m = (GMouse *)gdriverGetNext(GDRIVER_TYPE_MOUSE, m)) {
+		if (!(gmvmt(m)->d.flags & GMOUSE_VFLG_NOPOLL) || (m->flags & GMOUSE_FLG_NEEDREAD))
+			GetMouseReading(m);
+	}
 }
 
 GSourceHandle ginputGetMouse(uint16_t instance) {
@@ -413,7 +410,7 @@ GSourceHandle ginputGetMouse(uint16_t instance) {
 				if ((MouseConfig.flags & FLG_CAL_FREE))
 					gfxFree((void *)pc);
 			} else if (instance == 9999) {
-				_tsSetIdentity(&MouseConfig.caldata);
+				CalibrationSetIdentity(&MouseConfig.caldata);
 				MouseConfig.flags |= (FLG_CAL_OK|FLG_CAL_SAVED|FLG_CAL_RAW);
 			} else
 				ginputCalibrateMouse(instance);
@@ -491,7 +488,7 @@ bool_t ginputCalibrateMouse(uint16_t instance) {
 									{(width - (width / 4)) , (height - (height / 4))},
 									{(width / 2), (height / 2)}}; /* Check point */
 		#endif
-		MousePoint points[GINPUT_MOUSE_CALIBRATION_POINTS];
+		MousePoint points[4];
 		const MousePoint	*pc;
 		MousePoint *pt;
 		int32_t px, py;
@@ -523,7 +520,7 @@ bool_t ginputCalibrateMouse(uint16_t instance) {
 				gdispGFillStringBox(MouseConfig.display, 0, 5, width, 30, GINPUT_MOUSE_CALIBRATION_TEXT, font1,  White, Blue, justifyCenter);
 
 				for(i = 0, pt = points, pc = cross; i < GINPUT_MOUSE_CALIBRATION_POINTS; i++, pt++, pc++) {
-					_tsDrawCross(pc);
+					CalibrationCrossDraw(pc);
 
 					do {
 
@@ -546,7 +543,7 @@ bool_t ginputCalibrateMouse(uint16_t instance) {
 					pt->x = px / j;
 					pt->y = py / j;
 
-					_tsClearCross(pc);
+					CalibrationCrossClear(pc);
 
 					if (i >= 1 && pt->x == (pt-1)->x && pt->y == (pt-1)->y) {
 						gdispGFillStringBox(MouseConfig.display, 0, 35, width, 40, GINPUT_MOUSE_CALIBRATION_SAME_TEXT, font2,  Red, Yellow, justifyCenter);
@@ -557,7 +554,7 @@ bool_t ginputCalibrateMouse(uint16_t instance) {
 				}
 
 				/* Apply 3 point calibration algorithm */
-				_tsDo3PointCalibration(cross, points, MouseConfig.display, &MouseConfig.caldata);
+				CalibrationCalculate(&MouseConfig, cross, points);
 
 				 /* Verification of correctness of calibration (optional) :
 				 *  See if the 4th point (Middle of the screen) coincides with the calibrated
@@ -568,7 +565,7 @@ bool_t ginputCalibrateMouse(uint16_t instance) {
 				/* Transform the co-ordinates */
 				MouseConfig.t.x = points[3].x;
 				MouseConfig.t.y = points[3].y;
-				_tsTransform(&MouseConfig.t, &MouseConfig.caldata);
+				CalibrationTransform(&MouseConfig.t, &MouseConfig.caldata);
 				_tsOrientClip(&MouseConfig.t, MouseConfig.display, FALSE);
 
 				/* Calculate the delta */
@@ -657,12 +654,14 @@ bool_t ginputRequireMouseCalibrationStorage(uint16_t instance) {
 }
 
 /* Wake up the mouse driver from an interrupt service routine (there may be new readings available) */
-void ginputMouseWakeup(void) {
+void ginputMouseWakeup(GMouse *m) {
+	m->flags |= GMOUSE_FLG_NEEDREAD;
 	gtimerJab(&MouseTimer);
 }
 
 /* Wake up the mouse driver from an interrupt service routine (there may be new readings available) */
-void ginputMouseWakeupI(void) {
+void ginputMouseWakeupI(GMouse *m) {
+	m->flags |= GMOUSE_FLG_NEEDREAD;
 	gtimerJabI(&MouseTimer);
 }
 

@@ -287,7 +287,7 @@ struct GDisplay {
 };
 
 typedef struct GDISPVMT {
-	GDriverVMT	vmtdriver;
+	GDriverVMT	d;
 	bool_t (*init)(GDisplay *g);
 	void (*deinit)(GDisplay *g);
 	void (*writestart)(GDisplay *g);				// Uses p.x,p.y  p.cx,p.cy
