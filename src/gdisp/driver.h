@@ -24,7 +24,7 @@
 // Our special auto-detect hardware code which uses the VMT.
 #define HARDWARE_AUTODETECT		2
 
-#if GDISP_TOTAL_CONTROLLERS > 1 && !defined(GDISP_DRIVER_VMT)
+#if defined(GDISP_DRIVER_LIST) && !defined(GDISP_DRIVER_VMT)
 	// Multiple controllers the default is to hardware detect
 	#define HARDWARE_DEFAULT		HARDWARE_AUTODETECT
 #else
@@ -40,7 +40,7 @@
 	 * @brief   The display hardware can benefit from being de-initialized when usage is complete.
 	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
 	 *
-	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_DRIVER_LIST is defined
 	 * @note	This is most useful for displays such as remote network displays.
 	 */
 	#ifndef GDISP_HARDWARE_DEINIT
@@ -51,7 +51,7 @@
 	 * @brief   The display hardware can benefit from being flushed.
 	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
 	 *
-	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_DRIVER_LIST is defined
 	 * @note	Some controllers ** require ** the application to flush
 	 */
 	#ifndef GDISP_HARDWARE_FLUSH
@@ -62,7 +62,7 @@
 	 * @brief   Hardware streaming writing is supported.
 	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
 	 *
-	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_DRIVER_LIST is defined
 	 * @note	Either GDISP_HARDWARE_STREAM_WRITE or GDISP_HARDWARE_DRAWPIXEL must be provided by each driver
 	 */
 	#ifndef GDISP_HARDWARE_STREAM_WRITE
@@ -73,7 +73,7 @@
 	 * @brief   Hardware streaming reading of the display surface is supported.
 	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
 	 *
-	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_DRIVER_LIST is defined
 	 *
 	 */
 	#ifndef GDISP_HARDWARE_STREAM_READ
@@ -84,7 +84,7 @@
 	 * @brief   Hardware supports setting the cursor position within the stream window.
 	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
 	 *
-	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_DRIVER_LIST is defined
 	 * @note	This is used to optimise setting of individual pixels within a stream window.
 	 * 			It should therefore not be implemented unless it is cheaper than just setting
 	 * 			a new window.
@@ -97,7 +97,7 @@
 	 * @brief   Hardware accelerated draw pixel.
 	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
 	 *
-	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_DRIVER_LIST is defined
 	 * @note	Either GDISP_HARDWARE_STREAM_WRITE or GDISP_HARDWARE_DRAWPIXEL must be provided by the driver
 	 */
 	#ifndef GDISP_HARDWARE_DRAWPIXEL
@@ -108,7 +108,7 @@
 	 * @brief   Hardware accelerated screen clears.
 	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
 	 *
-	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_DRIVER_LIST is defined
 	 * @note	This clears the entire display surface regardless of the clipping area currently set
 	 */
 	#ifndef GDISP_HARDWARE_CLEARS
@@ -119,7 +119,7 @@
 	 * @brief   Hardware accelerated rectangular fills.
 	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
 	 *
-	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_DRIVER_LIST is defined
 	 */
 	#ifndef GDISP_HARDWARE_FILLS
 		#define GDISP_HARDWARE_FILLS			HARDWARE_DEFAULT
@@ -129,7 +129,7 @@
 	 * @brief   Hardware accelerated fills from an image.
 	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
 	 *
-	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_DRIVER_LIST is defined
 	 */
 	#ifndef GDISP_HARDWARE_BITFILLS
 		#define GDISP_HARDWARE_BITFILLS			HARDWARE_DEFAULT
@@ -139,7 +139,7 @@
 	 * @brief   Hardware accelerated scrolling.
 	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
 	 *
-	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_DRIVER_LIST is defined
 	 */
 	#ifndef GDISP_HARDWARE_SCROLL
 		#define GDISP_HARDWARE_SCROLL			HARDWARE_DEFAULT
@@ -149,7 +149,7 @@
 	 * @brief   Reading back of pixel values.
 	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
 	 *
-	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_DRIVER_LIST is defined
 	 */
 	#ifndef GDISP_HARDWARE_PIXELREAD
 		#define GDISP_HARDWARE_PIXELREAD		HARDWARE_DEFAULT
@@ -159,7 +159,7 @@
 	 * @brief   The driver supports one or more control commands.
 	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
 	 *
-	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_DRIVER_LIST is defined
 	 */
 	#ifndef GDISP_HARDWARE_CONTROL
 		#define GDISP_HARDWARE_CONTROL			HARDWARE_DEFAULT
@@ -169,7 +169,7 @@
 	 * @brief   The driver supports a non-standard query.
 	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
 	 *
-	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_DRIVER_LIST is defined
 	 */
 	#ifndef GDISP_HARDWARE_QUERY
 		#define GDISP_HARDWARE_QUERY			HARDWARE_DEFAULT
@@ -179,7 +179,7 @@
 	 * @brief   The driver supports a clipping in hardware.
 	 * @details Can be set to TRUE, FALSE or HARDWARE_AUTODETECT
 	 *
-	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_TOTAL_CONTROLLERS > 1
+	 * @note	HARDWARE_AUTODETECT is only meaningful when GDISP_DRIVER_LIST is defined
 	 * @note	If this is defined the driver must perform its own clipping on all calls to
 	 * 			the driver and respond appropriately if a parameter is outside the display area.
 	 * @note	If this is not defined then the software ensures that all calls to the
@@ -310,16 +310,16 @@ typedef struct GDISPVMT {
 } GDISPVMT;
 
 // Do we need function definitions or macro's (via the VMT)
-#if GDISP_TOTAL_CONTROLLERS <= 1 || defined(GDISP_DRIVER_VMT) || defined(__DOXYGEN__)
+#if !defined(GDISP_DRIVER_LIST) || defined(GDISP_DRIVER_VMT) || defined(__DOXYGEN__)
 	#ifdef __cplusplus
 	extern "C" {
 	#endif
 
 	// Should the driver routines should be static or not
-	#if GDISP_TOTAL_CONTROLLERS <= 1
-		#define LLDSPEC
+	#if defined(GDISP_DRIVER_LIST)
+		#define LLDSPEC         static
 	#else
-		#define LLDSPEC			static
+		#define LLDSPEC
 	#endif
 
 	/**
@@ -611,7 +611,7 @@ typedef struct GDISPVMT {
 	#endif
 
 	// If we are not using multiple displays then hard-code the VMT name
-	#ifndef GDISP_CONTROLLER_LIST
+	#if !defined(GDISP_DRIVER_LIST)
 		#undef GDISP_DRIVER_VMT
 		#define GDISP_DRIVER_VMT		GDISPVMT_OnlyOne
 	#endif

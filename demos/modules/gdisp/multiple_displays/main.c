@@ -46,7 +46,7 @@
 #if USE_METHOD_1
 	int main(void) {
 		coord_t		width, height;
-		coord_t		display, i, j;
+		coord_t		display, i, j, cnt;
 		font_t		f;
 		GDisplay	*g;
 		char		buf[16];
@@ -58,7 +58,8 @@
 		f = gdispOpenFont("*");
 
 		/* Cycle through each display */
-		for(display = 0; display < GDISP_TOTAL_DISPLAYS; display++) {
+		cnt = gdispGetDisplayCount();
+		for(display = 0; display < cnt; display++) {
 
 			// Get the specified display
 			g = gdispGetDisplay(display);
@@ -84,7 +85,7 @@
 #else
 	int main(void) {
 		coord_t		width, height;
-		coord_t		display, i, j;
+		coord_t		display, i, j, cnt;
 		font_t		f;
 		char		buf[16];
 
@@ -95,7 +96,8 @@
 		f = gdispOpenFont("*");
 
 		/* Cycle through each display */
-		for(display = 0; display < GDISP_TOTAL_DISPLAYS; display++) {
+		cnt = gdispGetDisplayCount();
+		for(display = 0; display < cnt; display++) {
 
 			// Set the default display to the specified display
 			gdispSetDisplay(gdispGetDisplay(display));
