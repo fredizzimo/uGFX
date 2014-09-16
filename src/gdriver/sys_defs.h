@@ -67,7 +67,7 @@ typedef struct GDriverVMT {
 	uint16_t	type;																// @< What type of driver this is
 	uint16_t	flags;																// @< Flags for the driver. Meaning is specific to each driver type.
 	uint32_t	objsize;															// @< How big the runtime driver structure is
-	bool_t		(*init)(GDriver *driver, int driverinstance, int systeminstance);	// @< Initialise the driver. Returns TRUE if OK.
+	bool_t		(*init)(GDriver *driver, unsigned driverinstance, unsigned systeminstance);	// @< Initialise the driver. Returns TRUE if OK.
 																					//		driverinstance is the instance 0..n of this driver.
 																					//		systeminstance is the instance 0..n of this type of device.
 	void		(*postinit)(GDriver *driver);										// @< Called once the driver is registered.
@@ -118,7 +118,7 @@ extern "C" {
 	 * @param[in]	type		The type of driver to find
 	 * @param[in]	instance	The instance (0..n) to find
 	 */
-	GDriver *gdriverGetInstance(uint16_t type, int instance);
+	GDriver *gdriverGetInstance(uint16_t type, unsigned instance);
 
 	/**
 	 * @brief	Get the count of instances of a type of device
@@ -128,7 +128,7 @@ extern "C" {
 	 *
 	 * @param[in]	type		The type of driver to find
 	 */
-	int gdriverInstanceCount(uint16_t type);
+	unsigned gdriverInstanceCount(uint16_t type);
 
 	/**
 	 * @brief	Get the next driver for a type of device

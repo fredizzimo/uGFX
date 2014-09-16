@@ -219,7 +219,7 @@ color_t gdispContrastColor(color_t color);
  *
  * @api
  */
-#define gdispGetDisplay(display)     ((GDisplay *)gdriverGetInstance(GDRIVER_TYPE_DISPLAY, display))
+GDisplay *gdispGetDisplay(unsigned display);
 
 /**
  * @brief   Set the current default display to the specified display
@@ -241,7 +241,7 @@ void gdispSetDisplay(GDisplay *g);
  *
  * @note	Displays are numbered from 0 to @p gdispGetDisplayCount() - 1
  */
-#define gdispGetDisplayCount()      gdriverInstanceCount(GDRIVER_TYPE_DISPLAY)
+unsigned gdispGetDisplayCount(void);
 
 /* Property Functions */
 

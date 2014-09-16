@@ -26,7 +26,7 @@
 	#endif
 	#if defined(GDISP_DRIVER_LIST)
         #if GDISP_TOTAL_DISPLAYS != 1
-            #error "GDISP Multiple Drivers: You can't specify both GDISP_TOTAL_DISPLAYS and GDISP_DRIVER_LIST
+            #error "GDISP Multiple Drivers: You can't specify both GDISP_TOTAL_DISPLAYS and GDISP_DRIVER_LIST"
         #endif
 		#ifndef GDISP_PIXELFORMAT
 			#error "GDISP Multiple Drivers: You must specify a value for GDISP_PIXELFORMAT when using GDISP_DRIVER_LIST"

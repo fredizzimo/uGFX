@@ -34,9 +34,9 @@ void _gdriverDeinit(void) {
 
 
 GDriver *gdriverRegister(const GDriverVMT *vmt) {
-	GDriver *pd;
-	GDriver *dtail;
-	int		dinstance, sinstance;
+	GDriver *	pd;
+	GDriver *	dtail;
+	unsigned	dinstance, sinstance;
 
 	// Loop to find the driver instance and the system instance numbers
 	dinstance = sinstance = 0;
@@ -98,9 +98,9 @@ void gdriverUnRegister(GDriver *driver) {
 	gfxFree(driver);
 }
 
-GDriver *gdriverGetInstance(uint16_t type, int instance) {
+GDriver *gdriverGetInstance(uint16_t type, unsigned instance) {
 	GDriver		*pd;
-	int			sinstance;
+	unsigned	sinstance;
 
 	// Loop to find the system instance
 	sinstance = 0;
@@ -114,9 +114,9 @@ GDriver *gdriverGetInstance(uint16_t type, int instance) {
 	return 0;
 }
 
-int gdriverInstanceCount(uint16_t type) {
+unsigned gdriverInstanceCount(uint16_t type) {
 	GDriver		*pd;
-	int			sinstance;
+	unsigned	sinstance;
 
 	// Loop to count the system instances
 	sinstance = 0;

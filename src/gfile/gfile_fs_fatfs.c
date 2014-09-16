@@ -14,7 +14,7 @@
 #if GFX_USE_GFILE && GFILE_NEED_FATFS
 
 #include "gfile_fs.h"
-#include "fatfs_wrapper.h"
+#include "gfile_fatfs_wrapper.h"
 
 /********************************************************
  * The FAT file-system VMT
