@@ -21,14 +21,6 @@
  * @{
  */
 	/**
-	 * @brief	Should the startup logo be displayed
-	 *
-	 * @details Defaults to TRUE
-	 */
-	#ifndef GDISP_NEED_STARTUP_LOGO
-		#define GDISP_NEED_STARTUP_LOGO 		TRUE
-	#endif
-	/**
 	 * @brief   Should drawing operations be automatically flushed.
 	 * @details	Defaults to FALSE
 	 * @note	If set to FALSE and the controller requires flushing
@@ -180,6 +172,62 @@
 /**
  * @}
  *
+ * @name    GDISP Multi-Threading Options
+ * @{
+ */
+	/**
+	 * @brief   Do the drawing functions need to be thread-safe.
+	 * @details	Defaults to FALSE
+	 */
+	#ifndef GDISP_NEED_MULTITHREAD
+		#define GDISP_NEED_MULTITHREAD			FALSE
+	#endif
+/**
+ * @}
+ *
+ * @name    GDISP Optional Parameters
+ * @{
+ */
+	/**
+	 * @brief	Should the startup logo be displayed
+	 *
+	 * @details Defaults to TRUE
+	 */
+	#ifndef GDISP_NEED_STARTUP_LOGO
+		#define GDISP_NEED_STARTUP_LOGO 		TRUE
+	#endif
+	/**
+	 * @brief	Define the initial background color for all displays in the system.
+	 */
+	#ifndef GDISP_STARTUP_COLOR
+		#define GDISP_STARTUP_COLOR				Black
+	#endif
+	/**
+	 * @brief	Define the default orientation for all displays in the system.
+	 * @note	GDISP_NEED_CONTROL must also be set (and the hardware must support it)
+	 * @note	If not specified then displays default to the native hardware orientation
+	 */
+	// #define GDISP_DEFAULT_ORIENTATION		GDISP_ROTATE_LANDSCAPE
+	/**
+	 * @brief   The size of pixel buffer (in pixels) used for optimization.
+	 * @details	Set to zero to guarantee disabling of the buffer.
+	 * @note	Depending on the driver and what operations the application
+	 * 			needs, this buffer may never be allocated.
+	 * @note	Setting the size to zero may cause some operations to not
+	 * 			compile eg. Scrolling if there is no hardware scroll support.
+	 * @note	Increasing the size will speedup certain operations
+	 * 			at the expense of RAM.
+	 * @note	Currently only used to support scrolling on hardware without
+	 * 			scrolling support, and to increase the speed of streaming
+	 * 			operations on non-streaming hardware where there is a
+	 * 			hardware supported bit-blit.
+	 */
+	#ifndef GDISP_LINEBUF_SIZE
+		#define GDISP_LINEBUF_SIZE				128
+	#endif
+/**
+ * @}
+ *
  * @name    GDISP Multiple Display Support
  * @{
  */
@@ -267,7 +315,6 @@
 	#ifndef GDISP_NEED_UTF8
 		#define GDISP_NEED_UTF8					FALSE
 	#endif
-
 	/**
 	 * @brief	Enable kerning for font rendering (improves character placement).
 	 * @details	Defaults to FALSE
@@ -275,7 +322,6 @@
 	#ifndef GDISP_NEED_TEXT_KERNING
 		#define GDISP_NEED_TEXT_KERNING			FALSE
 	#endif
-
 	/**
 	 * @brief	Enable antialiased font support
 	 * @details	Defaults to FALSE
@@ -283,65 +329,12 @@
 	#ifndef GDISP_NEED_ANTIALIAS
 		#define GDISP_NEED_ANTIALIAS			FALSE
 	#endif
-
-/**
- * @}
- *
- * @name    GDISP Multi-Threading Options
- * @{
- */
-	/**
-	 * @brief   Do the drawing functions need to be thread-safe.
-	 * @details	Defaults to FALSE
-	 */
-	#ifndef GDISP_NEED_MULTITHREAD
-		#define GDISP_NEED_MULTITHREAD	FALSE
-	#endif
-/**
- * @}
- *
- * @name    GDISP Fonts
- * @{
- */
-	/**
-	 * @brief   Predefined built in fonts
-	 * @note	Turning off the ones you are not using can save program size.
-	 */
-
-/**
- * @}
- *
- * @name    GDISP Optional Sizing Parameters
- * @{
- */
-	/**
-	 * @brief   The size of pixel buffer (in pixels) used for optimization.
-	 * @details	Set to zero to guarantee disabling of the buffer.
-	 * @note	Depending on the driver and what operations the application
-	 * 			needs, this buffer may never be allocated.
-	 * @note	Setting the size to zero may cause some operations to not
-	 * 			compile eg. Scrolling if there is no hardware scroll support.
-	 * @note	Increasing the size will speedup certain operations
-	 * 			at the expense of RAM.
-	 * @note	Currently only used to support scrolling on hardware without
-	 * 			scrolling support, and to increase the speed of streaming
-	 * 			operations on non-streaming hardware where there is a
-	 * 			hardware supported bit-blit.
-	 */
-	#ifndef GDISP_LINEBUF_SIZE
-		#define GDISP_LINEBUF_SIZE		128
-	#endif
 /**
  * @}
  *
  * @name    GDISP Optional Low Level Driver Defines
  * @{
  */
-	/**
-	 * @brief	Define the default orientation for all displays in the system.
-	 * @note	GDISP_NEED_CONTROL must also be set (and the hardware must support it)
-	 */
-	// #define GDISP_DEFAULT_ORIENTATION	GDISP_ROTATE_LANDSCAPE
 	/**
 	 * @brief   Set the screen height and width.
 	 * @note	Ignored by some low level GDISP drivers, optional for others.
