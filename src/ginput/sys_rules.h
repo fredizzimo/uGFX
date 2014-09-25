@@ -31,6 +31,21 @@
 		#undef GFX_USE_GTIMER
 		#define	GFX_USE_GTIMER		TRUE
 	#endif
+	#if GINPUT_NEED_MOUSE
+		#if GINPUT_TOUCH_NOTOUCH
+			// No warning needed for this
+			#undef GINPUT_TOUCH_NOCALIBRATE
+			#define GINPUT_TOUCH_NOCALIBRATE	TRUE
+		#endif
+		#if GINPUT_TOUCH_NOCALIBRATE
+			// No warning needed for this
+			#undef GINPUT_TOUCH_NOCALIBRATE_GUI
+			#define GINPUT_TOUCH_NOCALIBRATE_GUI	TRUE
+		#endif
+		#if !GINPUT_TOUCH_NOTOUCH && GINPUT_MOUSE_CLICK_TIME > GINPUT_TOUCH_CXTCLICK_TIME
+			#error "GINPUT MOUSE: The GINPUT_MOUSE_CLICK_TIME must be <= GINPUT_TOUCH_CXTCLICK_TIME"
+		#endif
+	#endif
 #endif
 
 #endif /* _GINPUT_RULES_H */

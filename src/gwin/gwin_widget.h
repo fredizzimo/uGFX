@@ -199,7 +199,7 @@ void gwinSetDefaultStyle(const GWidgetStyle *pstyle, bool_t updateAll);
  * @brief   Get the current default style.
  *
  * @return	The current default style.
- * 
+ *
  * @api
  */
 const GWidgetStyle *gwinGetDefaultStyle(void);
@@ -315,7 +315,7 @@ bool_t gwinAttachListener(GListener *pl);
 	 *
 	 * @api
 	 */
-	bool_t gwinAttachMouse(uint16_t instance);
+	bool_t DEPRECATED("This call can now be removed. Attaching the mouse to GWIN is now automatic.") gwinAttachMouse(uint16_t instance);
 #endif
 
 #if (GFX_USE_GINPUT && GINPUT_NEED_TOGGLE) || defined(__DOXYGEN__)

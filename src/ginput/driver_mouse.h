@@ -42,21 +42,17 @@ typedef struct GMouse {
 	GDriver								d;					// The driver overheads and vmt
 	GMouseReading						r;					// The current position and state
 	uint16_t							flags;				// Flags
-			#define GMOUSE_FLG_ACTIVE			0x0001				// Mouse is currently active
-			#define GMOUSE_FLG_CLICK_TIMER		0x0002				// Currently timing a click event
-			#define GMOUSE_FLG_INDELTA			0x0004				// Currently in a up/down transition test
-			#define GMOUSE_FLG_CLIP				0x0008				// Clip reading to the display
-			#define GMOUSE_FLG_CALIBRATE		0x0010				// Calibrate readings
-			#define GMOUSE_FLG_CAL_INPROGRESS	0x0020				// Calibrate is currently in progress
-			#define GMOUSE_FLG_CAL_SAVED		0x0040				// Calibration has been saved
-			#define GMOUSE_FLG_FINGERMODE		0x0080				// Mouse is currently in finger mode
-			#define GMOUSE_FLG_NEEDREAD			0x0100				// The mouse needs reading
+			#define GMOUSE_FLG_CLICK_TIMER		0x0001				// Currently timing a click
+			#define GMOUSE_FLG_INDELTA			0x0002				// Currently in a up/down transition test
+			#define GMOUSE_FLG_CLIP				0x0004				// Clip reading to the display
+			#define GMOUSE_FLG_CALIBRATE		0x0008				// Calibrate readings
+			#define GMOUSE_FLG_IN_CAL			0x0010				// Currently in calibration routine
+			#define GMOUSE_FLG_FINGERMODE		0x0020				// Mouse is currently in finger mode
+			#define GMOUSE_FLG_NEEDREAD			0x0040				// The mouse needs reading
 	point								clickpos;			// The position of the last click event
 	systemticks_t						clicktime;			// The time of the last click event
 	GDisplay *							display;			// The display the mouse is associated with
 	#if !GINPUT_TOUCH_NOCALIBRATE
-		GMouseCalibrationSaveRoutine	fnsavecal;			// The calibration load routine
-		GMouseCalibrationLoadRoutine	fnloadcal;			// The calibration save routine
 		GMouseCalibration				caldata;			// The calibration data
 	#endif
 	// Other driver specific fields may follow.
@@ -77,8 +73,10 @@ typedef struct GMouseVMT {
 		#define GMOUSE_VFLG_CALIBRATE		0x0010			// This device requires calibration
 		#define GMOUSE_VFLG_CAL_EXTREMES	0x0020			// Use edge to edge calibration
 		#define GMOUSE_VFLG_CAL_TEST		0x0040			// Test the results of the calibration
+		#define GMOUSE_VFLG_CAL_LOADFREE    0x0080          // Call gfxFree on the buffer returned by the VMT calload() routine.
 		#define GMOUSE_VFLG_ONLY_DOWN		0x0100			// This device returns a valid position only when the mouse is down
 		#define GMOUSE_VFLG_POORUPDOWN		0x0200			// Position readings during up/down are unreliable
+		#define GMOUSE_VFLG_DYNAMICONLY		0x8000			// This mouse driver should not be statically initialized eg Win32
 	coord_t		z_max;										// TOUCH: Maximum possible z value (fully touched)
 	coord_t		z_min;										// TOUCH: Minimum possible z value (touch off screen). Note may also be > z_max
 	coord_t		z_touchon;									// TOUCH: z values between z_max and this are a solid touch on
@@ -87,10 +85,11 @@ typedef struct GMouseVMT {
 	GMouseJitter	pen_jitter;								// PEN MODE: Jitter settings
 	GMouseJitter	finger_jitter;							// FINGER MODE: Jitter settings
 
-	bool_t (*init)(GMouse *m);								// Required
+	bool_t (*init)(GMouse *m, unsigned driverinstance);		// Required
+	void (*deinit)(GMouse *m);								// Optional
 	void (*get)(GMouse *m, GMouseReading *prd);				// Required
 	void (*calsave)(GMouse *m, void *buf, size_t sz);		// Optional
-	const char *(*calload)(GMouse *m);						// Optional: Can return NULL if no data is saved. Buffer is automatically gfxFree()'d afterwards.
+	const char *(*calload)(GMouse *m, size_t sz);			// Optional: Can return NULL if no data is saved.
 } GMouseVMT;
 
 #define gmvmt(m)		((const GMouseVMT const *)((m)->d.vmt))
@@ -99,9 +98,28 @@ typedef struct GMouseVMT {
 /* External declarations.                                                    */
 /*===========================================================================*/
 
+// If we are not using multiple mice then hard-code the VMT name
+#if !defined(GINPUT_MOUSE_DRIVER_LIST)
+	#undef GMOUSE_DRIVER_VMT
+	#define GMOUSE_DRIVER_VMT		GMOUSEVMT_OnlyOne
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+	/**
+	 * @brief	Routines needed by the general driver VMT
+	 * @note	These routines are provided by the high level code for
+	 * 			use in the GMouseVMT.d structure.
+	 *
+	 * @notapi
+	 * @{
+	 */
+	bool_t _gmouseInitDriver(GDriver *g, unsigned driverinstance, unsigned systeminstance);
+	void _gmousePostInitDriver(GDriver *g);
+	void _gmouseDeInitDriver(GDriver *g);
+	/** @} */
+
 	/**
 	 * @brief	Wakeup the high level code so that it attempts another read
 	 *
@@ -109,7 +127,7 @@ extern "C" {
 	 *
 	 * @notapi
 	 */
-	void ginputMouseWakeup(GMouse *m);
+	void _gmouseWakeup(GMouse *m);
 
 	/**
 	 * @brief	Wakeup the high level code so that it attempts another read
@@ -119,7 +137,7 @@ extern "C" {
 	 * @iclass
 	 * @notapi
 	 */
-	void ginputMouseWakeupI(GMouse *m);
+	void _gmouseWakeupI(GMouse *m);
 
 #ifdef __cplusplus
 }

@@ -17,7 +17,7 @@
  *
  * @pre		GFX_USE_GINPUT must be set to TRUE in your gfxconf.h
  * @pre		GINPUT_NEED_MOUSE must be set to TRUE in your gfxconf.h
- * 
+ *
  * @{
  */
 
@@ -32,31 +32,29 @@
 
 /* This type definition is also used by touch */
 typedef struct GEventMouse_t {
-	GEventType		type;				// The type of this event (GEVENT_MOUSE or GEVENT_TOUCH)
-	coord_t			x, y, z;			// The position of the mouse.
-										//		- For touch devices, Z is the current pressure if supported (otherwise 0)
-										//		- For mice, Z is the 3rd dimension if supported (otherwise 0)
-	uint16_t		current_buttons;	// A bit is set if the button is down.
-										//		- For touch only bit 0 is relevant
-										//		- For mice the order of the buttons is (from 0 to n)  left, right, middle, any other buttons
-										//		- Bit 15 being set indicates that an important mouse event has been missed.
-		#define GINPUT_MOUSE_BTN_LEFT		0x0001
-		#define GINPUT_MOUSE_BTN_RIGHT		0x0002
-		#define GINPUT_MOUSE_BTN_MIDDLE		0x0004
-		#define GINPUT_MOUSE_BTN_4			0x0008
-		#define GINPUT_MISSED_MOUSE_EVENT	0x8000
-		#define GINPUT_TOUCH_PRESSED		GINPUT_MOUSE_BTN_LEFT
-	uint16_t		last_buttons;		// The value of current_buttons on the last event
-	enum GMouseMeta_e {
-		GMETA_NONE = 0,						// There is no meta event currently happening
-		GMETA_MOUSE_DOWN = 1,				// Button 0 has just gone down
-		GMETA_MOUSE_UP = 2,					// Button 0 has just gone up
-		GMETA_MOUSE_CLICK = 4,				// Button 0 has just gone through a short down - up cycle
-		GMETA_MOUSE_CXTCLICK = 8			// For mice - The right button has just been depressed
-											// For touch - a long press has just occurred
-		}				meta;
+	GEventType		type;							// The type of this event (GEVENT_MOUSE or GEVENT_TOUCH)
+	coord_t			x, y, z;						// The position of the mouse.
+													//		- For touch devices, Z is the current pressure if supported (values are device specific)
+													//		- For mice, Z is the 3rd dimension if supported (values are device specific)
+	uint16_t		buttons;						// A bit is set if the button is down or a meta event has occurred.
+		#define GINPUT_MOUSE_BTN_MASK		0x000F		// The "button is down" mask
+		#define GINPUT_MOUSE_BTN_LEFT		0x0001		// The left mouse button is currently down
+		#define GINPUT_MOUSE_BTN_RIGHT		0x0002		// The right mouse button is currently down
+		#define GINPUT_MOUSE_BTN_MIDDLE		0x0004		// The middle mouse button is currently down
+		#define GINPUT_MOUSE_BTN_4			0x0008		// The 4th mouse button is currently down
+		#define GINPUT_TOUCH_PRESSED		0x0001		// The touch surface is currently touched
+
+		#define GMETA_MASK					0x00F0		// The "button transition" mask
+		#define GMETA_NONE					0x0000		// No "button transition" events
+		#define GMETA_MOUSE_DOWN			0x0001		// Left mouse/touch has just gone down
+		#define GMETA_MOUSE_UP				0x0002		// Left mouse/touch has just gone up
+		#define GMETA_MOUSE_CLICK			0x0004		// Left mouse/touch has just gone through a click (short down - up cycle)
+		#define GMETA_MOUSE_CXTCLICK		0x0008		// Right mouse has just been depressed or touch has gone through a long click
+
+		#define GINPUT_MISSED_MOUSE_EVENT	0x8000		// Oops - a mouse event has previously been missed
+
 	GDisplay *			display;		// The display this mouse is currently associated with.
-	} GEventMouse;
+} GEventMouse;
 
 // Mouse/Touch Listen Flags - passed to geventAddSourceToListener()
 #define GLISTEN_MOUSEMETA			0x0001			// Create events for meta events such as CLICK and CXTCLICK
@@ -68,11 +66,12 @@ typedef struct GEventMouse_t {
 #define GLISTEN_TOUCHUPMOVES		GLISTEN_MOUSEUPMOVES
 #define	GLISTEN_TOUCHNOFILTER		GLISTEN_MOUSENOFILTER
 
-#define GINPUT_MOUSE_NUM_PORTS		1			// The total number of mouse/touch inputs supported
-
 // Event types for the mouse ginput source
 #define GEVENT_MOUSE		(GEVENT_GINPUT_FIRST+0)
 #define GEVENT_TOUCH		(GEVENT_GINPUT_FIRST+1)
+
+// All mice
+#define GMOUSE_ALL_INSTANCES		((unsigned)-1)
 
 /*===========================================================================*/
 /* External declarations.                                                    */
@@ -83,16 +82,32 @@ extern "C" {
 #endif
 
 	/**
-	 * @brief	Creates an instance of a mouse and returns the Source handler
-	 * @note	HACK: if the instance is 9999, it is treated as instance 0 except
-	 * 			that no calibration will be performed!
+	 * @brief	Get the Source handler for a mouse using the instance number
 	 *
-	 * @param[in] instance		The ID of the mouse input instance (from 0 to 9999)
+	 * @param[in] instance		The mouse instance number
 	 *
-	 * @return		The source handle of the created instance
+	 * @return		The source handle of the mouse or NULL
+	 * @note		You can use the special value of GMOUSE_ALL_INSTANCES to
+	 * 				get a source handle that returns events for all mice rather
+	 * 				than a specific mouse. Using GMOUSE_ALL_INSTANCES will always
+	 * 				return a valid spurce handle even if there are currently no mice
+	 * 				in the system.
 	 */
-	GSourceHandle ginputGetMouse(uint16_t instance);
-	
+	GSourceHandle ginputGetMouse(unsigned instance);
+
+	/**
+	 * @brief	Should this device be in Pen mode or Finger mode
+	 * @note	A touch device (and even theoritically a mouse) can operate
+	 * 			in either pen or finger mode. In finger mode typically a
+	 * 			touch device will be far more tolerant of movement and other
+	 * 			inaccuracies. Each driver specifies its own tolerances for
+	 * 			pen versus finger mode.
+	 *
+	 * @param[in] instance		The ID of the mouse input instance
+	 * @param[in] on			If true then finger mode is turned on.
+	 */
+	void ginputSetFingerMode(unsigned instance, bool_t on);
+
 	/**
 	 * @brief	Assign the display associated with the mouse
 	 * @note	This only needs to be called if the mouse is associated with a display
@@ -104,7 +119,7 @@ extern "C" {
 	 * @param[in] instance		The ID of the mouse input instance
 	 * @param[in] g				The GDisplay to which this mouse belongs
 	 */
-	void ginputSetMouseDisplay(uint16_t instance, GDisplay *g);
+	void ginputSetMouseDisplay(unsigned instance, GDisplay *g);
 
 	/**
 	 * @brief	Get the display currently associated with the mouse
@@ -112,7 +127,7 @@ extern "C" {
 	 *
 	 * @param[in] instance		The ID of the mouse input instance
 	 */
-	GDisplay *ginputGetMouseDisplay(uint16_t instance);
+	GDisplay *ginputGetMouseDisplay(unsigned instance);
 
 	/**
 	 * @brief	Get the current mouse position and button status
@@ -124,7 +139,7 @@ extern "C" {
 	 *
 	 * @return	FALSE on an error (eg. invalid instance)
 	 */
-	bool_t ginputGetMouseStatus(uint16_t instance, GEventMouse *pmouse);
+	bool_t ginputGetMouseStatus(unsigned instance, GEventMouse *pmouse);
 
 	/**
 	 * @brief	Performs a calibration
@@ -133,42 +148,37 @@ extern "C" {
 	 *
 	 * @return	FALSE if the driver dosen't support a calibration of if the handle is invalid
 	 */
-	bool_t ginputCalibrateMouse(uint16_t instance);
+	bool_t ginputCalibrateMouse(unsigned instance);
 
-	/* Set the routines to save and fetch calibration data.
-	 * This function should be called before first calling ginputGetMouse() for a particular instance
-	 *	as the gdispGetMouse() routine may attempt to fetch calibration data and perform a startup calibration if there is no way to get it.
-	 *	If this is called after gdispGetMouse() has been called and the driver requires calibration storage, it will immediately save the data is has already obtained.
-	 * The 'requireFree' parameter indicates if the fetch buffer must be free()'d to deallocate the buffer provided by the Fetch routine.
-	 */
-	typedef void (*GMouseCalibrationSaveRoutine)(uint16_t instance, const uint8_t *calbuf, size_t sz);			// Save calibration data
-	typedef const char * (*GMouseCalibrationLoadRoutine)(uint16_t instance);									// Load calibration data (returns NULL if not data saved)
+    /**
+     * @brief   Load a set of mouse calibration data
+     * @return  A pointer to the data or NULL on failure
+     *
+	 * @param[in] instance		The mouse input instance number
+	 * @param[in] sz    		The size in bytes of the data to retrieve.
+	 *
+     * @note    This routine is provided by the user application. It is only
+     *          called if GINPUT_TOUCH_USER_CALIBRATION_LOAD has been set to TRUE in the
+     *          users gfxconf.h file.
+     * @note    If GINPUT_TOUCH_USER_CALIBRATION_FREE has been set to TRUE in the users
+     *          gfxconf.h file then the buffer returned will be free'd using gfxFree().
+     */
+    void *LoadMouseCalibration(unsigned instance, size_t sz);
 
-	/**
-	 * @brief	Set the routines to store and restore calibration data
+    /**
+     * @brief   Save a set of mouse calibration data
+     * @return  TRUE if the save operation was successful.
+     *
+	 * @param[in] instance		The mouse input instance number
+	 * @param[in] data          The data to save
+	 * @param[in] sz    		The size in bytes of the data to retrieve.
 	 *
-	 * @details	This function should be called before first calling ginputGetMouse() for a particular instance
-	 *			as the gdispGetMouse() routine may attempt to fetch calibration data and perform a startup calibration if there is no way to get it.
-	 *			If this is called after gdispGetMouse() has been called and the driver requires calibration storage, it will immediately save the
-	 *			data is has already obtained.
-	 *
-	 * @param[in] instance		The ID of the mouse input instance
-	 * @param[in] fnsave		The routine to save the data
-	 * @param[in] fnload		The routine to restore the data
-	 * @param[in] requireFree	TRUE if the buffer returned by the load function must be freed by the mouse code.
-	 */	
-	void ginputSetMouseCalibrationRoutines(uint16_t instance, GMouseCalibrationSaveRoutine fnsave, GMouseCalibrationLoadRoutine fnload, bool_t requireFree);
+     * @note    This routine is provided by the user application. It is only
+     *          called if GINPUT_TOUCH_USER_CALIBRATION_SAVE has been set to TRUE in the
+     *          users gfxconf.h file.
+     */
+    bool_t SaveMouseCalibration(unsigned instance, const void *data, size_t sz);
 
-	/**
-	 * @brief	Test if a particular mouse/touch instance requires routines to save it's alibration data
-	 * @note	Not implemented yet
-	 *
-	 * @param[in] instance		The ID of the mouse input instance
-	 *
-	 * @return	TRUE if needed
-	 */
-	bool_t ginputRequireMouseCalibrationStorage(uint16_t instance);
-	
 #ifdef __cplusplus
 }
 #endif
