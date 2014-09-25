@@ -617,9 +617,15 @@ typedef struct GDISPVMT {
 	#endif
 
 	// Routines needed by the general driver VMT
-	bool_t _gdispInitDriver(GDriver *g, unsigned driverinstance, unsigned systeminstance);
-	void _gdispPostInitDriver(GDriver *g);
-	void _gdispDeInitDriver(GDriver *g);
+	#ifdef __cplusplus
+	extern "C" {
+	#endif
+		bool_t _gdispInitDriver(GDriver *g, unsigned driverinstance, unsigned systeminstance);
+		void _gdispPostInitDriver(GDriver *g);
+		void _gdispDeInitDriver(GDriver *g);
+	#ifdef __cplusplus
+	}
+	#endif
 
 	// Build the VMT
 	const GDISPVMT const GDISP_DRIVER_VMT[1] = {{
