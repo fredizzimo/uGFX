@@ -38,9 +38,6 @@
 	#define GDISP_STARTUP_LOGO_TIMEOUT		0
 #endif
 
-// The color to clear the display on startup
-#define GDISP_STARTUP_COLOR				Black
-
 /*===========================================================================*/
 /* Driver local variables.                                                   */
 /*===========================================================================*/
