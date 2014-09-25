@@ -70,6 +70,7 @@ typedef struct GDriverVMT {
 	bool_t		(*init)(GDriver *driver, unsigned driverinstance, unsigned systeminstance);	// @< Initialise the driver. Returns TRUE if OK.
 																					//		driverinstance is the instance 0..n of this driver.
 																					//		systeminstance is the instance 0..n of this type of device.
+																					//      The memory allocated is cleared before this call.
 	void		(*postinit)(GDriver *driver);										// @< Called once the driver is registered.
 	void		(*deinit)(GDriver *driver);											// @< De-initialise the driver
 } GDriverVMT;
@@ -129,6 +130,14 @@ extern "C" {
 	 * @param[in]	type		The type of driver to find
 	 */
 	unsigned gdriverInstanceCount(uint16_t type);
+
+	/**
+	 * @brief	Get the instance number for a device
+	 * @return	The instance number or (unsigned)-1 if it fails.
+	 *
+	 * @param[in]	driver	The driver to find the instance number for
+	 */
+	unsigned gdriverGetDriverInstanceNumber(GDriver *driver);
 
 	/**
 	 * @brief	Get the next driver for a type of device

@@ -11,19 +11,13 @@
 
 #include "sys_defs.h"
 
+#include <string.h>         // For memset
+
 // Define the tables to hold the driver instances.
 static GDriver *dhead;
 
 // The system initialization.
 void _gdriverInit(void) {
-
-	// Drivers not loaded yet
-	// GINPUT_NEED_MOUSE
-	// GINPUT_NEED_DIAL
-	// GINPUT_NEED_TOGGLE
-	// GINPUT_NEED_KEYBOARD
-	// GINPUT_NEED_STRING
-	// GFX_USE_GBLOCK
 }
 
 // The system de-initialization.
@@ -51,7 +45,7 @@ GDriver *gdriverRegister(const GDriverVMT *vmt) {
 	pd = gfxAlloc(vmt->objsize);
 	if (!pd)
 		return 0;
-	pd->driverchain = 0;
+    memset(pd, 0, vmt->objsize);
 	pd->vmt = vmt;
 	if (vmt->init && !vmt->init(pd, dinstance, sinstance)) {
 		gfxFree(pd);
@@ -134,6 +128,21 @@ GDriver *gdriverGetNext(uint16_t type, GDriver *driver) {
 		driver = driver->driverchain;
 
 	return driver;
+}
+
+unsigned gdriverGetDriverInstanceNumber(GDriver *driver) {
+	GDriver		*pd;
+	unsigned	instance;
+
+	// Loop to find the system instance
+	instance = 0;
+	for(pd = dhead; pd; pd = pd->driverchain) {
+		if (pd == driver)
+			return instance;
+		if (pd->vmt->type == driver->vmt->type)
+			instance++;
+	}
+	return (unsigned)-1;
 }
 
 #endif /* GFX_USE_GDRIVER */
