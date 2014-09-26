@@ -572,7 +572,7 @@ void _gdispInit(void)
 			static const struct GDriverVMT const *	dclist[] = {GDISP_DRIVER_LIST};
 
 			for(i = 0; i < sizeof(dclist)/sizeof(dclist[0]); i++)
-				gdriverRegister(dclist[i]);
+				gdriverRegister(dclist[i], 0);
 		}
 	#elif GDISP_TOTAL_DISPLAYS > 1
 		{
@@ -580,13 +580,13 @@ void _gdispInit(void)
 			extern GDriverVMTList					GDISPVMT_OnlyOne;
 
 			for(i = 0; i < GDISP_TOTAL_DISPLAYS; i++)
-				gdriverRegister(GDISPVMT_OnlyOne);
+				gdriverRegister(GDISPVMT_OnlyOne, 0);
 		}
 	#else
 		{
 			extern GDriverVMTList					GDISPVMT_OnlyOne;
 
-			gdriverRegister(GDISPVMT_OnlyOne);
+			gdriverRegister(GDISPVMT_OnlyOne, 0);
 		}
 	#endif
 
@@ -620,9 +620,10 @@ void _gdispDeinit(void)
 	/* ToDo */
 }
 
-bool_t _gdispInitDriver(GDriver *g, unsigned driverinstance, unsigned systeminstance) {
+bool_t _gdispInitDriver(GDriver *g, void *param, unsigned driverinstance, unsigned systeminstance) {
 	#define		gd		((GDisplay *)g)
 	bool_t		ret;
+	(void)		param;
 
 	// Intialise fields
 	gd->systemdisplay = systeminstance;

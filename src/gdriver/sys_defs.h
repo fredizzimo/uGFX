@@ -67,7 +67,7 @@ typedef struct GDriverVMT {
 	uint16_t	type;																// @< What type of driver this is
 	uint16_t	flags;																// @< Flags for the driver. Meaning is specific to each driver type.
 	uint32_t	objsize;															// @< How big the runtime driver structure is
-	bool_t		(*init)(GDriver *driver, unsigned driverinstance, unsigned systeminstance);	// @< Initialise the driver. Returns TRUE if OK.
+	bool_t		(*init)(GDriver *driver, void *param, unsigned driverinstance, unsigned systeminstance);	// @< Initialise the driver. Returns TRUE if OK.
 																					//		driverinstance is the instance 0..n of this driver.
 																					//		systeminstance is the instance 0..n of this type of device.
 																					//      The memory allocated is cleared before this call.
@@ -102,8 +102,9 @@ extern "C" {
 	 * @return	The runtime driver structure or NULL if it fails.
 	 *
 	 * @param[in]	vmt		The driver's vmt
+	 * @param[in]	param	An arbitrary paramater passed to the driver init routine.
 	 */
-	GDriver *gdriverRegister(const GDriverVMT *vmt);
+	GDriver *gdriverRegister(const GDriverVMT *vmt, void *param);
 
 	/**
 	 * @brief	UnRegister a driver instance.
