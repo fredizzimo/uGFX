@@ -10,7 +10,7 @@
 #if GFX_USE_GDISP
 
 #define GDISP_DRIVER_VMT			GDISPVMT_Win32
-#include "drivers/multiple/Win32/gdisp_lld_config.h"
+#include "gdisp_lld_config.h"
 #include "src/gdisp/driver.h"
 
 #ifndef GDISP_SCREEN_WIDTH
@@ -52,7 +52,6 @@
 
 #define GDISP_FLG_READY				(GDISP_FLG_DRIVER<<0)
 #define GDISP_FLG_HASTOGGLE			(GDISP_FLG_DRIVER<<1)
-#define GDISP_FLG_HASMOUSE			(GDISP_FLG_DRIVER<<2)
 #if GDISP_HARDWARE_STREAM_WRITE || GDISP_HARDWARE_STREAM_READ
 	#define GDISP_FLG_WSTREAM			(GDISP_FLG_DRIVER<<3)
 	#define GDISP_FLG_WRAPPED			(GDISP_FLG_DRIVER<<4)
@@ -64,16 +63,50 @@
 #endif
 
 #if GINPUT_NEED_MOUSE
-	/* Include mouse support code */
+	// Include mouse support code
+	#define GMOUSE_DRIVER_VMT		GMOUSEVMT_Win32
 	#include "src/ginput/driver_mouse.h"
+
+	// Forward definitions
+	static bool_t Win32MouseInit(GMouse *m, unsigned driverinstance);
+	static void Win32MouseRead(GMouse *m, GMouseReading *prd);
+
+	const GMouseVMT const GMOUSE_DRIVER_VMT[1] = {{
+		{
+			GDRIVER_TYPE_MOUSE,
+			GMOUSE_VFLG_NOPOLL|GMOUSE_VFLG_DYNAMICONLY,
+				// Extra flags for testing only
+				//GMOUSE_VFLG_TOUCH|GMOUSE_VFLG_SELFROTATION|GMOUSE_VFLG_DEFAULTFINGER
+				//GMOUSE_VFLG_CALIBRATE|GMOUSE_VFLG_CAL_EXTREMES|GMOUSE_VFLG_CAL_TEST|GMOUSE_VFLG_CAL_LOADFREE
+				//GMOUSE_VFLG_ONLY_DOWN|GMOUSE_VFLG_POORUPDOWN
+			sizeof(GMouse),
+			_gmouseInitDriver, _gmousePostInitDriver, _gmouseDeInitDriver
+		},
+		1,				// z_max
+		0,				// z_min
+		1,				// z_touchon
+		0,				// z_touchoff
+		{				// pen_jitter
+			0,				// calibrate
+			0,				// click
+			0				// move
+		},
+		{				// finger_jitter
+			0,				// calibrate
+			2,				// click
+			2				// move
+		},
+		Win32MouseInit,	// init
+		0,				// deinit
+		Win32MouseRead,	// get
+		0,				//calsave
+		0				//calload
+	}};
 #endif
 
 static DWORD			winThreadId;
 static volatile bool_t	QReady;
 static HANDLE			drawMutex;
-#if GINPUT_NEED_MOUSE
-	static GDisplay *	mouseDisplay;
-#endif
 
 /*===========================================================================*/
 /* Driver local routines    .                                                */
@@ -95,6 +128,7 @@ typedef struct winPriv {
 	#if GINPUT_NEED_MOUSE
 		coord_t		mousex, mousey;
 		uint16_t	mousebuttons;
+		GMouse		*mouse;
 	#endif
 	#if GINPUT_NEED_TOGGLE
 		uint8_t		toggles;
@@ -149,7 +183,7 @@ static LRESULT myWindowProc(HWND hWnd,	UINT Msg, WPARAM wParam, LPARAM lParam)
 
 			// Handle mouse down on the window
 			#if GINPUT_NEED_MOUSE
-				if ((coord_t)HIWORD(lParam) < GDISP_SCREEN_HEIGHT && (g->flags & GDISP_FLG_HASMOUSE)) {
+				if ((coord_t)HIWORD(lParam) < GDISP_SCREEN_HEIGHT) {
 					priv->mousebuttons |= GINPUT_MOUSE_BTN_LEFT;
 					goto mousemove;
 				}
@@ -198,7 +232,7 @@ static LRESULT myWindowProc(HWND hWnd,	UINT Msg, WPARAM wParam, LPARAM lParam)
 
 			// Handle mouse up on the window
 			#if GINPUT_NEED_MOUSE
-				if ((coord_t)HIWORD(lParam) < GDISP_SCREEN_HEIGHT && (g->flags & GDISP_FLG_HASMOUSE)) {
+				if ((coord_t)HIWORD(lParam) < GDISP_SCREEN_HEIGHT) {
 					priv->mousebuttons &= ~GINPUT_MOUSE_BTN_LEFT;
 					goto mousemove;
 				}
@@ -210,7 +244,7 @@ static LRESULT myWindowProc(HWND hWnd,	UINT Msg, WPARAM wParam, LPARAM lParam)
 		case WM_MBUTTONDOWN:
 			g = (GDisplay *)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 			priv = (winPriv *)g->priv;
-			if ((coord_t)HIWORD(lParam) < GDISP_SCREEN_HEIGHT && (g->flags & GDISP_FLG_HASMOUSE)) {
+			if ((coord_t)HIWORD(lParam) < GDISP_SCREEN_HEIGHT) {
 				priv->mousebuttons |= GINPUT_MOUSE_BTN_MIDDLE;
 				goto mousemove;
 			}
@@ -218,7 +252,7 @@ static LRESULT myWindowProc(HWND hWnd,	UINT Msg, WPARAM wParam, LPARAM lParam)
 		case WM_MBUTTONUP:
 			g = (GDisplay *)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 			priv = (winPriv *)g->priv;
-			if ((coord_t)HIWORD(lParam) < GDISP_SCREEN_HEIGHT && (g->flags & GDISP_FLG_HASMOUSE)) {
+			if ((coord_t)HIWORD(lParam) < GDISP_SCREEN_HEIGHT) {
 				priv->mousebuttons &= ~GINPUT_MOUSE_BTN_MIDDLE;
 				goto mousemove;
 			}
@@ -226,7 +260,7 @@ static LRESULT myWindowProc(HWND hWnd,	UINT Msg, WPARAM wParam, LPARAM lParam)
 		case WM_RBUTTONDOWN:
 			g = (GDisplay *)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 			priv = (winPriv *)g->priv;
-			if ((coord_t)HIWORD(lParam) < GDISP_SCREEN_HEIGHT && (g->flags & GDISP_FLG_HASMOUSE)) {
+			if ((coord_t)HIWORD(lParam) < GDISP_SCREEN_HEIGHT) {
 				priv->mousebuttons |= GINPUT_MOUSE_BTN_RIGHT;
 				goto mousemove;
 			}
@@ -234,7 +268,7 @@ static LRESULT myWindowProc(HWND hWnd,	UINT Msg, WPARAM wParam, LPARAM lParam)
 		case WM_RBUTTONUP:
 			g = (GDisplay *)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 			priv = (winPriv *)g->priv;
-			if ((coord_t)HIWORD(lParam) < GDISP_SCREEN_HEIGHT && (g->flags & GDISP_FLG_HASMOUSE)) {
+			if ((coord_t)HIWORD(lParam) < GDISP_SCREEN_HEIGHT) {
 				priv->mousebuttons &= ~GINPUT_MOUSE_BTN_RIGHT;
 				goto mousemove;
 			}
@@ -242,14 +276,13 @@ static LRESULT myWindowProc(HWND hWnd,	UINT Msg, WPARAM wParam, LPARAM lParam)
 		case WM_MOUSEMOVE:
 			g = (GDisplay *)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 			priv = (winPriv *)g->priv;
-			if ((coord_t)HIWORD(lParam) >= GDISP_SCREEN_HEIGHT || !(g->flags & GDISP_FLG_HASMOUSE))
+			if ((coord_t)HIWORD(lParam) >= GDISP_SCREEN_HEIGHT)
 				break;
 		mousemove:
 			priv->mousex = (coord_t)LOWORD(lParam);
 			priv->mousey = (coord_t)HIWORD(lParam);
-			#if GINPUT_MOUSE_POLL_PERIOD == TIME_INFINITE
-				ginputMouseWakeup();
-			#endif
+			if ((gmvmt(priv->mouse)->d.flags & GMOUSE_VFLG_NOPOLL))		// For normal setup this is always TRUE
+				_gmouseWakeup(priv->mouse);
 			break;
 	#endif
 
@@ -445,14 +478,6 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			g->flags |= GDISP_FLG_HASTOGGLE;
 	#endif
 
-	// Only turn on mouse on the first window for now
-	#if GINPUT_NEED_MOUSE
-		if (!g->controllerdisplay) {
-			mouseDisplay = g;
-			g->flags |= GDISP_FLG_HASMOUSE;
-		}
-	#endif
-
 	// Create a private area for this window
 	priv = gfxAlloc(sizeof(winPriv));
 	assert(priv != 0);
@@ -475,6 +500,11 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	SetWindowText(priv->hwnd, buf);
 	ShowWindow(priv->hwnd, SW_SHOW);
 	UpdateWindow(priv->hwnd);
+
+	// Create the associated mouse
+	#if GINPUT_NEED_MOUSE
+		priv->mouse = (GMouse *)gdriverRegister((const GDriverVMT const *)GMOUSE_DRIVER_VMT, g);
+	#endif
 
 	return TRUE;
 }
@@ -686,10 +716,10 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		winPriv	*	priv;
 		int			x, y;
 		COLORREF	color;
-	
+
 		priv = g->priv;
 		color = gdispColor2Native(g->p.color);
-	
+
 		#if GDISP_NEED_CONTROL
 			switch(g->g.Orientation) {
 			case GDISP_ROTATE_0:
@@ -818,7 +848,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		sz = (size_t)g->p.cx * (size_t)g->p.cy;
 		if (!(dstbuf = (pixel_t *)malloc(sz * sizeof(pixel_t))))
 			return 0;
-		
+
 		// Copy the bits we need
 		switch(g->g.Orientation) {
 		case GDISP_ROTATE_0:
@@ -847,7 +877,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		return dstbuf;
 	}
 #endif
-	
+
 #if GDISP_HARDWARE_BITFILLS
 	#if COLOR_SYSTEM != GDISP_COLORSYSTEM_TRUECOLOR || COLOR_TYPE_BITS <= 8
 		#error "GDISP Win32: This driver's bitblit currently only supports true-color with bit depths > 8 bits."
@@ -863,7 +893,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		priv = g->priv;
 		buffer = g->p.ptr;
 		buffer += g->p.x2*g->p.y1;
-		
+
 		memset(&bmpInfo, 0, sizeof(bmpInfo));
 		bmpInfo.bV4Size = sizeof(bmpInfo);
 		bmpInfo.bV4Planes = 1;
@@ -982,7 +1012,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			color = GetPixel(priv->dcBuffer, g->p.x, g->p.y);
 		#endif
 		ReleaseMutex(drawMutex);
-		
+
 		return gdispNative2Color(color);
 	}
 #endif
@@ -992,7 +1022,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		winPriv	*	priv;
 		RECT		rect;
 		coord_t		lines;
-		
+
 		priv = g->priv;
 
 		#if GDISP_NEED_CONTROL
@@ -1134,18 +1164,49 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 #endif
 
 #if GINPUT_NEED_MOUSE
-	void ginput_lld_mouse_init(void) {}
-	void ginput_lld_mouse_get_reading(MouseReading *pt) {
+	static bool_t Win32MouseInit(GMouse *m, unsigned driverinstance) {
+		(void)	m;
+		(void)	driverinstance;
+		return TRUE;
+	}
+	static void Win32MouseRead(GMouse *m, GMouseReading *pt) {
 		GDisplay *	g;
 		winPriv	*	priv;
 
-		g = mouseDisplay;
+		g = m->display;
 		priv = g->priv;
 
 		pt->x = priv->mousex;
-		pt->y = priv->mousey > g->g.Height ? g->g.Height : priv->mousey;
-		pt->z = (priv->mousebuttons & GINPUT_MOUSE_BTN_LEFT) ? 100 : 0;
+		pt->y = priv->mousey;
+		pt->z = (priv->mousebuttons & GINPUT_MOUSE_BTN_LEFT) ? 1 : 0;
 		pt->buttons = priv->mousebuttons;
+
+		#if GDISP_NEED_CONTROL
+			// If the self-rotation has been set in the VMT then do that here (TESTING ONLY)
+			if ((gmvmt(m)->d.flags & GMOUSE_VFLG_SELFROTATION)) {		// For normal setup this is always False
+				coord_t		t;
+
+				switch(gdispGGetOrientation(m->display)) {
+					case GDISP_ROTATE_0:
+					default:
+						break;
+					case GDISP_ROTATE_90:
+						t = pt->x;
+						pt->x = g->g.Width - 1 - pt->y;
+						pt->y = t;
+						break;
+					case GDISP_ROTATE_180:
+						pt->x = g->g.Width - 1 - pt->x;
+						pt->y = g->g.Height - 1 - pt->y;
+						break;
+					case GDISP_ROTATE_270:
+						t = pt->y;
+						pt->y = g->g.Height - 1 - pt->x;
+						pt->x = t;
+						break;
+				}
+			}
+		#endif
 	}
 #endif /* GINPUT_NEED_MOUSE */
 
