@@ -99,8 +99,8 @@
 		Win32MouseInit,	// init
 		0,				// deinit
 		Win32MouseRead,	// get
-		0,				//calsave
-		0				//calload
+		0,				// calsave
+		0				// calload
 	}};
 #endif
 
