@@ -89,9 +89,6 @@ void gfxInit(void)
 	#if GFX_USE_GDISP
 		_gdispInit();
 	#endif
-	#if GFX_USE_GWIN
-		_gwinInit();
-	#endif
 	#if GFX_USE_GINPUT
 		_ginputInit();
 	#endif
@@ -100,6 +97,9 @@ void gfxInit(void)
 	#endif
 	#if GFX_USE_GAUDIO
 		_gaudioInit();
+	#endif
+	#if GFX_USE_GWIN
+		_gwinInit();
 	#endif
 }
 
@@ -110,6 +110,9 @@ void gfxDeinit(void)
 	initDone = FALSE;
 
 	// We deinitialise the opposite way as we initialised
+	#if GFX_USE_GWIN
+		_gwinDeinit();
+	#endif
 	#if GFX_USE_GAUDIN
 		_gaudioDeinit();
 	#endif
@@ -118,9 +121,6 @@ void gfxDeinit(void)
 	#endif
 	#if GFX_USE_GINPUT
 		_ginputDeinit();
-	#endif
-	#if GFX_USE_GWIN
-		_gwinDeinit();
 	#endif
 	#if GFX_USE_GDISP
 		_gdispDeinit();
