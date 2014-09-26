@@ -620,7 +620,7 @@ typedef struct GDISPVMT {
 	#ifdef __cplusplus
 	extern "C" {
 	#endif
-		bool_t _gdispInitDriver(GDriver *g, unsigned driverinstance, unsigned systeminstance);
+		bool_t _gdispInitDriver(GDriver *g, void *param, unsigned driverinstance, unsigned systeminstance);
 		void _gdispPostInitDriver(GDriver *g);
 		void _gdispDeInitDriver(GDriver *g);
 	#ifdef __cplusplus

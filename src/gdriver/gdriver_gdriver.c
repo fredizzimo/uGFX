@@ -27,7 +27,7 @@ void _gdriverDeinit(void) {
 }
 
 
-GDriver *gdriverRegister(const GDriverVMT *vmt) {
+GDriver *gdriverRegister(const GDriverVMT *vmt, void *param) {
 	GDriver *	pd;
 	GDriver *	dtail;
 	unsigned	dinstance, sinstance;
@@ -47,7 +47,7 @@ GDriver *gdriverRegister(const GDriverVMT *vmt) {
 		return 0;
     memset(pd, 0, vmt->objsize);
 	pd->vmt = vmt;
-	if (vmt->init && !vmt->init(pd, dinstance, sinstance)) {
+	if (vmt->init && !vmt->init(pd, param, dinstance, sinstance)) {
 		gfxFree(pd);
 		return 0;
 	}
