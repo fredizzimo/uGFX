@@ -13,13 +13,30 @@
 #
 
 ##############################################################################################
+# Start of make control
+#
+
+# Turn ChibiOS simimulator on or off?
+USE_CHIBIOS=no
+
+# Verbose compiling?
+USE_VERBOSE_COMPILE=no
+
+# Generate listing files?
+USE_LISTING=no
+
+# Your project name and executable file name - Optional, defaults to the project directory name
+#PROJECT=uGFX
+
+#
+# End of make control
+##############################################################################################
+
+##############################################################################################
 # Start of default section
 #
 
 CC   = i686-pc-mingw32-gcc -g
-
-# Turn ChibiOS simimulator on or off - uGFX doesn't need it but you might for other purposes.
-USE_CHIBIOS=no
 
 # List all default C defines here, like -D_DEBUG=1
 DDEFS =
@@ -34,7 +51,7 @@ DLIBDIR =
 DLIBS = -lws2_32 -lgdi32 -lwinmm
 
 # Make sure this empty for now
-SRC = 
+SRC =
 
 #
 # End of default section
@@ -43,9 +60,6 @@ SRC =
 ##############################################################################################
 # Start of user section
 #
-
-# Define project name here
-PROJECT = uGFX
 
 # Imported source files and paths for uGFX
 GFXLIB = ../uGFX
@@ -108,51 +122,75 @@ OPT = -ggdb -O0 -fomit-frame-pointer
 ##############################################################################################
 
 
-# Output directory and files
-ifeq ($(BUILDDIR),)
-  BUILDDIR = .build
+# Default project name is the project directory name
+ifeq ($(PROJECT),)
+	PROJECT := $(notdir $(patsubst %/,%,$(dir $(abspath $(firstword $(MAKEFILE_LIST))))))
 endif
-ifeq ($(BUILDDIR),.)
+
+# Output directory and files
+ifeq ($(MAKECMDGOALS),Debug)
+  BUILDDIR = bin/Debug
+else ifeq ($(MAKECMDGOALS),Release)
+  BUILDDIR = bin/Release
+else ifeq ($(BUILDDIR),)
+  BUILDDIR = .build
+else ifeq ($(BUILDDIR),.)
   BUILDDIR = .build
 endif
 
 OBJDIR    = $(BUILDDIR)/obj
 LSTDIR    = $(BUILDDIR)/lst
 MAPDIR    = $(BUILDDIR)/map
+DEPDIR    = .dep
 
 INCDIR  = $(patsubst %,-I%,$(DINCDIR) $(UINCDIR))
 LIBDIR  = $(patsubst %,-L%,$(DLIBDIR) $(ULIBDIR))
 DEFS    = $(DDEFS) $(UDEFS)
 ADEFS   = $(DADEFS) $(UADEFS)
-COBJ	= $(addprefix $(OBJDIR)/, $(SRC:.c=.o))
-AOBJ	= $(addprefix $(OBJDIR)/, $(ASRC:.s=.o))
+COBJ	= $(addprefix $(OBJDIR)/, $(subst ../,_dot_dot/,$(SRC:.c=.o)))
+AOBJ	= $(addprefix $(OBJDIR)/, $(subst ../,_dot_dot/,$(ASRC:.s=.o)))
 OBJS    = $(AOBJ) $(COBJ)
 LIBS    = $(DLIBS) $(ULIBS)
 
 LDFLAGS = -Wl,-Map=$(MAPDIR)/$(PROJECT).map,--cref,--no-warn-mismatch $(LIBDIR)
-CPFLAGS = $(OPT) -Wall -Wextra -Wstrict-prototypes -fverbose-asm -Wa,-alms=$(LSTDIR)/$(<:.c=.lst) $(DEFS)
+CPFLAGS = $(OPT) -Wall -Wextra -Wstrict-prototypes -fverbose-asm $(DEFS)
+ifeq ($(USE_LISTING),yes)
+	CPFLAGS += -Wa,-alms=$(LSTDIR)/$(<:.c=.lst)
+endif
 
 # Generate dependency information
-CPFLAGS += -MD -MP -MF .dep/$(@F).d
+CPFLAGS += -MD -MP -MF $(DEPDIR)/$(@F).d
 
 #
 # makefile rules
 #
 
+Debug Release: all
+
+cleanDebug cleanRelease:	clean
+	-rm -fR bin
+
 all: $(BUILDDIR) $(OBJS) $(BUILDDIR)/$(PROJECT).exe MAKE_ALL_RULE_HOOK
+#all: main.cp
+
+main.cp:	$(MYCSRC)
+	$(CC)  -c $(CPFLAGS) -E -P -I. $(INCDIR) $< -o $@
 
 MAKE_ALL_RULE_HOOK:
 
 $(BUILDDIR) $(OBJDIR) $(LSTDIR):
 	mkdir -p $(OBJDIR)
-	mkdir -p $(LSTDIR)
 	mkdir -p $(MAPDIR)
+ifeq ($(USE_LISTING),yes)
+	mkdir -p $(LSTDIR)
+endif
 ifneq ($(USE_VERBOSE_COMPILE),yes)
 	@echo Compiler Options - $(CC) -c $(CPFLAGS) -I. $(INCDIR) main.c -o $(OBJDIR)/main.o
 	@echo
 endif
 
-$(OBJDIR)/%.o : %.c
+.SECONDEXPANSION:
+$(OBJDIR)/%.o : $$(subst _dot_dot/,../,%.c)
 	@mkdir -p $(dir $@)
 ifeq ($(USE_VERBOSE_COMPILE),yes)
 	@echo
@@ -162,7 +200,7 @@ else
 	@$(CC) -c $(CPFLAGS) -I. $(INCDIR) $< -o $@
 endif
 
-$(OBJDIR)/%.o : %.s
+$(OBJDIR)/%.o : $$(subst _dot_dot/,../,%.s)
 	@mkdir -p $(dir $@)
 ifeq ($(USE_VERBOSE_COMPILE),yes)
 	@echo
@@ -187,12 +225,12 @@ gcov:
 	-mv *.gcov ./gcov
 
 clean:
-	-rm -fR .build
-	-rm -fR .dep
+	-rm -fR $(BUILDDIR)
+	-rm -fR $(DEPDIR)
 
 #
 # Include the dependency files, should be the last of the makefile
 #
--include $(shell mkdir .dep 2>/dev/null) $(wildcard .dep/*)
+-include $(shell mkdir $(DEPDIR) 2>/dev/null) $(wildcard $(DEPDIR)/*)
 
 # *** EOF ***
