@@ -132,6 +132,10 @@ ifeq ($(MAKECMDGOALS),Debug)
   BUILDDIR = bin/Debug
 else ifeq ($(MAKECMDGOALS),Release)
   BUILDDIR = bin/Release
+else ifeq ($(MAKECMDGOALS),cleanDebug)
+  BUILDDIR = bin/Debug
+else ifeq ($(MAKECMDGOALS),cleanRelease)
+  BUILDDIR = bin/Release
 else ifeq ($(BUILDDIR),)
   BUILDDIR = .build
 else ifeq ($(BUILDDIR),.)
@@ -168,7 +172,6 @@ CPFLAGS += -MD -MP -MF $(DEPDIR)/$(@F).d
 Debug Release: all
 
 cleanDebug cleanRelease:	clean
-	-rm -fR bin
 
 all: $(BUILDDIR) $(OBJS) $(BUILDDIR)/$(PROJECT).exe MAKE_ALL_RULE_HOOK
 #all: main.cp

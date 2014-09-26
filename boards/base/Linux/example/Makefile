@@ -107,6 +107,10 @@ ifeq ($(MAKECMDGOALS),Debug)
   BUILDDIR = bin/Debug
 else ifeq ($(MAKECMDGOALS),Release)
   BUILDDIR = bin/Release
+else ifeq ($(MAKECMDGOALS),cleanDebug)
+  BUILDDIR = bin/Debug
+else ifeq ($(MAKECMDGOALS),cleanRelease)
+  BUILDDIR = bin/Release
 else ifeq ($(BUILDDIR),)
   BUILDDIR = .build
 else ifeq ($(BUILDDIR),.)
@@ -158,6 +162,10 @@ CPFLAGS += -MD -MP -MF $(DEPDIR)/$(@F).d
 # makefile rules
 #
 
+Debug Release: all
+
+cleanDebug cleanRelease:	clean
+
 all: $(BUILDDIR) $(OBJS) $(PROJECT)
 
 $(BUILDDIR) $(OBJDIR) $(LSTDIR) $(MAPDIR):
@@ -201,7 +209,7 @@ gcov:
 	-mv *.gcov ./gcov
 
 clean:
-	-rm -f $(BUILDDIR)
+	-rm -fR $(BUILDDIR)
 	-rm -fR $(DEPDIR)
 
 #
