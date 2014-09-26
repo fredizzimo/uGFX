@@ -19,7 +19,7 @@ static void createWidgets(void) {
     ghContainer = gwinContainerCreate(0, &wi, GWIN_CONTAINER_BORDER);
     wi.g.show = TRUE;
 
-    // Apply the button parameters    
+    // Apply the button parameters
     wi.g.width = 120;
     wi.g.height = 30;
     wi.g.y = 10;
@@ -36,9 +36,6 @@ static void createWidgets(void) {
 int main(void) {
     // Initialize the display
     gfxInit();
-
-    // Attach the mouse input
-    gwinAttachMouse(0);
 
     // Set the widget defaults
     gwinSetDefaultFont(gdispOpenFont("*"));

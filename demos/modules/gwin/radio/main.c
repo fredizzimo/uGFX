@@ -83,9 +83,6 @@ int main(void) {
 	gwinSetDefaultStyle(&WhiteWidgetStyle, FALSE);
 	gdispClear(White);
 
-	// Attach the mouse input
-	gwinAttachMouse(0);
-
 	// create the widget
 	createWidgets();
 

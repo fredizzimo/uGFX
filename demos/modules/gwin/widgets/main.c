@@ -418,11 +418,6 @@ int main(void) {
 	// Initialize the display
 	gfxInit();
 
-	// Connect the mouse
-	#if GINPUT_NEED_MOUSE
-		gwinAttachMouse(0);
-	#endif
-
 	// Set the widget defaults
 	font = gdispOpenFont("*");			// Get the first defined font.
 	gwinSetDefaultFont(font);

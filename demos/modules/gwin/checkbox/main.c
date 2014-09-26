@@ -39,14 +39,14 @@ static void createWidgets(void) {
 	gwinWidgetClearInit(&wi);
 	wi.g.show = TRUE;
 
-	// Apply the checkbox parameters	
+	// Apply the checkbox parameters
 	wi.g.width = 100;		// includes text
 	wi.g.height = 20;
 	wi.g.y = 10;
 	wi.g.x = 10;
 	wi.text = "Checkbox";
 
-	// Create the actual checkbox 
+	// Create the actual checkbox
 	ghCheckbox1 = gwinCheckboxCreate(0, &wi);
 }
 
@@ -60,9 +60,6 @@ int main(void) {
 	gwinSetDefaultFont(gdispOpenFont("UI2"));
 	gwinSetDefaultStyle(&WhiteWidgetStyle, FALSE);
 	gdispClear(White);
-
-	// Attach the mouse input
-	gwinAttachMouse(0);
 
 	// create the widget
 	createWidgets();

@@ -40,7 +40,7 @@ static void createWidgets(void) {
     wi.text = "Container 3";
     ghContainer3 = gwinContainerCreate(0, &wi, GWIN_CONTAINER_BORDER);
 
-    // Button 1    
+    // Button 1
     wi.g.width = 80;
     wi.g.height = 20;
     wi.g.y = 10;
@@ -49,7 +49,7 @@ static void createWidgets(void) {
     wi.g.parent = ghContainer2;
     ghButton1 = gwinButtonCreate(0, &wi);
 
-    // Button 2    
+    // Button 2
     wi.g.width = 80;
     wi.g.height = 20;
     wi.g.y = 40;
@@ -58,7 +58,7 @@ static void createWidgets(void) {
     wi.g.parent = ghContainer2;
     ghButton2 = gwinButtonCreate(0, &wi);
 
-    // Button 3    
+    // Button 3
     wi.g.width = 80;
     wi.g.height = 20;
     wi.g.y = 10;
@@ -67,7 +67,7 @@ static void createWidgets(void) {
     wi.g.parent = ghContainer3;
     ghButton3 = gwinButtonCreate(0, &wi);
 
-    // Button 4    
+    // Button 4
     wi.g.width = 80;
     wi.g.height = 20;
     wi.g.y = 40;
@@ -114,9 +114,6 @@ int main(void) {
 
     // Initialize the display
     gfxInit();
-
-    // Attach the mouse input
-    gwinAttachMouse(0);
 
     // Set the widget defaults
     gwinSetDefaultFont(gdispOpenFont("*"));
