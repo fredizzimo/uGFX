@@ -13,6 +13,11 @@
 
 #if GFX_USE_GINPUT && GINPUT_NEED_MOUSE
 
+// Just to make code easier
+#if !GFX_USE_GDISP
+	#define GDISP	0
+#endif
+
 // Local Settings
 #define CALIBRATION_POLL_PERIOD			20				// milliseconds
 #define CALIBRATION_MINPRESS_PERIOD		300				// milliseconds
@@ -618,7 +623,7 @@ void _gmouseInit(void) {
 
 			for(i = 0; i < sizeof(dclist)/sizeof(dclist[0]); i++) {
                 if (!(dclist[i]->flags & GMOUSE_VFLG_DYNAMICONLY))
-                    gdriverRegister(dclist[i]);
+					gdriverRegister(dclist[i], GDISP);
 			}
 		}
 
@@ -628,7 +633,7 @@ void _gmouseInit(void) {
 			extern GDriverVMTList			GMOUSEVMT_OnlyOne;
 
             if (!(GMOUSEVMT_OnlyOne->flags & GMOUSE_VFLG_DYNAMICONLY))
-                gdriverRegister(GMOUSEVMT_OnlyOne);
+					gdriverRegister(GMOUSEVMT_OnlyOne, GDISP);
 		}
 	#endif
 
@@ -638,19 +643,22 @@ void _gmouseDeinit(void) {
 	gtimerDeinit(&MouseTimer);
 }
 
-bool_t _gmouseInitDriver(GDriver *g, unsigned driverinstance, unsigned systeminstance) {
+bool_t _gmouseInitDriver(GDriver *g, void *display, unsigned driverinstance, unsigned systeminstance) {
     #define m   ((GMouse *)g)
     (void) systeminstance;
+
+	// The initial display is passed in the parameter for mice
+	m->display = display;
+
+	#if !GINPUT_TOUCH_NOTOUCH
+		// Should this mouse start in finger mode? (according to the VMT)
+		if ((gmvmt(m)->d.flags & GMOUSE_VFLG_DEFAULTFINGER))
+			m->flags |= GMOUSE_FLG_FINGERMODE;
+	#endif
 
 	// Init the mouse
     if (!gmvmt(m)->init((GMouse *)g, driverinstance))
         return FALSE;
-
-	#if !GINPUT_TOUCH_NOTOUCH
-		// Should this mouse start in finger mode?
-		if ((gmvmt(m)->d.flags & GMOUSE_VFLG_DEFAULTFINGER))
-			m->flags |= GMOUSE_FLG_FINGERMODE;
-	#endif
 
 	// Ensure the Poll timer is started
 	if (!gtimerIsActive(&MouseTimer))
@@ -663,10 +671,6 @@ bool_t _gmouseInitDriver(GDriver *g, unsigned driverinstance, unsigned systemins
 
 void _gmousePostInitDriver(GDriver *g) {
     #define     m   ((GMouse *)g)
-
-	// Make sure we have a valid mouse display
-	if (!m->display)
-		m->display = GDISP;
 
     #if !GINPUT_TOUCH_NOCALIBRATE && !GINPUT_TOUCH_STARTRAW
         if ((gmvmt(m)->d.flags & GMOUSE_VFLG_CALIBRATE)) {
@@ -784,14 +788,16 @@ bool_t ginputGetMouseStatus(unsigned instance, GEventMouse *pe) {
 #endif
 
 /* Wake up the mouse driver from an interrupt service routine (there may be new readings available) */
-void ginputMouseWakeup(GMouse *m) {
-	m->flags |= GMOUSE_FLG_NEEDREAD;
+void _gmouseWakeup(GMouse *m) {
+	if (m)
+		m->flags |= GMOUSE_FLG_NEEDREAD;
 	gtimerJab(&MouseTimer);
 }
 
 /* Wake up the mouse driver from an interrupt service routine (there may be new readings available) */
-void ginputMouseWakeupI(GMouse *m) {
-	m->flags |= GMOUSE_FLG_NEEDREAD;
+void _gmouseWakeupI(GMouse *m) {
+	if (m)
+		m->flags |= GMOUSE_FLG_NEEDREAD;
 	gtimerJabI(&MouseTimer);
 }
 

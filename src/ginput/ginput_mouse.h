@@ -46,10 +46,10 @@ typedef struct GEventMouse_t {
 
 		#define GMETA_MASK					0x00F0		// The "button transition" mask
 		#define GMETA_NONE					0x0000		// No "button transition" events
-		#define GMETA_MOUSE_DOWN			0x0001		// Left mouse/touch has just gone down
-		#define GMETA_MOUSE_UP				0x0002		// Left mouse/touch has just gone up
-		#define GMETA_MOUSE_CLICK			0x0004		// Left mouse/touch has just gone through a click (short down - up cycle)
-		#define GMETA_MOUSE_CXTCLICK		0x0008		// Right mouse has just been depressed or touch has gone through a long click
+		#define GMETA_MOUSE_DOWN			0x0010		// Left mouse/touch has just gone down
+		#define GMETA_MOUSE_UP				0x0020		// Left mouse/touch has just gone up
+		#define GMETA_MOUSE_CLICK			0x0040		// Left mouse/touch has just gone through a click (short down - up cycle)
+		#define GMETA_MOUSE_CXTCLICK		0x0080		// Right mouse has just been depressed or touch has gone through a long click
 
 		#define GINPUT_MISSED_MOUSE_EVENT	0x8000		// Oops - a mouse event has previously been missed
 

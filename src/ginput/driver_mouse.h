@@ -115,7 +115,7 @@ extern "C" {
 	 * @notapi
 	 * @{
 	 */
-	bool_t _gmouseInitDriver(GDriver *g, unsigned driverinstance, unsigned systeminstance);
+	bool_t _gmouseInitDriver(GDriver *g, void *display, unsigned driverinstance, unsigned systeminstance);
 	void _gmousePostInitDriver(GDriver *g);
 	void _gmouseDeInitDriver(GDriver *g);
 	/** @} */
