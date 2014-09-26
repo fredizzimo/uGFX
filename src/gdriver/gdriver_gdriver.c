@@ -15,6 +15,7 @@
 
 // Define the tables to hold the driver instances.
 static GDriver *dhead;
+static GDriver *dtail;
 
 // The system initialization.
 void _gdriverInit(void) {
@@ -29,12 +30,11 @@ void _gdriverDeinit(void) {
 
 GDriver *gdriverRegister(const GDriverVMT *vmt, void *param) {
 	GDriver *	pd;
-	GDriver *	dtail;
 	unsigned	dinstance, sinstance;
 
 	// Loop to find the driver instance and the system instance numbers
 	dinstance = sinstance = 0;
-	for(pd = dhead; pd; dtail = pd, pd = pd->driverchain) {
+	for(pd = dhead; pd; pd = pd->driverchain) {
 		if (pd->vmt == vmt)
 			dinstance++;
 		if (pd->vmt->type == vmt->type)
