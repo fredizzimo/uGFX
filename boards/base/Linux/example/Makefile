@@ -13,15 +13,28 @@
 #
 
 ##############################################################################################
+# Start of make control
+#
+
+# Verbose compiling?
+USE_VERBOSE_COMPILE=no
+
+# Generate listing files?
+USE_LISTING=no
+
+# Your project name and executable file name - Optional, defaults to the project directory name
+#PROJECT=uGFX
+
+##############################################################################################
 # Start of default section
 #
 
-TRGT = 
+TRGT =
 CC   = $(TRGT)gcc
 AS   = $(TRGT)gcc -x assembler-with-cpp
 
 # List all default C defines here, like -D_DEBUG=1
-DDEFS = 
+DDEFS =
 
 # List all default ASM defines here, like -D_DEBUG=1
 DADEFS =
@@ -43,8 +56,10 @@ DLIBS = -lX11 -pthread -lrt
 # Start of user section
 #
 
-# Define project name here
-PROJECT = ugfx
+# Default project name is the project directory name
+ifeq ($(PROJECT),)
+	PROJECT := $(notdir $(patsubst %/,%,$(dir $(abspath $(firstword $(MAKEFILE_LIST))))))
+endif
 
 # Imported source files and paths for uGFX
 GFXLIB = ../ugfx
@@ -87,15 +102,38 @@ OPT = -ggdb -O0 -fomit-frame-pointer
 # End of user defines
 ##############################################################################################
 
+# Output directory and files
+ifeq ($(MAKECMDGOALS),Debug)
+  BUILDDIR = bin/Debug
+else ifeq ($(MAKECMDGOALS),Release)
+  BUILDDIR = bin/Release
+else ifeq ($(BUILDDIR),)
+  BUILDDIR = .build
+else ifeq ($(BUILDDIR),.)
+  BUILDDIR = .build
+endif
+
+OBJDIR    = $(BUILDDIR)/obj
+LSTDIR    = $(BUILDDIR)/lst
+MAPDIR    = $(BUILDDIR)/map
+DEPDIR    = .dep
+
 INCDIR  = $(patsubst %,-I%,$(DINCDIR) $(UINCDIR))
 LIBDIR  = $(patsubst %,-L%,$(DLIBDIR) $(ULIBDIR))
 DEFS    = $(DDEFS) $(UDEFS)
 ADEFS   = $(DADEFS) $(UADEFS)
-OBJS    = $(ASRC:.s=.o) $(SRC:.c=.o)
+COBJ	= $(addprefix $(OBJDIR)/, $(subst ../,_dot_dot/,$(SRC:.c=.o)))
+AOBJ	= $(addprefix $(OBJDIR)/, $(subst ../,_dot_dot/,$(ASRC:.s=.o)))
+OBJS    = $(AOBJ) $(COBJ)
 LIBS    = $(DLIBS) $(ULIBS)
 
-ASFLAGS = -Wa,-amhls=$(<:.s=.lst) $(ADEFS)
-CPFLAGS = $(OPT) -Wall -Wextra -Wstrict-prototypes -fverbose-asm $(DEFS) 
+ASFLAGS = $(ADEFS)
+CPFLAGS = $(OPT) -Wall -Wextra -Wstrict-prototypes -fverbose-asm $(DEFS)
+LDFLAGS = -Wl,-Map=$(MAPDIR)/$(PROJECT).map,--cref,--no-warn-mismatch $(LIBDIR)
+ifeq ($(USE_LISTING),yes)
+	ASFLAGS += -Wa,-amhls=$(LSTDIR)/$(subst ../,_dot_dot/,$(<:.s=.lst))
+	CPFLAGS += -Wa,-alms=$(LSTDIR)/$(subst ../,_dot_dot/,$(<:.c=.lst))
+endif
 
 ifeq ($(HOST_OSX),yes)
   ifeq ($(OSX_SDK),)
@@ -105,29 +143,54 @@ ifeq ($(HOST_OSX),yes)
     OSX_ARCH = -mmacosx-version-min=10.3 -arch i386
   endif
 
-  CPFLAGS += -isysroot $(OSX_SDK) $(OSX_ARCH)
-  LDFLAGS = -Wl -Map=$(PROJECT).map,-syslibroot,$(OSX_SDK),$(LIBDIR)
   LIBS += $(OSX_ARCH)
+  CPFLAGS += -isysroot $(OSX_SDK) $(OSX_ARCH)
+  LDFLAGS = -Wl -Map=$(MAPDIR)/$(PROJECT).map,-syslibroot,$(OSX_SDK),$(LIBDIR)
 else
   # Linux, or other
-  CPFLAGS += -m32 -Wa,-alms=$(<:.c=.lst)
-  LDFLAGS = -m32 -Wl,-Map=$(PROJECT).map,--cref,--no-warn-mismatch $(LIBDIR)
+  CPFLAGS += -m32
 endif
 
 # Generate dependency information
-CPFLAGS += -MD -MP -MF .dep/$(@F).d
+CPFLAGS += -MD -MP -MF $(DEPDIR)/$(@F).d
 
 #
 # makefile rules
 #
 
-all: $(OBJS) $(PROJECT)
+all: $(BUILDDIR) $(OBJS) $(PROJECT)
 
-%.o : %.c
-	$(CC) -c $(CPFLAGS) -I . $(INCDIR) $< -o $@
+$(BUILDDIR) $(OBJDIR) $(LSTDIR) $(MAPDIR):
+	mkdir -p $(OBJDIR)
+	mkdir -p $(MAPDIR)
+ifeq ($(USE_LISTING),yes)
+	mkdir -p $(LSTDIR)
+endif
+ifneq ($(USE_VERBOSE_COMPILE),yes)
+	@echo Compiler Options - $(CC) -c $(CPFLAGS) -I. $(INCDIR) main.c -o $(OBJDIR)/main.o
+	@echo
+endif
 
-%.o : %.s
-	$(AS) -c $(ASFLAGS) $< -o $@
+.SECONDEXPANSION:
+$(OBJDIR)/%.o : $$(subst _dot_dot/,../,%.c)
+	@mkdir -p $(dir $@)
+ifeq ($(USE_VERBOSE_COMPILE),yes)
+	@echo
+	$(CC) -c $(CPFLAGS) -I. $(INCDIR) $< -o $@
+else
+	@echo Compiling $<
+	@$(CC) -c $(CPFLAGS) -I. $(INCDIR) $< -o $@
+endif
+
+$(OBJDIR)/%.o : $$(subst _dot_dot/,../,%.s)
+	@mkdir -p $(dir $@)
+ifeq ($(USE_VERBOSE_COMPILE),yes)
+	@echo
+	$(AS) -c $(ASFLAGS) -I. $(INCDIR) $< -o $@
+else
+	@echo Compiling $<
+	@$(AS) -c $(ASFLAGS) -I. $(INCDIR) $< -o $@
+endif
 
 $(PROJECT): $(OBJS)
 	$(CC) $(OBJS) $(LDFLAGS) $(LIBS) -o $@
@@ -137,19 +200,13 @@ gcov:
 	$(COV) -u $(subst /,\,$(SRC))
 	-mv *.gcov ./gcov
 
-clean:                                      
-	-rm -f $(OBJS)
-	-rm -f $(PROJECT)
-	-rm -f $(PROJECT).map
-	-rm -f $(SRC:.c=.c.bak)
-	-rm -f $(SRC:.c=.lst)
-	-rm -f $(ASRC:.s=.s.bak)
-	-rm -f $(ASRC:.s=.lst)
-	-rm -fR .dep
+clean:
+	-rm -f $(BUILDDIR)
+	-rm -fR $(DEPDIR)
 
 #
 # Include the dependency files, should be the last of the makefile
 #
--include $(shell mkdir .dep 2>/dev/null) $(wildcard .dep/*)
+-include $(shell mkdir $(DEPDIR) 2>/dev/null) $(wildcard $(DEPDIR)/*)
 
 # *** EOF ***
