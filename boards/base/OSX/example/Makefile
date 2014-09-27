@@ -9,12 +9,12 @@ OPT_VERBOSE_COMPILE		= no
 OPT_GENERATE_LISTINGS	= yes
 OPT_GENERATE_MAP		= yes
 OPT_COPY_EXE			= no
-OPT_NATIVEOS			= linux
-OPT_OS					= linux
+OPT_NATIVEOS			= osx
+OPT_OS					= osx
 
 # See $(GFXLIB)/tools/gmake_scripts/library_ugfx.mk for the meaning of these variables
 GFXLIB = ../uGFX
-GFXBOARD = Linux-Framebuffer
+GFXBOARD = OSX
 #GFXDRIVERS = multiple/uGFXnet
 GFXDEMO = modules/gdisp/basics
 
@@ -22,12 +22,15 @@ GFXDEMO = modules/gdisp/basics
 # Set these for your project
 #
 
+OSX_SDK = /Developer/SDKs/MacOSX10.7.sdk
+OSX_ARCH = -mmacosx-version-min=10.3 -arch i386
+
 ARCH     =
-SRCFLAGS = -m32 -ggdb -O0 -fomit-frame-pointer -Wall -Wextra -Wstrict-prototypes -fverbose-asm
+SRCFLAGS = -m32 -ggdb -O0 -fomit-frame-pointer -Wall -Wextra -Wstrict-prototypes -fverbose-asm -isysroot $(OSX_SDK) $(OSX_ARCH)
 CFLAGS   =
 CXXFLAGS =
 ASFLAGS  =
-LDFLAGS  = -pthread
+LDFLAGS  = -pthread -Wl,-syslibroot,$(OSX_SDK) $(OSX_ARCH)
 
 SRC      =
 DEFS     =

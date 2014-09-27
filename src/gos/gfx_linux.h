@@ -34,7 +34,6 @@ typedef pthread_mutex_t		gfxMutex;
 #define gfxRealloc(p,osz,nsz)			realloc(p, nsz)
 #define gfxFree(ptr)					free(ptr)
 #define gfxMillisecondsToTicks(ms)		(ms)
-#define gfxYield()						pthread_yield()
 #define gfxThreadMe()					pthread_self()
 #define gfxThreadClose(th)				(void)th
 #define gfxMutexInit(pmtx)				pthread_mutex_init(pmtx, 0)
@@ -67,6 +66,7 @@ typedef struct gfxSem {
 extern "C" {
 #endif
 
+void gfxYield(void);
 void gfxHalt(const char *msg);
 void gfxSleepMilliseconds(delaytime_t ms);
 void gfxSleepMicroseconds(delaytime_t ms);

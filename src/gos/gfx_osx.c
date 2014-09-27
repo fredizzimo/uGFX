@@ -30,7 +30,7 @@ void get_ticks(mach_timespec_t *mts){
 	clock_get_time(cclock, mts);
 	mach_port_deallocate(mach_task_self(), cclock);
 
-	
+
 }
 
 void _gosInit(void)
@@ -89,16 +89,19 @@ void gfxSleepMicroseconds(delaytime_t ms) {
 systemticks_t gfxSystemTicks(void) {
 	//struct timespec	ts;
 	//clock_gettime(CLOCK_MONOTONIC, &ts);
-	
+
 	mach_timespec_t ts;
 	get_ticks(&ts);
-	
-	
+
+
 	return ts.tv_sec * 1000UL + ts.tv_nsec / 1000UL;
 }
 
 gfxThreadHandle gfxThreadCreate(void *stackarea, size_t stacksz, threadpriority_t prio, DECLARE_THREAD_FUNCTION((*fn),p), void *param) {
 	gfxThreadHandle		th;
+	(void)				stackarea;
+	(void)				stacksz;
+	(void)				prio;
 
 	// Implementing priority with pthreads is a rats nest that is also pthreads implementation dependent.
 	//	Only some pthreads schedulers support it, some implementations use the operating system process priority mechanisms.
