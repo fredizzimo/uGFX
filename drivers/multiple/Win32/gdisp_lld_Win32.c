@@ -496,15 +496,15 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	while(!(((volatile GDisplay *)g)->flags & GDISP_FLG_READY))
 		Sleep(1);
 
-	sprintf(buf, APP_NAME " - %u", g->systemdisplay+1);
-	SetWindowText(priv->hwnd, buf);
-	ShowWindow(priv->hwnd, SW_SHOW);
-	UpdateWindow(priv->hwnd);
-
 	// Create the associated mouse
 	#if GINPUT_NEED_MOUSE
 		priv->mouse = (GMouse *)gdriverRegister((const GDriverVMT const *)GMOUSE_DRIVER_VMT, g);
 	#endif
+
+	sprintf(buf, APP_NAME " - %u", g->systemdisplay+1);
+	SetWindowText(priv->hwnd, buf);
+	ShowWindow(priv->hwnd, SW_SHOW);
+	UpdateWindow(priv->hwnd);
 
 	return TRUE;
 }
