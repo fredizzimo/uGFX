@@ -1,6 +1,6 @@
-GFXINC  += $(GFXLIB)/boards/base/Linux
+GFXINC  += $(GFXLIB)/boards/base/OSX
 GFXSRC  +=
-GFXDEFS += -DGFX_USE_OS_LINUX=TRUE
+GFXDEFS += -DGFX_USE_OS_OSX=TRUE
 GFXLIBS += rt
 
 include $(GFXLIB)/drivers/multiple/X/driver.mk
