@@ -52,9 +52,7 @@ static GTIMER_DECL(MouseTimer);
 
 // Calibration application
 #if !GINPUT_TOUCH_NOCALIBRATE
-	#if GINPUT_TOUCH_USER_CALIBRATION_LOAD
-		#include <string.h>							// Required for memcpy
-	#endif
+	#include <string.h>							// Required for memcpy
 
 	static inline void CalibrationTransform(GMouseReading *pt, const GMouseCalibration *c) {
 		pt->x = (coord_t) (c->ax * pt->x + c->bx * pt->y + c->cx);
