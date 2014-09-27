@@ -9,10 +9,20 @@
 
 #if GFX_USE_OS_LINUX
 
+// Linux seems to have deprecated pthread_yield() and now says to use sched_yield()
+#define		USE_SCHED_NOT_PTHREAD_YIELD		TRUE
+
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
+#include <sys/time.h>
 #include <time.h>
+#if USE_SCHED_NOT_PTHREAD_YIELD
+	#include <sched.h>
+	#define linuxyield()	sched_yield()
+#else
+	#define linuxyield()	pthread_yield()
+#endif
 
 static gfxMutex		SystemMutex;
 
@@ -35,6 +45,10 @@ void gfxSystemUnlock(void) {
 	gfxMutexExit(&SystemMutex);
 }
 
+void gfxYield(void) {
+	linuxyield();
+}
+
 void gfxHalt(const char *msg) {
 	if (msg)
 		fprintf(stderr, "%s\n", msg);
@@ -46,7 +60,7 @@ void gfxSleepMilliseconds(delaytime_t ms) {
 
 	switch(ms) {
 		case TIME_IMMEDIATE:
-			pthread_yield();
+			linuxyield();
 			return;
 
 		case TIME_INFINITE:
@@ -67,7 +81,7 @@ void gfxSleepMicroseconds(delaytime_t ms) {
 
 	switch(ms) {
 		case TIME_IMMEDIATE:
-			pthread_yield();
+			linuxyield();
 			return;
 
 		case TIME_INFINITE:
@@ -93,6 +107,9 @@ systemticks_t gfxSystemTicks(void) {
 
 gfxThreadHandle gfxThreadCreate(void *stackarea, size_t stacksz, threadpriority_t prio, DECLARE_THREAD_FUNCTION((*fn),p), void *param) {
 	gfxThreadHandle		th;
+	(void)				stackarea;
+	(void)				stacksz;
+	(void)				prio;
 
 	// Implementing priority with pthreads is a rats nest that is also pthreads implementation dependent.
 	// Only some pthreads schedulers support it, some implementations use the operating system process priority mechanisms.
@@ -151,7 +168,7 @@ bool_t gfxSemWait(gfxSem *pSem, delaytime_t ms) {
 				struct timeval now;
 				struct timespec	tm;
 
-				gettimeofday(&now);
+				gettimeofday(&now, 0);
 				tm.tv_sec = now.tv_sec + ms / 1000;
 				tm.tv_nsec = (now.tv_usec + ms % 1000) * 1000;
 				while (!pSem->cnt) {
