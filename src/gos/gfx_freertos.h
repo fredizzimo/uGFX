@@ -6,7 +6,7 @@
  */
 
 /**
- * @file    src/gos/freertos.h
+ * @file    src/gos/gfx_freertos.h
  * @brief   GOS - Operating System Support header file for FreeRTOS.
  */
 

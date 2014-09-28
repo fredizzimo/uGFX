@@ -112,6 +112,8 @@ extern "C" {
 	 * @note	These routines are provided by the high level code for
 	 * 			use in the GMouseVMT.d structure.
 	 *
+	 * @return	TRUE on success, FALSE otherwise
+	 *
 	 * @notapi
 	 * @{
 	 */

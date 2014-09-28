@@ -6,7 +6,7 @@
  */
 
 /**
- * @file    src/gdisp/image_native.c
+ * @file    src/gdisp/gdisp_image_native.c
  * @brief   GDISP native image code.
  */
 #include "gfx.h"
