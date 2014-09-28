@@ -250,6 +250,8 @@ unsigned gdispGetDisplayCount(void);
  *
  * @param[in] g 		The display to use
  *
+ * @return	The width of the display
+ *
  * @api
  */
 coord_t gdispGGetWidth(GDisplay *g);
@@ -259,6 +261,8 @@ coord_t gdispGGetWidth(GDisplay *g);
  * @brief   Get the display height in pixels.
  *
  * @param[in] g 		The display to use
+ *
+ * @return	The height of the display
  *
  * @api
  */
@@ -270,6 +274,8 @@ coord_t gdispGGetHeight(GDisplay *g);
  *
  * @param[in] g 		The display to use
  *
+ * @return	The current power mode
+ *
  * @api
  */
 powermode_t gdispGGetPowerMode(GDisplay *g);
@@ -279,6 +285,8 @@ powermode_t gdispGGetPowerMode(GDisplay *g);
  * @brief   Get the current display orientation.
  *
  * @param[in] g 		The display to use
+ *
+ * @return	The current orientation
  *
  * @api
  */
@@ -290,6 +298,8 @@ orientation_t gdispGGetOrientation(GDisplay *g);
  *
  * @param[in] g 		The display to use
  *
+ * @return	The current backlight value
+ *
  * @api
  */
 uint8_t gdispGGetBacklight(GDisplay *g);
@@ -299,6 +309,8 @@ uint8_t gdispGGetBacklight(GDisplay *g);
  * @brief   Get the current display contrast.
  *
  * @param[in] g 		The display to use
+ *
+ * @return	The current contrast value
  *
  * @api
  */

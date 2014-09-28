@@ -17,7 +17,7 @@
 #ifndef _LLD_GINPUT_MOUSE_H
 #define _LLD_GINPUT_MOUSE_H
 
-#if GINPUT_NEED_MOUSE || defined(__DOXYGEN__)
+#if GINPUT_NEED_MOUSE //|| defined(__DOXYGEN__)
 
 // Include the GDRIVER infrastructure
 #include "src/gdriver/sys_defs.h"
@@ -108,19 +108,36 @@ typedef struct GMouseVMT {
 extern "C" {
 #endif
 	/**
-	 * @brief	Routines needed by the general driver VMT
-	 * @note	These routines are provided by the high level code for
-	 * 			use in the GMouseVMT.d structure.
+	 * @brief	Initialize a mouse driver
+	 *
+	 * @param[in] g					The mouse driver
+	 * @param[in] display			The display to which the mouse shall be assigned
+	 * @param[in] driverinstance	The driver instance		ToDo: Add some more details
+	 * @param[in] systeminstance	The mouse instance		ToDo: Add some more details
 	 *
 	 * @return	TRUE on success, FALSE otherwise
 	 *
 	 * @notapi
-	 * @{
 	 */
 	bool_t _gmouseInitDriver(GDriver *g, void *display, unsigned driverinstance, unsigned systeminstance);
+
+	/**
+	 * @brief	Routine that is called after initialization
+	 *
+	 * @param[in] g		The mouse driver
+	 *
+	 * @notapi
+	 */
 	void _gmousePostInitDriver(GDriver *g);
+
+	/**
+	 * @brief	Deinitialize a mouse driver
+	 *
+	 * @param[in] g		The mouse driver
+	 *
+	 * @notapi
+	 */
 	void _gmouseDeInitDriver(GDriver *g);
-	/** @} */
 
 	/**
 	 * @brief	Wakeup the high level code so that it attempts another read

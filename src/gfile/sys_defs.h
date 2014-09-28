@@ -103,21 +103,21 @@ extern "C" {
 	 * @return					Valid GFILE on success, 0 otherwise
 	 *
 	 * @note					The modes follow the c library fopen() standard.
-	 * 							The valid modes are:<br/>
+	 * 							The valid modes are:
 	 * 							<ul><li>r   - Open for read, the file must exist</li>
 	 * 								<li>w   - Open for write, the file is truncated if it exists</li>
 	 * 								<li>wx  - Open for write, the file must not exist</li>
 	 * 								<li>a   - Open for append, the file is truncated if it exists</li>
 	 * 								<li>ax  - Open for append, the file must not exists</li>
-	 * 							</ul><br/>
-	 * 							THe following flags can also be added to the above modes:<br/>
+	 * 							</ul>
+	 * 							The following flags can also be added to the above modes:<br/>
 	 * 							<ul><li>+   - Open for both read and write</li>
 	 * 								<li>b   - Open as a binary file rather than a text file</li>
-	 * 							<ul>
+	 * 							</ul>
 	 * @note					Not all file-systems support all modes. For example, write
 	 * 							is not available with the ROM file-system. Similarly few platforms
 	 * 							distinguish between binary and text files.
-	 * @note					Even though binary vs text is relevant only for a small number of platforms
+	 * @note					Even though binary vs. text is relevant only for a small number of platforms
 	 * 							the "b" flag should always be specified for binary files such as images.
 	 * 							This ensures portability to other platforms. The extra flag will be ignored
 	 * 							on platforms where it is not relevant.
@@ -346,8 +346,8 @@ extern "C" {
 		/**
 		 * @brief					Open file from a null terminated C string
 		 *
-		 * @param[in] memptr		The pointer to the string or string buffer
-		 * @param[in] mode			The mode.
+		 * @param[in] str			The pointer to the string or string buffer
+		 * @param[in] mode			The mode
 		 *
 		 * @return					Valid GFILE on success, 0 otherwise
 		 *

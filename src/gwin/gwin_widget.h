@@ -305,16 +305,6 @@ void gwinSetCustomDraw(GHandle gh, CustomWidgetDrawFunction fn, void *param);
 bool_t gwinAttachListener(GListener *pl);
 
 #if (GFX_USE_GINPUT && GINPUT_NEED_MOUSE) || defined(__DOXYGEN__)
-	/**
-	 * @brief	Set the mouse to be used to control the widgets
-	 * @return	TRUE on success
-	 *
-	 * @param[in] instance	The mouse instance
-	 *
-	 * @note	Every widget uses the same mouse.
-	 *
-	 * @api
-	 */
 	bool_t DEPRECATED("This call can now be removed. Attaching the mouse to GWIN is now automatic.") gwinAttachMouse(uint16_t instance);
 #endif
 
