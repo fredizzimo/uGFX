@@ -1,9 +1,9 @@
-GFXSRC +=   $(GFXLIB)/src/gos/gfx_chibios.c	\
-			$(GFXLIB)/src/gos/gfx_freertos.c \
-			$(GFXLIB)/src/gos/gfx_win32.c \
-			$(GFXLIB)/src/gos/gfx_linux.c \
-			$(GFXLIB)/src/gos/gfx_osx.c \
-			$(GFXLIB)/src/gos/gfx_raw32.c \
-			$(GFXLIB)/src/gos/gfx_ecos.c \
-			$(GFXLIB)/src/gos/gfx_rawrtos.c
+GFXSRC +=   $(GFXLIB)/src/gos/gos_chibios.c	\
+			$(GFXLIB)/src/gos/gos_freertos.c \
+			$(GFXLIB)/src/gos/gos_win32.c \
+			$(GFXLIB)/src/gos/gos_linux.c \
+			$(GFXLIB)/src/gos/gos_osx.c \
+			$(GFXLIB)/src/gos/gos_raw32.c \
+			$(GFXLIB)/src/gos/gos_ecos.c \
+			$(GFXLIB)/src/gos/gos_rawrtos.c
 

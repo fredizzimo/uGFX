@@ -440,21 +440,21 @@
  * (without any of the documentation overheads) is in the files below.
  */
 #elif GFX_USE_OS_RAWRTOS
- 	#include "src/gos/gfx_rawrtos.h"
+ 	#include "src/gos/gos_rawrtos.h"
 #elif GFX_USE_OS_CHIBIOS
-	#include "src/gos/gfx_chibios.h"
+	#include "src/gos/gos_chibios.h"
 #elif GFX_USE_OS_FREERTOS
-	#include "src/gos/gfx_freertos.h"
+	#include "src/gos/gos_freertos.h"
 #elif GFX_USE_OS_WIN32
-	#include "src/gos/gfx_win32.h"
+	#include "src/gos/gos_win32.h"
 #elif GFX_USE_OS_LINUX
-	#include "src/gos/gfx_linux.h"
+	#include "src/gos/gos_linux.h"
 #elif GFX_USE_OS_OSX
-	#include "src/gos/gfx_osx.h"
+	#include "src/gos/gos_osx.h"
 #elif GFX_USE_OS_RAW32
-	#include "src/gos/gfx_raw32.h"
+	#include "src/gos/gos_raw32.h"
 #elif GFX_USE_OS_ECOS
-	#include "src/gos/gfx_ecos.h"
+	#include "src/gos/gos_ecos.h"
 #else
 	#error "Your operating system is not supported yet"
 #endif
