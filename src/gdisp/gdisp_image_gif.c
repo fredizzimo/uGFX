@@ -6,7 +6,7 @@
  */
 
 /**
- * @file    src/gdisp/image_gif.c
+ * @file    src/gdisp/gdisp_image_gif.c
  * @brief   GDISP native image code.
  *
  * @defgroup Image Image
