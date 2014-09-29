@@ -254,6 +254,11 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	XSetBackground(dis, priv->gc, BlackPixel(dis, scr));
 	XSync(dis, TRUE);
 
+	// Create the associated mouse before the map
+	#if GINPUT_NEED_MOUSE
+		priv->mouse = (GMouse *)gdriverRegister((const GDriverVMT const *)GMOUSE_DRIVER_VMT, g);
+	#endif
+
 	XSelectInput(dis, priv->win, StructureNotifyMask);
 	XMapWindow(dis, priv->win);
 
@@ -268,11 +273,6 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
     g->g.Contrast = 50;
     g->g.Width = GDISP_SCREEN_WIDTH;
     g->g.Height = GDISP_SCREEN_HEIGHT;
-
-	// Create the associated mouse
-	#if GINPUT_NEED_MOUSE
-		priv->mouse = (GMouse *)gdriverRegister((const GDriverVMT const *)GMOUSE_DRIVER_VMT, g);
-	#endif
 
     return TRUE;
 }
