@@ -33,7 +33,6 @@ typedef struct GProgressbarObject {
 	int					pos;
 	#if GWIN_PROGRESSBAR_AUTO
 		GTimer			gt;
-		delaytime_t		delay;
 	#endif
 } GProgressbarObject;
 
@@ -59,7 +58,7 @@ extern "C" {
  * @note				A progressbar does not take any GINPUT inputs.
  *
  * @api
- */	
+ */
 GHandle gwinGProgressbarCreate(GDisplay *g, GProgressbarObject *gb, const GWidgetInit *pInit);
 #define gwinProgressbarCreate(w, pInit)			gwinGProgressbarCreate(GDISP, w, pInit)
 
@@ -165,14 +164,14 @@ void gwinProgressbarDecrement(GHandle gh);
 	 * @api
 	 */
 	void gwinProgressbarStart(GHandle gh, delaytime_t delay);
-	
+
 	/**
 	 * @brief	Stop the timer which is started by @p gwinProgressbarStart()
 	 *
 	 * @param[in] gh		The window handle (must be a progressbar window)
 	 *
 	 * @api
-	 */		
+	 */
 	void gwinProgressbarStop(GHandle gh);
 #endif /* GWIN_PROGRESSBAR_AUTO */
 
