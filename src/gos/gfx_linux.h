@@ -10,10 +10,19 @@
 
 #if GFX_USE_OS_LINUX
 
+// We don't put this in the general sys_options.h as it is Linux specific.
+#ifndef GFX_USE_POSIX_SEMAPHORES
+	#define GFX_USE_POSIX_SEMAPHORES	TRUE
+#endif
+
 #include <sys/types.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <pthread.h>
+
+#if GFX_USE_POSIX_SEMAPHORES
+	#include <semaphore.h>
+#endif
 
 /* Already defined int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t, size_t */
 
@@ -42,7 +51,6 @@ typedef pthread_mutex_t		gfxMutex;
 #define gfxMutexExit(pmtx)				pthread_mutex_unlock(pmtx)
 #define gfxSemWaitI(psem)				gfxSemWait(psem, TIME_IMMEDIATE)
 #define gfxSemSignalI(psem)				gfxSemSignal(psem)
-#define gfxSemCounterI(pSem)			((pSem)->cnt)
 
 #define TIME_IMMEDIATE				0
 #define TIME_INFINITE				((delaytime_t)-1)
@@ -51,12 +59,21 @@ typedef pthread_mutex_t		gfxMutex;
 #define NORMAL_PRIORITY				0
 #define HIGH_PRIORITY				-10
 
-typedef struct gfxSem {
-	pthread_mutex_t	mtx;
-	pthread_cond_t	cond;
-	semcount_t		cnt;
-	semcount_t		max;
-} gfxSem;
+#if GFX_USE_POSIX_SEMAPHORES
+	typedef struct gfxSem {
+		sem_t			sem;
+		semcount_t		max;
+	} gfxSem;
+	#define gfxSemCounterI(psem)	gfxSemCounter(psem)
+#else
+	typedef struct gfxSem {
+		pthread_mutex_t	mtx;
+		pthread_cond_t	cond;
+		semcount_t		cnt;
+		semcount_t		max;
+	} gfxSem;
+	#define gfxSemCounterI(psem)	((psem)->cnt)
+#endif
 
 /*===========================================================================*/
 /* Function declarations.                                                    */

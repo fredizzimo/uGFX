@@ -14,8 +14,6 @@
 
 #include <stdio.h>
 #include <unistd.h>
-#include <errno.h>
-#include <sys/time.h>
 #include <time.h>
 #if USE_SCHED_NOT_PTHREAD_YIELD
 	#include <sched.h>
@@ -70,16 +68,16 @@ void gfxSleepMilliseconds(delaytime_t ms) {
 
 		default:
 			ts.tv_sec = ms / 1000;
-			ts.tv_nsec = (ms % 1000) * 1000;
+			ts.tv_nsec = (ms % 1000) * 1000000;
 			nanosleep(&ts, 0);
 			return;
 	}
 }
 
-void gfxSleepMicroseconds(delaytime_t ms) {
+void gfxSleepMicroseconds(delaytime_t us) {
 	struct timespec	ts;
 
-	switch(ms) {
+	switch(us) {
 		case TIME_IMMEDIATE:
 			linuxyield();
 			return;
@@ -90,8 +88,8 @@ void gfxSleepMicroseconds(delaytime_t ms) {
 			return;
 
 		default:
-			ts.tv_sec = ms / 1000000;
-			ts.tv_nsec = ms % 1000000;
+			ts.tv_sec = us / 1000000;
+			ts.tv_nsec = (us % 1000000) * 1000;
 			nanosleep(&ts, 0);
 			return;
 	}
@@ -101,8 +99,7 @@ systemticks_t gfxSystemTicks(void) {
 	struct timespec	ts;
 
 	clock_gettime(CLOCK_MONOTONIC, &ts);
-
-	return ts.tv_sec * 1000UL + ts.tv_nsec / 1000UL;
+	return ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
 }
 
 gfxThreadHandle gfxThreadCreate(void *stackarea, size_t stacksz, threadpriority_t prio, DECLARE_THREAD_FUNCTION((*fn),p), void *param) {
@@ -133,81 +130,119 @@ threadreturn_t gfxThreadWait(gfxThreadHandle thread) {
 	return retval;
 }
 
-void gfxSemInit(gfxSem *pSem, semcount_t val, semcount_t limit) {
-	pthread_mutex_init(&pSem->mtx, 0);
-	pthread_cond_init(&pSem->cond, 0);
-	pthread_mutex_lock(&pSem->mtx);
-	pSem->cnt = val;
-	pSem->max = limit;
-	pthread_mutex_unlock(&pSem->mtx);
-}
-
-void gfxSemDestroy(gfxSem *pSem) {
-	pthread_mutex_destroy(&pSem->mtx);
-	pthread_cond_destroy(&pSem->cond);
-}
-
-bool_t gfxSemWait(gfxSem *pSem, delaytime_t ms) {
-	pthread_mutex_lock(&pSem->mtx);
-
-	switch (ms) {
+#if GFX_USE_POSIX_SEMAPHORES
+	void gfxSemInit(gfxSem *pSem, semcount_t val, semcount_t limit) {
+		pSem->max = limit;
+		sem_init(&pSem->sem, 0, val);
+	}
+	void gfxSemDestroy(gfxSem *pSem) {
+		sem_destroy(&pSem->sem);
+	}
+	bool_t gfxSemWait(gfxSem *pSem, delaytime_t ms) {
+		switch (ms) {
 		case TIME_INFINITE:
-			while (!pSem->cnt)
-				pthread_cond_wait(&pSem->cond, &pSem->mtx);
-			break;
+			return sem_wait(&pSem->sem) ? FALSE : TRUE;
 
 		case TIME_IMMEDIATE:
-			if (!pSem->cnt) {
-				pthread_mutex_unlock(&pSem->mtx);
-				return FALSE;
-			}
-			break;
+			return sem_trywait(&pSem->sem) ? FALSE : TRUE;
 
 		default:
 			{
-				struct timeval now;
 				struct timespec	tm;
 
-				gettimeofday(&now, 0);
-				tm.tv_sec = now.tv_sec + ms / 1000;
-				tm.tv_nsec = (now.tv_usec + ms % 1000) * 1000;
-				while (!pSem->cnt) {
-					if (pthread_cond_timedwait(&pSem->cond, &pSem->mtx, &tm) == ETIMEDOUT) {
-						pthread_mutex_unlock(&pSem->mtx);
-						return FALSE;
+				clock_gettime(CLOCK_REALTIME, &tm);
+				tm.tv_sec += ms / 1000;
+				tm.tv_nsec += (ms % 1000) * 1000000;
+				return sem_timedwait(&pSem->sem, &tm) ? FALSE : TRUE;
+			}
+		}
+	}
+	void gfxSemSignal(gfxSem *pSem) {
+		if (gfxSemCounter(pSem) < pSem->max)
+			sem_post(&pSem->sem);
+	}
+	semcount_t gfxSemCounter(gfxSem *pSem) {
+		int	res;
+
+		res = 0;
+		sem_getvalue(&pSem->sem, &res);
+		return res;
+	}
+#else
+	void gfxSemInit(gfxSem *pSem, semcount_t val, semcount_t limit) {
+		pthread_mutex_init(&pSem->mtx, 0);
+		pthread_cond_init(&pSem->cond, 0);
+		pthread_mutex_lock(&pSem->mtx);
+		pSem->cnt = val;
+		pSem->max = limit;
+		pthread_mutex_unlock(&pSem->mtx);
+	}
+	void gfxSemDestroy(gfxSem *pSem) {
+		pthread_mutex_destroy(&pSem->mtx);
+		pthread_cond_destroy(&pSem->cond);
+	}
+	bool_t gfxSemWait(gfxSem *pSem, delaytime_t ms) {
+		pthread_mutex_lock(&pSem->mtx);
+
+		switch (ms) {
+			case TIME_INFINITE:
+				while (!pSem->cnt)
+					pthread_cond_wait(&pSem->cond, &pSem->mtx);
+				break;
+
+			case TIME_IMMEDIATE:
+				if (!pSem->cnt) {
+					pthread_mutex_unlock(&pSem->mtx);
+					return FALSE;
+				}
+				break;
+
+			default:
+				{
+					struct timespec	tm;
+
+					clock_gettime(CLOCK_REALTIME, &tm);
+					tm.tv_sec += ms / 1000;
+					tm.tv_nsec += (ms % 1000) * 1000000;
+					while (!pSem->cnt) {
+						// We used to test the return value for ETIMEDOUT. This doesn't
+						//	work in some current pthread libraries which return -1 instead
+						//	and set errno to ETIMEDOUT. So, we will return FALSE on any error
+						//	including a ETIMEDOUT.
+						if (pthread_cond_timedwait(&pSem->cond, &pSem->mtx, &tm)) {
+							pthread_mutex_unlock(&pSem->mtx);
+							return FALSE;
+						}
 					}
 				}
-			}
-			break;
+				break;
+		}
+
+		pSem->cnt--;
+		pthread_mutex_unlock(&pSem->mtx);
+		return TRUE;
 	}
+	void gfxSemSignal(gfxSem *pSem) {
+		pthread_mutex_lock(&pSem->mtx);
 
-	pSem->cnt--;
-	pthread_mutex_unlock(&pSem->mtx);
+		if (pSem->cnt < pSem->max) {
+			pSem->cnt++;
+			pthread_cond_signal(&pSem->cond);
+		}
 
-	return TRUE;
-}
-
-void gfxSemSignal(gfxSem *pSem) {
-	pthread_mutex_lock(&pSem->mtx);
-
-	if (pSem->cnt < pSem->max) {
-		pSem->cnt++;
-		pthread_cond_signal(&pSem->cond);
+		pthread_mutex_unlock(&pSem->mtx);
 	}
+	semcount_t gfxSemCounter(gfxSem *pSem) {
+		semcount_t	res;
 
-	pthread_mutex_unlock(&pSem->mtx);
-}
+		// The locking is really only required if obtaining the count is a divisible operation
+		//	which it might be on a 8/16 bit processor with a 32 bit semaphore count.
+		pthread_mutex_lock(&pSem->mtx);
+		res = pSem->cnt;
+		pthread_mutex_unlock(&pSem->mtx);
 
-semcount_t gfxSemCounter(gfxSem *pSem) {
-	semcount_t	res;
-
-	// The locking is really only required if obtaining the count is a divisible operation
-	//	which it might be on a 8/16 bit processor with a 32 bit semaphore count.
-	pthread_mutex_lock(&pSem->mtx);
-	res = pSem->cnt;
-	pthread_mutex_unlock(&pSem->mtx);
-
-	return res;
-}
+		return res;
+	}
+#endif // GFX_USE_POSIX_SEMAPHORES
 
 #endif /* GFX_USE_OS_LINUX */
