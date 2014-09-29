@@ -13,7 +13,7 @@
 #include "drivers/multiple/X/gdisp_lld_config.h"
 #include "src/gdisp/driver.h"
 
-#ifndef GDISP_FORCE_24BIT	
+#ifndef GDISP_FORCE_24BIT
 	#define GDISP_FORCE_24BIT	FALSE
 #endif
 
@@ -44,6 +44,7 @@ static XEvent			evt;
 static Colormap			cmap;
 static XVisualInfo		vis;
 static XContext			cxt;
+static Atom				wmDelete;
 #if GINPUT_NEED_MOUSE
 	static coord_t		mousex, mousey;
 	static uint16_t		mousebuttons;
@@ -65,10 +66,16 @@ static void ProcessEvent(GDisplay *g, xPriv *priv) {
 		XCloseDisplay(dis);
 		exit(0);
 		break;
+	case ClientMessage:
+		if ((Atom)evt.xclient.data.l[0] == wmDelete) {
+			XCloseDisplay(dis);
+			exit(0);
+		}
+		break;
 	case Expose:
 		XCopyArea(dis, priv->pix, evt.xexpose.window, priv->gc,
 			evt.xexpose.x, evt.xexpose.y,
-			evt.xexpose.width, evt.xexpose.height,   
+			evt.xexpose.width, evt.xexpose.height,
 			evt.xexpose.x, evt.xexpose.y);
 		break;
 #if GINPUT_NEED_MOUSE
@@ -125,7 +132,7 @@ static DECLARE_THREAD_FUNCTION(ThreadX, arg) {
 	}
 	return 0;
 }
- 
+
 static int FatalXIOError(Display *d) {
 	(void) d;
 
@@ -152,6 +159,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		dis = XOpenDisplay(0);
 		scr = DefaultScreen(dis);
 		cxt = XUniqueContext();
+		wmDelete = XInternAtom(dis, "WM_DELETE_WINDOW", False);
 		XSetIOErrorHandler(FatalXIOError);
 
 		#if GDISP_FORCE_24BIT
@@ -187,14 +195,15 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	xa.colormap = cmap;
 	xa.border_pixel = 0xFFFFFF;
 	xa.background_pixel = 0x000000;
-	
+
 	priv->win = XCreateWindow(dis, RootWindow(dis, scr), 16, 16,
 			GDISP_SCREEN_WIDTH, GDISP_SCREEN_HEIGHT,
 			0, vis.depth, InputOutput, vis.visual,
 			CWBackPixel|CWColormap|CWBorderPixel, &xa);
 	XSync(dis, TRUE);
-	
+
 	XSaveContext(dis, priv->win, cxt, (XPointer)g);
+	XSetWMProtocols(dis, priv->win, &wmDelete, 1);
 
 	{
 		char					buf[132];
@@ -205,7 +214,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		XSetWMIconName(dis, priv->win, &WindowTitle);
 		XSync(dis, TRUE);
 	}
-			
+
 	pSH = XAllocSizeHints();
 	pSH->flags = PSize | PMinSize | PMaxSize;
 	pSH->min_width = pSH->max_width = pSH->base_width = GDISP_SCREEN_WIDTH;
@@ -213,7 +222,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	XSetWMNormalHints(dis, priv->win, pSH);
 	XFree(pSH);
 	XSync(dis, TRUE);
-	
+
 	priv->pix = XCreatePixmap(dis, priv->win,
 				GDISP_SCREEN_WIDTH, GDISP_SCREEN_HEIGHT, vis.depth);
 	XSync(dis, TRUE);
@@ -236,6 +245,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
     g->g.Contrast = 50;
     g->g.Width = GDISP_SCREEN_WIDTH;
     g->g.Height = GDISP_SCREEN_HEIGHT;
+
     return TRUE;
 }
 
