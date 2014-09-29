@@ -81,6 +81,7 @@ static XEvent			evt;
 static Colormap			cmap;
 static XVisualInfo		vis;
 static XContext			cxt;
+static Atom				wmDelete;
 
 typedef struct xPriv {
 	Pixmap			pix;
@@ -102,6 +103,12 @@ static void ProcessEvent(GDisplay *g, xPriv *priv) {
 	case UnmapNotify:
 		XCloseDisplay(dis);
 		exit(0);
+		break;
+	case ClientMessage:
+		if ((Atom)evt.xclient.data.l[0] == wmDelete) {
+			XCloseDisplay(dis);
+			exit(0);
+		}
 		break;
 	case Expose:
 		XCopyArea(dis, priv->pix, evt.xexpose.window, priv->gc,
@@ -184,6 +191,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		dis = XOpenDisplay(0);
 		scr = DefaultScreen(dis);
 		cxt = XUniqueContext();
+		wmDelete = XInternAtom(dis, "WM_DELETE_WINDOW", False);
 		XSetIOErrorHandler(FatalXIOError);
 
 		#if GDISP_FORCE_24BIT
@@ -227,6 +235,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	XSync(dis, TRUE);
 
 	XSaveContext(dis, priv->win, cxt, (XPointer)g);
+	XSetWMProtocols(dis, priv->win, &wmDelete, 1);
 
 	{
 		char					buf[132];
