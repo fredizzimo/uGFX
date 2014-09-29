@@ -79,13 +79,12 @@ GHandle gwinGProgressbarCreate(GDisplay *g, GProgressbarObject *gs, const GWidge
 	gs->pos = 0;
 
 	#if GWIN_PROGRESSBAR_AUTO
-		gs->delay = 0;
 		gtimerInit(&gs->gt);
 	#endif
 
 	ResetDisplayPos(gs);
 	gwinSetVisible((GHandle)gs, pInit->g.show);
-	
+
 	return (GHandle)gs;
 }
 
@@ -183,39 +182,37 @@ void gwinProgressbarDecrement(GHandle gh) {
 	static void _progressbarCallback(void *param) {
 		#define gsw		((GProgressbarObject *)gh)
 		GHandle gh = (GHandle)param;
-	
+
 		if (gh->vmt != (gwinVMT *)&progressbarVMT)
 			return;
-	
+
 		gwinProgressbarIncrement(gh);
-	
-		if (gsw->pos < gsw->max)
-			gtimerStart(&(gsw->gt), _progressbarCallback, gh, FALSE, gsw->delay);
-	
-		#undef gsw	
-	}
-	
-	void gwinProgressbarStart(GHandle gh, delaytime_t delay) {
-		#define gsw		((GProgressbarObject *)gh)
-	
-		if (gh->vmt != (gwinVMT *)&progressbarVMT)
-			return;
-	
-		gsw->delay = delay;
-	
-		gtimerStart(&(gsw->gt), _progressbarCallback, gh, FALSE, gsw->delay);
-	
+
+		if (gsw->pos >= gsw->max)
+			gtimerStop(&gsw->gt);
+
 		#undef gsw
 	}
-	
-	void gwinProgressbarStop(GHandle gh) {
+
+	void gwinProgressbarStart(GHandle gh, delaytime_t delay) {
 		#define gsw		((GProgressbarObject *)gh)
-	
+
 		if (gh->vmt != (gwinVMT *)&progressbarVMT)
 			return;
-	
-		gtimerStop(&(gsw->gt));
-	
+
+		gtimerStart(&gsw->gt, _progressbarCallback, gh, TRUE, delay);
+
+		#undef gsw
+	}
+
+	void gwinProgressbarStop(GHandle gh) {
+		#define gsw		((GProgressbarObject *)gh)
+
+		if (gh->vmt != (gwinVMT *)&progressbarVMT)
+			return;
+
+		gtimerStop(&gsw->gt);
+
 		#undef gsw
 	}
 #endif /* GWIN_PROGRESSBAR_AUTO */
@@ -226,7 +223,7 @@ void gwinProgressbarDecrement(GHandle gh) {
 
 void gwinProgressbarDraw_Std(GWidgetObject *gw, void *param) {
 	#define gsw			((GProgressbarObject *)gw)
-	
+
 	const GColorSet *	pcol;
 	(void)				param;
 
