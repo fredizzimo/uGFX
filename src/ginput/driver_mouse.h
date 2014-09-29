@@ -116,6 +116,8 @@ extern "C" {
 	 * @param[in] systeminstance	The mouse instance		ToDo: Add some more details
 	 *
 	 * @return	TRUE on success, FALSE otherwise
+	 * @note	This routine is provided by the high level code for
+	 * 			use in the driver VMT's GMouseVMT.d structure.
 	 *
 	 * @notapi
 	 */
@@ -125,6 +127,8 @@ extern "C" {
 	 * @brief	Routine that is called after initialization
 	 *
 	 * @param[in] g		The mouse driver
+	 * @note	This routine is provided by the high level code for
+	 * 			use in the driver VMT's GMouseVMT.d structure.
 	 *
 	 * @notapi
 	 */
@@ -134,6 +138,8 @@ extern "C" {
 	 * @brief	Deinitialize a mouse driver
 	 *
 	 * @param[in] g		The mouse driver
+	 * @note	This routine is provided by the high level code for
+	 * 			use in the driver VMT's GMouseVMT.d structure.
 	 *
 	 * @notapi
 	 */
