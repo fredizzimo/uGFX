@@ -21,18 +21,6 @@
 
 static gfxMutex		SystemMutex;
 
-
-void get_ticks(mach_timespec_t *mts){
-	clock_serv_t cclock;
-	//mach_timespec_t mts;
-
-	host_get_clock_service(mach_host_self(), SYSTEM_CLOCK, &cclock);
-	clock_get_time(cclock, mts);
-	mach_port_deallocate(mach_task_self(), cclock);
-
-
-}
-
 void _gosInit(void)
 {
 	/* No initialization of the operating system itself is needed */
@@ -66,35 +54,35 @@ void gfxSleepMilliseconds(delaytime_t ms) {
 	case TIME_INFINITE:		while(1) sleep(60);			return;
 	default:
 		ts.tv_sec = ms / 1000;
-		ts.tv_nsec = (ms % 1000) * 1000;
+		ts.tv_nsec = (ms % 1000) * 1000000;
 		nanosleep(&ts, 0);
 		return;
 	}
 }
 
-void gfxSleepMicroseconds(delaytime_t ms) {
+void gfxSleepMicroseconds(delaytime_t us) {
 	struct timespec	ts;
 
-	switch(ms) {
+	switch(us) {
 	case TIME_IMMEDIATE:	gfxYield();			return;
 	case TIME_INFINITE:		while(1) sleep(60);			return;
 	default:
-		ts.tv_sec = ms / 1000000;
-		ts.tv_nsec = ms % 1000000;
+		ts.tv_sec = us / 1000000;
+		ts.tv_nsec = (us % 1000000) * 1000;
 		nanosleep(&ts, 0);
 		return;
 	}
 }
 
 systemticks_t gfxSystemTicks(void) {
-	//struct timespec	ts;
-	//clock_gettime(CLOCK_MONOTONIC, &ts);
+	mach_timespec_t	ts;
+	clock_serv_t	cclock;
 
-	mach_timespec_t ts;
-	get_ticks(&ts);
+	host_get_clock_service(mach_host_self(), SYSTEM_CLOCK, &cclock);
+	clock_get_time(cclock, &ts);
+	mach_port_deallocate(mach_task_self(), cclock);
 
-
-	return ts.tv_sec * 1000UL + ts.tv_nsec / 1000UL;
+	return ts.tv_sec * 1000UL + ts.tv_nsec / 1000000;
 }
 
 gfxThreadHandle gfxThreadCreate(void *stackarea, size_t stacksz, threadpriority_t prio, DECLARE_THREAD_FUNCTION((*fn),p), void *param) {
@@ -157,9 +145,13 @@ bool_t gfxSemWait(gfxSem *pSem, delaytime_t ms) {
 
 			gettimeofday(&now, 0);
 			tm.tv_sec = now.tv_sec + ms / 1000;
-			tm.tv_nsec = (now.tv_usec + ms % 1000) * 1000;
+			tm.tv_nsec = now.tv_usec * 1000 + (ms % 1000) * 1000000;
 			while (!pSem->cnt) {
-				if (pthread_cond_timedwait(&pSem->cond, &pSem->mtx, &tm) == ETIMEDOUT) {
+				// We used to test the return value for ETIMEDOUT. This doesn't
+				//	work in some current pthread libraries which return -1 instead
+				//	and set errno to ETIMEDOUT. So, we will return FALSE on any error
+				//	including a ETIMEDOUT.
+				if (pthread_cond_timedwait(&pSem->cond, &pSem->mtx, &tm)) {
 					pthread_mutex_unlock(&pSem->mtx);
 					return FALSE;
 				}
