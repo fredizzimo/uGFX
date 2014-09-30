@@ -28,18 +28,25 @@ endif
 # Include the operating system define
 ifeq ($(OPT_OS),win32)
 	GFXDEFS += GFX_USE_OS_WIN32=TRUE
-else ifeq ($(OPT_OS),linux)
+endif
+ifeq ($(OPT_OS),linux)
 	GFXDEFS += GFX_USE_OS_LINUX=TRUE
-else ifeq ($(OPT_OS),osx)
+endif
+ifeq ($(OPT_OS),osx)
 	GFXDEFS += GFX_USE_OS_OSX=TRUE
-else ifeq ($(OPT_OS),chibios)
+endif
+ifeq ($(OPT_OS),chibios)
 	GFXDEFS += GFX_USE_OS_CHIBIOS=TRUE
-else ifeq ($(OPT_OS),freertos)
+endif
+ifeq ($(OPT_OS),freertos)
 	GFXDEFS += GFX_USE_OS_FREERTOS=TRUE
-else ifeq ($(OPT_OS),ecos)
+endif
+ifeq ($(OPT_OS),ecos)
 	GFXDEFS += GFX_USE_OS_ECOS=TRUE
-else ifeq ($(OPT_OS),rawrtos)
+endif
+ifeq ($(OPT_OS),rawrtos)
 	GFXDEFS += GFX_USE_OS_RAWRTOS=TRUE
-else ifeq ($(OPT_OS),raw32)
+endif
+ifeq ($(OPT_OS),raw32)
 	GFXDEFS += GFX_USE_OS_RAW32=TRUE
 endif
