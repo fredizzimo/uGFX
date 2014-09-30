@@ -4,30 +4,37 @@
 # Settings
 #
 
-# See $(GFXLIB)/tools/gmake_scripts/readme.txt for the meaning of these variables
-OPT_VERBOSE_COMPILE		= no
-OPT_GENERATE_LISTINGS	= yes
-OPT_GENERATE_MAP		= yes
-OPT_COPY_EXE			= no
-OPT_NATIVEOS			= linux
-OPT_OS					= linux
+# General settings
+	# See $(GFXLIB)/tools/gmake_scripts/readme.txt for the list of variables
+	OPT_VERBOSE_COMPILE		= no
+	OPT_GENERATE_LISTINGS	= yes
+	OPT_GENERATE_MAP		= yes
+	OPT_COPY_EXE			= no
+	OPT_LINK_OPTIMIZE		= yes
+	OPT_NONSTANDARD_FLAGS	= no
+	OPT_OS					= linux
 
-# See $(GFXLIB)/tools/gmake_scripts/library_ugfx.mk for the meaning of these variables
-GFXLIB = ../uGFX
-GFXBOARD = Linux-Framebuffer
-#GFXDRIVERS = multiple/uGFXnet
-GFXDEMO = modules/gdisp/basics
+# uGFX settings
+	# See $(GFXLIB)/tools/gmake_scripts/library_ugfx.mk for the list of variables
+	GFXLIB					= ../uGFX
+	GFXBOARD				= Linux-Framebuffer
+	#GFXDRIVERS				= multiple/uGFXnet
+	GFXDEMO					= modules/gdisp/basics
+
+# Linux settings
+	# See $(GFXLIB)/tools/gmake_scripts/os_linux.mk for the list of variables
 
 ##############################################################################################
 # Set these for your project
 #
 
 ARCH     =
-SRCFLAGS = -m32 -ggdb -O0 -fomit-frame-pointer -Wall -Wextra -Wstrict-prototypes -fverbose-asm
+SRCFLAGS = -ggdb -O0
+SRCFLAGS+= -m32
 CFLAGS   =
 CXXFLAGS =
 ASFLAGS  =
-LDFLAGS  = -pthread
+LDFLAGS  =
 
 SRC      =
 DEFS     =
@@ -40,5 +47,6 @@ LIBPATH  =
 #
 
 include $(GFXLIB)/tools/gmake_scripts/library_ugfx.mk
+include $(GFXLIB)/tools/gmake_scripts/os_$(OPT_OS).mk
 include $(GFXLIB)/tools/gmake_scripts/compiler_gcc.mk
 # *** EOF ***

@@ -13,9 +13,18 @@ endif
 ifeq ($(XLD),)
 	XLD = $(ARCH)gcc
 endif
+ifeq ($(XOC),)
+	XOC = $(ARCH)objcopy
+endif
+ifeq ($(XOD),)
+	XOD = $(ARCH)objdump
+endif
 
 # Default project name is the project directory name
 ifeq ($(PROJECT),)
+	ifneq ($(firstword $(abspath $(firstword $(MAKEFILE_LIST)))),$(lastword $(abspath $(firstword $(MAKEFILE_LIST)))))
+	$(error Your directory contains spaces. Gmake barfs at that. Please define PROJECT)
+	endif
 	PROJECT := $(notdir $(patsubst %/,%,$(dir $(abspath $(firstword $(MAKEFILE_LIST))))))
 endif
 
@@ -45,23 +54,49 @@ SRCFILE = $<
 OBJFILE = $@
 LSTFILE = $(@:.o=.lst)
 MAPFILE = $(BUILDDIR)/$(PROJECT).map
-ifeq ($(OPT_NATIVEOS),win32)
+EXEFILE =
+ifeq ($(basename $(OPT_OS)),win32)
 	EXEFILE = $(BUILDDIR)/$(PROJECT).exe
-else
+	TARGETS = $(EXEFILE)
+endif
+ifeq ($(basename $(OPT_OS)),linux)
 	EXEFILE = $(BUILDDIR)/$(PROJECT)
+	TARGETS = $(EXEFILE)
+endif
+ifeq ($(basename $(OPT_OS)),osx)
+	EXEFILE = $(BUILDDIR)/$(PROJECT)
+	TARGETS = $(EXEFILE)
+endif
+ifeq ($(EXEFILE),)
+	LDFLAGS += -nostartfiles
+	EXEFILE = $(BUILDDIR)/$(PROJECT).elf
+	TARGETS = $(EXEFILE) $(BUILDDIR)/$(PROJECT).hex $(BUILDDIR)/$(PROJECT).bin $(BUILDDIR)/$(PROJECT).dmp
 endif
 
 SRCFLAGS += -I. $(patsubst %,-I%,$(INCPATH)) $(patsubst %,-D%,$(patsubst -D%,%,$(DEFS)))
 LDFLAGS  += $(patsubst %,-L%,$(LIBPATH)) $(patsubst %,-l%,$(patsubst -l%,%,$(LIBS)))
 OBJS	  = $(addprefix $(OBJDIR)/,$(subst ../,_dot_dot/,$(addsuffix .o,$(basename $(SRC)))))
 
+ifneq ($(OPT_NONSTANDARD_FLAGS),yes)
+	SRCFLAGS += -fomit-frame-pointer -Wall -Wextra -Wstrict-prototypes -fverbose-asm
+endif
+ifeq ($(OPT_LINK_OPTIMIZE),yes)
+	SRCFLAGS += -ffunction-sections -fdata-sections
+endif
 ifeq ($(OPT_GENERATE_MAP),yes)
-	LDFLAGS += -Wl,-Map=$(MAPFILE),--cref,--no-warn-mismatch
+	ifeq ($(OPT_LINK_OPTIMIZE),yes)
+		LDFLAGS += -Wl,-Map=$(MAPFILE),--cref,--no-warn-mismatch,--gc-sections
+	else
+		LDFLAGS += -Wl,-Map=$(MAPFILE),--cref,--no-warn-mismatch
+	endif
 endif
 ifeq ($(OPT_GENERATE_LISTINGS),yes)
 	CFLAGS += -Wa,-alms=$(LSTFILE)
 	CXXFLAGS += -Wa,-alms=$(LSTFILE)
 	ASFLAGS += -Wa,-amhls=$(LSTFILE)
+endif
+ifneq ($(LDSCRIPT),)
+	LDFLAGS += -T$(LDSCRIPT)
 endif
 
 # Generate dependency information
@@ -76,7 +111,7 @@ SRCFLAGS += -MMD -MP -MF $(DEPDIR)/$(@F).d
 Debug Release:				all
 cleanDebug cleanRelease:	clean
 
-all: builddirs fakefile.o $(EXEFILE)
+all: builddirs fakefile.o $(TARGETS)
 
 builddirs:
 	@mkdir -p $(BUILDDIR)
@@ -140,7 +175,41 @@ else
 	@$(XLD) $(OBJS) $(LDFLAGS) -o $@
 endif
 ifeq ($(OPT_COPY_EXE),yes)
-	@cp $(EXEFILE) .
+	@cp $@ .
+endif
+
+%.hex: %.elf $(LDSCRIPT)
+ifeq ($(OPT_VERBOSE_COMPILE),yes)
+	$(XOC) -O ihex $< $@
+else
+	@echo Creating $@
+	@$(XOC) -O ihex $< $@
+endif
+ifeq ($(OPT_COPY_EXE),yes)
+	@cp $@ .
+endif
+
+%.bin: %.elf $(LDSCRIPT)
+ifeq ($(USE_VERBOSE_COMPILE),yes)
+	$(XOC) -O binary $< $@
+else
+	@echo Creating $@
+	@$(XOC) -O binary $< $@
+endif
+ifeq ($(OPT_COPY_EXE),yes)
+	@cp $@ .
+endif
+
+%.dmp: %.elf $(LDSCRIPT)
+ifeq ($(USE_VERBOSE_COMPILE),yes)
+	$(XOD) -x --syms $< > $@
+else
+	@echo Creating $@
+	@$(XOD) -x --syms $< > $@
+	@echo Done
+endif
+ifeq ($(OPT_COPY_EXE),yes)
+	@cp $@ .
 endif
 
 gcov:
