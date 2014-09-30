@@ -23,13 +23,17 @@ endif
 ifeq ($(BUILDDIR),)
 	ifeq ($(MAKECMDGOALS),Debug)
 	  BUILDDIR = bin/Debug
-	else ifeq ($(MAKECMDGOALS),Release)
+	endif
+	ifeq ($(MAKECMDGOALS),Release)
 	  BUILDDIR = bin/Release
-	else ifeq ($(MAKECMDGOALS),cleanDebug)
+	endif
+	ifeq ($(MAKECMDGOALS),cleanDebug)
 	  BUILDDIR = bin/Debug
-	else ifeq ($(MAKECMDGOALS),cleanRelease)
+	endif
+	ifeq ($(MAKECMDGOALS),cleanRelease)
 	  BUILDDIR = bin/Release
-	else
+	endif
+	ifeq ($(BUILDDIR),)
 	  BUILDDIR = .build
 	endif
 endif
