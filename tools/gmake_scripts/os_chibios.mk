@@ -13,6 +13,8 @@
 # CHIBIOS_LDSCRIPT	The name of the loader script		eg CHIBIOS_LDSCRIPT=$(PORTLD)/AT91SAM7X256.ld
 #
 
+PATHLIST += CHIBIOS
+
 include $(CHIBIOS)/boards/$(CHIBIOS_BOARD)/board.mk
 include $(CHIBIOS)/os/hal/platforms/$(CHIBIOS_PLATFORM)/platform.mk
 include $(CHIBIOS)/os/hal/hal.mk

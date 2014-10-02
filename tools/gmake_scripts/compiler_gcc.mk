@@ -1,5 +1,29 @@
 # See readme.txt for the make API
 
+ifeq ($(basename $(OPT_OS)),win32)
+	# Nasty - must convert all paths into a format make can handle
+	PATHEXPAND := ARCH XCC XCXX XAS XLD XOC XOD PROJECT BUILDDIR SRC DEFS LIBS INCPATH LIBPATH $(PATHLIST)
+	
+	# First convert \'s to /'s
+    $(foreach var,$(PATHEXPAND),$(eval $(var):=$$(subst \,/,$($(var)))))
+    
+	# For cygwin gmake - need to convert all absolute paths (mingw gmake doesn't need this)
+	ifneq ($(findstring cygdrive,$(PATH)),)
+		DRIVELETTERS := a b c d e f g h i j k l m n o p q r s t u v w x y z A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
+        $(foreach drv,$(DRIVELETTERS),$(foreach var,$(PATHEXPAND),$(eval $(var):=$$(patsubst $(drv):%,/cygdrive/$(drv)%,$($(var))))))
+	endif
+endif
+
+# Path resolution - Functions to convert a source path to a object path and visa-versa
+src_obj_fn := $$(1)
+obj_src_fn := $$(1)
+$(foreach var,$(PATHLIST),$(eval obj_src_fn := $$$$(patsubst $(var)/%,$$$$($(var))/%,$$(obj_src_fn)))) 
+$(foreach var,$(PATHLIST),$(eval src_obj_fn := $$$$(patsubst $$$$($(var))/%,$(var)/%,$$(src_obj_fn)))) 
+src_obj_fn := $$(subst :,_drv_drv_,$$(subst ../,_dot_dot/,$(src_obj_fn)))
+obj_src_fn := $$(subst _drv_drv_,:,$$(subst _dot_dot/,../,$(obj_src_fn)))
+$(eval src_obj=$(src_obj_fn))
+$(eval obj_src=$(obj_src_fn))
+
 # Add ARCH to each of the compiler programs
 ifeq ($(XCC),)
 	XCC = $(ARCH)gcc
@@ -23,12 +47,12 @@ endif
 # Default project name is the project directory name
 ifeq ($(PROJECT),)
 	ifneq ($(firstword $(abspath $(firstword $(MAKEFILE_LIST)))),$(lastword $(abspath $(firstword $(MAKEFILE_LIST)))))
-	$(error Your directory contains spaces. Gmake barfs at that. Please define PROJECT)
+        $(error Your directory contains spaces. Gmake barfs at that. Please define PROJECT)
 	endif
 	PROJECT := $(notdir $(patsubst %/,%,$(dir $(abspath $(firstword $(MAKEFILE_LIST))))))
 endif
 
-# Output directory and files
+# Output directories
 ifeq ($(BUILDDIR),)
 	ifeq ($(MAKECMDGOALS),Debug)
 	  BUILDDIR = bin/Debug
@@ -46,13 +70,10 @@ ifeq ($(BUILDDIR),)
 	  BUILDDIR = .build
 	endif
 endif
-
 OBJDIR  = $(BUILDDIR)/obj
 DEPDIR  = $(BUILDDIR)/dep
 
-SRCFILE = $<
-OBJFILE = $@
-LSTFILE = $(@:.o=.lst)
+# Output files
 MAPFILE = $(BUILDDIR)/$(PROJECT).map
 EXEFILE =
 ifeq ($(basename $(OPT_OS)),win32)
@@ -73,10 +94,12 @@ ifeq ($(EXEFILE),)
 	TARGETS = $(EXEFILE) $(BUILDDIR)/$(PROJECT).hex $(BUILDDIR)/$(PROJECT).bin $(BUILDDIR)/$(PROJECT).dmp
 endif
 
+# Combine all our compiler arguments
 SRCFLAGS += -I. $(patsubst %,-I%,$(INCPATH)) $(patsubst %,-D%,$(patsubst -D%,%,$(DEFS)))
 LDFLAGS  += $(patsubst %,-L%,$(LIBPATH)) $(patsubst %,-l%,$(patsubst -l%,%,$(LIBS)))
-OBJS	  = $(addprefix $(OBJDIR)/,$(subst ../,_dot_dot/,$(addsuffix .o,$(basename $(SRC)))))
+OBJS	  = $(addprefix $(OBJDIR)/,$(call src_obj,$(addsuffix .o,$(basename $(SRC)))))
 
+# Handle make API options that affect compiler arguments
 ifneq ($(OPT_NONSTANDARD_FLAGS),yes)
 	SRCFLAGS += -fomit-frame-pointer -Wall -Wextra -Wstrict-prototypes -fverbose-asm
 endif
@@ -91,9 +114,9 @@ ifeq ($(OPT_GENERATE_MAP),yes)
 	endif
 endif
 ifeq ($(OPT_GENERATE_LISTINGS),yes)
-	CFLAGS += -Wa,-alms=$(LSTFILE)
-	CXXFLAGS += -Wa,-alms=$(LSTFILE)
-	ASFLAGS += -Wa,-amhls=$(LSTFILE)
+	CFLAGS += -Wa,-alms=$(@:.o=.lst)
+	CXXFLAGS += -Wa,-alms=$(@:.o=.lst)
+	ASFLAGS += -Wa,-amhls=$(@:.o=.lst)
 endif
 ifneq ($(LDSCRIPT),)
 	LDFLAGS += -T$(LDSCRIPT)
@@ -102,10 +125,7 @@ endif
 # Generate dependency information
 SRCFLAGS += -MMD -MP -MF $(DEPDIR)/$(@F).d
 
-#
-# makefile rules
-#
-
+# Targets
 .PHONY: builddirs fakefile.o all clean Debug Release cleanDebug cleanRelease
 
 Debug Release:				all
@@ -124,8 +144,10 @@ ifneq ($(OPT_VERBOSE_COMPILE),yes)
 	@echo
 endif
 
+# Implicit Rules
+
 .SECONDEXPANSION:
-$(OBJDIR)/%.o : $$(subst _dot_dot/,../,%.c)
+$(OBJDIR)/%.o : $$(call obj_src,%.c)
 	@mkdir -p $(dir $@)
 ifeq ($(OPT_VERBOSE_COMPILE),yes)
 	@echo
@@ -135,7 +157,7 @@ else
 	@$(XCC) -c $(CPPFLAGS) $(CFLAGS) $(SRCFLAGS) $< -o $@
 endif
 
-$(OBJDIR)/%.o : $$(subst _dot_dot/,../,%.cpp)
+$(OBJDIR)/%.o : $$(call obj_src,%.cpp)
 	@mkdir -p $(dir $@)
 ifeq ($(OPT_VERBOSE_COMPILE),yes)
 	@echo
@@ -145,7 +167,7 @@ else
 	@$(XCXX) -c $(CPPFLAGS) $(CXXFLAGS) $(SRCFLAGS) $< -o $@
 endif
 
-$(OBJDIR)/%.o : $$(subst _dot_dot/,../,%.c++)
+$(OBJDIR)/%.o : $$(call obj_src,%.c++)
 	@mkdir -p $(dir $@)
 ifeq ($(OPT_VERBOSE_COMPILE),yes)
 	@echo
@@ -155,7 +177,7 @@ else
 	@$(XCXX) -c $(CPPFLAGS) $(CXXFLAGS) $(SRCFLAGS) $< -o $@
 endif
 
-$(OBJDIR)/%.o : $$(subst _dot_dot/,../,%.s)
+$(OBJDIR)/%.o : $$(call obj_src,%.s)
 	@mkdir -p $(dir $@)
 ifeq ($(OPT_VERBOSE_COMPILE),yes)
 	@echo
@@ -165,7 +187,7 @@ else
 	@$(XAS) -c $(CPPFLAGS) $(ASFLAGS) $(SRCFLAGS) $< -o $@
 endif
 
-$(EXEFILE): $(OBJS)
+$(EXEFILE): $(OBJS) $(LDSCRIPT)
 	@mkdir -p $(dir $@)
 ifeq ($(OPT_VERBOSE_COMPILE),yes)
 	@echo
@@ -178,7 +200,7 @@ ifeq ($(OPT_COPY_EXE),yes)
 	@cp $@ .
 endif
 
-%.hex: %.elf $(LDSCRIPT)
+%.hex: %.elf
 ifeq ($(OPT_VERBOSE_COMPILE),yes)
 	$(XOC) -O ihex $< $@
 else
@@ -189,7 +211,7 @@ ifeq ($(OPT_COPY_EXE),yes)
 	@cp $@ .
 endif
 
-%.bin: %.elf $(LDSCRIPT)
+%.bin: %.elf
 ifeq ($(USE_VERBOSE_COMPILE),yes)
 	$(XOC) -O binary $< $@
 else
@@ -200,7 +222,7 @@ ifeq ($(OPT_COPY_EXE),yes)
 	@cp $@ .
 endif
 
-%.dmp: %.elf $(LDSCRIPT)
+%.dmp: %.elf
 ifeq ($(USE_VERBOSE_COMPILE),yes)
 	$(XOD) -x --syms $< > $@
 else
@@ -212,16 +234,16 @@ ifeq ($(OPT_COPY_EXE),yes)
 	@cp $@ .
 endif
 
+# Goodness knows why we would want this.
 gcov:
 	-mkdir gcov
 	$(COV) -u $(subst /,\,$(SRC))
 	-mv *.gcov ./gcov
 
-#
 # Include the dependency files, should be the last of the makefile except for clean
-#
 -include $(shell mkdir -p $(DEPDIR) 2>/dev/null) $(wildcard $(DEPDIR)/*)
 
+# Clean
 clean:
 	-rm -fR $(BUILDDIR)
 

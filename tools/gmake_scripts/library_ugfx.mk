@@ -12,6 +12,7 @@
 # GFXDEMO:		Compile a uGFX standard demo? If blank you need to include your own project files. eg GFXDEMO=modules/gwin/widgets
 #
 
+PATHLIST += GFXLIB
 
 include $(GFXLIB)/gfx.mk
 SRC     += $(GFXSRC)
