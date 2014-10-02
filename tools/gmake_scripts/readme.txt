@@ -18,6 +18,7 @@ OPT_OS=win32|win32.chibios|linux|osx|chibios|freertos|ecos|raw32|rawrtos	- Manda
 
 BUILDDIR						- Build Directory - default is ".build" or "bin/Debug" or "bin/Release" depending on the target
 PROJECT							- Project Name - default is the name of the project directory
+PATHLIST						- A list of variable names of "master" paths that contain source and other objects of interest - default is ""
 
 ARCH							- Architecture - default is ""
 XCC								- C compiler - default is "$(ARCH)gcc"
