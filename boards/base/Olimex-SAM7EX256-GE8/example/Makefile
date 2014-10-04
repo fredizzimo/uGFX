@@ -14,6 +14,8 @@
 	OPT_NONSTANDARD_FLAGS	= no
 	OPT_NATIVEOS			= chibios
 	OPT_OS					= chibios
+	OPT_THUMB				= no
+	OPT_CPU					= at91sam7
 
 # uGFX settings
 	# See $(GFXLIB)/tools/gmake_scripts/library_ugfx.mk for the list of variables
@@ -30,9 +32,7 @@ ifeq ($(OPT_OS),chibios)
 	CHIBIOS_PLATFORM	= AT91SAM7
 	CHIBIOS_PORT		= GCC/ARM/AT91SAM7
 	CHIBIOS_DEFS		=
-	#CHIBIOS_LDSCRIPT	= $(PORTLD)/AT91SAM7X256.ld
-	# We define a non standard linker script here just to give us some more stack space
-	CHIBIOS_LDSCRIPT	= linker.ld
+	CHIBIOS_LDSCRIPT	= AT91SAM7X256.ld
 endif
 
 ##############################################################################################
@@ -41,18 +41,20 @@ endif
 
 ARCH     = arm-none-eabi-
 SRCFLAGS = -ggdb -O0
-SRCFLAGS+= -mcpu=arm7tdmi -mabi=apcs-gnu -mno-thumb-interwork
 CFLAGS   =
 CXXFLAGS = -fno-rtti
 ASFLAGS  =
-LDFLAGS  = -mcpu=arm7tdmi
+LDFLAGS  =
 
 SRC      =
+OBJS     =
 DEFS     =
 LIBS     =
 INCPATH  =
 LIBPATH  =
-LDSCRIPT =
+
+# We override the standard ChibiOS linker script here just to give us some more stack space
+LDSCRIPT = linker.ld
 
 ##############################################################################################
 # These should be at the end

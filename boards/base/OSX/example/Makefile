@@ -24,7 +24,7 @@
 # OSX settings
 	# See $(GFXLIB)/tools/gmake_scripts/os_osx.mk for the list of variables
 	OSX_SDK = /Developer/SDKs/MacOSX10.7.sdk
-	OSX_ARCH = -mmacosx-version-min=10.3 -arch i386
+	OSX_ARCH = -mmacosx-version-min=10.3
 
 ##############################################################################################
 # Set these for your project
@@ -32,13 +32,13 @@
 
 ARCH     =
 SRCFLAGS = -ggdb -O0
-SRCFLAGS+= -m32
 CFLAGS   =
 CXXFLAGS =
 ASFLAGS  =
 LDFLAGS  =
 
 SRC      =
+OBJS     =
 DEFS     =
 LIBS     =
 INCPATH  =

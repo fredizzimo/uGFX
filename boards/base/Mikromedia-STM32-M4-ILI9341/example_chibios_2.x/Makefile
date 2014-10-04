@@ -1,236 +1,66 @@
-##############################################################################
-# Build global options
-# NOTE: Can be overridden externally.
+# Possible Targets:	all clean Debug cleanDebug Release cleanRelease
+
+##############################################################################################
+# Settings
 #
 
-# Compiler options here.
-ifeq ($(USE_OPT),)
-  # Replace -O0 with -O2 for a production build. -O2 just messes with the debugger.
-  USE_OPT = -O0 -g -fomit-frame-pointer -falign-functions=16
+# General settings
+	# See $(GFXLIB)/tools/gmake_scripts/readme.txt for the list of variables
+	OPT_VERBOSE_COMPILE		= no
+	OPT_GENERATE_LISTINGS	= yes
+	OPT_GENERATE_MAP		= yes
+	OPT_COPY_EXE			= no
+	OPT_LINK_OPTIMIZE		= yes
+	OPT_NONSTANDARD_FLAGS	= no
+	OPT_NATIVEOS			= chibios
+	OPT_OS					= chibios
+	OPT_THUMB				= yes
+	OPT_CPU					= stm32m4
+
+# uGFX settings
+	# See $(GFXLIB)/tools/gmake_scripts/library_ugfx.mk for the list of variables
+	GFXLIB					= ../uGFX
+	GFXBOARD				= Mikromedia-STM32-M4-ILI9341
+	#GFXDRIVERS				= multiple/uGFXnet
+	GFXDEMO					= modules/gdisp/basics
+
+# ChibiOS settings
+ifeq ($(OPT_OS),chibios)
+	# See $(GFXLIB)/tools/gmake_scripts/os_chibios.mk for the list of variables
+	CHIBIOS				= ../ChibiOS
+	CHIBIOS_BOARD		=
+	CHIBIOS_PLATFORM	= STM32F4xx
+	CHIBIOS_PORT		= GCC/ARMCMx/STM32F4xx
+	CHIBIOS_DEFS		=
+	CHIBIOS_LDSCRIPT	= STM32F407xG.ld
+	# We define a non standard board script as this is not a standard ChibiOS supported board
+	include $(GFXLIB)/boards/base/Mikromedia-STM32-M4-ILI9341/ChibiOS_Board/board.mk
 endif
 
-# C specific options here (added to USE_OPT).
-ifeq ($(USE_COPT),)
-  USE_COPT = 
-endif
-
-# C++ specific options here (added to USE_OPT).
-ifeq ($(USE_CPPOPT),)
-  USE_CPPOPT = -fno-rtti
-endif
-
-# Enable this if you want the linker to remove unused code and data
-ifeq ($(USE_LINK_GC),)
-  USE_LINK_GC = yes
-endif
-
-# If enabled, this option allows to compile the application in THUMB mode.
-ifeq ($(USE_THUMB),)
-  USE_THUMB = yes
-endif
-
-# Enable this if you want to see the full log while compiling.
-ifeq ($(USE_VERBOSE_COMPILE),)
-  USE_VERBOSE_COMPILE = no
-endif
-
-#
-# Build global options
-##############################################################################
-
-##############################################################################
-# Architecture or project specific options
+##############################################################################################
+# Set these for your project
 #
 
-# Enables the use of FPU on Cortex-M4.
-# Enable this if you really want to use the STM FWLib.
-ifeq ($(USE_FPU),)
-  USE_FPU = no
-endif
+ARCH     = arm-none-eabi-
+SRCFLAGS = -ggdb -O0
+CFLAGS   =
+CXXFLAGS = -fno-rtti
+ASFLAGS  =
+LDFLAGS  =
 
-# Enable this if you really want to use the STM FWLib.
-ifeq ($(USE_FWLIB),)
-  USE_FWLIB = no
-endif
+SRC      =
+OBJS     =
+DEFS     =
+LIBS     =
+INCPATH  =
+LIBPATH  =
+LDSCRIPT =
 
-#
-# Architecture or project specific options
-##############################################################################
-
-##############################################################################
-# Project, sources and paths
-#
-
-SW = ..
-
-# Define project name here
-PROJECT = ch
-
-# Imported source files and paths
-CHIBIOS = ../ChibiOS
-#include $(CHIBIOS)/boards/MIKROMEDIA_STM32_M4/board.mk					# Not a standard ChibiOS supported board
-include $(CHIBIOS)/os/hal/platforms/STM32F4xx/platform.mk
-include $(CHIBIOS)/os/hal/hal.mk
-include $(CHIBIOS)/os/ports/GCC/ARMCMx/STM32F4xx/port.mk
-include $(CHIBIOS)/os/kernel/kernel.mk
-LDSCRIPT= $(PORTLD)/STM32F407xG.ld
-
-# Imported source files and paths for uGFX
-GFXLIB = ../ugfx
-include $(GFXLIB)/boards/base/Mikromedia-STM32-M4-ILI9341/board.mk
-include $(GFXLIB)/boards/base/Mikromedia-STM32-M4-ILI9341/ChibiOS_Board/board.mk		# The replacement ChibiOS board files
-include $(GFXLIB)/gfx.mk
-
-# Where is our source code - alter these for your project.
-# Either just include the demo makefile or add your own definitions
-include $(GFXLIB)/demos/modules/gdisp/basics/demo.mk
-#MYFILES = my-project-directory
-#MYCSRC  = $(MYFILES)/main.c
-#MYDEFS  =
-
-# C sources that can be compiled in ARM or THUMB mode depending on the global
-# setting.
-CSRC = $(PORTSRC) \
-       $(KERNSRC) \
-       $(TESTSRC) \
-       $(HALSRC) \
-       $(PLATFORMSRC) \
-       $(BOARDSRC) \
-       $(GFXSRC) \
-       $(MYCSRC)
-       
-# C++ sources that can be compiled in ARM or THUMB mode depending on the global
-# setting.
-CPPSRC =
-
-# C sources to be compiled in ARM mode regardless of the global setting.
-# NOTE: Mixing ARM and THUMB mode enables the -mthumb-interwork compiler
-#       option that results in lower performance and larger code size.
-ACSRC =
-
-# C++ sources to be compiled in ARM mode regardless of the global setting.
-# NOTE: Mixing ARM and THUMB mode enables the -mthumb-interwork compiler
-#       option that results in lower performance and larger code size.
-ACPPSRC =
-
-# C sources to be compiled in THUMB mode regardless of the global setting.
-# NOTE: Mixing ARM and THUMB mode enables the -mthumb-interwork compiler
-#       option that results in lower performance and larger code size.
-TCSRC =
-
-# C sources to be compiled in THUMB mode regardless of the global setting.
-# NOTE: Mixing ARM and THUMB mode enables the -mthumb-interwork compiler
-#       option that results in lower performance and larger code size.
-TCPPSRC =
-
-# List ASM source files here
-ASMSRC = $(PORTASM)
-
-INCDIR = $(PORTINC) $(KERNINC) $(TESTINC) \
-         $(HALINC) $(PLATFORMINC) $(BOARDINC) \
-         $(GFXINC) \
-         $(MYFILES)
-
-#
-# Project, sources and paths
-##############################################################################
-
-##############################################################################
-# Compiler settings
+##############################################################################################
+# These should be at the end
 #
 
-MCU  = cortex-m4
-
-#TRGT = arm-elf-
-TRGT = arm-none-eabi-
-CC   = $(TRGT)gcc
-CPPC = $(TRGT)g++
-# Enable loading with g++ only if you need C++ runtime support.
-# NOTE: You can use C++ even without C++ support if you are careful. C++
-#       runtime support makes code size explode.
-LD   = $(TRGT)gcc
-#LD   = $(TRGT)g++
-CP   = $(TRGT)objcopy
-AS   = $(TRGT)gcc -x assembler-with-cpp
-OD   = $(TRGT)objdump
-SZ   = $(TRGT)size
-HEX  = $(CP) -O ihex
-BIN  = $(CP) -O binary
-
-# ARM-specific options here
-AOPT =
-
-# THUMB-specific options here
-TOPT = -mthumb -DTHUMB
-
-# Define C warning options here
-CWARN = -Wall -Wextra -Wstrict-prototypes
-
-# Define C++ warning options here
-CPPWARN = -Wall -Wextra
-
-#
-# Compiler settings
-##############################################################################
-
-##############################################################################
-# Start of default section
-#
-
-# List all default C defines here, like -D_DEBUG=1
-DDEFS = $(GFXDEFS)
-
-# List all default ASM defines here, like -D_DEBUG=1
-DADEFS =
-
-# List all default directories to look for include files here
-DINCDIR =
-
-# List the default directory to look for the libraries here
-DLIBDIR =
-
-# List all default libraries here
-DLIBS =
-
-#
-# End of default section
-##############################################################################
-
-##############################################################################
-# Start of user section
-#
-
-# List all user C define here, like -D_DEBUG=1
-UDEFS =
-
-# Define ASM defines here
-UADEFS =
-
-# List all user directories here
-UINCDIR =
-
-# List the user directory to look for the libraries here
-ULIBDIR =
-
-# List all user libraries here
-ULIBS =
-
-#
-# End of user defines
-##############################################################################
-
-ifeq ($(USE_FPU),yes)
-  USE_OPT += -mfloat-abi=softfp -mfpu=fpv4-sp-d16 -fsingle-precision-constant
-  DDEFS += -DCORTEX_USE_FPU=TRUE
-else
-  DDEFS += -DCORTEX_USE_FPU=FALSE
-endif
-
-ifeq ($(USE_FWLIB),yes)
-  include $(CHIBIOS)/ext/stm32lib/stm32lib.mk
-  CSRC += $(STM32SRC)
-  INCDIR += $(STM32INC)
-  USE_OPT += -DUSE_STDPERIPH_DRIVER
-endif
-
-include $(CHIBIOS)/os/ports/GCC/ARMCMx/rules.mk
+include $(GFXLIB)/tools/gmake_scripts/library_ugfx.mk
+include $(GFXLIB)/tools/gmake_scripts/os_$(OPT_OS).mk
+include $(GFXLIB)/tools/gmake_scripts/compiler_gcc.mk
+# *** EOF ***

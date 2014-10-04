@@ -15,6 +15,7 @@ OPT_COPY_EXE=no|yes				- Copy the final program to the local project directory -
 OPT_NONSTANDARD_FLAGS=no		- Turn off adding the standard compiler language flags - default no
 OPT_LINK_OPTIMIZE=no			- Remove unused code/data during link - default no
 OPT_OS=win32|win32.chibios|linux|osx|chibios|freertos|ecos|raw32|rawrtos	- Mandatory: The operating system
+OPT_CPU=x86|x64|stm32m4|at91sam7	- Add some cpu dependant flags
 
 BUILDDIR						- Build Directory - default is ".build" or "bin/Debug" or "bin/Release" depending on the target
 PROJECT							- Project Name - default is the name of the project directory
@@ -27,6 +28,7 @@ XAS								- Assembler - default is "$(ARCH)gcc -x assembler-with-cpp"
 XLD								- Linker - default is "$(ARCH)gcc"
 XOC								- Object Copy - default is "$(ARCH)objcopy"
 XOD								- Object Dump - default is "$(ARCH)objdump"
+XSZ								- Report binary dump details - default is "$(ARCH)size"
 
 SRCFLAGS						- Compiler defines for c, c++ and assembler files - default is ""
 CFLAGS							- C specific compiler defines - default is ""
@@ -43,7 +45,17 @@ LIBPATH							- List of library include directories - default is ""
 DEFS							- List of preprocessor defines (any -D prefix is ignored) - default is ""
 LIBS							- List of libraries (any -l prefix is ignored) - default is ""
 SRC								- List of c, c++ and assembler source files - default is ""
+OBJS							- List of additional object files - default is ""
 LDSCRIPT						- Custom loader script - default is ""
+
+ARM Specific options
+----------------------------
+OPT_THUMB=no|yes				- Compile normal sources in thumb mode - default is no
+
+SRC_THUMB						- List of source files that MUST be compiled in thumb mode - default is ""
+SRC_NOTHUMB						- List of source files that MUST be compiled in non-thumb mode - default is ""
+OBJS_THUMB						- List of object files that MUST be linked in thumb mode - default is ""
+OBJS_NOTHUMB					- List of object files that MUST be linked in non-thumb mode - default is ""
 
 Targets
 ----------------------------
