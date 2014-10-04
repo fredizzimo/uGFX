@@ -1,24 +1,33 @@
+#
+# This file is subject to the terms of the GFX License. If a copy of
+# the license was not distributed with this file, you can obtain one at:
+#
+#             http://ugfx.org/license.html
+#
+
+#
 # See readme.txt for the make API
+#
 
 ifeq ($(basename $(OPT_OS)),win32)
-	# Nasty - must convert all paths into a format make can handle
-	PATHEXPAND := ARCH XCC XCXX XAS XLD XOC XOD PROJECT BUILDDIR SRC DEFS LIBS INCPATH LIBPATH $(PATHLIST)
-	
-	# First convert \'s to /'s
-    $(foreach var,$(PATHEXPAND),$(eval $(var):=$$(subst \,/,$($(var)))))
-    
-	# For cygwin gmake - need to convert all absolute paths (mingw gmake doesn't need this)
-	ifneq ($(findstring cygdrive,$(PATH)),)
-		DRIVELETTERS := a b c d e f g h i j k l m n o p q r s t u v w x y z A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
-        $(foreach drv,$(DRIVELETTERS),$(foreach var,$(PATHEXPAND),$(eval $(var):=$$(patsubst $(drv):%,/cygdrive/$(drv)%,$($(var))))))
-	endif
+  # Nasty - must convert all paths into a format make can handle
+  PATHEXPAND := ARCH XCC XCXX XAS XLD XOC XOD XSZ PROJECT BUILDDIR SRC DEFS LIBS INCPATH LIBPATH $(PATHLIST)
+
+  # First convert \'s to /'s
+  $(foreach var,$(PATHEXPAND),$(eval $(var):=$$(subst \,/,$($(var)))))
+
+  # For cygwin gmake - need to convert all absolute paths (mingw gmake doesn't need this)
+  ifneq ($(findstring cygdrive,$(PATH)),)
+    DRIVELETTERS := a b c d e f g h i j k l m n o p q r s t u v w x y z A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
+    $(foreach drv,$(DRIVELETTERS),$(foreach var,$(PATHEXPAND),$(eval $(var):=$$(patsubst $(drv):%,/cygdrive/$(drv)%,$($(var))))))
+  endif
 endif
 
 # Path resolution - Functions to convert a source path to a object path and visa-versa
 src_obj_fn := $$(1)
 obj_src_fn := $$(1)
-$(foreach var,$(PATHLIST),$(eval obj_src_fn := $$$$(patsubst $(var)/%,$$$$($(var))/%,$$(obj_src_fn)))) 
-$(foreach var,$(PATHLIST),$(eval src_obj_fn := $$$$(patsubst $$$$($(var))/%,$(var)/%,$$(src_obj_fn)))) 
+$(foreach var,$(PATHLIST),$(eval obj_src_fn := $$$$(patsubst $(var)/%,$$$$($(var))/%,$$(obj_src_fn))))
+$(foreach var,$(PATHLIST),$(eval src_obj_fn := $$$$(patsubst $$$$($(var))/%,$(var)/%,$$(src_obj_fn))))
 src_obj_fn := $$(subst :,_drv_drv_,$$(subst ../,_dot_dot/,$(src_obj_fn)))
 obj_src_fn := $$(subst _drv_drv_,:,$$(subst _dot_dot/,../,$(obj_src_fn)))
 $(eval src_obj=$(src_obj_fn))
@@ -26,122 +35,188 @@ $(eval obj_src=$(obj_src_fn))
 
 # Add ARCH to each of the compiler programs
 ifeq ($(XCC),)
-	XCC = $(ARCH)gcc
+  XCC = $(ARCH)gcc
 endif
 ifeq ($(XCXX),)
-	XCXX = $(ARCH)g++
+  XCXX = $(ARCH)g++
 endif
 ifeq ($(XAS),)
-	XAS = $(ARCH)gcc -x assembler-with-cpp
+  XAS = $(ARCH)gcc -x assembler-with-cpp
 endif
 ifeq ($(XLD),)
-	XLD = $(ARCH)gcc
+  XLD = $(ARCH)gcc
 endif
 ifeq ($(XOC),)
-	XOC = $(ARCH)objcopy
+  XOC = $(ARCH)objcopy
 endif
 ifeq ($(XOD),)
-	XOD = $(ARCH)objdump
+  XOD = $(ARCH)objdump
 endif
+ifeq ($(XSZ),)
+  XSZ = $(ARCH)size
+ endif
 
 # Default project name is the project directory name
 ifeq ($(PROJECT),)
-	ifneq ($(firstword $(abspath $(firstword $(MAKEFILE_LIST)))),$(lastword $(abspath $(firstword $(MAKEFILE_LIST)))))
-        $(error Your directory contains spaces. Gmake barfs at that. Please define PROJECT)
-	endif
-	PROJECT := $(notdir $(patsubst %/,%,$(dir $(abspath $(firstword $(MAKEFILE_LIST))))))
+  ifneq ($(firstword $(abspath $(firstword $(MAKEFILE_LIST)))),$(lastword $(abspath $(firstword $(MAKEFILE_LIST)))))
+    $(error Your directory contains spaces. Gmake barfs at that. Please define PROJECT)
+  endif
+  PROJECT := $(notdir $(patsubst %/,%,$(dir $(abspath $(firstword $(MAKEFILE_LIST))))))
 endif
 
 # Output directories
 ifeq ($(BUILDDIR),)
-	ifeq ($(MAKECMDGOALS),Debug)
-	  BUILDDIR = bin/Debug
-	endif
-	ifeq ($(MAKECMDGOALS),Release)
-	  BUILDDIR = bin/Release
-	endif
-	ifeq ($(MAKECMDGOALS),cleanDebug)
-	  BUILDDIR = bin/Debug
-	endif
-	ifeq ($(MAKECMDGOALS),cleanRelease)
-	  BUILDDIR = bin/Release
-	endif
-	ifeq ($(BUILDDIR),)
-	  BUILDDIR = .build
-	endif
+  ifeq ($(MAKECMDGOALS),Debug)
+    BUILDDIR = bin/Debug
+  endif
+  ifeq ($(MAKECMDGOALS),Release)
+    BUILDDIR = bin/Release
+  endif
+  ifeq ($(MAKECMDGOALS),cleanDebug)
+    BUILDDIR = bin/Debug
+  endif
+  ifeq ($(MAKECMDGOALS),cleanRelease)
+    BUILDDIR = bin/Release
+  endif
+  ifeq ($(BUILDDIR),)
+    BUILDDIR = .build
+  endif
 endif
 OBJDIR  = $(BUILDDIR)/obj
 DEPDIR  = $(BUILDDIR)/dep
 
 # Output files
 MAPFILE = $(BUILDDIR)/$(PROJECT).map
+FAKEFILE= fakefile.o
 EXEFILE =
 ifeq ($(basename $(OPT_OS)),win32)
-	EXEFILE = $(BUILDDIR)/$(PROJECT).exe
-	TARGETS = $(EXEFILE)
+  EXEFILE = $(BUILDDIR)/$(PROJECT).exe
+  TARGETS = $(EXEFILE)
 endif
 ifeq ($(basename $(OPT_OS)),linux)
-	EXEFILE = $(BUILDDIR)/$(PROJECT)
-	TARGETS = $(EXEFILE)
+  EXEFILE = $(BUILDDIR)/$(PROJECT)
+  TARGETS = $(EXEFILE)
 endif
 ifeq ($(basename $(OPT_OS)),osx)
-	EXEFILE = $(BUILDDIR)/$(PROJECT)
-	TARGETS = $(EXEFILE)
+  EXEFILE = $(BUILDDIR)/$(PROJECT)
+  TARGETS = $(EXEFILE)
 endif
 ifeq ($(EXEFILE),)
-	LDFLAGS += -nostartfiles
-	EXEFILE = $(BUILDDIR)/$(PROJECT).elf
-	TARGETS = $(EXEFILE) $(BUILDDIR)/$(PROJECT).hex $(BUILDDIR)/$(PROJECT).bin $(BUILDDIR)/$(PROJECT).dmp
+  LDFLAGS += -nostartfiles
+  EXEFILE = $(BUILDDIR)/$(PROJECT).elf
+  TARGETS = $(EXEFILE) $(BUILDDIR)/$(PROJECT).hex $(BUILDDIR)/$(PROJECT).bin $(BUILDDIR)/$(PROJECT).dmp elfstats
 endif
 
-# Combine all our compiler arguments
-SRCFLAGS += -I. $(patsubst %,-I%,$(INCPATH)) $(patsubst %,-D%,$(patsubst -D%,%,$(DEFS)))
-LDFLAGS  += $(patsubst %,-L%,$(LIBPATH)) $(patsubst %,-l%,$(patsubst -l%,%,$(LIBS)))
-OBJS	  = $(addprefix $(OBJDIR)/,$(call src_obj,$(addsuffix .o,$(basename $(SRC)))))
+# Generate our object file lists
+OBJS_THUMB	   += $(addprefix $(OBJDIR)/,$(call src_obj,$(addsuffix .o,$(basename $(SRC_THUMB)))))
+OBJS_NOTHUMB   += $(addprefix $(OBJDIR)/,$(call src_obj,$(addsuffix .o,$(basename $(SRC_NOTHUMB)))))
+ifeq ($(OPT_THUMB),yes)
+  OBJS_THUMB   += $(OBJS) $(addprefix $(OBJDIR)/,$(call src_obj,$(addsuffix .o,$(basename $(SRC)))))
+else
+  OBJS_NOTHUMB += $(OBJS) $(addprefix $(OBJDIR)/,$(call src_obj,$(addsuffix .o,$(basename $(SRC)))))
+endif
+ifneq ($(OBJS_THUMB),)
+  ifneq ($(OBJS_NOTHUMB),)
+    # Mixed ARM and THUMB mode - enabled only if needed because it kills performance.
+    SRCFLAGS += -mthumb-interwork
+    LDFLAGS  += -mthumb-interwork
+    DEFS     += THUMB_PRESENT
+  else
+    # Pure THUMB mode, THUMB C code cannot be called by ARM asm code directly.
+    LDFLAGS  += -mthumb
+    DEFS     += THUMB_PRESENT THUMB_NO_INTERWORKING
+	FAKEFILE= fakethumbfile.o
+  endif
+endif
 
 # Handle make API options that affect compiler arguments
 ifneq ($(OPT_NONSTANDARD_FLAGS),yes)
-	SRCFLAGS += -fomit-frame-pointer -Wall -Wextra -Wstrict-prototypes -fverbose-asm
+  SRCFLAGS += -fomit-frame-pointer -Wall -Wextra -Wstrict-prototypes -fverbose-asm
 endif
 ifeq ($(OPT_LINK_OPTIMIZE),yes)
-	SRCFLAGS += -ffunction-sections -fdata-sections
+  SRCFLAGS += -ffunction-sections -fdata-sections -fno-common -flto
 endif
 ifeq ($(OPT_GENERATE_MAP),yes)
-	ifeq ($(OPT_LINK_OPTIMIZE),yes)
-		LDFLAGS += -Wl,-Map=$(MAPFILE),--cref,--no-warn-mismatch,--gc-sections
-	else
-		LDFLAGS += -Wl,-Map=$(MAPFILE),--cref,--no-warn-mismatch
-	endif
+  ifeq ($(OPT_LINK_OPTIMIZE),yes)
+    LDFLAGS += -Wl,-Map=$(MAPFILE),--cref,--no-warn-mismatch,--gc-sections
+  else
+    LDFLAGS += -Wl,-Map=$(MAPFILE),--cref,--no-warn-mismatch
+  endif
 endif
 ifeq ($(OPT_GENERATE_LISTINGS),yes)
-	CFLAGS += -Wa,-alms=$(@:.o=.lst)
-	CXXFLAGS += -Wa,-alms=$(@:.o=.lst)
-	ASFLAGS += -Wa,-amhls=$(@:.o=.lst)
+  CFLAGS   += -Wa,-alms=$(@:.o=.lst)
+  CXXFLAGS += -Wa,-alms=$(@:.o=.lst)
+  ASFLAGS  += -Wa,-amhls=$(@:.o=.lst)
 endif
 ifneq ($(LDSCRIPT),)
-	LDFLAGS += -T$(LDSCRIPT)
+  LDFLAGS  += -T$(LDSCRIPT)
+endif
+ifeq ($(OPT_CPU),x86)
+  SRCFLAGS += -m32
+  LDFLAGS  += -m32
+endif
+ifeq ($(OPT_CPU),x64)
+  SRCFLAGS += -m64
+  LDFLAGS  += -m64
+endif
+ifeq ($(OPT_CPU),at91sam7)
+  SRCFLAGS += -mcpu=arm7tdmi -mabi=apcs-gnu
+  LDFLAGS  += -mcpu=arm7tdmi
+endif
+ifeq ($(OPT_CPU),stm32m4)
+  SRCFLAGS += -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -fsingle-precision-constant -falign-functions=16
+  LDFLAGS  += -mcpu=cortex-m4
+  LIBS     += m
 endif
 
 # Generate dependency information
 SRCFLAGS += -MMD -MP -MF $(DEPDIR)/$(@F).d
 
+# Combine all our compiler arguments
+SRCFLAGS += -I. $(patsubst %,-I%,$(INCPATH)) $(patsubst %,-D%,$(patsubst -D%,%,$(DEFS)))
+LDFLAGS  += $(patsubst %,-L%,$(LIBPATH)) $(patsubst %,-l%,$(patsubst -l%,%,$(LIBS)))
+
 # Targets
-.PHONY: builddirs fakefile.o all clean Debug Release cleanDebug cleanRelease
+.PHONY: builddirs fakefile.o fakethumbfile.o elfstats all clean Debug Release cleanDebug cleanRelease
 
 Debug Release:				all
 cleanDebug cleanRelease:	clean
 
-all: builddirs fakefile.o $(TARGETS)
+all: builddirs $(FAKEFILE)  $(TARGETS)
 
 builddirs:
 	@mkdir -p $(BUILDDIR)
 	@mkdir -p $(OBJDIR)
 	@mkdir -p $(DEPDIR)
 
-fakefile.o:
+$(FAKEFILE):
 ifneq ($(OPT_VERBOSE_COMPILE),yes)
-	@echo Compiler Options - $(XCC) -c $(CPPFLAGS) $(CFLAGS) $(SRCFLAGS) fakefile.c -o $(OBJDIR)/$@
-	@echo
+	@echo .
+  ifneq ($(filter %.cpp,$(SRC) $(SRC_NOTHUMB) $(SRC_THUMB)),)
+	@echo C++ Compiler Options.. $(XCXX) -c $(CPPFLAGS) $(CXXFLAGS) $(SRCFLAGS) $(@:.o=.cpp) -o $(OBJDIR)/$@
+  else
+   ifneq ($(filter %.c++,$(SRC) $(SRC_NOTHUMB) $(SRC_THUMB)),)
+	@echo C++ Compiler Options.. $(XCXX) -c $(CPPFLAGS) $(CXXFLAGS) $(SRCFLAGS) $(@:.o=.c++) -o $(OBJDIR)/$@
+   endif
+  endif
+  ifneq ($(filter %.c,$(SRC) $(SRC_NOTHUMB) $(SRC_THUMB)),)
+	@echo C Compiler Options.... $(XCC) -c $(CPPFLAGS) $(CFLAGS) $(SRCFLAGS) $(@:.o=.c) -o $(OBJDIR)/$@
+  endif
+  ifneq ($(filter %.s,$(SRC) $(SRC_NOTHUMB) $(SRC_THUMB)),)
+	@echo Assembler Options..... $(XCC) -c $(CPPFLAGS) $(CFLAGS) $(SRCFLAGS) $(@:.o=.s) -o $(OBJDIR)/$@
+  endif
+	@echo Linker Options........ $(XLD) $(LDFLAGS) $(OBJDIR)/$@ -o $(EXEFILE)
+	@echo .
+endif
+
+fakethumbfile.o $(OBJS_THUMB):	SRCFLAGS += -mthumb -DTHUMB
+
+elfstats:		$(EXEFILE)
+	@echo .
+ifeq ($(USE_VERBOSE_COMPILE),yes)
+	$(XSZ) $<
+else
+	@$(XSZ) $<
 endif
 
 # Implicit Rules
@@ -150,7 +225,7 @@ endif
 $(OBJDIR)/%.o : $$(call obj_src,%.c)
 	@mkdir -p $(dir $@)
 ifeq ($(OPT_VERBOSE_COMPILE),yes)
-	@echo
+	@echo .
 	$(XCC) -c $(CPPFLAGS) $(CFLAGS) $(SRCFLAGS) $< -o $@
 else
 	@echo Compiling $<
@@ -160,7 +235,7 @@ endif
 $(OBJDIR)/%.o : $$(call obj_src,%.cpp)
 	@mkdir -p $(dir $@)
 ifeq ($(OPT_VERBOSE_COMPILE),yes)
-	@echo
+	@echo .
 	$(XCXX) -c $(CPPFLAGS) $(CXXFLAGS) $(SRCFLAGS) $< -o $@
 else
 	@echo Compiling $<
@@ -170,7 +245,7 @@ endif
 $(OBJDIR)/%.o : $$(call obj_src,%.c++)
 	@mkdir -p $(dir $@)
 ifeq ($(OPT_VERBOSE_COMPILE),yes)
-	@echo
+	@echo .
 	$(XCXX) -c $(CPPFLAGS) $(CXXFLAGS) $(SRCFLAGS) $< -o $@
 else
 	@echo Compiling $<
@@ -180,21 +255,21 @@ endif
 $(OBJDIR)/%.o : $$(call obj_src,%.s)
 	@mkdir -p $(dir $@)
 ifeq ($(OPT_VERBOSE_COMPILE),yes)
-	@echo
+	@echo .
 	$(XAS) -c $(CPPFLAGS) $(ASFLAGS) $(SRCFLAGS) $< -o $@
 else
 	@echo Compiling $<
 	@$(XAS) -c $(CPPFLAGS) $(ASFLAGS) $(SRCFLAGS) $< -o $@
 endif
 
-$(EXEFILE): $(OBJS) $(LDSCRIPT)
+$(EXEFILE): $(OBJS_THUMB) $(OBJS_NOTHUMB) $(LDSCRIPT)
 	@mkdir -p $(dir $@)
 ifeq ($(OPT_VERBOSE_COMPILE),yes)
-	@echo
-	$(XLD) $(OBJS) $(LDFLAGS) -o $@
+	@echo .
+	$(XLD) $(OBJS_THUMB) $(OBJS_NOTHUMB) $(LDFLAGS) -o $@
 else
 	@echo Linking $@
-	@$(XLD) $(OBJS) $(LDFLAGS) -o $@
+	@$(XLD) $(OBJS_THUMB) $(OBJS_NOTHUMB) $(LDFLAGS) -o $@
 endif
 ifeq ($(OPT_COPY_EXE),yes)
 	@cp $@ .
@@ -228,7 +303,6 @@ ifeq ($(USE_VERBOSE_COMPILE),yes)
 else
 	@echo Creating $@
 	@$(XOD) -x --syms $< > $@
-	@echo Done
 endif
 ifeq ($(OPT_COPY_EXE),yes)
 	@cp $@ .

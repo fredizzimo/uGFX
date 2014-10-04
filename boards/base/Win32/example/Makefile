@@ -43,6 +43,7 @@ ASFLAGS  =
 LDFLAGS  =
 
 SRC      =
+OBJS     =
 DEFS     =
 LIBS     =
 INCPATH  =

@@ -13,6 +13,8 @@
 	OPT_LINK_OPTIMIZE		= yes
 	OPT_NONSTANDARD_FLAGS	= no
 	OPT_OS					= linux
+	# Change this next setting (or add the explicit compiler flags) if you are not compiling for x86 linux
+	OPT_CPU					= x86
 
 # uGFX settings
 	# See $(GFXLIB)/tools/gmake_scripts/library_ugfx.mk for the list of variables
@@ -30,13 +32,13 @@
 
 ARCH     =
 SRCFLAGS = -ggdb -O0
-SRCFLAGS+= -m32
 CFLAGS   =
 CXXFLAGS =
 ASFLAGS  =
 LDFLAGS  =
 
 SRC      =
+OBJS     =
 DEFS     =
 LIBS     =
 INCPATH  =
