@@ -1,5 +1,4 @@
-
-#include <gfx.h>
+#include "gfx.h"
 
 #if defined(GDISP_INCLUDE_FONT_DEJAVUSANS10) && GDISP_INCLUDE_FONT_DEJAVUSANS10
 #define GDISP_FONT_FOUND
