@@ -6,22 +6,16 @@
 
 # General settings
 	# See $(GFXLIB)/tools/gmake_scripts/readme.txt for the list of variables
-	OPT_VERBOSE_COMPILE		= no
-	OPT_GENERATE_LISTINGS	= yes
-	OPT_GENERATE_MAP		= yes
-	OPT_COPY_EXE			= no
-	OPT_LINK_OPTIMIZE		= yes
-	OPT_NONSTANDARD_FLAGS	= no
 	OPT_NATIVEOS			= chibios
 	OPT_OS					= chibios
-	OPT_THUMB				= no
+	OPT_THUMB				= yes
+	OPT_LINK_OPTIMIZE		= yes
 	OPT_CPU					= at91sam7
 
 # uGFX settings
 	# See $(GFXLIB)/tools/gmake_scripts/library_ugfx.mk for the list of variables
 	GFXLIB					= ../uGFX
 	GFXBOARD				= Olimex-SAM7EX256-GE8
-	#GFXDRIVERS				= multiple/uGFXnet
 	GFXDEMO					= modules/gdisp/basics
 
 # ChibiOS settings
@@ -31,7 +25,6 @@ ifeq ($(OPT_OS),chibios)
 	CHIBIOS_BOARD		= OLIMEX_SAM7_EX256
 	CHIBIOS_PLATFORM	= AT91SAM7
 	CHIBIOS_PORT		= GCC/ARM/AT91SAM7
-	CHIBIOS_DEFS		=
 	CHIBIOS_LDSCRIPT	= AT91SAM7X256.ld
 endif
 

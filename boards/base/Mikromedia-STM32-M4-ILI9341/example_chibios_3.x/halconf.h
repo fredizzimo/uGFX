@@ -1,5 +1,5 @@
 /*
-    ChibiOS/RT - Copyright (C) 2006-2013 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006-2014 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -29,13 +29,6 @@
 #define _HALCONF_H_
 
 #include "mcuconf.h"
-
-/**
- * @brief   Enables the TM subsystem.
- */
-#if !defined(HAL_USE_TM) || defined(__DOXYGEN__)
-#define HAL_USE_TM                  FALSE
-#endif
 
 /**
  * @brief   Enables the PAL subsystem.
@@ -80,6 +73,13 @@
 #endif
 
 /**
+ * @brief   Enables the I2S subsystem.
+ */
+#if !defined(HAL_USE_I2S) || defined(__DOXYGEN__)
+#define HAL_USE_I2S                 FALSE
+#endif
+
+/**
  * @brief   Enables the ICU subsystem.
  */
 #if !defined(HAL_USE_ICU) || defined(__DOXYGEN__)
@@ -104,7 +104,7 @@
  * @brief   Enables the PWM subsystem.
  */
 #if !defined(HAL_USE_PWM) || defined(__DOXYGEN__)
-#define HAL_USE_PWM                 TRUE
+#define HAL_USE_PWM                 FALSE
 #endif
 
 /**

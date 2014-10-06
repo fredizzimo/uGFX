@@ -6,20 +6,14 @@
 
 # General settings
 	# See $(GFXLIB)/tools/gmake_scripts/readme.txt for the list of variables
-	OPT_VERBOSE_COMPILE		= no
-	OPT_GENERATE_LISTINGS	= yes
-	OPT_GENERATE_MAP		= yes
-	OPT_COPY_EXE			= no
-	OPT_LINK_OPTIMIZE		= yes
-	OPT_NONSTANDARD_FLAGS	= no
 	# For Win32 this variable can be set to "win32" (native win32 api) or "win32.chibios" (ChibiOS simulator). 
 	OPT_OS					= win32
+	OPT_LINK_OPTIMIZE		= yes
 
 # uGFX settings
 	# See $(GFXLIB)/tools/gmake_scripts/library_ugfx.mk for the list of variables
 	GFXLIB					= ../uGFX
 	GFXBOARD				= Win32
-	#GFXDRIVERS				= multiple/uGFXnet
 	GFXDEMO					= modules/gdisp/basics
 
 # ChibiOS settings

@@ -9,9 +9,9 @@
 # See readme.txt for the make API
 #
 
+# Win32 Nasty - must convert all paths into a format make can handle
 ifeq ($(basename $(OPT_OS)),win32)
-  # Nasty - must convert all paths into a format make can handle
-  PATHEXPAND := ARCH XCC XCXX XAS XLD XOC XOD XSZ PROJECT BUILDDIR SRC DEFS LIBS INCPATH LIBPATH $(PATHLIST)
+  PATHEXPAND := ARCH XCC XCXX XAS XLD XOC XOD XSZ XAR PROJECT BUILDDIR SRC DEFS LIBS INCPATH LIBPATH $(PATHLIST)
 
   # First convert \'s to /'s
   $(foreach var,$(PATHEXPAND),$(eval $(var):=$$(subst \,/,$($(var)))))
@@ -21,6 +21,14 @@ ifeq ($(basename $(OPT_OS)),win32)
     DRIVELETTERS := a b c d e f g h i j k l m n o p q r s t u v w x y z A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
     $(foreach drv,$(DRIVELETTERS),$(foreach var,$(PATHEXPAND),$(eval $(var):=$$(patsubst $(drv):%,/cygdrive/$(drv)%,$($(var))))))
   endif
+endif
+
+# Where are we
+CURRENTDIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
+# Handle cpu specific options
+ifneq ($(OPT_CPU),)
+  include $(CURRENTDIR)cpu_$(OPT_CPU).mk
 endif
 
 # Path resolution - Functions to convert a source path to a object path and visa-versa
@@ -54,7 +62,10 @@ ifeq ($(XOD),)
 endif
 ifeq ($(XSZ),)
   XSZ = $(ARCH)size
- endif
+endif
+ifeq ($(XAR),)
+  XAR = $(ARCH)ar
+endif
 
 # Default project name is the project directory name
 ifeq ($(PROJECT),)
@@ -87,6 +98,7 @@ DEPDIR  = $(BUILDDIR)/dep
 
 # Output files
 MAPFILE = $(BUILDDIR)/$(PROJECT).map
+LIBFILE = $(BUILDDIR)/lib$(PROJECT).a
 FAKEFILE= fakefile.o
 EXEFILE =
 ifeq ($(basename $(OPT_OS)),win32)
@@ -135,13 +147,10 @@ ifneq ($(OPT_NONSTANDARD_FLAGS),yes)
 endif
 ifeq ($(OPT_LINK_OPTIMIZE),yes)
   SRCFLAGS += -ffunction-sections -fdata-sections -fno-common -flto
+  LDFLAGS += -Wl,--gc-sections
 endif
 ifeq ($(OPT_GENERATE_MAP),yes)
-  ifeq ($(OPT_LINK_OPTIMIZE),yes)
-    LDFLAGS += -Wl,-Map=$(MAPFILE),--cref,--no-warn-mismatch,--gc-sections
-  else
-    LDFLAGS += -Wl,-Map=$(MAPFILE),--cref,--no-warn-mismatch
-  endif
+  LDFLAGS += -Wl,-Map=$(MAPFILE),--cref
 endif
 ifeq ($(OPT_GENERATE_LISTINGS),yes)
   CFLAGS   += -Wa,-alms=$(@:.o=.lst)
@@ -151,23 +160,6 @@ endif
 ifneq ($(LDSCRIPT),)
   LDFLAGS  += -T$(LDSCRIPT)
 endif
-ifeq ($(OPT_CPU),x86)
-  SRCFLAGS += -m32
-  LDFLAGS  += -m32
-endif
-ifeq ($(OPT_CPU),x64)
-  SRCFLAGS += -m64
-  LDFLAGS  += -m64
-endif
-ifeq ($(OPT_CPU),at91sam7)
-  SRCFLAGS += -mcpu=arm7tdmi -mabi=apcs-gnu
-  LDFLAGS  += -mcpu=arm7tdmi
-endif
-ifeq ($(OPT_CPU),stm32m4)
-  SRCFLAGS += -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -fsingle-precision-constant -falign-functions=16
-  LDFLAGS  += -mcpu=cortex-m4
-  LIBS     += m
-endif
 
 # Generate dependency information
 SRCFLAGS += -MMD -MP -MF $(DEPDIR)/$(@F).d
@@ -176,13 +168,23 @@ SRCFLAGS += -MMD -MP -MF $(DEPDIR)/$(@F).d
 SRCFLAGS += -I. $(patsubst %,-I%,$(INCPATH)) $(patsubst %,-D%,$(patsubst -D%,%,$(DEFS)))
 LDFLAGS  += $(patsubst %,-L%,$(LIBPATH)) $(patsubst %,-l%,$(patsubst -l%,%,$(LIBS)))
 
-# Targets
-.PHONY: builddirs fakefile.o fakethumbfile.o elfstats all clean Debug Release cleanDebug cleanRelease
+################# Targets ######################
 
+.PHONY: builddirs fakefile.o fakethumbfile.o elfstats all exe lib clean Debug Release cleanDebug cleanRelease
+
+# Many IDE's use these targets instead.
 Debug Release:				all
 cleanDebug cleanRelease:	clean
 
-all: builddirs $(FAKEFILE)  $(TARGETS)
+# Make a program or a library?
+ifeq ($(OPT_MAKE_LIB),yes)
+  all: lib
+else
+  all: exe
+endif
+
+exe: builddirs $(FAKEFILE) $(TARGETS)
+lib: builddirs $(FAKEFILE) $(LIBFILE)
 
 builddirs:
 	@mkdir -p $(BUILDDIR)
@@ -205,7 +207,9 @@ ifneq ($(OPT_VERBOSE_COMPILE),yes)
   ifneq ($(filter %.s,$(SRC) $(SRC_NOTHUMB) $(SRC_THUMB)),)
 	@echo Assembler Options..... $(XCC) -c $(CPPFLAGS) $(CFLAGS) $(SRCFLAGS) $(@:.o=.s) -o $(OBJDIR)/$@
   endif
+  ifneq ($(OPT_MAKE_LIB),yes)
 	@echo Linker Options........ $(XLD) $(LDFLAGS) $(OBJDIR)/$@ -o $(EXEFILE)
+  endif
 	@echo .
 endif
 
@@ -275,6 +279,18 @@ ifeq ($(OPT_COPY_EXE),yes)
 	@cp $@ .
 endif
 
+$(LIBFILE): $(OBJS_THUMB) $(OBJS_NOTHUMB)
+ifeq ($(OPT_VERBOSE_COMPILE),yes)
+	@echo .
+	$(XAR) -r $@ $^
+else
+	@echo Creating Library $@
+	@$(XAR) -r $@ $^
+endif
+ifeq ($(OPT_COPY_EXE),yes)
+	@cp $@ .
+endif
+
 %.hex: %.elf
 ifeq ($(OPT_VERBOSE_COMPILE),yes)
 	$(XOC) -O ihex $< $@
@@ -287,7 +303,7 @@ ifeq ($(OPT_COPY_EXE),yes)
 endif
 
 %.bin: %.elf
-ifeq ($(USE_VERBOSE_COMPILE),yes)
+ifeq ($(OPT_VERBOSE_COMPILE),yes)
 	$(XOC) -O binary $< $@
 else
 	@echo Creating $@
@@ -298,7 +314,7 @@ ifeq ($(OPT_COPY_EXE),yes)
 endif
 
 %.dmp: %.elf
-ifeq ($(USE_VERBOSE_COMPILE),yes)
+ifeq ($(OPT_VERBOSE_COMPILE),yes)
 	$(XOD) -x --syms $< > $@
 else
 	@echo Creating $@
@@ -311,7 +327,7 @@ endif
 # Goodness knows why we would want this.
 gcov:
 	-mkdir gcov
-	$(COV) -u $(subst /,\,$(SRC))
+	$(COV) -u $(subst /,\,$(SRC_NOTHUMB) $(SRC_THUMB))
 	-mv *.gcov ./gcov
 
 # Include the dependency files, should be the last of the makefile except for clean

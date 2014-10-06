@@ -6,22 +6,16 @@
 
 # General settings
 	# See $(GFXLIB)/tools/gmake_scripts/readme.txt for the list of variables
-	OPT_VERBOSE_COMPILE		= no
-	OPT_GENERATE_LISTINGS	= yes
-	OPT_GENERATE_MAP		= yes
-	OPT_COPY_EXE			= no
-	OPT_LINK_OPTIMIZE		= yes
-	OPT_NONSTANDARD_FLAGS	= no
 	OPT_NATIVEOS			= chibios
 	OPT_OS					= chibios
 	OPT_THUMB				= yes
+	OPT_LINK_OPTIMIZE		= yes
 	OPT_CPU					= stm32m4
 
 # uGFX settings
 	# See $(GFXLIB)/tools/gmake_scripts/library_ugfx.mk for the list of variables
 	GFXLIB					= ../uGFX
 	GFXBOARD				= Mikromedia-STM32-M4-ILI9341
-	#GFXDRIVERS				= multiple/uGFXnet
 	GFXDEMO					= modules/gdisp/basics
 
 # ChibiOS settings
@@ -31,7 +25,6 @@ ifeq ($(OPT_OS),chibios)
 	CHIBIOS_BOARD		=
 	CHIBIOS_PLATFORM	= STM32F4xx
 	CHIBIOS_PORT		= GCC/ARMCMx/STM32F4xx
-	CHIBIOS_DEFS		=
 	CHIBIOS_LDSCRIPT	= STM32F407xG.ld
 	# We define a non standard board script as this is not a standard ChibiOS supported board
 	include $(GFXLIB)/boards/base/Mikromedia-STM32-M4-ILI9341/ChibiOS_Board/board.mk
