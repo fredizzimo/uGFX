@@ -4,7 +4,7 @@
 .extern vFreeRTOS_ISR
 .extern vPortYieldProcessor
 .extern DisableInterrupts
-.extern main
+.extern FreeRTOS_Main
 	.section .init
 	.globl _start
 ;; 
@@ -79,7 +79,7 @@ zero_loop:
 	
 	
 	;@ 	mov	sp,#0x1000000
-	b main									;@ We're ready?? Lets start main execution!
+	b FreeRTOS_Main									;@ We're ready?? Lets start main execution!
 	.section .text
 
 undefined_instruction:

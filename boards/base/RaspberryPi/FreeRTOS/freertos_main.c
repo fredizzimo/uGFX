@@ -3,43 +3,23 @@
 
 #include "Drivers/interrupts.h"
 
-#include "gfx.h"
+extern int main(void);
 
-static void displayTask(void *pvParameters) {
-	coord_t		width, height;
-	// Get the screen size
-    width = gdispGetWidth();
-    height = gdispGetHeight();
-
-    // Code Here
-	gdispDrawBox(10, 10, width/2, height/2, Yellow);
-    gdispFillArea(width/2, height/2, width/2-10, height/2-10, Blue);
-    gdispDrawLine(5, 30, width-50, height-40, Red);
-
-	while(1)
-	{
-		vTaskDelay(1000);
-	}
-
-	return;
+static void mainTask(void *pvParameters) {
+	(void)	pvParameters;
+	main();
 }
 
 /**
  *	This is the systems main entry, some call it a boot thread.
- *
- *	-- Absolutely nothing wrong with this being called main(), just it doesn't have
- *	-- the same prototype as you'd see in a linux program.
  **/
-int main(void) {
+int FreeRTOS_Main(void) {
 
 	DisableInterrupts();
 	InitInterruptController();
 
-   // Initialize and clear the display
-   gfxInit();
-   
-   xTaskCreate(displayTask,
-			  (portCHAR *)"Display Task",
+   xTaskCreate(mainTask,
+			  (portCHAR *)"Main Task",
 			  128,
 			  NULL, 
 			  0, 

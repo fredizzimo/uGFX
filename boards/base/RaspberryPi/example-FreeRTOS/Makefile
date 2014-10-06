@@ -1,73 +1,55 @@
-# build environment
-PREFIX ?= /your compiler path/gcc-arm-none-eabi-4_8-2014q1
-ARCH ?= $(PREFIX)/bin/arm-none-eabi
+# Possible Targets:	all clean Debug cleanDebug Release cleanRelease
 
-CC = ${ARCH}-gcc
-CPP = ${ARCH}-g++
-AS = ${ARCH}-as
-LD = ${ARCH}-ld
-AR = ${ARCH}-ar
-OBJCOPY = ${ARCH}-objcopy
+##############################################################################################
+# Settings
+#
 
-PLATFORM = raspi
-LINKER_SCRIPT = raspberrypi.ld
+# General settings
+	# See $(GFXLIB)/tools/gmake_scripts/readme.txt for the list of variables
+	OPT_OS					= freertos
+	OPT_THUMB				= yes
+	OPT_LINK_OPTIMIZE		= yes
+	# For the raspberry pi we can either use the generic armv6 cpu or the highly optimized raspberrypi settings
+	OPT_CPU					= raspberrypi
 
-CFLAGS = -march=armv6z -g -Wall -Wextra
-ASFLAGS = -g 
+# uGFX settings
+	# See $(GFXLIB)/tools/gmake_scripts/library_ugfx.mk for the list of variables
+	GFXLIB					= ../uGFX
+	GFXBOARD				= RaspberryPi
+	GFXDEMO					= modules/gdisp/basics
 
-CFLAGS_FOR_TARGET = #-mcpu=arm1176jzf-s
-ASFLAGS_FOR_TARGET = #-mcpu=arm1176jzf-s
-LDFLAGS = #--error-unresolved-symbols
+# FreeRTOS settings
+ifeq ($(OPT_OS),freertos)
+	# See $(GFXLIB)/tools/gmake_scripts/os_freertos.mk for the list of variables
+	FREERTOS			= ../FreeRTOS
+	FREERTOS_BOARD		= RaspberryPi
+	FREERTOS_MODULES	= $(GFXLIB)/boards/base/RaspberryPi/FreeRTOS
+	FREERTOS_LDSCRIPT	= $(GFXLIB)/boards/base/RaspberryPi/FreeRTOS/raspberrypi.ld
+endif
 
-GFXLIB := ../uGFX
-include $(GFXLIB)/gfx.mk
-include $(GFXLIB)/drivers/gdisp/framebuffer/driver.mk
+##############################################################################################
+# Set these for your project
+#
 
-OSLIB := ../FreeRTOS
-MODULES := $(OSLIB)/Source/portable/GCC/RaspberryPi
-MODULES += $(OSLIB)/Source/portable/MemMang
-MODULES += $(OSLIB)/Source
-MODULES += Drivers
+ARCH     = arm-none-eabi-
+SRCFLAGS = -ggdb -O0
+CFLAGS   =
+CXXFLAGS = -fno-rtti
+ASFLAGS  =
+LDFLAGS  =
 
-SRC_DIR := $(MODULES)
-INC_DIR := $(addsuffix /include,$(SRC_DIR))
-BUILD_DIR := $(addsuffix /build,$(SRC_DIR))
+SRC      =
+OBJS     =
+DEFS     =
+LIBS     =
+INCPATH  =
+LIBPATH  =
 
-INCLUDEDIRS := $(OSLIB)/Source/portable/GCC/RaspberryPi
-INCLUDEDIRS += $(OSLIB)/Source/include
-INCLUDEDIRS += Drivers
-INCLUDEDIRS += $(GFXINC)
+##############################################################################################
+# These should be at the end
+#
 
-INCLUDES := $(addprefix -I,$(INCLUDEDIRS))
-
-ASRC     := $(foreach sdir,$(SRC_DIR),$(wildcard $(sdir)/*.s))
-AOBJ     := $(ASRC:.s=.o)
-CSRC     := $(foreach sdir,$(SRC_DIR),$(wildcard $(sdir)/*.c))
-CSRC += $(GFXSRC)
-COBJ     := $(CSRC:.c=.o)
-
-vpath %.c $(SRC_DIR)
-vpath %.cpp $(SRC_DIR)
-vpath %.s $(SRC_DIR)
-
-%.o: %.c
-	$(CC) $(CFLAGS_FOR_TARGET) $(INCLUDES) $(CFLAGS) -c -o $*.o $<
-
-%.o: %.s
-	$(AS) $(ASFLAGS_FOR_TARGET) $(INCLUDES) $(ASFLAGS) -o $*.o $<
-
-OBJ = $(AOBJ) $(COBJ)
-
-bin/kernel.img: bin/kernel.elf
-	${OBJCOPY} -O binary $< $@
-
-bin/kernel.elf: LDFLAGS += -L "$(PREFIX)/lib/gcc/arm-none-eabi/4.8.3" -lgcc
-bin/kernel.elf: LDFLAGS += -L "$(PREFIX)/arm-none-eabi/lib" -lc
-bin/kernel.elf: $(OBJ)
-	${LD} $(OBJ) -Map bin/kernel.map -o $@ -T $(LINKER_SCRIPT) ${LDFLAGS}
-
-clean:
-	rm -f bin/*.elf bin/*.img bin/*.map $(OBJ)
-
-
-
+include $(GFXLIB)/tools/gmake_scripts/library_ugfx.mk
+include $(GFXLIB)/tools/gmake_scripts/os_$(OPT_OS).mk
+include $(GFXLIB)/tools/gmake_scripts/compiler_gcc.mk
+# *** EOF ***
