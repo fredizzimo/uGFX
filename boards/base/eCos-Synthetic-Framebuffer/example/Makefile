@@ -1,165 +1,51 @@
-#
-#       !!!! Do NOT edit this makefile with an editor which replace tabs by spaces !!!!
-#
-##############################################################################################
-#
-# On command line:
-#
-# make INSTALL_DIR=/path/to/ecos/install all = Create project
-#
-# make clean = Clean project files.
-#
-# To rebuild project do "make clean" and "make all".
-#
+# Possible Targets:	all clean Debug cleanDebug Release cleanRelease
 
 ##############################################################################################
-# Start of default section
+# Settings
 #
 
-INSTALL_DIR=$$(INSTALL_DIR) # override on make command line
+# General settings
+	# See $(GFXLIB)/tools/gmake_scripts/readme.txt for the list of variables
+	OPT_OS					= ecos
+	OPT_LINK_OPTIMIZE		= yes
+	OPT_CPU					= x86
 
-include $(INSTALL_DIR)/include/pkgconf/ecos.mak
+# uGFX settings
+	# See $(GFXLIB)/tools/gmake_scripts/library_ugfx.mk for the list of variables
+	GFXLIB					= ../uGFX
+	GFXBOARD				= eCos-Synthetic-Framebuffer
+	GFXDEMO					= modules/gdisp/basics
 
-CC           = $(ECOS_COMMAND_PREFIX)gcc
-AS           = $(CC) -x assembler-with-cpp
-CXX          = $(CC)
-LD           = $(CC)
-CFLAGS       = -I$(INSTALL_DIR)/include
-CXXFLAGS     = $(CFLAGS) -g
-LDFLAGS      = -nostartfiles -L$(INSTALL_DIR)/lib -Ttarget.ld
-
-# List all default C defines here, like -D_DEBUG=1
-DDEFS = 
-
-# List all default ASM defines here, like -D_DEBUG=1
-DADEFS =
-
-# List all default directories to look for include files here
-DINCDIR =
-
-# List the default directory to look for the libraries here
-DLIBDIR =
-
-# List all default libraries here
-DLIBS =
-
-#
-# End of default section
-##############################################################################################
-
-##############################################################################################
-# Start of user section
-#
-
-# Define project name here
-PROJECT = ugfx_over_ecos
-
-# Imported source files and paths for uGFX
-GFXLIB = ../ugfx
-
-include ${GFXLIB}/gfx.mk
-include ${GFXLIB}/boards/base/eCos-Synthetic-Framebuffer/board.mk
-
-# Where is our source code - alter these for your project.
-# Either just include the demo makefile or add your own definitions
-include $(GFXLIB)/demos/modules/gdisp/basics/demo.mk
-
-#MYFILES =
-#MYCSRC  =
-#MYDEFS  =
-
-# List all user C define here, like -D_DEBUG=1
-UDEFS = $(MYDEFS) $(GFXDEFS)
-
-# Define ASM defines here
-UADEFS =
-
-# List C source files here
-SRC  = $(GFXSRC) \
-       $(MYCSRC)
-
-# List ASM source files here
-ASRC =
-
-# List all user directories here
-UINCDIR = $(MYFILES) $(GFXINC)
-
-# List the user directory to look for the libraries here
-ULIBDIR =
-
-# List all user libraries here
-ULIBS =
-
-# Define optimisation level here
-OPT = -ggdb -O0 -fomit-frame-pointer
-
-#
-# End of user defines
-##############################################################################################
-
-INCDIR  = $(patsubst %,-I%,$(DINCDIR) $(UINCDIR))
-LIBDIR  = $(patsubst %,-L%,$(DLIBDIR) $(ULIBDIR))
-DEFS    = $(DDEFS) $(UDEFS)
-ADEFS   = $(DADEFS) $(UADEFS)
-OBJS    = $(ASRC:.s=.o) $(SRC:.c=.o)
-LIBS    = $(DLIBS) $(ULIBS)
-
-ASFLAGS = -Wa,-amhls=$(<:.s=.lst) $(ADEFS)
-CPFLAGS = $(OPT) -Wall -Wextra -Wstrict-prototypes -fverbose-asm $(DEFS) 
-
-ifeq ($(HOST_OSX),yes)
-  ifeq ($(OSX_SDK),)
-    OSX_SDK = /Developer/SDKs/MacOSX10.7.sdk
-  endif
-  ifeq ($(OSX_ARCH),)
-    OSX_ARCH = -mmacosx-version-min=10.3 -arch i386
-  endif
-
-  CPFLAGS += -isysroot $(OSX_SDK) $(OSX_ARCH)
-  LDFLAGS = -Wl -Map=$(PROJECT).map,-syslibroot,$(OSX_SDK),$(LIBDIR)
-  LIBS += $(OSX_ARCH)
-else
-  # Linux, or other
-  CPFLAGS += -m32 -Wa,-alms=$(<:.c=.lst) -I$(INSTALL_DIR)/include
-  LDFLAGS = -g -nostdlib -m32 -Wl,-Map=$(PROJECT).map,--cref,--no-warn-mismatch $(LIBDIR) -nostartfiles -L$(INSTALL_DIR)/lib -Ttarget.ld
+# ECOS settings
+ifeq ($(OPT_OS),ecos)
+	# See $(GFXLIB)/tools/gmake_scripts/os_ecos.mk for the list of variables
+	FREERTOS			= ../eCos
+	ECOS_LDSCRIPT		= target.ld
 endif
 
-# Generate dependency information
-CPFLAGS += -MD -MP -MF .dep/$(@F).d
-
-#
-# makefile rules
+##############################################################################################
+# Set these for your project
 #
 
-all: $(OBJS) $(PROJECT)
+ARCH     = $(ECOS_COMMAND_PREFIX)
+SRCFLAGS = -ggdb -O0
+CFLAGS   =
+CXXFLAGS = -fno-rtti
+ASFLAGS  =
+LDFLAGS  =
 
-%.o : %.c
-	$(CC) -c $(CPFLAGS) -I . $(INCDIR) $< -o $@
+SRC      =
+OBJS     =
+DEFS     =
+LIBS     =
+INCPATH  =
+LIBPATH  =
 
-%.o : %.s
-	$(AS) -c $(ASFLAGS) $< -o $@
-
-$(PROJECT): $(OBJS)
-	$(CC) $(OBJS) $(LDFLAGS) $(LIBS) -o $@
-
-gcov:
-	-mkdir gcov
-	$(COV) -u $(subst /,\,$(SRC))
-	-mv *.gcov ./gcov
-
-clean:                                      
-	-rm -f $(OBJS)
-	-rm -f $(PROJECT)
-	-rm -f $(PROJECT).map
-	-rm -f $(SRC:.c=.c.bak)
-	-rm -f $(SRC:.c=.lst)
-	-rm -f $(ASRC:.s=.s.bak)
-	-rm -f $(ASRC:.s=.lst)
-	-rm -fR .dep
-
+##############################################################################################
+# These should be at the end
 #
-# Include the dependency files, should be the last of the makefile
-#
--include $(shell mkdir .dep 2>/dev/null) $(wildcard .dep/*)
 
+include $(GFXLIB)/tools/gmake_scripts/library_ugfx.mk
+include $(GFXLIB)/tools/gmake_scripts/os_$(OPT_OS).mk
+include $(GFXLIB)/tools/gmake_scripts/compiler_gcc.mk
 # *** EOF ***
