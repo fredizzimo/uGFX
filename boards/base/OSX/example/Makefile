@@ -6,19 +6,13 @@
 
 # General settings
 	# See $(GFXLIB)/tools/gmake_scripts/readme.txt for the list of variables
-	OPT_VERBOSE_COMPILE		= no
-	OPT_GENERATE_LISTINGS	= yes
-	OPT_GENERATE_MAP		= yes
-	OPT_COPY_EXE			= no
-	OPT_LINK_OPTIMIZE		= yes
-	OPT_NONSTANDARD_FLAGS	= no
 	OPT_OS					= osx
+	OPT_LINK_OPTIMIZE		= yes
 
 # uGFX settings
 	# See $(GFXLIB)/tools/gmake_scripts/library_ugfx.mk for the list of variables
 	GFXLIB					= ../uGFX
 	GFXBOARD				= OSX
-	#GFXDRIVERS				= multiple/uGFXnet
 	GFXDEMO					= modules/gdisp/basics
 
 # OSX settings

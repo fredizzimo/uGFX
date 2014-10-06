@@ -6,13 +6,8 @@
 
 # General settings
 	# See $(GFXLIB)/tools/gmake_scripts/readme.txt for the list of variables
-	OPT_VERBOSE_COMPILE		= no
-	OPT_GENERATE_LISTINGS	= yes
-	OPT_GENERATE_MAP		= yes
-	OPT_COPY_EXE			= no
-	OPT_LINK_OPTIMIZE		= yes
-	OPT_NONSTANDARD_FLAGS	= no
 	OPT_OS					= linux
+	OPT_LINK_OPTIMIZE		= yes
 	# Change this next setting (or add the explicit compiler flags) if you are not compiling for x86 linux
 	OPT_CPU					= x86
 
@@ -20,7 +15,6 @@
 	# See $(GFXLIB)/tools/gmake_scripts/library_ugfx.mk for the list of variables
 	GFXLIB					= ../uGFX
 	GFXBOARD				= Linux
-	#GFXDRIVERS				= multiple/uGFXnet
 	GFXDEMO					= modules/gdisp/basics
 
 # Linux settings

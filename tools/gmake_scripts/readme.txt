@@ -8,6 +8,7 @@ All make script files in this directory apply the following rules and assumption
 Input Variables (all optional unless otherwise specified)
 ----------------------------
 
+OPT_MAKE_LIB=no|yes				- Make a library instead of an program = default no
 OPT_VERBOSE_COMPILE=no|yes		- Turn on full compile messages - default no
 OPT_GENERATE_LISTINGS=no|yes	- Generate listing files - default no
 OPT_GENERATE_MAP=no|yes			- Generate a map file - default no
@@ -29,6 +30,7 @@ XLD								- Linker - default is "$(ARCH)gcc"
 XOC								- Object Copy - default is "$(ARCH)objcopy"
 XOD								- Object Dump - default is "$(ARCH)objdump"
 XSZ								- Report binary dump details - default is "$(ARCH)size"
+XAR								- Library archiver - default is "$(ARCH)ar"
 
 SRCFLAGS						- Compiler defines for c, c++ and assembler files - default is ""
 CFLAGS							- C specific compiler defines - default is ""
@@ -61,6 +63,8 @@ Targets
 ----------------------------
 
 all
+lib
+exe
 clean
 Debug
 cleanDebug

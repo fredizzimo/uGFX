@@ -28,6 +28,10 @@
  * are already defined by ChibiOS
  */
 
+#if CH_KERNEL_MAJOR == 3
+	typedef char	bool_t;
+#endif
+
 typedef systime_t	delaytime_t;
 typedef systime_t	systemticks_t;
 typedef cnt_t		semcount_t;
