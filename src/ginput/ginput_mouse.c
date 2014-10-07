@@ -230,7 +230,7 @@ static void GetMouseReading(GMouse *m) {
 		// Is this just movement jitter
 		if (pj->move > 0) {
 			diff = (uint32_t)(r.x - m->r.x) * (uint32_t)(r.x - m->r.x) + (uint32_t)(r.y - m->r.y) * (uint32_t)(r.y - m->r.y);
-			if (diff > (uint32_t)pj->move * (uint32_t)pj->move) {
+			if (diff < (uint32_t)pj->move * (uint32_t)pj->move) {
 				r.x = m->r.x;
 				r.y = m->r.y;
 			}
@@ -344,7 +344,7 @@ static void MousePoll(void *param) {
 	}
 
 	static inline void CalibrationCrossClear(GMouse *m, const point *pp) {
-		gdispGFillArea(m->display, pp->x - CALIBRATION_CROSS_RADIUS, pp->y - CALIBRATION_CROSS_RADIUS, CALIBRATION_CROSS_RADIUS*2, CALIBRATION_CROSS_RADIUS*2, CALIBRATION_BACKGROUND);
+		gdispGFillArea(m->display, pp->x - CALIBRATION_CROSS_RADIUS, pp->y - CALIBRATION_CROSS_RADIUS, CALIBRATION_CROSS_RADIUS*2+1, CALIBRATION_CROSS_RADIUS*2+1, CALIBRATION_BACKGROUND);
 	}
 
 	static inline void CalibrationCalculate(GMouse *m, const point *cross, const point *points) {
