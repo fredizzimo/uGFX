@@ -89,7 +89,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	acquire_bus(g);
 
 	write_index(g, 0x01); //software reset
-	chThdSleepMilliseconds(5);
+	gfxSleepMilliseconds(5);
 	write_index(g, 0x28);
 	// display off
 	//---------------------------------------------------------
@@ -210,9 +210,9 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	write_data(g, 0x27);
 	write_data(g, 0x00);
 	write_index(g, 0x11); //sleep out
-	chThdSleepMilliseconds(100);
+	gfxSleepMilliseconds(100);
 	write_index(g, 0x29); // display on
-	chThdSleepMilliseconds(100);
+	gfxSleepMilliseconds(100);
 
     // Finish Init
     post_init_board(g);
