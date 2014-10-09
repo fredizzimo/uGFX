@@ -23,10 +23,10 @@
 #elif CH_KERNEL_MAJOR == 3
 
 	#if !CH_CFG_USE_MUTEXES
-		#error "GOS: CH_USE_MUTEXES must be defined in chconf.h"
+		#error "GOS: CH_CFG_USE_MUTEXES must be defined in chconf.h"
 	#endif
 	#if !CH_CFG_USE_SEMAPHORES
-		#error "GOS: CH_USE_SEMAPHORES must be defined in chconf.h"
+		#error "GOS: CH_CFG_USE_SEMAPHORES must be defined in chconf.h"
 	#endif
 	
 #endif
