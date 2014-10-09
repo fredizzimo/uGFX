@@ -10,11 +10,11 @@
 
 // We directly define the jitter settings
 #define GMOUSE_MCU_PEN_CALIBRATE_ERROR		8
-#define GMOUSE_MCU_PEN_CLICK_ERROR			4
+#define GMOUSE_MCU_PEN_CLICK_ERROR			6
 #define GMOUSE_MCU_PEN_MOVE_ERROR			4
 #define GMOUSE_MCU_FINGER_CALIBRATE_ERROR	14
-#define GMOUSE_MCU_FINGER_CLICK_ERROR		8
-#define GMOUSE_MCU_FINGER_MOVE_ERROR		8
+#define GMOUSE_MCU_FINGER_CLICK_ERROR		18
+#define GMOUSE_MCU_FINGER_MOVE_ERROR		14
 
 // Now board specific settings...
 
@@ -40,7 +40,7 @@ static const ADCConversionGroup adcgrpcfg = {
 
 #define Z_MIN				0			// The minimum Z reading
 #define Z_MAX				4095		// The maximum Z reading (12 bits)
-#define Z_TOUCHON			4000		// Values between this and Z_MAX are definitely pressed
+#define Z_TOUCHON			3090		// Values between this and Z_MAX are definitely pressed
 #define Z_TOUCHOFF			400			// Values between this and Z_MIN are definitely not pressed
 
 static bool_t init_board(GMouse *m, unsigned driverinstance) {
