@@ -90,7 +90,7 @@ int vfnprintg(GFILE *f, int maxlen, const char *fmt, va_list arg) {
 			fmt++;
 			left_align = TRUE;
 		}
-		if (*fmt == '.') {
+		if (*fmt == '0') {
 			fmt++;
 			filler = '0';
 		}
