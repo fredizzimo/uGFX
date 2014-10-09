@@ -684,7 +684,7 @@ void gwinPrintf(GHandle gh, const char *fmt, ...) {
 			left_align = TRUE;
 		}
 		filler = ' ';
-		if (*fmt == '.') {
+		if (*fmt == '0') {
 			fmt++;
 			filler = '0';
 		}
