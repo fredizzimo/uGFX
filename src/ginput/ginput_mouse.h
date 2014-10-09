@@ -146,9 +146,10 @@ extern "C" {
 	 *
 	 * @param[in] instance	The ID of the mouse input instance
 	 *
-	 * @return	FALSE if the driver dosen't support a calibration of if the handle is invalid
+	 * @return	The calibration error squared if calibration fails, or 0 on success or if the driver dosen't need calibration.
+	 * @note	An invalid instance will also return 0.
 	 */
-	bool_t ginputCalibrateMouse(unsigned instance);
+	uint32_t ginputCalibrateMouse(unsigned instance);
 
     /**
      * @brief   Load a set of mouse calibration data

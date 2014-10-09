@@ -38,7 +38,8 @@
 #define CALIBRATION_TITLE_COLOR			White
 #define CALIBRATION_TITLE_BACKGROUND	Blue
 
-#define CALIBRATION_ERROR_TEXT			"Failed - Please try again!"
+#define CALIBRATION_ERROR_TEXT			"Calibration Failed!"
+#define CALIBRATION_ERROR_DELAY			3000
 #define CALIBRATION_ERROR_COLOR			Red
 #define CALIBRATION_ERROR_BACKGROUND	Yellow
 #define CALIBRATION_ERROR_Y				35
@@ -438,14 +439,18 @@ static void MousePoll(void *param) {
 							+ c2 * ((float)points[0].x * (float)points[1].y - (float)points[1].x * (float)points[0].y)) / dx;
 	}
 
-	static void CalibrateMouse(GMouse *m) {
+	static uint32_t CalibrateMouse(GMouse *m) {
 		coord_t		w, h;
 		point		cross[4];		// The locations of the test points on the display
 		point		points[4];		// The x, y readings obtained from the mouse for each test point
 		font_t		font1, font2;
+		uint32_t	err;
 
+		err = 0;
 		font1 = gdispOpenFont(CALIBRATION_FONT);
+		if (!font1) font1 = gdispOpenFont("*");
 		font2 = gdispOpenFont(CALIBRATION_FONT2);
+		if (!font2) font2 = gdispOpenFont("*");
 		w  =  gdispGGetWidth(m->display);
 		h  =  gdispGGetHeight(m->display);
 		#if GDISP_NEED_CLIP
@@ -468,138 +473,133 @@ static void MousePoll(void *param) {
             cross[3].x = w/2;	cross[3].y = h/2;
         }
 
-		// Perform calibration until we get a valid result
-		while(1) {
+		// Set up the calibration display
+		gdispGClear(m->display, Blue);
+		gdispGFillStringBox(m->display,
+							0, CALIBRATION_TITLE_Y, w, CALIBRATION_TITLE_HEIGHT,
+							CALIBRATION_TITLE, font1,  CALIBRATION_TITLE_COLOR, CALIBRATION_TITLE_BACKGROUND,
+							justifyCenter);
 
-			// Set up the calibration display
-			gdispGClear(m->display, Blue);
-			gdispGFillStringBox(m->display,
-								0, CALIBRATION_TITLE_Y, w, CALIBRATION_TITLE_HEIGHT,
-								CALIBRATION_TITLE, font1,  CALIBRATION_TITLE_COLOR, CALIBRATION_TITLE_BACKGROUND,
-								justifyCenter);
+		// Calculate the calibration
+		{
+			unsigned	i, maxpoints;
 
-			// Calculate the calibration
-			{
-				unsigned	i, maxpoints;
+			maxpoints = (gmvmt(m)->d.flags & GMOUSE_VFLG_CAL_TEST) ? 4 : 3;
 
-				maxpoints = (gmvmt(m)->d.flags & GMOUSE_VFLG_CAL_TEST) ? 4 : 3;
+			// Loop through the calibration points
+			for(i = 0; i < maxpoints; i++) {
+				int32_t		px, py;
+				unsigned	j;
 
-				// Loop through the calibration points
-				for(i = 0; i < maxpoints; i++) {
-					int32_t		px, py;
-					unsigned	j;
+				// Draw the current calibration point
+				CalibrationCrossDraw(m, &cross[i]);
 
-					// Draw the current calibration point
-					CalibrationCrossDraw(m, &cross[i]);
+				// Get a valid "point pressed" average reading
+				do {
+					// Wait for the mouse to be pressed
+					while(!(m->r.buttons & GINPUT_MOUSE_BTN_LEFT))
+						gfxSleepMilliseconds(CALIBRATION_POLL_PERIOD);
 
-					// Get a valid "point pressed" average reading
-					do {
-						// Wait for the mouse to be pressed
-						while(!(m->r.buttons & GINPUT_MOUSE_BTN_LEFT))
-							gfxSleepMilliseconds(CALIBRATION_POLL_PERIOD);
-
-						// Sum samples taken every CALIBRATION_POLL_PERIOD milliseconds while the mouse is down
-						px = py = j = 0;
-						while((m->r.buttons & GINPUT_MOUSE_BTN_LEFT)) {
-							// Limit sampling period to prevent overflow
-							if (j < CALIBRATION_MAXPRESS_PERIOD/CALIBRATION_POLL_PERIOD) {
-								px += m->r.x;
-								py += m->r.y;
-								j++;
-							}
-							gfxSleepMilliseconds(CALIBRATION_POLL_PERIOD);
+					// Sum samples taken every CALIBRATION_POLL_PERIOD milliseconds while the mouse is down
+					px = py = j = 0;
+					while((m->r.buttons & GINPUT_MOUSE_BTN_LEFT)) {
+						// Limit sampling period to prevent overflow
+						if (j < CALIBRATION_MAXPRESS_PERIOD/CALIBRATION_POLL_PERIOD) {
+							px += m->r.x;
+							py += m->r.y;
+							j++;
 						}
-
-						// Ignore presses less than CALIBRATION_MAXPRESS_PERIOD milliseconds
-					} while(j < CALIBRATION_MINPRESS_PERIOD/CALIBRATION_POLL_PERIOD);
-					points[i].x = px / j;
-					points[i].y = py / j;
-
-					// Clear the current calibration point
-					CalibrationCrossClear(m, &cross[i]);
-				}
-
-				// Apply 3 point calibration algorithm
-				CalibrationCalculate(m, cross, points);
-
-				// Skip the 4th point tests if we don't want them
-				if (maxpoints < 4)
-					break;
-			}
-
-			 /* Verification of correctness of calibration (optional) :
-			 *  See if the 4th point (Middle of the screen) coincides with the calibrated
-			 *  result. If point is within +/- Squareroot(ERROR) pixel margin, then successful calibration
-			 *  Else, start from the beginning.
-			 */
-			{
-				const GMouseJitter	*pj;
-				uint32_t			err;
-
-				// Are we in pen or finger mode
-				pj = (m->flags & GMOUSE_FLG_FINGERMODE) ? &gmvmt(m)->finger_jitter : &gmvmt(m)->pen_jitter;
-
-				// Transform the co-ordinates
-				CalibrationTransform((GMouseReading *)&points[3], &m->caldata);
-
-				// Do we need to rotate the reading to match the display
-				#if GDISP_NEED_CONTROL
-					if (!(gmvmt(m)->d.flags & GMOUSE_VFLG_SELFROTATION)) {
-						coord_t		t;
-
-						switch(gdispGGetOrientation(m->display)) {
-							case GDISP_ROTATE_0:
-								break;
-							case GDISP_ROTATE_90:
-								t = points[3].x;
-								points[3].x = w - 1 - points[3].y;
-								points[3].y = t;
-								break;
-							case GDISP_ROTATE_180:
-								points[3].x = w - 1 - points[3].x;
-								points[3].y = h - 1 - points[3].y;
-								break;
-							case GDISP_ROTATE_270:
-								t = points[3].y;
-								points[3].y = h - 1 - points[3].x;
-								points[3].x = t;
-								break;
-							default:
-								break;
-						}
+						gfxSleepMilliseconds(CALIBRATION_POLL_PERIOD);
 					}
-				#endif
 
-				// Is this accurate enough?
-				err = (points[3].x - cross[3].x) * (points[3].x - cross[3].x) + (points[3].y - cross[3].y) * (points[3].y - cross[3].y);
-				if (err <= (uint32_t)pj->calibrate * (uint32_t)pj->calibrate)
-					break;
+					// Ignore presses less than CALIBRATION_MAXPRESS_PERIOD milliseconds
+				} while(j < CALIBRATION_MINPRESS_PERIOD/CALIBRATION_POLL_PERIOD);
+				points[i].x = px / j;
+				points[i].y = py / j;
 
-				// No - Display error and try again
+				// Clear the current calibration point
+				CalibrationCrossClear(m, &cross[i]);
+			}
+		}
+
+		// Apply 3 point calibration algorithm
+		CalibrationCalculate(m, cross, points);
+
+		 /* Verification of correctness of calibration (optional) :
+		 *  See if the 4th point (Middle of the screen) coincides with the calibrated
+		 *  result. If point is within +/- Squareroot(ERROR) pixel margin, then successful calibration
+		 *  Else return the error.
+		 */
+		if ((gmvmt(m)->d.flags & GMOUSE_VFLG_CAL_TEST)) {
+			const GMouseJitter	*pj;
+
+			// Are we in pen or finger mode
+			pj = (m->flags & GMOUSE_FLG_FINGERMODE) ? &gmvmt(m)->finger_jitter : &gmvmt(m)->pen_jitter;
+
+			// Transform the co-ordinates
+			CalibrationTransform((GMouseReading *)&points[3], &m->caldata);
+
+			// Do we need to rotate the reading to match the display
+			#if GDISP_NEED_CONTROL
+				if (!(gmvmt(m)->d.flags & GMOUSE_VFLG_SELFROTATION)) {
+					coord_t		t;
+
+					switch(gdispGGetOrientation(m->display)) {
+						case GDISP_ROTATE_0:
+							break;
+						case GDISP_ROTATE_90:
+							t = points[3].x;
+							points[3].x = w - 1 - points[3].y;
+							points[3].y = t;
+							break;
+						case GDISP_ROTATE_180:
+							points[3].x = w - 1 - points[3].x;
+							points[3].y = h - 1 - points[3].y;
+							break;
+						case GDISP_ROTATE_270:
+							t = points[3].y;
+							points[3].y = h - 1 - points[3].x;
+							points[3].x = t;
+							break;
+						default:
+							break;
+					}
+				}
+			#endif
+
+			// Is this accurate enough?
+			err = (points[3].x - cross[3].x) * (points[3].x - cross[3].x) + (points[3].y - cross[3].y) * (points[3].y - cross[3].y);
+			if (err > (uint32_t)pj->calibrate * (uint32_t)pj->calibrate) {
+				// No - Display error and return
 				gdispGFillStringBox(m->display,
 										0, CALIBRATION_ERROR_Y, w, CALIBRATION_ERROR_HEIGHT,
 										CALIBRATION_ERROR_TEXT, font2,  CALIBRATION_ERROR_COLOR, CALIBRATION_ERROR_BACKGROUND,
 										justifyCenter);
-				gfxSleepMilliseconds(5000);
-			}
+				gfxSleepMilliseconds(CALIBRATION_ERROR_DELAY);
+			} else
+				err = 0;
 		}
 
 		// We are done calibrating
 		gdispCloseFont(font1);
 		gdispCloseFont(font2);
-		m->flags |= GMOUSE_FLG_CALIBRATE|GMOUSE_FLG_CLIP;
 		m->flags &= ~GMOUSE_FLG_IN_CAL;
+		m->flags |= GMOUSE_FLG_CLIP;
+
+		// Save the calibration data (if possible)
+		if (!err) {
+			m->flags |= GMOUSE_FLG_CALIBRATE;
+
+			#if GINPUT_TOUCH_USER_CALIBRATION_SAVE
+				SaveMouseCalibration(gdriverGetDriverInstanceNumber((GDriver *)m), &m->caldata, sizeof(GMouseCalibration));
+			#endif
+			if (gmvmt(m)->calsave)
+				gmvmt(m)->calsave(m, &m->caldata, sizeof(GMouseCalibration));
+		}
 
 		// Force an initial reading
 		m->r.buttons = 0;
 		GetMouseReading(m);
-
-		// Save the calibration data (if possible)
-		#if GINPUT_TOUCH_USER_CALIBRATION_SAVE
-			SaveMouseCalibration(gdriverGetDriverInstanceNumber((GDriver *)m), &m->caldata, sizeof(GMouseCalibration));
-		#endif
-		if (gmvmt(m)->calsave)
-			gmvmt(m)->calsave(m, &m->caldata, sizeof(GMouseCalibration));
 
 		// Clear the screen using the GWIN default background color
 		#if GFX_USE_GWIN
@@ -607,6 +607,8 @@ static void MousePoll(void *param) {
 		#else
 			gdispGClear(m->display, GDISP_STARTUP_COLOR);
 		#endif
+
+		return err;
 	}
 #endif
 
@@ -670,6 +672,10 @@ bool_t _gmouseInitDriver(GDriver *g, void *display, unsigned driverinstance, uns
 void _gmousePostInitDriver(GDriver *g) {
     #define     m   ((GMouse *)g)
 
+	#if !GINPUT_TOUCH_STARTRAW
+		m->flags |= GMOUSE_FLG_CLIP;
+	#endif
+
     #if !GINPUT_TOUCH_NOCALIBRATE && !GINPUT_TOUCH_STARTRAW
         if ((gmvmt(m)->d.flags & GMOUSE_VFLG_CALIBRATE)) {
             GMouseCalibration		*pc;
@@ -680,18 +686,18 @@ void _gmousePostInitDriver(GDriver *g) {
                     #if GINPUT_TOUCH_USER_CALIBRATION_FREE
                         gfxFree(pc);
                     #endif
-                    m->flags |= GMOUSE_FLG_CALIBRATE|GMOUSE_FLG_CLIP;
+                    m->flags |= GMOUSE_FLG_CALIBRATE;
                 } else
             #endif
             if (gmvmt(m)->calload && (pc = (GMouseCalibration *)gmvmt(m)->calload(m, sizeof(GMouseCalibration)))) {
                 memcpy(&m->caldata, pc, sizeof(GMouseCalibration));
                 if ((gmvmt(m)->d.flags & GMOUSE_VFLG_CAL_LOADFREE))
                     gfxFree(pc);
-                m->flags |= GMOUSE_FLG_CALIBRATE|GMOUSE_FLG_CLIP;
+                m->flags |= GMOUSE_FLG_CALIBRATE;
             }
 			#if !GINPUT_TOUCH_NOCALIBRATE_GUI
 				else
-					CalibrateMouse(m);
+					while (CalibrateMouse(m));
 			#endif
         }
     #endif
@@ -774,14 +780,18 @@ bool_t ginputGetMouseStatus(unsigned instance, GEventMouse *pe) {
 #endif
 
 #if !GINPUT_TOUCH_NOCALIBRATE_GUI
-	bool_t ginputCalibrateMouse(unsigned instance) {
+	uint32_t ginputCalibrateMouse(unsigned instance) {
 		GMouse *m;
 
+		// Find the instance
 		if (!(m = (GMouse *)gdriverGetInstance(GDRIVER_TYPE_MOUSE, instance)))
-			return FALSE;
+			return 0;
 
-		CalibrateMouse(m);
-		return TRUE;
+		// Check it needs calibration
+        if (!(gmvmt(m)->d.flags & GMOUSE_VFLG_CALIBRATE))
+        	return 0;
+
+		return CalibrateMouse(m);
 	}
 #endif
 
