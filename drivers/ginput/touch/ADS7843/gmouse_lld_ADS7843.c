@@ -20,8 +20,9 @@
 	#define BOARD_DATA_SIZE		0
 #endif
 
-#define CMD_X 0xD1
-#define CMD_Y 0x91
+#define CMD_X				0xD1
+#define CMD_Y				0x91
+#define CMD_ENABLE_IRQ		0x80
 
 void read_xyz(GMouse* m, GMouseReading* pdr)
 {
@@ -31,10 +32,18 @@ void read_xyz(GMouse* m, GMouseReading* pdr)
 	pdr->buttons = 0;
 	
 	if (getpin_pressed()) {
+		pdr->z = 1;						// Set to Z_MAX as we are pressed
+
 		aquire_bus();
-		pdr->x = read_value(CMD_X);
-		pdr->y = read_value(CMD_Y);
-		pdr->z = 1;
+		
+		read_value(CMD_X);				// Dummy read - disable PenIRQ
+		pdr->x = read_value(CMD_X);		// Read X-Value
+
+		read_value(CMD_Y);				// Dummy read - disable PenIRQ
+		pdr->y = read_value(CMD_Y);		// Read Y-Value
+
+		read_value(CMD_ENABLE_IRQ);		// Enable IRQ
+
 		release_bus();
 	} else {
 		// Don't touch x and y values here
