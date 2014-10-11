@@ -8,7 +8,7 @@
 #ifndef _GINPUT_LLD_MOUSE_BOARD_H
 #define _GINPUT_LLD_MOUSE_BOARD_H
 
-static inline void init_board(void) {
+static bool_t init_board(GMouse* m, unsigned driverinstance) {
 
 }
 
