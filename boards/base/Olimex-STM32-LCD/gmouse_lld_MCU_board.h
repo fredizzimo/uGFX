@@ -8,15 +8,20 @@
 #ifndef _LLD_GMOUSE_MCU_BOARD_H
 #define _LLD_GMOUSE_MCU_BOARD_H
 
-// We directly define the jitter settings
+// Resolution and Accuracy Settings
 #define GMOUSE_MCU_PEN_CALIBRATE_ERROR		8
 #define GMOUSE_MCU_PEN_CLICK_ERROR			6
 #define GMOUSE_MCU_PEN_MOVE_ERROR			4
 #define GMOUSE_MCU_FINGER_CALIBRATE_ERROR	14
 #define GMOUSE_MCU_FINGER_CLICK_ERROR		18
 #define GMOUSE_MCU_FINGER_MOVE_ERROR		14
+#define GMOUSE_MCU_Z_MIN					0
+#define GMOUSE_MCU_Z_MAX					1
+#define GMOUSE_MCU_Z_TOUCHON				1
+#define GMOUSE_MCU_Z_TOUCHOFF				0
 
-// Now board specific settings...
+// How much extra data to allocate at the end of the GMouse structure for the board's use
+#define GMOUSE_MCU_BOARD_DATA_SIZE		0
 
 #define ADC_NUM_CHANNELS   2
 #define ADC_BUF_DEPTH      1
@@ -44,13 +49,6 @@ static const ADCConversionGroup adc_x_config = {
     0,
     ADC_SQR3_SQ2_N(ADC_CHANNEL_IN10) | ADC_SQR3_SQ1_N(ADC_CHANNEL_IN11)
 };
-
-#define BOARD_DATA_SIZE		0			// How many extra bytes to add on the end of the mouse structure for the board's use
-
-#define Z_MIN				0			// The minimum Z reading
-#define Z_MAX				1			// The maximum Z reading
-#define Z_TOUCHON			1			// Values between this and Z_MAX are definitely pressed
-#define Z_TOUCHOFF			0			// Values between this and Z_MIN are definitely not pressed
 
 static inline void setup_z(void) {
 	palSetPadMode(GPIOC, 0, PAL_MODE_INPUT_PULLDOWN);

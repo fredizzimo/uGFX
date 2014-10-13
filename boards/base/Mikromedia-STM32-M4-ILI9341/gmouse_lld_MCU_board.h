@@ -8,15 +8,20 @@
 #ifndef _LLD_GMOUSE_MCU_BOARD_H
 #define _LLD_GMOUSE_MCU_BOARD_H
 
-// We directly define the jitter settings
+// Resolution and Accuracy Settings
 #define GMOUSE_MCU_PEN_CALIBRATE_ERROR		8
 #define GMOUSE_MCU_PEN_CLICK_ERROR			6
 #define GMOUSE_MCU_PEN_MOVE_ERROR			4
 #define GMOUSE_MCU_FINGER_CALIBRATE_ERROR	14
 #define GMOUSE_MCU_FINGER_CLICK_ERROR		18
 #define GMOUSE_MCU_FINGER_MOVE_ERROR		14
+#define GMOUSE_MCU_Z_MIN					0
+#define GMOUSE_MCU_Z_MAX					4095
+#define GMOUSE_MCU_Z_TOUCHON				3090
+#define GMOUSE_MCU_Z_TOUCHOFF				400
 
-// Now board specific settings...
+// How much extra data to allocate at the end of the GMouse structure for the board's use
+#define GMOUSE_MCU_BOARD_DATA_SIZE		0
 
 #define ADC_NUM_CHANNELS   2
 #define ADC_BUF_DEPTH      1
@@ -35,13 +40,6 @@ static const ADCConversionGroup adcgrpcfg = {
   0,
   ADC_SQR3_SQ2_N(ADC_CHANNEL_IN8) | ADC_SQR3_SQ1_N(ADC_CHANNEL_IN9)
 };
-
-#define BOARD_DATA_SIZE		0			// How many extra bytes to add on the end of the mouse structure for the board's use
-
-#define Z_MIN				0			// The minimum Z reading
-#define Z_MAX				4095		// The maximum Z reading (12 bits)
-#define Z_TOUCHON			3090		// Values between this and Z_MAX are definitely pressed
-#define Z_TOUCHOFF			400			// Values between this and Z_MIN are definitely not pressed
 
 static bool_t init_board(GMouse *m, unsigned driverinstance) {
 	(void)	m;
@@ -71,7 +69,7 @@ static void read_xyz(GMouse *m, GMouseReading *prd) {
     prd->z = samples[0];
 
     // Take a shortcut and don't read x, y if we know we are definitely not touched.
-    if (prd->z >= Z_TOUCHOFF) {
+    if (prd->z >= GMOUSE_MCU_Z_TOUCHOFF) {
 
 		// Get the x reading
 		palSetPad(GPIOB, GPIOB_DRIVEA);

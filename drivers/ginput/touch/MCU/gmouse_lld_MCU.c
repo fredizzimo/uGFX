@@ -15,11 +15,6 @@
 // Get the hardware interface
 #include "gmouse_lld_MCU_board.h"
 
-// If the board file doesn't specify how many extra bytes it wants - assume 0
-#ifndef BOARD_DATA_SIZE
-	#define BOARD_DATA_SIZE		0
-#endif
-
 const GMouseVMT const GMOUSE_DRIVER_VMT[1] = {{
 	{
 		GDRIVER_TYPE_TOUCH,
@@ -28,13 +23,13 @@ const GMouseVMT const GMOUSE_DRIVER_VMT[1] = {{
 		// Extra flags for testing only
 		//GMOUSE_VFLG_DEFAULTFINGER|GMOUSE_VFLG_CAL_EXTREMES					- Possible
 		//GMOUSE_VFLG_NOPOLL|GMOUSE_VFLG_DYNAMICONLY|GMOUSE_VFLG_SELFROTATION|GMOUSE_VFLG_CAL_LOADFREE - unlikely
-		sizeof(GMouse)+BOARD_DATA_SIZE,
+		sizeof(GMouse) + GMOUSE_MCU_BOARD_DATA_SIZE,
 		_gmouseInitDriver, _gmousePostInitDriver, _gmouseDeInitDriver
 	},
-	Z_MAX,			// z_max
-	Z_MIN,			// z_min
-	Z_TOUCHON,		// z_touchon
-	Z_TOUCHOFF,		// z_touchoff
+	GMOUSE_MCU_Z_MAX,			// z_max
+	GMOUSE_MCU_Z_MIN,			// z_min
+	GMOUSE_MCU_Z_TOUCHON,		// z_touchon
+	GMOUSE_MCU_Z_TOUCHOFF,		// z_touchoff
 	{				// pen_jitter
 		GMOUSE_MCU_PEN_CALIBRATE_ERROR,			// calibrate
 		GMOUSE_MCU_PEN_CLICK_ERROR,				// click
