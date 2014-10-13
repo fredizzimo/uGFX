@@ -14,11 +14,11 @@
 
 #define GMOUSE_STMPE811_FLG_TOUCHED		(GMOUSE_FLG_DRIVER_FIRST<<0)
 
-// Get the hardware interface
-#include "gmouse_lld_STMPE811_board.h"
-
 // Hardware definitions
 #include "drivers/ginput/touch/STMPE811/stmpe811.h"
+
+// Get the hardware interface
+#include "gmouse_lld_STMPE811_board.h"
 
 static bool_t MouseInit(GMouse* m, unsigned driverinstance) {
 	if (!init_board(m, driverinstance))
@@ -61,7 +61,7 @@ static bool_t MouseInit(GMouse* m, unsigned driverinstance) {
 	return TRUE;
 }
 
-static void MouseXYZ(GMouse* m, GMouseReading* pdr)
+static void read_xyz(GMouse* m, GMouseReading* pdr)
 {
 	bool_t	clearfifo;		// Do we need to clear the FIFO
 
@@ -76,7 +76,7 @@ static void MouseXYZ(GMouse* m, GMouseReading* pdr)
 		clearfifo = false;
 		if(getpin_irq(m)) {
 			write_reg(m, STMPE811_REG_INT_STA, 0xFF);						// clear all interrupts
-			if (read_byte(STMPE811_REG_TSC_CTRL) & 0x80)					// set the new touched status
+			if (read_byte(m, STMPE811_REG_TSC_CTRL) & 0x80)					// set the new touched status
 				m->flags |= GMOUSE_STMPE811_FLG_TOUCHED;
 			else
 				m->flags &= ~GMOUSE_STMPE811_FLG_TOUCHED;
