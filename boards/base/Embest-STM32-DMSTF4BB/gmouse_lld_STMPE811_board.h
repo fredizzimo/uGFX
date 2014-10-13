@@ -31,6 +31,9 @@
 // If TRUE this is a really slow CPU and we should always clear the FIFO between reads.
 #define GMOUSE_STMPE811_SLOW_CPU				FALSE
 
+// Maximum timeout
+#define STMPE811_TIMEOUT			0x3000
+
 static const I2CConfig i2ccfg = {
 	OPMODE_I2C,
 	400000,
@@ -41,7 +44,7 @@ static bool_t init_board(GMouse* m, unsigned driverinstance) {
 	(void)		m;
 
 	// This board only supports one touch panel
-	if (driverInstance)
+	if (driverinstance)
 		return FALSE;
 
 	palSetPadMode(GPIOC, 13, PAL_MODE_INPUT | PAL_STM32_PUDR_FLOATING);			/* TP IRQ */
@@ -49,6 +52,7 @@ static bool_t init_board(GMouse* m, unsigned driverinstance) {
 	palSetPadMode(GPIOB, 9, PAL_MODE_ALTERNATE(4) | PAL_STM32_OTYPE_OPENDRAIN);	/* SDA */
 
 	i2cStart(&I2CD1, &i2ccfg);
+
 	return TRUE;
 }
 
