@@ -15,39 +15,32 @@
 // Get the hardware interface
 #include "gmouse_lld_ADS7843_board.h"
 
-// If the board file doesn't specify how many extra bytes it wants - assume 0
-#ifndef BOARD_DATA_SIZE
-	#define BOARD_DATA_SIZE		0
-#endif
-
 #define CMD_X				0xD1
 #define CMD_Y				0x91
 #define CMD_ENABLE_IRQ		0x80
 
-void read_xyz(GMouse* m, GMouseReading* pdr)
+static void MouseXYZ(GMouse* m, GMouseReading* pdr)
 {
 	(void)m;
 
 	// No buttons
 	pdr->buttons = 0;
+	pdr->z = 0;
 	
-	if (getpin_pressed()) {
+	if (getpin_pressed(m)) {
 		pdr->z = 1;						// Set to Z_MAX as we are pressed
 
-		aquire_bus();
+		aquire_bus(m);
 		
-		read_value(CMD_X);				// Dummy read - disable PenIRQ
-		pdr->x = read_value(CMD_X);		// Read X-Value
+		read_value(m, CMD_X);				// Dummy read - disable PenIRQ
+		pdr->x = read_value(m, CMD_X);		// Read X-Value
 
-		read_value(CMD_Y);				// Dummy read - disable PenIRQ
-		pdr->y = read_value(CMD_Y);		// Read Y-Value
+		read_value(m, CMD_Y);				// Dummy read - disable PenIRQ
+		pdr->y = read_value(m, CMD_Y);		// Read Y-Value
 
-		read_value(CMD_ENABLE_IRQ);		// Enable IRQ
+		read_value(m, CMD_ENABLE_IRQ);		// Enable IRQ
 
-		release_bus();
-	} else {
-		// Don't touch x and y values here
-		pdr->z = 0;
+		release_bus(m);
 	}
 }
 
@@ -77,7 +70,7 @@ const GMouseVMT const GMOUSE_DRIVER_VMT[1] = {{
 	},
 	init_board, 	// init
 	0,				// deinit
-	read_xyz,		// get
+	MouseXYZ,		// get
 	0,				// calsave
 	0				// calload
 }};
