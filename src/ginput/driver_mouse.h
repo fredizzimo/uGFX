@@ -49,6 +49,7 @@ typedef struct GMouse {
 			#define GMOUSE_FLG_IN_CAL			0x0010				// Currently in calibration routine
 			#define GMOUSE_FLG_FINGERMODE		0x0020				// Mouse is currently in finger mode
 			#define GMOUSE_FLG_NEEDREAD			0x0040				// The mouse needs reading
+			#define GMOUSE_FLG_DRIVER_FIRST		0x0100				// The first flag available for the driver
 	point								clickpos;			// The position of the last click event
 	systemticks_t						clicktime;			// The time of the last click event
 	GDisplay *							display;			// The display the mouse is associated with
