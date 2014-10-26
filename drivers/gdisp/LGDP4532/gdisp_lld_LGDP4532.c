@@ -19,11 +19,11 @@
 	#undef GDISP_SCREEN_WIDTH
 #endif
 
-#define GDISP_DRIVER_VMT	GDISPVMT_LGD4532
+#define GDISP_DRIVER_VMT	GDISPVMT_LGDP4532
 #include "gdisp_lld_config.h"
 #include "src/gdisp/driver.h"
 
-#include "board_LGD4532.h"
+#include "board_LGDP4532.h"
 
 /*===========================================================================*/
 /* Driver local definitions.                                                 */
