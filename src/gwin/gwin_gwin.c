@@ -301,7 +301,7 @@ void gwinBlitArea(GHandle gh, coord_t x, coord_t y, coord_t cx, coord_t cy, coor
 
 #if GDISP_NEED_PIXELREAD
 	color_t gwinGetPixelColor(GHandle gh, coord_t x, coord_t y) {
-		if (!_gwinDrawStart(gh)) return;
+		if (!_gwinDrawStart(gh)) return (color_t)0;
 		return gdispGGetPixelColor(gh->display, gh->x+x, gh->y+y);
 		_gwinDrawEnd(gh);
 	}
