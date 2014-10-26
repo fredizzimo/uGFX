@@ -28,7 +28,7 @@ ifeq ($(OPT_OS),chibios)
 	CHIBIOS_PORT		= stm32f4xx
 	CHIBIOS_LDSCRIPT	= STM32F407xG.ld
 	# We define a non standard board script as this is not a standard ChibiOS supported board
-	include $(GFXLIB)/boards/base/Mikromedia-STM32-M4-ILI9341/ChibiOS_Board/board.mk
+	include $(GFXLIB)/boards/base/$(GFXBOARD)/ChibiOS_Board/board.mk
 endif
 
 ##############################################################################################
