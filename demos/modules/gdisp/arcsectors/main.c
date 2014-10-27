@@ -29,12 +29,9 @@
 
 #include "gfx.h"
 
-GListener	gl;
-
 int main(void) {
 	coord_t		width, height, r1, r2, cx, cy;
 	uint8_t		sectors;
-	GEventMouse	*pme;
 
     // Initialize and clear the display
     gfxInit();
@@ -42,15 +39,13 @@ int main(void) {
     // Get the screen size
     width = gdispGetWidth();
     height = gdispGetHeight();
+
+    // Initialize some variables
     r1 = width > height ? height/3 : width/3;
     r2 = r1*3/4;
     cx = width/2;
     cy = height/2;
     sectors = 1;
-
-	// We want to listen for mouse button events
-	geventListenerInit(&gl);
-	geventAttachSource(&gl, ginputGetMouse(0), GLISTEN_MOUSEMETA);
 
 	while(1) {
 		// Draw the arc sectors
@@ -58,19 +53,10 @@ int main(void) {
 		gdispDrawArcSectors(cx, cy, r1, sectors, Blue);
 		gdispFillArcSectors(cx, cy, r2, sectors, Red);
 
-		// Get an Event
-		pme = (GEventMouse *)geventEventWait(&gl, TIME_INFINITE);
+		// Increase the sectors counter
+		sectors++;
 
-		// Change our sectors based on the event.
-		switch(pme->type) {
-		case GEVENT_MOUSE:
-		case GEVENT_TOUCH:
-			if (pme->buttons & GMETA_MOUSE_CLICK)
-				sectors++;
-			else if (pme->buttons & GMETA_MOUSE_CXTCLICK)
-				sectors--;
-			break;
-		}
+		// Waste some time
+		gfxSleepMilliseconds(250);
 	}
 }
-
