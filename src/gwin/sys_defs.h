@@ -646,7 +646,7 @@ extern "C" {
 	void gwinBlitArea(GHandle gh, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t srcx, coord_t srcy, coord_t srccx, const pixel_t *buffer);
 
 /*-------------------------------------------------
- * Circle, ellipse and arc functions
+ * Circle, ellipse, arc and arc-sectors functions
  *-------------------------------------------------*/
 
 	#if GDISP_NEED_CIRCLE || defined(__DOXYGEN__)
@@ -735,6 +735,54 @@ extern "C" {
 		 * @api
 		 */
 		void gwinFillArc(GHandle gh, coord_t x, coord_t y, coord_t radius, coord_t startangle, coord_t endangle);
+	#endif
+
+	#if GDISP_NEED_ARCSECTORS || defined(__DOXYGEN__)
+		/*
+		 * @brief	Draw a selection of 45 degree arcs of a circle in the window.
+		 * @note	Uses the current foreground color to draw the arc sector
+		 * @note	May leave GDISP clipping to this window's dimensions
+		 *
+		 * @param[in] gh		The window handle
+		 * @param[in] x,y		The center of the circle
+		 * @param[in] radius	The radius of the circle
+		 * @param[in] sectors	Bits determine which sectors are drawn.
+		 * 						Bits go anti-clockwise from the 0 degree mark (y = 0, x is positive), as follows:
+		 *  						bit 0 - upper right right		  -----
+		 *  						bit 1 - upper upper right		 /2   1\
+		 *  						bit 2 - upper upper left		/3     0\
+		 *  						bit 3 - upper left  left		\4     7/
+		 *  						bit 4 - lower left  left		 \5   6/
+		 *  						bit 5 - lower lower left		  -----
+		 *  						bit 6 - lower lower right
+		 *  						bit 7 - lower left  left
+		 *
+		 * @api
+		 */
+		void gwinDrawArcSectors(GHandle gh, coord_t x, coord_t y, coord_t radius, uint8_t sectors);
+
+		/*
+		 * @brief	Draw a filled selection of 45 degree arcs of a circle in the window.
+		 * @note	Uses the current foreground color to draw the arc sector
+		 * @note	May leave GDISP clipping to this window's dimensions
+		 *
+		 * @param[in] gh		The window handle
+		 * @param[in] x,y		The center of the circle
+		 * @param[in] radius	The radius of the circle
+		 * @param[in] sectors	Bits determine which sectors are drawn.
+		 * 						Bits go anti-clockwise from the 0 degree mark (y = 0, x is positive), as follows:
+		 *  						bit 0 - upper right right		  -----
+		 *  						bit 1 - upper upper right		 /2   1\
+		 *  						bit 2 - upper upper left		/3     0\
+		 *  						bit 3 - upper left  left		\4     7/
+		 *  						bit 4 - lower left  left		 \5   6/
+		 *  						bit 5 - lower lower left		  -----
+		 *  						bit 6 - lower lower right
+		 *  						bit 7 - lower left  left
+		 *
+		 * @api
+		 */
+		void gwinFillArcSectors(GHandle gh, coord_t x, coord_t y, coord_t radius, uint8_t sectors);
 	#endif
 
 /*-------------------------------------------------
