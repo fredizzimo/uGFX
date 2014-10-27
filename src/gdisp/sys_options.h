@@ -102,6 +102,14 @@
 		#define GDISP_NEED_ELLIPSE				FALSE
 	#endif
 	/**
+	 * @brief   Are arc sector functions needed.
+	 * @details	Defaults to FALSE
+	 * @note	Uses integer algorithms only. It does not use any trig or floating point.
+	 */
+	#ifndef GDISP_NEED_ARCSECTORS
+		#define GDISP_NEED_ARCSECTORS			FALSE
+	#endif
+	/**
 	 * @brief   Are arc functions needed.
 	 * @details	Defaults to FALSE
 	 * @note	This can be compiled using fully integer mathematics by
