@@ -299,6 +299,20 @@ void gwinBlitArea(GHandle gh, coord_t x, coord_t y, coord_t cx, coord_t cy, coor
 	}
 #endif
 
+#if GDISP_NEED_ARCSECTORS
+	void gwinDrawArcSectors(GHandle gh, coord_t x, coord_t y, coord_t radius, uint8_t sectors) {
+		if (!_gwinDrawStart(gh)) return;
+		gdispGDrawArcSectors(gh->display, gh->x+x, gh->y+y, radius, sectors, gh->color);
+		_gwinDrawEnd(gh);
+	}
+
+	void gwinFillArcSectors(GHandle gh, coord_t x, coord_t y, coord_t radius, uint8_t sectors) {
+		if (!_gwinDrawStart(gh)) return;
+		gdispGFillArcSectors(gh->display, gh->x+x, gh->y+y, radius, sectors, gh->color);
+		_gwinDrawEnd(gh);
+	}
+#endif
+
 #if GDISP_NEED_PIXELREAD
 	color_t gwinGetPixelColor(GHandle gh, coord_t x, coord_t y) {
 		if (!_gwinDrawStart(gh)) return (color_t)0;
