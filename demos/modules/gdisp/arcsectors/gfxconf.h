@@ -38,15 +38,11 @@
 
 /* GFX sub-systems to turn on */
 #define GFX_USE_GDISP			TRUE
-#define GFX_USE_GINPUT			TRUE
-#define GFX_USE_GEVENT			TRUE
-#define GFX_USE_GTIMER			TRUE
 
 /* Features for the GDISP subsystem. */
 #define GDISP_NEED_VALIDATION	TRUE
 #define GDISP_NEED_ARCSECTORS	TRUE
 
-#define GINPUT_NEED_MOUSE		TRUE
 
 #endif /* _GFXCONF_H */
 
