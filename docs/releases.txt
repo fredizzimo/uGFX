@@ -31,11 +31,12 @@ FIX:		Improve memory usage for the GWIN Frame widget.
 FEATURE:	Added transparent custom draws for GWIN containers and frame widgets
 FEATURE:	Added image custom draws for GWIN containers and frame widgets
 FEATURE:	Added GDRIVER infrastructure. Ported GDISP to use it.
+FEATURE:	Added gdispDrawArcSectors() and gdispFillArcSectors().
 
 
 *** Release 2.1 ***
 FIX:		Significant improvements to the way the MCU touch driver works.
-FEATURE:	Add support for edge to edge touch calibration. 
+FEATURE:	Add support for edge to edge touch calibration.
 FEATURE:	Added progressbar widget
 FEATURE:	Added gdispGDrawThickLine() by user jpa-
 DEPRECATE:	TDISP module removed
@@ -78,7 +79,7 @@ FEATURE:	GDISP Streaming API and demos.
 DEPRECATE:	GDISP_NEED_ASYNC is now deprecated.
 DEPRECATE:	3rd party boing demo is now deprecated (replaced by GDISP Streaming demo)
 FIX:		Remove GOS definitions from demo conf files so that it can be supplied by a makefile.
-FEATURE:	Repair GDISP low level driver interfaces so they can now be included in the doxygen documentation. 
+FEATURE:	Repair GDISP low level driver interfaces so they can now be included in the doxygen documentation.
 FEATURE:	New driver interface for GDISP
 FEATURE:	Multiple display support
 FEATURE:	Multiple controller support

@@ -1420,8 +1420,233 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 	}
 #endif
 
+#if GDISP_NEED_ARCSECTORS
+	void gdispGDrawArcSectors(GDisplay *g, coord_t x, coord_t y, coord_t radius, uint8_t sectors, color_t color) {
+		coord_t a, b, P;
+
+		MUTEX_ENTER(g);
+
+		// Calculate intermediates
+		a = 1;              // x in many explanations
+		b = radius;         // y in many explanations
+		P = 4 - radius;
+		g->p.color = color;
+
+		// Away we go using Bresenham's circle algorithm
+		// Optimized to prevent double drawing
+		if (sectors & 0x06) { g->p.x = x; g->p.y = y - b; drawpixel_clip(g); }				// Upper upper
+		if (sectors & 0x60) { g->p.x = x; g->p.y = y + b; drawpixel_clip(g); }				// Lower lower
+		if (sectors & 0x81) { g->p.x = x + b; g->p.y = y; drawpixel_clip(g); }				// Right right
+		if (sectors & 0x18) { g->p.x = x - b; g->p.y = y; drawpixel_clip(g); }				// Left left
+
+		do {
+			if (sectors & 0x01) { g->p.x = x + b; g->p.y = y - a; drawpixel_clip(g); }		// Upper right right
+			if (sectors & 0x02) { g->p.x = x + a; g->p.y = y - b; drawpixel_clip(g); }		// Upper upper right
+			if (sectors & 0x04) { g->p.x = x - a; g->p.y = y - b; drawpixel_clip(g); }		// Upper upper left
+			if (sectors & 0x08) { g->p.x = x - b; g->p.y = y - a; drawpixel_clip(g); }		// Upper left  left
+			if (sectors & 0x10) { g->p.x = x - b; g->p.y = y + a; drawpixel_clip(g); }		// Lower left  left
+			if (sectors & 0x20) { g->p.x = x - a; g->p.y = y + b; drawpixel_clip(g); }		// Lower lower left
+			if (sectors & 0x40) { g->p.x = x + a; g->p.y = y + b; drawpixel_clip(g); }		// Lower lower right
+			if (sectors & 0x80) { g->p.x = x + b; g->p.y = y + a; drawpixel_clip(g); }		// Lower right right
+			if (P < 0)
+				P += 3 + 2*a++;
+			else
+				P += 5 + 2*(a++ - b--);
+		} while(a < b);
+
+		if (sectors & 0xC0) { g->p.x = x + a; g->p.y = y + b; drawpixel_clip(g); }			// Lower right
+		if (sectors & 0x03) { g->p.x = x + a; g->p.y = y - b; drawpixel_clip(g); }			// Upper right
+		if (sectors & 0x30) { g->p.x = x - a; g->p.y = y + b; drawpixel_clip(g); }			// Lower left
+		if (sectors & 0x0C) { g->p.x = x - a; g->p.y = y - b; drawpixel_clip(g); }			// Upper left
+
+		autoflush(g);
+		MUTEX_EXIT(g);
+	}
+#endif
+
+#if GDISP_NEED_ARCSECTORS
+	void gdispGFillArcSectors(GDisplay *g, coord_t x, coord_t y, coord_t radius, uint8_t sectors, color_t color) {
+		coord_t a, b, P;
+
+		MUTEX_ENTER(g);
+
+		// Calculate intermediates
+		a = 1;              // x in many explanations
+		b = radius;         // y in many explanations
+		P = 4 - radius;
+		g->p.color = color;
+
+		// Away we go using Bresenham's circle algorithm
+		// Optimized to prevent double drawing
+		if (sectors & 0x06) { g->p.x = x; g->p.y = y - b; drawpixel_clip(g); }					// Upper upper
+		if (sectors & 0x60) { g->p.x = x; g->p.y = y + b; drawpixel_clip(g); }					// Lower lower
+		if (sectors & 0x81) {																	// Center right
+			g->p.y = y; g->p.x = x; g->p.x1 = x + b;
+			if (sectors & 0x18) g->p.x -= b;													// Left right
+			hline_clip(g);
+		} else if (sectors & 0x18) {															// Left center
+			g->p.x = x - b; g->p.x1 = x; g->p.y = y;
+			hline_clip(g);
+		}
+
+		do {
+			// Top half
+			switch(sectors & 0x0F) {
+			case 0x01:
+				g->p.y = y - a; g->p.x = x + a; g->p.x1 = x + b; hline_clip(g);
+				break;
+			case 0x02:
+				g->p.y = y - b; g->p.x = x; g->p.x1 = x + a; hline_clip(g);
+				g->p.y = y - a; g->p.x = x; g->p.x1 = x + a; hline_clip(g);
+				break;
+			case 0x03:
+				g->p.y = y - b; g->p.x = x; g->p.x1 = x + a; hline_clip(g);
+				g->p.y = y - a; g->p.x = x; g->p.x1 = x + b; hline_clip(g);
+				break;
+			case 0x04:
+				g->p.y = y - b; g->p.x = x - a; g->p.x1 = x; hline_clip(g);
+				g->p.y = y - a; g->p.x = x - a; g->p.x1 = x; hline_clip(g);
+				break;
+			case 0x05:
+				g->p.y = y - b; g->p.x = x - a; g->p.x1 = x; hline_clip(g);
+				g->p.y = y - a; g->p.x = x - a; g->p.x1 = x; hline_clip(g);
+				g->p.y = y - a; g->p.x = x + a; g->p.x1 = x + b; hline_clip(g);
+				break;
+			case 0x06:
+				g->p.y = y - b; g->p.x = x - a; g->p.x1 = x + a; hline_clip(g);
+				g->p.y = y - a; g->p.x = x - a; g->p.x1 = x + a; hline_clip(g);
+				break;
+			case 0x07:
+				g->p.y = y - b; g->p.x = x - a; g->p.x1 = x + a; hline_clip(g);
+				g->p.y = y - a; g->p.x = x - a; g->p.x1 = x + b; hline_clip(g);
+				break;
+			case 0x08:
+				g->p.y = y - a; g->p.x = x - b; g->p.x1 = x - a; hline_clip(g);
+				break;
+			case 0x09:
+				g->p.y = y - a; g->p.x = x - b; g->p.x1 = x - a; hline_clip(g);
+				g->p.y = y - a; g->p.x = x + a; g->p.x1 = x + b; hline_clip(g);
+				break;
+			case 0x0A:
+				g->p.y = y - b; g->p.x = x; g->p.x1 = x + a; hline_clip(g);
+				g->p.y = y - a; g->p.x = x - b; g->p.x1 = x - a; hline_clip(g);
+				g->p.y = y - a; g->p.x = x; g->p.x1 = x + a; hline_clip(g);
+				break;
+			case 0x0B:
+				g->p.y = y - b; g->p.x = x; g->p.x1 = x + a; hline_clip(g);
+				g->p.y = y - a; g->p.x = x - b; g->p.x1 = x - a; hline_clip(g);
+				g->p.y = y - a; g->p.x = x; g->p.x1 = x + b; hline_clip(g);
+				break;
+			case 0x0C:
+				g->p.y = y - b; g->p.x = x - a; g->p.x1 = x; hline_clip(g);
+				g->p.y = y - a; g->p.x = x - b; g->p.x1 = x; hline_clip(g);
+				break;
+			case 0x0D:
+				g->p.y = y - b; g->p.x = x - a; g->p.x1 = x; hline_clip(g);
+				g->p.y = y - a; g->p.x = x - b; g->p.x1 = x; hline_clip(g);
+				g->p.y = y - a; g->p.x = x + a; g->p.x1 = x + b; hline_clip(g);
+				break;
+			case 0x0E:
+				g->p.y = y - b; g->p.x = x - a; g->p.x1 = x + a; hline_clip(g);
+				g->p.y = y - a; g->p.x = x - b; g->p.x1 = x + a; hline_clip(g);
+				break;
+			case 0x0F:
+				g->p.y = y - b; g->p.x = x - a; g->p.x1 = x + a; hline_clip(g);
+				g->p.y = y - a; g->p.x = x - b; g->p.x1 = x + b; hline_clip(g);
+				break;
+			}
+
+			// Bottom half
+			switch((sectors & 0xF0)>>4) {
+			case 0x01:
+				g->p.y = y + a; g->p.x = x - b; g->p.x1 = x - a; hline_clip(g);
+				break;
+			case 0x02:
+				g->p.y = y + b; g->p.x = x - a; g->p.x1 = x; hline_clip(g);
+				g->p.y = y + a; g->p.x = x - a; g->p.x1 = x; hline_clip(g);
+				break;
+			case 0x03:
+				g->p.y = y + b; g->p.x = x - a; g->p.x1 = x; hline_clip(g);
+				g->p.y = y + a; g->p.x = x - b; g->p.x1 = x; hline_clip(g);
+				break;
+			case 0x04:
+				g->p.y = y + b; g->p.x = x; g->p.x1 = x + a; hline_clip(g);
+				g->p.y = y + a; g->p.x = x; g->p.x1 = x + a; hline_clip(g);
+				break;
+			case 0x05:
+				g->p.y = y + b; g->p.x = x; g->p.x1 = x + a; hline_clip(g);
+				g->p.y = y + a; g->p.x = x - b; g->p.x1 = x - a; hline_clip(g);
+				g->p.y = y + a; g->p.x = x; g->p.x1 = x + a; hline_clip(g);
+				break;
+			case 0x06:
+				g->p.y = y + b; g->p.x = x - a; g->p.x1 = x + a; hline_clip(g);
+				g->p.y = y + a; g->p.x = x - a; g->p.x1 = x + a; hline_clip(g);
+				break;
+			case 0x07:
+				g->p.y = y + b; g->p.x = x - a; g->p.x1 = x + a; hline_clip(g);
+				g->p.y = y + a; g->p.x = x - b; g->p.x1 = x + a; hline_clip(g);
+				break;
+			case 0x08:
+				g->p.y = y + a; g->p.x = x + a; g->p.x1 = x + b; hline_clip(g);
+				break;
+			case 0x09:
+				g->p.y = y + a; g->p.x = x - b; g->p.x1 = x - a; hline_clip(g);
+				g->p.y = y + a; g->p.x = x + a; g->p.x1 = x + b; hline_clip(g);
+				break;
+			case 0x0A:
+				g->p.y = y + b; g->p.x = x - a; g->p.x1 = x; hline_clip(g);
+				g->p.y = y + a; g->p.x = x - a; g->p.x1 = x; hline_clip(g);
+				g->p.y = y + a; g->p.x = x + a; g->p.x1 = x + b; hline_clip(g);
+				break;
+			case 0x0B:
+				g->p.y = y + b; g->p.x = x - a; g->p.x1 = x; hline_clip(g);
+				g->p.y = y + a; g->p.x = x - b; g->p.x1 = x; hline_clip(g);
+				g->p.y = y + a; g->p.x = x + a; g->p.x1 = x + b; hline_clip(g);
+				break;
+			case 0x0C:
+				g->p.y = y + b; g->p.x = x; g->p.x1 = x + a; hline_clip(g);
+				g->p.y = y + a; g->p.x = x; g->p.x1 = x + b; hline_clip(g);
+				break;
+			case 0x0D:
+				g->p.y = y + b; g->p.x = x; g->p.x1 = x + a; hline_clip(g);
+				g->p.y = y + a; g->p.x = x - b; g->p.x1 = x - a; hline_clip(g);
+				g->p.y = y + a; g->p.x = x; g->p.x1 = x + b; hline_clip(g);
+				break;
+			case 0x0E:
+				g->p.y = y + b; g->p.x = x - a; g->p.x1 = x + a; hline_clip(g);
+				g->p.y = y + a; g->p.x = x - a; g->p.x1 = x + b; hline_clip(g);
+				break;
+			case 0x0F:
+				g->p.y = y + b; g->p.x = x - a; g->p.x1 = x + a; hline_clip(g);
+				g->p.y = y + a; g->p.x = x - b; g->p.x1 = x + b; hline_clip(g);
+				break;
+			}
+
+			if (P < 0)
+				P += 3 + 2*a++;
+			else
+				P += 5 + 2*(a++ - b--);
+		} while(a < b);
+
+		// Top half
+		if (sectors & 0x02)			{ g->p.y = y - a; g->p.x = x; g->p.x1 = x + a; hline_clip(g); }
+		else if (sectors & 0x01)	{ g->p.y = y - a; g->p.x = x + a; drawpixel_clip(g); }
+		if (sectors & 0x04)			{ g->p.y = y - a; g->p.x = x - a; g->p.x1 = x; hline_clip(g); }
+		else if (sectors & 0x08)	{ g->p.y = y - a; g->p.x = x - a; drawpixel_clip(g); }
+
+		// Bottom half
+		if (sectors & 0x40)			{ g->p.y = y + a; g->p.x = x; g->p.x1 = x + a; hline_clip(g); }
+		else if (sectors & 0x80)	{ g->p.y = y + a; g->p.x = x + a; drawpixel_clip(g); }
+		if (sectors & 0x20)			{ g->p.y = y + a; g->p.x = x - a; g->p.x1 = x; hline_clip(g); }
+		else if (sectors & 0x10)	{ g->p.y = y + a; g->p.x = x - a; drawpixel_clip(g); }
+
+		autoflush(g);
+		MUTEX_EXIT(g);
+	}
+#endif
+
 #if GDISP_NEED_ARC
-	#if !GMISC_NEED_FIXEDTRIG && !GMISC_NEED_FASTTRIG
+	#if (!GMISC_NEED_FIXEDTRIG && !GMISC_NEED_FASTTRIG) || !GFX_USE_GMISC
 		#include <math.h>
 	#endif
 
@@ -2102,27 +2327,34 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 		autoflush(g);
 		MUTEX_EXIT(g);
 	}
-
 #endif
 
-#if GDISP_NEED_ARC
+#if GDISP_NEED_ARC || GDISP_NEED_ARCSECTORS
 	void gdispGDrawRoundedBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t radius, color_t color) {
 		if (2*radius > cx || 2*radius > cy) {
 			gdispGDrawBox(g, x, y, cx, cy, color);
 			return;
 		}
-		gdispGDrawArc(g, x+radius, y+radius, radius, 90, 180, color);
+
+		#if GDISP_NEED_ARCSECTORS
+			gdispGFillArcSectors(g, x+radius, y+radius, radius, 0x0C, color);
+			gdispGFillArcSectors(g, x+cx-1-radius, y+radius, radius, 0x03, color);
+			gdispGFillArcSectors(g, x+cx-1-radius, y+cy-1-radius, radius, 0xC0, color);
+			gdispGFillArcSectors(g, x+radius, y+cy-1-radius, radius, 0x30, color);
+		#else
+			gdispGDrawArc(g, x+radius, y+radius, radius, 90, 180, color);
+			gdispGDrawArc(g, x+cx-1-radius, y+radius, radius, 0, 90, color);
+			gdispGDrawArc(g, x+cx-1-radius, y+cy-1-radius, radius, 270, 360, color);
+			gdispGDrawArc(g, x+radius, y+cy-1-radius, radius, 180, 270, color);
+		#endif
 		gdispGDrawLine(g, x+radius+1, y, x+cx-2-radius, y, color);
-		gdispGDrawArc(g, x+cx-1-radius, y+radius, radius, 0, 90, color);
 		gdispGDrawLine(g, x+cx-1, y+radius+1, x+cx-1, y+cy-2-radius, color);
-		gdispGDrawArc(g, x+cx-1-radius, y+cy-1-radius, radius, 270, 360, color);
 		gdispGDrawLine(g, x+radius+1, y+cy-1, x+cx-2-radius, y+cy-1, color);
-		gdispGDrawArc(g, x+radius, y+cy-1-radius, radius, 180, 270, color);
 		gdispGDrawLine(g, x, y+radius+1, x, y+cy-2-radius, color);
 	}
 #endif
 
-#if GDISP_NEED_ARC
+#if GDISP_NEED_ARC || GDISP_NEED_ARCSECTORS
 	void gdispGFillRoundedBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t radius, color_t color) {
 		coord_t radius2;
 
@@ -2131,12 +2363,19 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 			gdispGFillArea(g, x, y, cx, cy, color);
 			return;
 		}
-		gdispGFillArc(g, x+radius, y+radius, radius, 90, 180, color);
+		#if GDISP_NEED_ARCSECTORS
+			gdispGFillArcSectors(g, x+radius, y+radius, radius, 0x0C, color);
+			gdispGFillArcSectors(g, x+cx-1-radius, y+radius, radius, 0x03, color);
+			gdispGFillArcSectors(g, x+cx-1-radius, y+cy-1-radius, radius, 0xC0, color);
+			gdispGFillArcSectors(g, x+radius, y+cy-1-radius, radius, 0x30, color);
+		#else
+			gdispGFillArc(g, x+radius, y+radius, radius, 90, 180, color);
+			gdispGFillArc(g, x+cx-1-radius, y+radius, radius, 0, 90, color);
+			gdispGFillArc(g, x+cx-1-radius, y+cy-1-radius, radius, 270, 360, color);
+			gdispGFillArc(g, x+radius, y+cy-1-radius, radius, 180, 270, color);
+		#endif
 		gdispGFillArea(g, x+radius+1, y, cx-radius2, radius, color);
-		gdispGFillArc(g, x+cx-1-radius, y+radius, radius, 0, 90, color);
-		gdispGFillArc(g, x+cx-1-radius, y+cy-1-radius, radius, 270, 360, color);
 		gdispGFillArea(g, x+radius+1, y+cy-radius, cx-radius2, radius, color);
-		gdispGFillArc(g, x+radius, y+cy-1-radius, radius, 180, 270, color);
 		gdispGFillArea(g, x, y+radius, cx, cy-radius2, color);
 	}
 #endif
