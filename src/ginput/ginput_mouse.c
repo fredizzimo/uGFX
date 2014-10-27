@@ -443,14 +443,18 @@ static void MousePoll(void *param) {
 		coord_t		w, h;
 		point		cross[4];		// The locations of the test points on the display
 		point		points[4];		// The x, y readings obtained from the mouse for each test point
-		font_t		font1, font2;
 		uint32_t	err;
+		#if GDISP_NEED_TEXT
+			font_t		font1, font2;
+		#endif
 
+		#if GDISP_NEED_TEXT
+			font1 = gdispOpenFont(CALIBRATION_FONT);
+			if (!font1) font1 = gdispOpenFont("*");
+			font2 = gdispOpenFont(CALIBRATION_FONT2);
+			if (!font2) font2 = gdispOpenFont("*");
+		#endif
 		err = 0;
-		font1 = gdispOpenFont(CALIBRATION_FONT);
-		if (!font1) font1 = gdispOpenFont("*");
-		font2 = gdispOpenFont(CALIBRATION_FONT2);
-		if (!font2) font2 = gdispOpenFont("*");
 		w  =  gdispGGetWidth(m->display);
 		h  =  gdispGGetHeight(m->display);
 		#if GDISP_NEED_CLIP
@@ -475,10 +479,12 @@ static void MousePoll(void *param) {
 
 		// Set up the calibration display
 		gdispGClear(m->display, Blue);
-		gdispGFillStringBox(m->display,
-							0, CALIBRATION_TITLE_Y, w, CALIBRATION_TITLE_HEIGHT,
-							CALIBRATION_TITLE, font1,  CALIBRATION_TITLE_COLOR, CALIBRATION_TITLE_BACKGROUND,
-							justifyCenter);
+		#if GDISP_NEED_TEXT
+			gdispGFillStringBox(m->display,
+								0, CALIBRATION_TITLE_Y, w, CALIBRATION_TITLE_HEIGHT,
+								CALIBRATION_TITLE, font1,  CALIBRATION_TITLE_COLOR, CALIBRATION_TITLE_BACKGROUND,
+								justifyCenter);
+		#endif
 
 		// Calculate the calibration
 		{
@@ -570,19 +576,23 @@ static void MousePoll(void *param) {
 			// Is this accurate enough?
 			err = (points[3].x - cross[3].x) * (points[3].x - cross[3].x) + (points[3].y - cross[3].y) * (points[3].y - cross[3].y);
 			if (err > (uint32_t)pj->calibrate * (uint32_t)pj->calibrate) {
-				// No - Display error and return
-				gdispGFillStringBox(m->display,
-										0, CALIBRATION_ERROR_Y, w, CALIBRATION_ERROR_HEIGHT,
-										CALIBRATION_ERROR_TEXT, font2,  CALIBRATION_ERROR_COLOR, CALIBRATION_ERROR_BACKGROUND,
-										justifyCenter);
-				gfxSleepMilliseconds(CALIBRATION_ERROR_DELAY);
+				#if GDISP_NEED_TEXT
+					// No - Display error and return
+					gdispGFillStringBox(m->display,
+											0, CALIBRATION_ERROR_Y, w, CALIBRATION_ERROR_HEIGHT,
+											CALIBRATION_ERROR_TEXT, font2,  CALIBRATION_ERROR_COLOR, CALIBRATION_ERROR_BACKGROUND,
+											justifyCenter);
+					gfxSleepMilliseconds(CALIBRATION_ERROR_DELAY);
+				#endif
 			} else
 				err = 0;
 		}
 
 		// We are done calibrating
-		gdispCloseFont(font1);
-		gdispCloseFont(font2);
+		#if GDISP_NEED_TEXT
+			gdispCloseFont(font1);
+			gdispCloseFont(font2);
+		#endif
 		m->flags &= ~GMOUSE_FLG_IN_CAL;
 		m->flags |= GMOUSE_FLG_CLIP;
 
