@@ -96,7 +96,7 @@ static void read_xyz(GMouse* m, GMouseReading* pdr)
 	#endif
 
 	// If not touched don't do any more
-	if ((m->flags &= ~GMOUSE_STMPE811_FLG_TOUCHED)) {
+	if ((m->flags & GMOUSE_STMPE811_FLG_TOUCHED)) {
 
 		// Clear the fifo if it is too full
 		#if !GMOUSE_STMPE811_SLOW_CPU
