@@ -73,7 +73,7 @@ static void read_xyz(GMouse* m, GMouseReading* pdr)
 
 	#if GMOUSE_STMPE811_GPIO_IRQPIN
 		// Check if the touch controller IRQ pin has gone off
-		clearfifo = false;
+		clearfifo = FALSE;
 		if(getpin_irq(m)) {
 			write_reg(m, STMPE811_REG_INT_STA, 0xFF);						// clear all interrupts
 			if (read_byte(m, STMPE811_REG_TSC_CTRL) & 0x80)					// set the new touched status
@@ -102,7 +102,7 @@ static void read_xyz(GMouse* m, GMouseReading* pdr)
 		#if !GMOUSE_STMPE811_SLOW_CPU
 			if (!clearfifo && (read_byte(m, STMPE811_REG_FIFO_STA) & 0xD0))
 		#endif
-				clearfifo = true;
+				clearfifo = TRUE;
 
 		do {
 			/* Get the X, Y, Z values */
