@@ -29,7 +29,7 @@ typedef struct ltdcLayerConfig {
 	LLDCOLOR_TYPE	*frame;			// Frame buffer address
 	coord_t			width, height;	// Frame size in pixels
 	coord_t			pitch;			// Line pitch, in bytes
-	ltdc_pixfmt_t	fmt;			// Pixel format in LTDC format
+	uint16_t		fmt;			// Pixel format in LTDC format
 
 	// window
 	coord_t			x, y;			// Start pixel position of the virtual layer
