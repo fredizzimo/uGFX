@@ -19,17 +19,20 @@
 // How much extra data to allocate at the end of the GMouse structure for the board's use
 #define GMOUSE_STMPE811_BOARD_DATA_SIZE			0
 
-// Set this to TRUE if you want self-calibration.
-//	NOTE:	This is not as accurate as real calibration.
-//			It requires the orientation of the touch panel to match the display.
-//			It requires the active area of the touch panel to exactly match the display size.
-#define GMOUSE_STMPE811_SELF_CALIBRATE			FALSE
+// Options - Leave these commented to make it user configurable in the gfxconf.h
+//#define GMOUSE_STMPE811_READ_PRESSURE		FALSE
+//#define GMOUSE_STMPE811_SELF_CALIBRATE	FALSE
+//#define GMOUSE_STMPE811_TEST_MODE			FALSE
 
 // If TRUE this board has the STMPE811 IRQ pin connected to a GPIO.
-#define GMOUSE_STMPE811_GPIO_IRQPIN				TRUE
+// Note: Although this board has such a pin its reliability has not been tested on this board!!!!!
+#define GMOUSE_STMPE811_GPIO_IRQPIN				FALSE
 
 // If TRUE this is a really slow CPU and we should always clear the FIFO between reads.
 #define GMOUSE_STMPE811_SLOW_CPU				FALSE
+
+// Slave address
+#define STMPE811_ADDR				(0x82 >> 1)
 
 // Maximum timeout
 #define STMPE811_TIMEOUT			0x3000

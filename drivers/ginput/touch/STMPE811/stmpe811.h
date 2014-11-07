@@ -8,9 +8,6 @@
 #ifndef _STMPE811_H
 #define _STMPE811_H
 
-// Slave address
-#define STMPE811_ADDR				(0x82 >> 1)
-
 // Identification registers
 #define STMPE811_REG_CHP_ID         0x00 // 16-bit
 #define STMPE811_REG_ID_VER         0x02

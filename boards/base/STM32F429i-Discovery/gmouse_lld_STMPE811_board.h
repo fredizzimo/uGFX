@@ -19,17 +19,19 @@
 // How much extra data to allocate at the end of the GMouse structure for the board's use
 #define GMOUSE_STMPE811_BOARD_DATA_SIZE			0
 
-// Set this to TRUE if you want self-calibration.
-//	NOTE:	This is not as accurate as real calibration.
-//			It requires the orientation of the touch panel to match the display.
-//			It requires the active area of the touch panel to exactly match the display size.
-#define GMOUSE_STMPE811_SELF_CALIBRATE			FALSE
+// Options - Leave these commented to make it user configurable in the gfxconf.h
+//#define GMOUSE_STMPE811_READ_PRESSURE		FALSE
+//#define GMOUSE_STMPE811_SELF_CALIBRATE	FALSE
+//#define GMOUSE_STMPE811_TEST_MODE			FALSE
 
-// If TRUE this board has the STMPE811 IRQ pin connected to a GPIO.
-#define GMOUSE_STMPE811_GPIO_IRQPIN				TRUE
+// Set to FALSE because it does not work properly on this board even though the pin exists.
+#define GMOUSE_STMPE811_GPIO_IRQPIN				FALSE
 
 // If TRUE this is a really slow CPU and we should always clear the FIFO between reads.
 #define GMOUSE_STMPE811_SLOW_CPU				FALSE
+
+// Slave address
+#define STMPE811_ADDR				0x41
 
 // Maximum timeout
 #define STMPE811_TIMEOUT			0x3000
@@ -47,10 +49,12 @@ static bool_t init_board(GMouse* m, unsigned driverinstance) {
 	if (driverinstance)
 		return FALSE;
 
+	// Set pin modes
 	palSetPadMode(GPIOA, 15, PAL_MODE_INPUT | PAL_STM32_PUDR_FLOATING);			/* TP IRQ */
 	palSetPadMode(GPIOA, 8, PAL_MODE_ALTERNATE(4) | PAL_STM32_OTYPE_OPENDRAIN);	/* SCL */
 	palSetPadMode(GPIOC, 9, PAL_MODE_ALTERNATE(4) | PAL_STM32_OTYPE_OPENDRAIN);	/* SDA */
 
+	// Start the I2C
 	i2cStart(&I2CD3, &i2ccfg);
 
 	return TRUE;
