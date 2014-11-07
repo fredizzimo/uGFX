@@ -40,7 +40,7 @@
 
 	// Forward definitions
 	static bool_t NMouseInit(GMouse *m, unsigned driverinstance);
-	static void NMouseRead(GMouse *m, GMouseReading *prd);
+	static bool_t NMouseRead(GMouse *m, GMouseReading *prd);
 
 	const GMouseVMT const GMOUSE_DRIVER_VMT[1] = {{
 		{
@@ -710,7 +710,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		(void)	driverinstance;
 		return TRUE;
 	}
-	static void NMouseRead(GMouse *m, GMouseReading *pt) {
+	static bool_t NMouseRead(GMouse *m, GMouseReading *pt) {
 		GDisplay *	g;
 		netPriv	*	priv;
 
@@ -721,6 +721,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		pt->y = priv->mousey;
 		pt->z = (priv->mousebuttons & GINPUT_MOUSE_BTN_LEFT) ? 1 : 0;
 		pt->buttons = priv->mousebuttons;
+		return TRUE;
 	}
 #endif /* GINPUT_NEED_MOUSE */
 

@@ -57,7 +57,7 @@ static bool_t init_board(GMouse *m, unsigned driverinstance) {
 	return TRUE;
 }
 
-static void read_xyz(GMouse *m, GMouseReading *prd) {
+static bool_t read_xyz(GMouse *m, GMouseReading *prd) {
 	adcsample_t samples[ADC_NUM_CHANNELS * ADC_BUF_DEPTH];
 	(void)		m;
 
@@ -89,6 +89,7 @@ static void read_xyz(GMouse *m, GMouseReading *prd) {
 		palClearPad(GPIOB, GPIOB_DRIVEA);
 		palClearPad(GPIOB, GPIOB_DRIVEB);
     }
+    return TRUE;
 }
 
 #endif /* _LLD_GMOUSE_MCU_BOARD_H */

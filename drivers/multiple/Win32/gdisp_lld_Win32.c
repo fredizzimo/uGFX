@@ -69,7 +69,7 @@
 
 	// Forward definitions
 	static bool_t Win32MouseInit(GMouse *m, unsigned driverinstance);
-	static void Win32MouseRead(GMouse *m, GMouseReading *prd);
+	static bool_t Win32MouseRead(GMouse *m, GMouseReading *prd);
 
 	const GMouseVMT const GMOUSE_DRIVER_VMT[1] = {{
 		{
@@ -1169,7 +1169,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		(void)	driverinstance;
 		return TRUE;
 	}
-	static void Win32MouseRead(GMouse *m, GMouseReading *pt) {
+	static bool_t Win32MouseRead(GMouse *m, GMouseReading *pt) {
 		GDisplay *	g;
 		winPriv	*	priv;
 
@@ -1207,6 +1207,8 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 				}
 			}
 		#endif
+
+		return TRUE;
 	}
 #endif /* GINPUT_NEED_MOUSE */
 

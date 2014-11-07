@@ -73,7 +73,7 @@ static bool_t init_board(GMouse *m, unsigned driverinstance) {
 	return TRUE;
 }
 
-static void read_xyz(GMouse *m, GMouseReading *prd) {
+static bool_t read_xyz(GMouse *m, GMouseReading *prd) {
 	adcsample_t samples[ADC_NUM_CHANNELS * ADC_BUF_DEPTH];
 	uint16_t val1, val2;
 	(void)		m;
@@ -130,6 +130,7 @@ static void read_xyz(GMouse *m, GMouseReading *prd) {
 		// Set up for reading z again. We know it will be 20ms before we get called again so don't worry about settling time
 	    setup_z();
     }
+	return TRUE;
 }
 
 #endif /* _LLD_GMOUSE_MCU_BOARD_H */

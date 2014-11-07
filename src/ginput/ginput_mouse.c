@@ -78,7 +78,7 @@ static void SendMouseEvent(GSourceListener	*psl, GMouse *m, GMouseReading *r) {
 
 	// Send the event only if we are listening for it
 	if (!((r->buttons & GINPUT_MOUSE_BTN_LEFT) && (psl->listenflags & GLISTEN_MOUSEDOWNMOVES))
-			&& !((r->buttons & GINPUT_MOUSE_BTN_LEFT) && (psl->listenflags & GLISTEN_MOUSEUPMOVES))
+			&& !(!(r->buttons & GINPUT_MOUSE_BTN_LEFT) && (psl->listenflags & GLISTEN_MOUSEUPMOVES))
 			&& !((r->buttons & GMETA_MASK) && (psl->listenflags & GLISTEN_MOUSEMETA)))
 		return;
 
@@ -102,7 +102,8 @@ static void GetMouseReading(GMouse *m) {
 	// Step 1 - Get the Raw Reading
 	{
 		m->flags &= ~GMOUSE_FLG_NEEDREAD;
-		gmvmt(m)->get(m, &r);
+		if (!gmvmt(m)->get(m, &r))
+			return;
 	}
 
 	// Step 2 - Handle touch and button 0 debouncing

@@ -56,7 +56,7 @@ static bool_t MouseInit(GMouse* m, unsigned driverinstance) {
 	return TRUE;
 }
 
-static void MouseXYZ(GMouse* m, GMouseReading* pdr)
+static bool_t MouseXYZ(GMouse* m, GMouseReading* pdr)
 {
 	// Assume not touched.
 	pdr->buttons = 0;
@@ -80,6 +80,7 @@ static void MouseXYZ(GMouse* m, GMouseReading* pdr)
 	}
 
 	release_bus(m);
+	return TRUE;
 }
 
 const GMouseVMT const GMOUSE_DRIVER_VMT[1] = {{

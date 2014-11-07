@@ -86,10 +86,10 @@ typedef struct GMouseVMT {
 	GMouseJitter	pen_jitter;								// PEN MODE: Jitter settings
 	GMouseJitter	finger_jitter;							// FINGER MODE: Jitter settings
 
-	bool_t (*init)(GMouse *m, unsigned driverinstance);		// Required
-	void (*deinit)(GMouse *m);								// Optional
-	void (*get)(GMouse *m, GMouseReading *prd);				// Required
-	void (*calsave)(GMouse *m, void *buf, size_t sz);		// Optional
+	bool_t	(*init)(GMouse *m, unsigned driverinstance);	// Required
+	void	(*deinit)(GMouse *m);							// Optional
+	bool_t	(*get)(GMouse *m, GMouseReading *prd);			// Required
+	void	(*calsave)(GMouse *m, void *buf, size_t sz);	// Optional
 	const char *(*calload)(GMouse *m, size_t sz);			// Optional: Can return NULL if no data is saved.
 } GMouseVMT;
 
