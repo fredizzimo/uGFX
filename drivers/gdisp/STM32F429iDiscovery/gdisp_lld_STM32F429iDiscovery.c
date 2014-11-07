@@ -354,7 +354,7 @@ LLDSPEC	color_t gdisp_lld_get_pixel_color(GDisplay *g) {
 				return;
 			switch((powermode_t)g->p.ptr) {
 			case powerOff: case powerOn: case powerSleep: case powerDeepSleep:
-				board_power(g, (powermode_t)g->p.ptr);
+				// TODO
 				break;
 			default:
 				return;
@@ -394,13 +394,13 @@ LLDSPEC	color_t gdisp_lld_get_pixel_color(GDisplay *g) {
 
 		case GDISP_CONTROL_BACKLIGHT:
 			if ((unsigned)g->p.ptr > 100) g->p.ptr = (void *)100;
-			board_backlight(g, (unsigned)g->p.ptr);
+			set_backlight(g, (unsigned)g->p.ptr);
 			g->g.Backlight = (unsigned)g->p.ptr;
 			return;
 
 		case GDISP_CONTROL_CONTRAST:
 			if ((unsigned)g->p.ptr > 100) g->p.ptr = (void *)100;
-			board_contrast(g, (unsigned)g->p.ptr);
+			// TODO
 			g->g.Contrast = (unsigned)g->p.ptr;
 			return;
 		}
