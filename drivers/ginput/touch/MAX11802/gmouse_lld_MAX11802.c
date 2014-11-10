@@ -18,6 +18,12 @@
 // Get the hardware interface
 #include "gmouse_lld_MAX11802_board.h"
 
+// Register values to set
+#define MAX11802_MODE    0x0E		// Direct conversion with averaging
+#define MAX11802_AVG     0x55
+#define MAX11802_TIMING  0x77
+#define MAX11802_DELAY   0x55
+
 #define Z_MIN		0
 #define Z_MAX		1
 

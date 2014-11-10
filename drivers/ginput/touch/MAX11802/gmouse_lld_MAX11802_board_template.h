@@ -16,27 +16,28 @@
 #define GMOUSE_MAX11802_FINGER_CLICK_ERROR		18
 #define GMOUSE_MAX11802_FINGER_MOVE_ERROR		14
 
-// Register values to set
-#define MAX11802_MODE    0x0E		// Direct conversion with averaging
-#define MAX11802_AVG     0x55
-#define MAX11802_TIMING  0x77
-#define MAX11802_DELAY   0x55
-
 // How much extra data to allocate at the end of the GMouse structure for the board's use
 #define GMOUSE_MAX11802_BOARD_DATA_SIZE			0
 
-static inline void init_board(GMouse* m) {
+/**
+ *	Init the board
+ *
+ *	Returns TRUE on success, FALSE on failure
+ */
+static inline bool_t init_board(GMouse* m, unsigned driverinstance) {
 
 }
 
-static inline bool_t getpin_pressed(GMouse* m) {
-
-}
-
+/**
+ *	Acquire the bus
+ */
 static inline void aquire_bus(GMouse* m) {
 
 }
 
+/**
+ *	Release the bus
+ */
 static inline void release_bus(GMouse* m) {
 
 }
