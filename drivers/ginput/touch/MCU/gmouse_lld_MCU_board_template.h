@@ -26,7 +26,7 @@
 static bool_t init_board(GMouse *m, unsigned driverinstance) {
 }
 
-static void read_xyz(GMouse *m, GMouseReading *prd) {
+static bool_t read_xyz(GMouse *m, GMouseReading *prd) {
 }
 
 #endif /* _LLD_GMOUSE_MCU_BOARD_H */
