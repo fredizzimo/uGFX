@@ -12,34 +12,31 @@
 #define GMOUSE_DRIVER_VMT		GMOUSEVMT_MAX11802
 #include "src/ginput/driver_mouse.h"
 
-#define GMOUSE_MAX11802_FLG_TOUCHED		(GMOUSE_FLG_DRIVER_FIRST << 0)
-
 // Hardware definitions
 #include "drivers/ginput/touch/MAX11802/max11802.h"
 
 // Get the hardware interface
 #include "gmouse_lld_MAX11802_board.h"
 
-// Last values read from A-D channels
-static uint16_t	lastx, lasty;
-static uint16_t	lastz = { 100 << 4 };			// This may not be used, so initialise it (value is bits 15..4)
+#define Z_MIN		0
+#define Z_MAX		1
 
 static bool_t MouseInit(GMouse* m, unsigned driverinstance)
 {
-	uint8_t ret;
+	uint8_t *p;
 
-	const uint8_t commandList[][2] = {
-		{ MAX11802_CMD_GEN_WR, 0xf0 },					// General config - leave TIRQ enabled, even though we ignore it ATM
-		{ MAX11802_CMD_RES_WR, 0x00 },					// A-D resolution, hardware config - rewriting default; all 12-bit resolution
-		{ MAX11802_CMD_AVG_WR, MAX11802_AVG },			// A-D averaging - 8 samples, average four median samples
-		{ MAX11802_CMD_SAMPLE_WR, 0x00 },				// A-D sample time - use default
-		{ MAX11802_CMD_TIMING_WR, MAX11802_TIMING },	// Setup timing
-		{ MAX11802_CMD_DELAY_WR, MAX11802_DELAY },		// Conversion delays
-		{ MAX11802_CMD_TDPULL_WR, 0x00 },				// A-D resolution, hardware config - rewrite default
-		//{ MAX11802_CMD_MDTIM_WR, 0x00 },				// Autonomous mode timing - write default
-		//{ MAX11802_CMD_APCONF_WR, 0x00 },				// Aperture config register - rewrite default
-														// Ignore aux config register - not used
-		{ MAX11802_CMD_MODE_WR, MAX11802_MODE },		// Set mode last
+	static const uint8_t commandList[] = {
+		MAX11802_CMD_GEN_WR, 0xf0,					// General config - leave TIRQ enabled, even though we ignore it ATM
+		MAX11802_CMD_RES_WR, 0x00,					// A-D resolution, hardware config - rewriting default; all 12-bit resolution
+		MAX11802_CMD_AVG_WR, MAX11802_AVG,			// A-D averaging - 8 samples, average four median samples
+		MAX11802_CMD_SAMPLE_WR, 0x00,				// A-D sample time - use default
+		MAX11802_CMD_TIMING_WR, MAX11802_TIMING,	// Setup timing
+		MAX11802_CMD_DELAY_WR, MAX11802_DELAY,		// Conversion delays
+		MAX11802_CMD_TDPULL_WR, 0x00,				// A-D resolution, hardware config - rewrite default
+		// MAX11802_CMD_MDTIM_WR, 0x00,				// Autonomous mode timing - write default - only for MAX11800, MAX11801
+		// MAX11802_CMD_APCONF_WR, 0x00,			// Aperture config register - rewrite default - only for MAX11800, MAX11801
+													// Ignore aux config register - not used
+		MAX11802_CMD_MODE_WR, MAX11802_MODE			// Set mode last
 	};
 
 	if (!init_board(m, driverinstance))
@@ -47,19 +44,21 @@ static bool_t MouseInit(GMouse* m, unsigned driverinstance)
 
 	aquire_bus(m);
 
-	for (ret = 0; ret < (sizeof(commandList) / (2 * sizeof(uint8_t))); ret++) {
-		write_command(m, commandList[ret][0], commandList[ret][1]);
-	}
+	for (p = commandList; p < commandList+sizeof(commandList); p += 2)
+		write_command(m, p[0], p[1]);
 	
-	ret = write_command(m, MAX11802_CMD_MODE_RD, 0);			// Read something as a test
-	if (ret != MAX11802_MODE) {
-		// Error here - @TODO: What can we do about it?
+	// Read something as a test
+	if (write_command(m, MAX11802_CMD_MODE_RD, 0) != MAX11802_MODE) {
+		release_bus(m);
+		return FALSE;
 	}
 
 	release_bus(m);
+
+	return TRUE;
 }
 
-static void read_xyz(GMouse* m, GMouseReading* pdr)
+static bool_t read_xyz(GMouse* m, GMouseReading* pdr)
 {
 	uint8_t readyCount;
 	uint8_t notReadyCount;
@@ -70,11 +69,8 @@ static void read_xyz(GMouse* m, GMouseReading* pdr)
 	
 	aquire_bus(m);
 
-#if MAX11802_READ_Z_VALUE
-	gfintWriteCommand(m, MAX11802_CMD_MEASUREXYZ);		// just write command
-#else
+	// Start the conversion
 	gfintWriteCommand(m, MAX11802_CMD_MEASUREXY);		// just write command
-#endif
 
     /**
 	 * put a delay in here, since conversion will take a finite time - longer if reading Z as well
@@ -94,49 +90,64 @@ static void read_xyz(GMouse* m, GMouseReading* pdr)
 	* There's also a separate counter to guard against never getting valid readings.
 	*
 	* Read the two or three readings required in a single burst, swapping x and y order if necessary
+	*
+	* Reading Z is possible but complicated requiring two z readings, multiplication and division, various constant ratio's,
+	* 	and interpolation in relation to the X and Y readings. It is not a simple pressure reading.
+	* 	In other words, don't bother trying.
 	*/
 
-	readyCount = 0;
-	notReadyCount = 0;
+	readyCount = notReadyCount = 0;
 	do {
-	    gfintWriteCommand(m, MAX11802_CMD_XPOSITION);     // This sets pointer to first byte of block
+		// Get a set of readings
+	    gfintWriteCommand(m, MAX11802_CMD_XPOSITION);
+		#if defined(GINPUT_MOUSE_YX_INVERTED) && GINPUT_MOUSE_YX_INVERTED
+			pdr->y = read_value(m);
+			pdr->x = read_value(m);
+		#else
+			pdr->x = read_value(m);
+			pdr->y = read_value(m);
+		#endif
 
-#if defined(GINPUT_MOUSE_YX_INVERTED) && GINPUT_MOUSE_YX_INVERTED
-        lasty = read_value(m);
-        lastx = read_value(m);
-#else
-        lastx = read_value(m);
-        lasty = read_value(m));
-#endif
-#if MAX11802_READ_Z_VALUE
-		lastz = read_value(m);
-		if (((lastx & 0x0f) != 0xF) && ((lasty * 0xf0) != 0xF) && ((lastz * 0xf0) != 0xF))
-#else
-		if (((lastx & 0x0f) != 0xF) && ((lasty * 0xf0) != 0xF))
-#endif
-		{
-			readyCount++;
+		// Test the result validity
+		if (((pdr->x | pdr->y) & 0x03) == 0x03) {
+
+			// Has it been too long? If so give up
+			if (++notReadyCount >= 5) {
+				release_bus(m);
+				return FALSE;
+			}
+
+			// Give up the time slice to someone else and then try again
+			gfxYield();
+			continue;
 		}
-		else
-		{
-			notReadyCount++;          // Protect against infinite loops
-		}
-	} while ((readyCount < 2) && (notReadyCount < 20));
+
+		// We have a result but we need two valid results to believe it
+		readyCount++;
+
+	} while (readyCount < 2);
 	
-	
+	release_bus(m);
+
 	/**
 	 *	format of each value returned by MAX11802:
 	 *		Bits 15..4 - analog value
 	 *		Bits 3..2 - tag value - measurement type (X, Y, Z1, Z2)
 	 *		Bits 1..0 - tag value - event type (00 = valid touch, 10 - no touch, 11 - measurement in progress)
 	 */
-	pt->x = lastx >> 4;		// Delete the tags
-	pt->y = lasty >> 4;
-    pt->z = lastz >> 4;		// If no Z-axis, lastz has been initialised to return 100
 
-	pt->buttons = ((0 == (lastx & 3)) && (0 == (lasty & 3)) && (0 == (lastz & 3))) ? GINPUT_TOUCH_PRESSED : 0;
+    // Was there a valid touch?
+    if ((pt->x & 0x03) == 0x02) {
+    	pdr->z = Z_MIN;
+    	return TRUE;
+    }
 
-	release_bus(m);
+    // Strip the tags
+	pt->x >>= 4;
+	pt->y >>= 4;
+   	pdr->z = Z_MAX;
+
+    return TRUE;
 }
 
 const GMouseVMT const GMOUSE_DRIVER_VMT[1] = {{
@@ -148,10 +159,10 @@ const GMouseVMT const GMOUSE_DRIVER_VMT[1] = {{
 		_gmousePostInitDriver,
 		_gmouseDeInitDriver
 	},
-	255,			// z_max
-	0,				// z_min
-	20,				// z_touchoff
-	200,			// z_touchon
+	Z_MAX,			// z_max
+	Z_MIN,			// z_min
+	Z_MIN,			// z_touchoff
+	Z_MAX,			// z_touchon
 	{				// pen_jitter
 		GMOUSE_MAX11802_PEN_CALIBRATE_ERROR,		// calibrate
 		GMOUSE_MAX11802_PEN_CLICK_ERROR,			// click

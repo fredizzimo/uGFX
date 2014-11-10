@@ -8,9 +8,6 @@
 #ifndef _GINPUT_LLD_MOUSE_BOARD_H
 #define _GINPUT_LLD_MOUSE_BOARD_H
 
-// Experimental to read pressure on Z1 as well
-#define MAX11802_READ_Z_VALUE	FALSE
-
 // Resolution and Accuracy Settings
 #define GMOUSE_MAX11802_PEN_CALIBRATE_ERROR		8
 #define GMOUSE_MAX11802_PEN_CLICK_ERROR			6
