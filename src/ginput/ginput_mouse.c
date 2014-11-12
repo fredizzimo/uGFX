@@ -8,670 +8,815 @@
 /**
  * @file    src/ginput/ginput_mouse.c
  * @brief   GINPUT mouse/touch code.
- *
- * @defgroup Mouse Mouse
- * @ingroup GINPUT
- * @{
  */
 #include "gfx.h"
 
-#if (GFX_USE_GINPUT && GINPUT_NEED_MOUSE) || defined(__DOXYGEN__)
+#if GFX_USE_GINPUT && GINPUT_NEED_MOUSE
 
-#include "driver_mouse.h"
-
-#if GINPUT_MOUSE_NEED_CALIBRATION
-	#if !defined(GFX_USE_GDISP) || !GFX_USE_GDISP
-		#error "GINPUT: GFX_USE_GDISP must be defined when mouse or touch calibration is required"
-	#endif
-
-	#include <string.h>							// Required for memcpy
-
-	#define GINPUT_MOUSE_CALIBRATION_FONT		"* Double"
-	#define GINPUT_MOUSE_CALIBRATION_FONT2		"* Narrow"
-	#define GINPUT_MOUSE_CALIBRATION_TEXT		"Calibration"
-	#define GINPUT_MOUSE_CALIBRATION_ERROR_TEXT	"Failed - Please try again!"
-	#define GINPUT_MOUSE_CALIBRATION_SAME_TEXT	"Error: Same Reading - Check Driver!"
-
-	#if GINPUT_MOUSE_MAX_CALIBRATION_ERROR < 0
-		#define GINPUT_MOUSE_CALIBRATION_POINTS		3
-	#else
-		#define GINPUT_MOUSE_CALIBRATION_POINTS		4
-	#endif
-
-	typedef struct Calibration_t {
-		float	ax;
-		float	bx;
-		float	cx;
-		float	ay;
-		float	by;
-		float	cy;
-	} Calibration;
+// Just to make code easier
+#if !GFX_USE_GDISP
+	#define GDISP	0
 #endif
 
-typedef struct MousePoint_t {
-	coord_t		x, y;
-} MousePoint;
+// Local Settings
+#define CALIBRATION_POLL_PERIOD			20				// milliseconds
+#define CALIBRATION_MINPRESS_PERIOD		300				// milliseconds
+#define CALIBRATION_MAXPRESS_PERIOD		5000			// milliseconds
 
+#define CALIBRATION_FONT				"* Double"
+#define CALIBRATION_FONT2				"* Narrow"
+#define CALIBRATION_BACKGROUND			Blue
+
+#define CALIBRATION_CROSS_COLOR1		White
+#define CALIBRATION_CROSS_COLOR2		RGB2COLOR(184,158,131)
+#define CALIBRATION_CROSS_INNERGAP		2
+#define CALIBRATION_CROSS_RADIUS		15
+
+#define CALIBRATION_TITLE				"Calibration"
+#define CALIBRATION_TITLE_Y				5
+#define CALIBRATION_TITLE_HEIGHT		30
+#define CALIBRATION_TITLE_COLOR			White
+#define CALIBRATION_TITLE_BACKGROUND	Blue
+
+#define CALIBRATION_ERROR_TEXT			"Calibration Failed!"
+#define CALIBRATION_ERROR_DELAY			3000
+#define CALIBRATION_ERROR_COLOR			Red
+#define CALIBRATION_ERROR_BACKGROUND	Yellow
+#define CALIBRATION_ERROR_Y				35
+#define CALIBRATION_ERROR_HEIGHT		40
+
+// Get the mouse driver interface
+#include "driver_mouse.h"
+
+// The mouse poll timer
 static GTIMER_DECL(MouseTimer);
 
-static struct MouseConfig_t {
-	MouseReading					t;
-	MousePoint						movepos;
-	MousePoint						clickpos;
-	systemticks_t					clicktime;
-	uint16_t						last_buttons;
-	uint16_t						flags;
-			#define FLG_INIT_DONE		0x8000
-			#define FLG_CLICK_TIMER		0x0001
-			#define FLG_IN_CAL			0x0010
-			#define FLG_CAL_OK			0x0020
-			#define FLG_CAL_SAVED		0x0040
-			#define FLG_CAL_FREE		0x0080
-			#define FLG_CAL_RAW			0x0100
-	#if GINPUT_MOUSE_NEED_CALIBRATION
-		GMouseCalibrationSaveRoutine	fnsavecal;
-		GMouseCalibrationLoadRoutine	fnloadcal;
-		Calibration						caldata;
-	#endif
-	GDisplay *							display;
-} MouseConfig;
+// Calibration application
+#if !GINPUT_TOUCH_NOCALIBRATE
+	#include <string.h>							// Required for memcpy
 
-void _tsOrientClip(MouseReading *pt, GDisplay *g, bool_t doClip) {
-	coord_t		w, h;
-
-	w = gdispGGetWidth(g);
-	h = gdispGGetHeight(g);
-
-	#if GDISP_NEED_CONTROL && !GINPUT_MOUSE_NO_ROTATION
-		switch(gdispGGetOrientation(g)) {
-			case GDISP_ROTATE_0:
-				break;
-			case GDISP_ROTATE_90:
-				{
-					coord_t t = pt->x;
-					pt->x = w - 1 - pt->y;
-					pt->y = t;
-				}
-				break;
-			case GDISP_ROTATE_180:
-				pt->x = w - 1 - pt->x;
-				pt->y = h - 1 - pt->y;
-				break;
-			case GDISP_ROTATE_270:
-				{
-					coord_t t = pt->y;
-					pt->y = h - 1 - pt->x;
-					pt->x = t;
-				}
-				break;
-			default:
-				break;
-		}
-	#endif
-
-	if (doClip) {
-		if (pt->x < 0)	pt->x = 0;
-		else if (pt->x >= w) pt->x = w-1;
-		if (pt->y < 0)	pt->y = 0;
-		else if (pt->y >= h) pt->y = h-1;
-	}
-}
-
-#if GINPUT_MOUSE_NEED_CALIBRATION
-	static inline void _tsSetIdentity(Calibration *c) {
-		c->ax = 1;
-		c->bx = 0;
-		c->cx = 0;
-		c->ay = 0;
-		c->by = 1;
-		c->cy = 0;
-	}
-
-	static inline void _tsDrawCross(const MousePoint *pp) {
-		gdispGDrawLine(MouseConfig.display, pp->x-15, pp->y, pp->x-2, pp->y, White);
-		gdispGDrawLine(MouseConfig.display, pp->x+2, pp->y, pp->x+15, pp->y, White);
-		gdispGDrawLine(MouseConfig.display, pp->x, pp->y-15, pp->x, pp->y-2, White);
-		gdispGDrawLine(MouseConfig.display, pp->x, pp->y+2, pp->x, pp->y+15, White);
-
-		gdispGDrawLine(MouseConfig.display, pp->x-15, pp->y+15, pp->x-7, pp->y+15, RGB2COLOR(184,158,131));
-		gdispGDrawLine(MouseConfig.display, pp->x-15, pp->y+7, pp->x-15, pp->y+15, RGB2COLOR(184,158,131));
-
-		gdispGDrawLine(MouseConfig.display, pp->x-15, pp->y-15, pp->x-7, pp->y-15, RGB2COLOR(184,158,131));
-		gdispGDrawLine(MouseConfig.display, pp->x-15, pp->y-7, pp->x-15, pp->y-15, RGB2COLOR(184,158,131));
-
-		gdispGDrawLine(MouseConfig.display, pp->x+7, pp->y+15, pp->x+15, pp->y+15, RGB2COLOR(184,158,131));
-		gdispGDrawLine(MouseConfig.display, pp->x+15, pp->y+7, pp->x+15, pp->y+15, RGB2COLOR(184,158,131));
-
-		gdispGDrawLine(MouseConfig.display, pp->x+7, pp->y-15, pp->x+15, pp->y-15, RGB2COLOR(184,158,131));
-		gdispGDrawLine(MouseConfig.display, pp->x+15, pp->y-15, pp->x+15, pp->y-7, RGB2COLOR(184,158,131));
-	}
-
-	static inline void _tsClearCross(const MousePoint *pp) {
-		gdispGFillArea(MouseConfig.display, pp->x - 15, pp->y - 15, 42, 42, Blue);
-	}
-
-	static inline void _tsTransform(MouseReading *pt, const Calibration *c) {
+	static inline void CalibrationTransform(GMouseReading *pt, const GMouseCalibration *c) {
 		pt->x = (coord_t) (c->ax * pt->x + c->bx * pt->y + c->cx);
 		pt->y = (coord_t) (c->ay * pt->x + c->by * pt->y + c->cy);
 	}
+#endif
 
-	static inline void _tsDo3PointCalibration(const MousePoint *cross, const MousePoint *points, GDisplay *g, Calibration *c) {
+static void SendMouseEvent(GSourceListener	*psl, GMouse *m, GMouseReading *r) {
+	GEventMouse		*pe;
+
+	// If there is no event buffer just mark a missed event
+	if (!(pe = (GEventMouse *)geventGetEventBuffer(psl))) {
+		// This listener is missing - save the meta events that have happened
+		psl->srcflags |= ((r->buttons & GMETA_MASK)|GINPUT_MISSED_MOUSE_EVENT);
+		return;
+	}
+
+	// If we haven't really moved (and there are no meta events) don't bother sending the event
+	if (!(r->buttons & GMETA_MASK) && !psl->srcflags && !(psl->listenflags & GLISTEN_MOUSENOFILTER)
+			&& r->x == m->r.x && r->y == m->r.y && (r->buttons & GINPUT_MOUSE_BTN_MASK) == (m->r.buttons & GINPUT_MOUSE_BTN_MASK))
+		return;
+
+	// Send the event only if we are listening for it
+	if (!((r->buttons & GINPUT_MOUSE_BTN_LEFT) && (psl->listenflags & GLISTEN_MOUSEDOWNMOVES))
+			&& !(!(r->buttons & GINPUT_MOUSE_BTN_LEFT) && (psl->listenflags & GLISTEN_MOUSEUPMOVES))
+			&& !((r->buttons & GMETA_MASK) && (psl->listenflags & GLISTEN_MOUSEMETA)))
+		return;
+
+	#if !GINPUT_TOUCH_NOTOUCH
+		pe->type = (gmvmt(m)->d.flags & GMOUSE_VFLG_TOUCH) ? GEVENT_TOUCH : GEVENT_MOUSE;
+	#else
+		pe->type = GEVENT_MOUSE;
+	#endif
+	pe->x = r->x;
+	pe->y = r->y;
+	pe->z = r->z;
+	pe->buttons = r->buttons | psl->srcflags;
+	psl->srcflags = 0;
+	pe->display = m->display;
+	geventSendEvent(psl);
+}
+
+static void GetMouseReading(GMouse *m) {
+	GMouseReading	r;
+
+	// Step 1 - Get the Raw Reading
+	{
+		m->flags &= ~GMOUSE_FLG_NEEDREAD;
+		if (!gmvmt(m)->get(m, &r))
+			return;
+	}
+
+	// Step 2 - Handle touch and button 0 debouncing
+	{
+		// Clean off button garbage
+		r.buttons &= GINPUT_MOUSE_BTN_MASK;
+
+		#if !GINPUT_TOUCH_NOTOUCH
+			// If touch then calculate button 0 from z
+			if ((gmvmt(m)->d.flags & GMOUSE_VFLG_TOUCH)) {
+				if (gmvmt(m)->z_min <= gmvmt(m)->z_max) {
+					if (r.z >= gmvmt(m)->z_touchon)			r.buttons |= GINPUT_MOUSE_BTN_LEFT;
+					else if (r.z <= gmvmt(m)->z_touchoff)	r.buttons &= ~GINPUT_MOUSE_BTN_LEFT;
+					else									return;				// bad transitional reading
+				} else {
+					if (r.z <= gmvmt(m)->z_touchon)			r.buttons |= GINPUT_MOUSE_BTN_LEFT;
+					else if (r.z >= gmvmt(m)->z_touchoff)	r.buttons &= ~GINPUT_MOUSE_BTN_LEFT;
+					else									return;				// bad transitional reading
+				}
+			}
+
+			// Devices with poor button 0 transitioning need debouncing
+			if ((gmvmt(m)->d.flags & GMOUSE_VFLG_POORUPDOWN)) {
+				// Are we in a transition test
+				if ((m->flags & GMOUSE_FLG_INDELTA)) {
+					if (!((r.buttons ^ m->r.buttons) & GINPUT_MOUSE_BTN_LEFT)) {
+						// Transition failed
+						m->flags &= ~GMOUSE_FLG_INDELTA;
+						return;
+					}
+					// Transition succeeded
+					m->flags &= ~GMOUSE_FLG_INDELTA;
+
+				// Should we start a transition test
+				} else if (((r.buttons ^ m->r.buttons) & GINPUT_MOUSE_BTN_LEFT)) {
+					m->flags |= GMOUSE_FLG_INDELTA;
+					return;
+				}
+			}
+		#endif
+
+		#if !GINPUT_TOUCH_NOCALIBRATE_GUI
+			// Stop here with just the raw x,y reading during calibration
+			if ((m->flags & GMOUSE_FLG_IN_CAL)) {
+				if ((r.buttons & GINPUT_MOUSE_BTN_LEFT)) {
+					m->r.x = r.x;
+					m->r.y = r.y;
+				}
+				m->r.buttons = r.buttons;
+				return;
+			}
+		#endif
+	}
+
+	// Step 3 - Apply calibration, rotation and display clipping
+	{
+		// If the mouse is up we may need to keep our previous position
+		if ((gmvmt(m)->d.flags & GMOUSE_VFLG_ONLY_DOWN) && !(r.buttons & GINPUT_MOUSE_BTN_LEFT)) {
+			r.x = m->r.x;
+			r.y = m->r.y;
+
+		} else {
+
+			#if !GINPUT_TOUCH_NOCALIBRATE
+				// Do we need to calibrate the reading?
+				if ((m->flags & GMOUSE_FLG_CALIBRATE))
+					CalibrationTransform(&r, &m->caldata);
+			#endif
+
+			// We can't clip or rotate if we don't have a display
+			if (m->display) {
+				coord_t			w, h;
+
+				// We now need display information
+				w = gdispGGetWidth(m->display);
+				h = gdispGGetHeight(m->display);
+
+				#if GDISP_NEED_CONTROL
+					// Do we need to rotate the reading to match the display
+					if (!(gmvmt(m)->d.flags & GMOUSE_VFLG_SELFROTATION)) {
+						coord_t		t;
+
+						switch(gdispGGetOrientation(m->display)) {
+							case GDISP_ROTATE_0:
+								break;
+							case GDISP_ROTATE_90:
+								t = r.x;
+								r.x = w - 1 - r.y;
+								r.y = t;
+								break;
+							case GDISP_ROTATE_180:
+								r.x = w - 1 - r.x;
+								r.y = h - 1 - r.y;
+								break;
+							case GDISP_ROTATE_270:
+								t = r.y;
+								r.y = h - 1 - r.x;
+								r.x = t;
+								break;
+							default:
+								break;
+						}
+					}
+				#endif
+
+				// Do we need to clip the reading to the display
+				if ((m->flags & GMOUSE_FLG_CLIP)) {
+					if (r.x < 0)		r.x = 0;
+					else if (r.x >= w)	r.x = w-1;
+					if (r.y < 0)		r.y = 0;
+					else if (r.y >= h)	r.y = h-1;
+				}
+			}
+		}
+	}
+
+	// Step 4 - Apply jitter detection
+	#if !GINPUT_TOUCH_NOTOUCH
+	{
+		const GMouseJitter	*pj;
+		uint32_t			diff;
+
+		// Are we in pen or finger mode
+		pj = (m->flags & GMOUSE_FLG_FINGERMODE) ? &gmvmt(m)->finger_jitter : &gmvmt(m)->pen_jitter;
+
+		// Is this just movement jitter
+		if (pj->move > 0) {
+			diff = (uint32_t)(r.x - m->r.x) * (uint32_t)(r.x - m->r.x) + (uint32_t)(r.y - m->r.y) * (uint32_t)(r.y - m->r.y);
+			if (diff < (uint32_t)pj->move * (uint32_t)pj->move) {
+				r.x = m->r.x;
+				r.y = m->r.y;
+			}
+		}
+
+		// Check if the click has moved outside the click area and if so cancel the click
+		if (pj->click > 0 && (m->flags & GMOUSE_FLG_CLICK_TIMER)) {
+			diff = (uint32_t)(r.x - m->clickpos.x) * (uint32_t)(r.x - m->clickpos.x) + (uint32_t)(r.y - m->clickpos.y) * (uint32_t)(r.y - m->clickpos.y);
+			if (diff > (uint32_t)pj->click * (uint32_t)pj->click)
+				m->flags &= ~GMOUSE_FLG_CLICK_TIMER;
+		}
+	}
+	#endif
+
+	// Step 5 - Click, context-click and other meta event detection
+	{
+		uint16_t		upbtns, dnbtns;
+
+		// Calculate button transitions
+		dnbtns = r.buttons & ~m->r.buttons;
+		upbtns = ~r.buttons & m->r.buttons;
+
+		// Left mouse down generates the Mouse-down meta event
+		if ((dnbtns & GINPUT_MOUSE_BTN_LEFT))
+			r.buttons |= GMETA_MOUSE_DOWN;
+
+		// Left mouse up generates the Mouse-up meta event
+		if ((upbtns & GINPUT_MOUSE_BTN_LEFT))
+			r.buttons |= GMETA_MOUSE_UP;
+
+		// Left/Right mouse down starts the click timer
+		if ((dnbtns & (GINPUT_MOUSE_BTN_LEFT|GINPUT_MOUSE_BTN_RIGHT))) {
+			m->clickpos.x = r.x;
+			m->clickpos.y = r.y;
+			m->clicktime = gfxSystemTicks();
+			m->flags |= GMOUSE_FLG_CLICK_TIMER;
+		}
+
+		// Left/Right mouse up with the click timer still running may generate a click or context click
+		if ((upbtns & (GINPUT_MOUSE_BTN_LEFT|GINPUT_MOUSE_BTN_RIGHT)) && (m->flags & GMOUSE_FLG_CLICK_TIMER)) {
+			m->flags &= ~GMOUSE_FLG_CLICK_TIMER;
+			m->clicktime = gfxSystemTicks() - m->clicktime;
+
+			// Was this a short click?
+			if (m->clicktime <= gfxMillisecondsToTicks(GINPUT_MOUSE_CLICK_TIME)) {
+				if ((upbtns & GINPUT_MOUSE_BTN_RIGHT))
+					r.buttons |= GMETA_MOUSE_CXTCLICK;
+				if ((upbtns & GINPUT_MOUSE_BTN_LEFT))
+					r.buttons |= GMETA_MOUSE_CLICK;
+			}
+
+			#if !GINPUT_TOUCH_NOTOUCH
+				// Was this a long click on a touch device?
+				if ((gmvmt(m)->d.flags & GMOUSE_VFLG_TOUCH) && m->clicktime >= gfxMillisecondsToTicks(GINPUT_TOUCH_CXTCLICK_TIME))
+					r.buttons |= GMETA_MOUSE_CXTCLICK;
+			#endif
+		}
+	}
+
+	// Step 6 - Send the event to the listeners that are interested.
+	{
+		GSourceListener	*psl;
+
+		// Send to the "All Mice" source listeners
+		psl = 0;
+		while ((psl = geventGetSourceListener((GSourceHandle)&MouseTimer, psl)))
+			SendMouseEvent(psl, m, &r);
+
+		// Send to the mouse specific source listeners
+		psl = 0;
+		while ((psl = geventGetSourceListener((GSourceHandle)m, psl)))
+			SendMouseEvent(psl, m, &r);
+	}
+
+	// Step 7 - Finally save the results
+	m->r.x = r.x;
+	m->r.y = r.y;
+	m->r.z = r.z;
+	m->r.buttons = r.buttons;
+}
+
+static void MousePoll(void *param) {
+	GMouse *	m;
+	(void) 		param;
+
+	for(m = (GMouse *)gdriverGetNext(GDRIVER_TYPE_MOUSE, 0); m; m = (GMouse *)gdriverGetNext(GDRIVER_TYPE_MOUSE, (GDriver *)m)) {
+		if (!(gmvmt(m)->d.flags & GMOUSE_VFLG_NOPOLL) || (m->flags & GMOUSE_FLG_NEEDREAD))
+			GetMouseReading(m);
+	}
+}
+
+// Calibration user interface
+#if !GINPUT_TOUCH_NOCALIBRATE_GUI
+	#if !defined(GFX_USE_GDISP) || !GFX_USE_GDISP
+		#error "GINPUT: GFX_USE_GDISP must be defined when calibration is required"
+	#endif
+
+	static inline void CalibrationCrossDraw(GMouse *m, const point *pp) {
+		gdispGDrawLine(m->display, pp->x-CALIBRATION_CROSS_RADIUS, pp->y, pp->x-CALIBRATION_CROSS_INNERGAP, pp->y, CALIBRATION_CROSS_COLOR1);
+		gdispGDrawLine(m->display, pp->x+CALIBRATION_CROSS_INNERGAP, pp->y, pp->x+CALIBRATION_CROSS_RADIUS, pp->y, CALIBRATION_CROSS_COLOR1);
+		gdispGDrawLine(m->display, pp->x, pp->y-CALIBRATION_CROSS_RADIUS, pp->x, pp->y-CALIBRATION_CROSS_INNERGAP, CALIBRATION_CROSS_COLOR1);
+		gdispGDrawLine(m->display, pp->x, pp->y+CALIBRATION_CROSS_INNERGAP, pp->x, pp->y+CALIBRATION_CROSS_RADIUS, CALIBRATION_CROSS_COLOR1);
+		gdispGDrawLine(m->display, pp->x-CALIBRATION_CROSS_RADIUS, pp->y+CALIBRATION_CROSS_RADIUS, pp->x-CALIBRATION_CROSS_RADIUS/2, pp->y+CALIBRATION_CROSS_RADIUS, CALIBRATION_CROSS_COLOR2);
+		gdispGDrawLine(m->display, pp->x-CALIBRATION_CROSS_RADIUS, pp->y+CALIBRATION_CROSS_RADIUS/2, pp->x-CALIBRATION_CROSS_RADIUS, pp->y+CALIBRATION_CROSS_RADIUS, CALIBRATION_CROSS_COLOR2);
+		gdispGDrawLine(m->display, pp->x-CALIBRATION_CROSS_RADIUS, pp->y-CALIBRATION_CROSS_RADIUS, pp->x-CALIBRATION_CROSS_RADIUS/2, pp->y-CALIBRATION_CROSS_RADIUS, CALIBRATION_CROSS_COLOR2);
+		gdispGDrawLine(m->display, pp->x-CALIBRATION_CROSS_RADIUS, pp->y-CALIBRATION_CROSS_RADIUS/2, pp->x-CALIBRATION_CROSS_RADIUS, pp->y-CALIBRATION_CROSS_RADIUS, CALIBRATION_CROSS_COLOR2);
+		gdispGDrawLine(m->display, pp->x+CALIBRATION_CROSS_RADIUS/2, pp->y+CALIBRATION_CROSS_RADIUS, pp->x+CALIBRATION_CROSS_RADIUS, pp->y+CALIBRATION_CROSS_RADIUS, CALIBRATION_CROSS_COLOR2);
+		gdispGDrawLine(m->display, pp->x+CALIBRATION_CROSS_RADIUS, pp->y+CALIBRATION_CROSS_RADIUS/2, pp->x+CALIBRATION_CROSS_RADIUS, pp->y+CALIBRATION_CROSS_RADIUS, CALIBRATION_CROSS_COLOR2);
+		gdispGDrawLine(m->display, pp->x+CALIBRATION_CROSS_RADIUS/2, pp->y-CALIBRATION_CROSS_RADIUS, pp->x+CALIBRATION_CROSS_RADIUS, pp->y-CALIBRATION_CROSS_RADIUS, CALIBRATION_CROSS_COLOR2);
+		gdispGDrawLine(m->display, pp->x+CALIBRATION_CROSS_RADIUS, pp->y-CALIBRATION_CROSS_RADIUS, pp->x+CALIBRATION_CROSS_RADIUS, pp->y-CALIBRATION_CROSS_RADIUS/2, CALIBRATION_CROSS_COLOR2);
+	}
+
+	static inline void CalibrationCrossClear(GMouse *m, const point *pp) {
+		gdispGFillArea(m->display, pp->x - CALIBRATION_CROSS_RADIUS, pp->y - CALIBRATION_CROSS_RADIUS, CALIBRATION_CROSS_RADIUS*2+1, CALIBRATION_CROSS_RADIUS*2+1, CALIBRATION_BACKGROUND);
+	}
+
+	static inline void CalibrationCalculate(GMouse *m, const point *cross, const point *points) {
 		float		dx;
 		coord_t		c0, c1, c2;
+		(void)		m;
+
+		// Work on x values
+		c0 = cross[0].x;
+		c1 = cross[1].x;
+		c2 = cross[2].x;
 
 		#if GDISP_NEED_CONTROL
-			/* Convert all cross points back to GDISP_ROTATE_0 convention
-			 * before calculating the calibration matrix.
-			 */
-			switch(gdispGGetOrientation(g)) {
-			case GDISP_ROTATE_90:
-				c0 = cross[0].y;
-				c1 = cross[1].y;
-				c2 = cross[2].y;
-				break;
-			case GDISP_ROTATE_180:
-				c0 = c1 = c2 = gdispGGetWidth(g) - 1;
-				c0 -= cross[0].x;
-				c1 -= cross[1].x;
-				c2 -= cross[2].x;
-				break;
-			case GDISP_ROTATE_270:
-				c0 = c1 = c2 = gdispGGetHeight(g) - 1;
-				c0 -= cross[0].y;
-				c1 -= cross[1].y;
-				c2 -= cross[2].y;
-				break;
-			case GDISP_ROTATE_0:
-			default:
-				c0 = cross[0].x;
-				c1 = cross[1].x;
-				c2 = cross[2].x;
-				break;
+			if (!(gmvmt(m)->d.flags & GMOUSE_VFLG_SELFROTATION)) {
+				/* Convert all cross points back to GDISP_ROTATE_0 convention
+				 * before calculating the calibration matrix.
+				 */
+				switch(gdispGGetOrientation(m->display)) {
+				case GDISP_ROTATE_90:
+					c0 = cross[0].y;
+					c1 = cross[1].y;
+					c2 = cross[2].y;
+					break;
+				case GDISP_ROTATE_180:
+					c0 = c1 = c2 = gdispGGetWidth(m->display) - 1;
+					c0 -= cross[0].x;
+					c1 -= cross[1].x;
+					c2 -= cross[2].x;
+					break;
+				case GDISP_ROTATE_270:
+					c0 = c1 = c2 = gdispGGetHeight(m->display) - 1;
+					c0 -= cross[0].y;
+					c1 -= cross[1].y;
+					c2 -= cross[2].y;
+					break;
+                default:
+                    break;
+				}
 			}
-		#else
-			(void)	g;
-
-			c0 = cross[0].x;
-			c1 = cross[1].x;
-			c2 = cross[2].x;
 		#endif
 
 		/* Compute all the required determinants */
 		dx  = (float)(points[0].x - points[2].x) * (float)(points[1].y - points[2].y)
 				- (float)(points[1].x - points[2].x) * (float)(points[0].y - points[2].y);
 
-		c->ax = ((float)(c0 - c2) * (float)(points[1].y - points[2].y)
-				- (float)(c1 - c2) * (float)(points[0].y - points[2].y)) / dx;
-		c->bx = ((float)(c1 - c2) * (float)(points[0].x - points[2].x)
-				- (float)(c0 - c2) * (float)(points[1].x - points[2].x)) / dx;
-		c->cx = (c0 * ((float)points[1].x * (float)points[2].y - (float)points[2].x * (float)points[1].y)
-				- c1 * ((float)points[0].x * (float)points[2].y - (float)points[2].x * (float)points[0].y)
-				+ c2 * ((float)points[0].x * (float)points[1].y - (float)points[1].x * (float)points[0].y)) / dx;
+		m->caldata.ax = ((float)(c0 - c2) * (float)(points[1].y - points[2].y)
+							- (float)(c1 - c2) * (float)(points[0].y - points[2].y)) / dx;
+		m->caldata.bx = ((float)(c1 - c2) * (float)(points[0].x - points[2].x)
+							- (float)(c0 - c2) * (float)(points[1].x - points[2].x)) / dx;
+		m->caldata.cx = (c0 * ((float)points[1].x * (float)points[2].y - (float)points[2].x * (float)points[1].y)
+							- c1 * ((float)points[0].x * (float)points[2].y - (float)points[2].x * (float)points[0].y)
+							+ c2 * ((float)points[0].x * (float)points[1].y - (float)points[1].x * (float)points[0].y)) / dx;
+
+		// Work on y values
+		c0 = cross[0].y;
+		c1 = cross[1].y;
+		c2 = cross[2].y;
 
 		#if GDISP_NEED_CONTROL
-			switch(gdispGGetOrientation(g)) {
-			case GDISP_ROTATE_90:
-				c0 = c1 = c2 = gdispGGetWidth(g) - 1;
-				c0 -= cross[0].x;
-				c1 -= cross[1].x;
-				c2 -= cross[2].x;
-				break;
-			case GDISP_ROTATE_180:
-				c0 = c1 = c2 = gdispGGetHeight(g) - 1;
-				c0 -= cross[0].y;
-				c1 -= cross[1].y;
-				c2 -= cross[2].y;
-				break;
-			case GDISP_ROTATE_270:
-				c0 = cross[0].x;
-				c1 = cross[1].x;
-				c2 = cross[2].x;
-				break;
-			case GDISP_ROTATE_0:
-			default:
-				c0 = cross[0].y;
-				c1 = cross[1].y;
-				c2 = cross[2].y;
-				break;
-			}
-		#else
-			c0 = cross[0].y;
-			c1 = cross[1].y;
-			c2 = cross[2].y;
-		#endif
-
-		c->ay = ((float)(c0 - c2) * (float)(points[1].y - points[2].y)
-				- (float)(c1 - c2) * (float)(points[0].y - points[2].y)) / dx;
-		c->by = ((float)(c1 - c2) * (float)(points[0].x - points[2].x)
-				- (float)(c0 - c2) * (float)(points[1].x - points[2].x)) / dx;
-		c->cy = (c0 * ((float)points[1].x * (float)points[2].y - (float)points[2].x * (float)points[1].y)
-				- c1 * ((float)points[0].x * (float)points[2].y - (float)points[2].x * (float)points[0].y)
-				+ c2 * ((float)points[0].x * (float)points[1].y - (float)points[1].x * (float)points[0].y)) / dx;
-	}
-#endif
-
-#if GINPUT_MOUSE_READ_CYCLES > 1
-	static void get_raw_reading(MouseReading *pt) {
-		int32_t x, y, z;
-		unsigned i;
-
-		x = y = z = 0;
-		for(i = 0; i < GINPUT_MOUSE_READ_CYCLES; i++) {
-			ginput_lld_mouse_get_reading(pt);
-			x += pt->x;
-			y += pt->y;
-			z += pt->z;
-		}
-
-		/* Take the average of the readings */
-		pt->x = x / GINPUT_MOUSE_READ_CYCLES;
-		pt->y = y / GINPUT_MOUSE_READ_CYCLES;
-		pt->z = z / GINPUT_MOUSE_READ_CYCLES;
-	}
-#else
-	#define get_raw_reading(pt)		ginput_lld_mouse_get_reading(pt)
-#endif
-
-static void get_calibrated_reading(MouseReading *pt) {
-	get_raw_reading(pt);
-
-	#if GINPUT_MOUSE_NEED_CALIBRATION
-		_tsTransform(pt, &MouseConfig.caldata);
-	#endif
-
-	_tsOrientClip(pt, MouseConfig.display, !(MouseConfig.flags & FLG_CAL_RAW));
-}
-
-static void MousePoll(void *param) {
-	(void) param;
-	GSourceListener	*psl;
-	GEventMouse		*pe;
-	unsigned 		meta;
-	uint16_t		upbtns, dnbtns;
-	uint32_t		cdiff;
-	uint32_t		mdiff;
-
-	// Save the last mouse state
-	MouseConfig.last_buttons = MouseConfig.t.buttons;
-
-	// Get the new mouse reading
-	get_calibrated_reading(&MouseConfig.t);
-
-	// Calculate out new event meta value and handle CLICK and CXTCLICK
-	dnbtns = MouseConfig.t.buttons & ~MouseConfig.last_buttons;
-	upbtns = ~MouseConfig.t.buttons & MouseConfig.last_buttons;
-	meta = GMETA_NONE;
-
-	// As the touch moves up we need to return a point at the old position because some
-	//	controllers return garbage with the mouse up
-	if ((upbtns & GINPUT_MOUSE_BTN_LEFT)) {
-		MouseConfig.t.x = MouseConfig.movepos.x;
-		MouseConfig.t.y = MouseConfig.movepos.y;
-	}
-
-	// Calculate the position difference from our movement reference (update the reference if out of range)
-	mdiff = (MouseConfig.t.x - MouseConfig.movepos.x) * (MouseConfig.t.x - MouseConfig.movepos.x) +
-		(MouseConfig.t.y - MouseConfig.movepos.y) * (MouseConfig.t.y - MouseConfig.movepos.y);
-	if (mdiff > GINPUT_MOUSE_MAX_MOVE_JITTER * GINPUT_MOUSE_MAX_MOVE_JITTER) {
-		MouseConfig.movepos.x = MouseConfig.t.x;
-		MouseConfig.movepos.y = MouseConfig.t.y;
-	}
-	
-	// Check if the click has moved outside the click area and if so cancel the click
-	if ((MouseConfig.flags & FLG_CLICK_TIMER)) {
-		cdiff = (MouseConfig.t.x - MouseConfig.clickpos.x) * (MouseConfig.t.x - MouseConfig.clickpos.x) +
-			(MouseConfig.t.y - MouseConfig.clickpos.y) * (MouseConfig.t.y - MouseConfig.clickpos.y);
-		if (cdiff > GINPUT_MOUSE_MAX_CLICK_JITTER * GINPUT_MOUSE_MAX_CLICK_JITTER)
-			MouseConfig.flags &= ~FLG_CLICK_TIMER;
-	}
-
-	// Mouse down
-	if ((dnbtns & (GINPUT_MOUSE_BTN_LEFT|GINPUT_MOUSE_BTN_RIGHT))) {
-		MouseConfig.clickpos.x = MouseConfig.t.x;
-		MouseConfig.clickpos.y = MouseConfig.t.y;
-		MouseConfig.clicktime = gfxSystemTicks();
-		MouseConfig.flags |= FLG_CLICK_TIMER;
-		if ((dnbtns & GINPUT_MOUSE_BTN_LEFT))
-			meta |= GMETA_MOUSE_DOWN;
-	}
-
-	// Mouse up
-	if ((upbtns & (GINPUT_MOUSE_BTN_LEFT|GINPUT_MOUSE_BTN_RIGHT))) {
-		if ((upbtns & GINPUT_MOUSE_BTN_LEFT))
-			meta |= GMETA_MOUSE_UP;
-		if ((MouseConfig.flags & FLG_CLICK_TIMER)) {
-			if ((upbtns & GINPUT_MOUSE_BTN_LEFT)
-					#if GINPUT_MOUSE_CLICK_TIME != TIME_INFINITE
-						&& gfxSystemTicks() - MouseConfig.clicktime < gfxMillisecondsToTicks(GINPUT_MOUSE_CLICK_TIME)
-					#endif
-					)
-				meta |= GMETA_MOUSE_CLICK;
-			else
-				meta |= GMETA_MOUSE_CXTCLICK;
-			MouseConfig.flags &= ~FLG_CLICK_TIMER;
-		}
-	}
-
-	// Send the event to the listeners that are interested.
-	psl = 0;
-	while ((psl = geventGetSourceListener((GSourceHandle)(&MouseConfig), psl))) {
-		if (!(pe = (GEventMouse *)geventGetEventBuffer(psl))) {
-			// This listener is missing - save the meta events that have happened
-			psl->srcflags |= meta;
-			continue;
-		}
-
-		// If we haven't really moved (and there are no meta events) don't bother sending the event
-		if (mdiff <= GINPUT_MOUSE_MAX_MOVE_JITTER * GINPUT_MOUSE_MAX_MOVE_JITTER && !psl->srcflags
-				&& !meta && MouseConfig.last_buttons == MouseConfig.t.buttons && !(psl->listenflags & GLISTEN_MOUSENOFILTER))
-			continue;
-
-		// Send the event if we are listening for it
-		if (((MouseConfig.t.buttons & GINPUT_MOUSE_BTN_LEFT) && (psl->listenflags & GLISTEN_MOUSEDOWNMOVES))
-				|| (!(MouseConfig.t.buttons & GINPUT_MOUSE_BTN_LEFT) && (psl->listenflags & GLISTEN_MOUSEUPMOVES))
-				|| (meta && (psl->listenflags & GLISTEN_MOUSEMETA))) {
-			pe->type = GINPUT_MOUSE_EVENT_TYPE;
-			pe->instance = 0;
-			pe->x = MouseConfig.t.x;
-			pe->y = MouseConfig.t.y;
-			pe->z = MouseConfig.t.z;
-			pe->current_buttons = MouseConfig.t.buttons;
-			pe->last_buttons = MouseConfig.last_buttons;
-			pe->meta = meta;
-			if (psl->srcflags) {
-				pe->current_buttons |= GINPUT_MISSED_MOUSE_EVENT;
-				pe->meta |= psl->srcflags;
-				psl->srcflags = 0;
-			}
-			pe->display = MouseConfig.display;
-			geventSendEvent(psl);
-		}
-	}
-}
-
-GSourceHandle ginputGetMouse(uint16_t instance) {
-	#if GINPUT_MOUSE_NEED_CALIBRATION
-		Calibration		*pc;
-	#endif
-
-	// We only support a single mouse instance currently
-	//	Instance 9999 is the same as instance 0 except that it installs
-	//	a special "raw" calibration if there isn't one we can load.
-	if (instance && instance != 9999)
-		return 0;
-
-	// Make sure we have a valid mouse display
-	if (!MouseConfig.display)
-		MouseConfig.display = GDISP;
-
-	// Do we need to initialise the mouse subsystem?
-	if (!(MouseConfig.flags & FLG_INIT_DONE)) {
-		ginput_lld_mouse_init();
-
-		#if GINPUT_MOUSE_NEED_CALIBRATION
-			#if GINPUT_MOUSE_LLD_CALIBRATION_LOADSAVE
-				if (!MouseConfig.fnloadcal) {
-					MouseConfig.fnloadcal = ginput_lld_mouse_calibration_load;
-					MouseConfig.flags &= ~FLG_CAL_FREE;
+			if (!(gmvmt(m)->d.flags & GMOUSE_VFLG_SELFROTATION)) {
+				switch(gdispGGetOrientation(m->display)) {
+				case GDISP_ROTATE_90:
+					c0 = c1 = c2 = gdispGGetWidth(m->display) - 1;
+					c0 -= cross[0].x;
+					c1 -= cross[1].x;
+					c2 -= cross[2].x;
+					break;
+				case GDISP_ROTATE_180:
+					c0 = c1 = c2 = gdispGGetHeight(m->display) - 1;
+					c0 -= cross[0].y;
+					c1 -= cross[1].y;
+					c2 -= cross[2].y;
+					break;
+				case GDISP_ROTATE_270:
+					c0 = cross[0].x;
+					c1 = cross[1].x;
+					c2 = cross[2].x;
+					break;
+                default:
+                    break;
 				}
-				if (!MouseConfig.fnsavecal)
-					MouseConfig.fnsavecal = ginput_lld_mouse_calibration_save;
-			#endif
-			if (MouseConfig.fnloadcal && (pc = (Calibration *)MouseConfig.fnloadcal(instance))) {
-				memcpy(&MouseConfig.caldata, pc, sizeof(MouseConfig.caldata));
-				MouseConfig.flags |= (FLG_CAL_OK|FLG_CAL_SAVED);
-				if ((MouseConfig.flags & FLG_CAL_FREE))
-					gfxFree((void *)pc);
-			} else if (instance == 9999) {
-				_tsSetIdentity(&MouseConfig.caldata);
-				MouseConfig.flags |= (FLG_CAL_OK|FLG_CAL_SAVED|FLG_CAL_RAW);
-			} else
-				ginputCalibrateMouse(instance);
+			}
 		#endif
 
-		// Get the first reading
-		MouseConfig.last_buttons = 0;
-		get_calibrated_reading(&MouseConfig.t);
-
-		// Mark init as done and start the Poll timer
-		MouseConfig.flags |= FLG_INIT_DONE;
-		gtimerStart(&MouseTimer, MousePoll, 0, TRUE, GINPUT_MOUSE_POLL_PERIOD);
+		m->caldata.ay = ((float)(c0 - c2) * (float)(points[1].y - points[2].y)
+							- (float)(c1 - c2) * (float)(points[0].y - points[2].y)) / dx;
+		m->caldata.by = ((float)(c1 - c2) * (float)(points[0].x - points[2].x)
+							- (float)(c0 - c2) * (float)(points[1].x - points[2].x)) / dx;
+		m->caldata.cy = (c0 * ((float)points[1].x * (float)points[2].y - (float)points[2].x * (float)points[1].y)
+							- c1 * ((float)points[0].x * (float)points[2].y - (float)points[2].x * (float)points[0].y)
+							+ c2 * ((float)points[0].x * (float)points[1].y - (float)points[1].x * (float)points[0].y)) / dx;
 	}
 
-	// Return our structure as the handle
-	return (GSourceHandle)&MouseConfig;
+	static uint32_t CalibrateMouse(GMouse *m) {
+		coord_t		w, h;
+		point		cross[4];		// The locations of the test points on the display
+		point		points[4];		// The x, y readings obtained from the mouse for each test point
+		uint32_t	err;
+		#if GDISP_NEED_TEXT
+			font_t		font1, font2;
+		#endif
+
+		#if GDISP_NEED_TEXT
+			font1 = gdispOpenFont(CALIBRATION_FONT);
+			if (!font1) font1 = gdispOpenFont("*");
+			font2 = gdispOpenFont(CALIBRATION_FONT2);
+			if (!font2) font2 = gdispOpenFont("*");
+		#endif
+		err = 0;
+		w  =  gdispGGetWidth(m->display);
+		h  =  gdispGGetHeight(m->display);
+		#if GDISP_NEED_CLIP
+			gdispGSetClip(m->display, 0, 0, w, h);
+		#endif
+
+		// Ensure we get minimaly processed readings for the calibration
+		m->flags |= GMOUSE_FLG_IN_CAL;
+
+		// Set up our calibration locations
+        if ((gmvmt(m)->d.flags & GMOUSE_VFLG_CAL_EXTREMES)) {
+            cross[0].x = 0;		cross[0].y = 0;
+            cross[1].x = w-1;	cross[1].y = 0;
+            cross[2].x = w-1;	cross[2].y = h-1;
+            cross[3].x = w/2;	cross[3].y = h/2;
+        } else {
+            cross[0].x = w/4;	cross[0].y = h/4;
+            cross[1].x = w-w/4;	cross[1].y = h/4;
+            cross[2].x = w-w/4;	cross[2].y = h-h/4;
+            cross[3].x = w/2;	cross[3].y = h/2;
+        }
+
+		// Set up the calibration display
+		gdispGClear(m->display, Blue);
+		#if GDISP_NEED_TEXT
+			gdispGFillStringBox(m->display,
+								0, CALIBRATION_TITLE_Y, w, CALIBRATION_TITLE_HEIGHT,
+								CALIBRATION_TITLE, font1,  CALIBRATION_TITLE_COLOR, CALIBRATION_TITLE_BACKGROUND,
+								justifyCenter);
+		#endif
+
+		// Calculate the calibration
+		{
+			unsigned	i, maxpoints;
+
+			maxpoints = (gmvmt(m)->d.flags & GMOUSE_VFLG_CAL_TEST) ? 4 : 3;
+
+			// Loop through the calibration points
+			for(i = 0; i < maxpoints; i++) {
+				int32_t		px, py;
+				unsigned	j;
+
+				// Draw the current calibration point
+				CalibrationCrossDraw(m, &cross[i]);
+
+				// Get a valid "point pressed" average reading
+				do {
+					// Wait for the mouse to be pressed
+					while(!(m->r.buttons & GINPUT_MOUSE_BTN_LEFT))
+						gfxSleepMilliseconds(CALIBRATION_POLL_PERIOD);
+
+					// Sum samples taken every CALIBRATION_POLL_PERIOD milliseconds while the mouse is down
+					px = py = j = 0;
+					while((m->r.buttons & GINPUT_MOUSE_BTN_LEFT)) {
+						// Limit sampling period to prevent overflow
+						if (j < CALIBRATION_MAXPRESS_PERIOD/CALIBRATION_POLL_PERIOD) {
+							px += m->r.x;
+							py += m->r.y;
+							j++;
+						}
+						gfxSleepMilliseconds(CALIBRATION_POLL_PERIOD);
+					}
+
+					// Ignore presses less than CALIBRATION_MAXPRESS_PERIOD milliseconds
+				} while(j < CALIBRATION_MINPRESS_PERIOD/CALIBRATION_POLL_PERIOD);
+				points[i].x = px / j;
+				points[i].y = py / j;
+
+				// Clear the current calibration point
+				CalibrationCrossClear(m, &cross[i]);
+			}
+		}
+
+		// Apply 3 point calibration algorithm
+		CalibrationCalculate(m, cross, points);
+
+		 /* Verification of correctness of calibration (optional) :
+		 *  See if the 4th point (Middle of the screen) coincides with the calibrated
+		 *  result. If point is within +/- Squareroot(ERROR) pixel margin, then successful calibration
+		 *  Else return the error.
+		 */
+		if ((gmvmt(m)->d.flags & GMOUSE_VFLG_CAL_TEST)) {
+			const GMouseJitter	*pj;
+
+			// Are we in pen or finger mode
+			pj = (m->flags & GMOUSE_FLG_FINGERMODE) ? &gmvmt(m)->finger_jitter : &gmvmt(m)->pen_jitter;
+
+			// Transform the co-ordinates
+			CalibrationTransform((GMouseReading *)&points[3], &m->caldata);
+
+			// Do we need to rotate the reading to match the display
+			#if GDISP_NEED_CONTROL
+				if (!(gmvmt(m)->d.flags & GMOUSE_VFLG_SELFROTATION)) {
+					coord_t		t;
+
+					switch(gdispGGetOrientation(m->display)) {
+						case GDISP_ROTATE_0:
+							break;
+						case GDISP_ROTATE_90:
+							t = points[3].x;
+							points[3].x = w - 1 - points[3].y;
+							points[3].y = t;
+							break;
+						case GDISP_ROTATE_180:
+							points[3].x = w - 1 - points[3].x;
+							points[3].y = h - 1 - points[3].y;
+							break;
+						case GDISP_ROTATE_270:
+							t = points[3].y;
+							points[3].y = h - 1 - points[3].x;
+							points[3].x = t;
+							break;
+						default:
+							break;
+					}
+				}
+			#endif
+
+			// Is this accurate enough?
+			err = (points[3].x - cross[3].x) * (points[3].x - cross[3].x) + (points[3].y - cross[3].y) * (points[3].y - cross[3].y);
+			if (err > (uint32_t)pj->calibrate * (uint32_t)pj->calibrate) {
+				#if GDISP_NEED_TEXT
+					// No - Display error and return
+					gdispGFillStringBox(m->display,
+											0, CALIBRATION_ERROR_Y, w, CALIBRATION_ERROR_HEIGHT,
+											CALIBRATION_ERROR_TEXT, font2,  CALIBRATION_ERROR_COLOR, CALIBRATION_ERROR_BACKGROUND,
+											justifyCenter);
+					gfxSleepMilliseconds(CALIBRATION_ERROR_DELAY);
+				#endif
+			} else
+				err = 0;
+		}
+
+		// We are done calibrating
+		#if GDISP_NEED_TEXT
+			gdispCloseFont(font1);
+			gdispCloseFont(font2);
+		#endif
+		m->flags &= ~GMOUSE_FLG_IN_CAL;
+		m->flags |= GMOUSE_FLG_CLIP;
+
+		// Save the calibration data (if possible)
+		if (!err) {
+			m->flags |= GMOUSE_FLG_CALIBRATE;
+
+			#if GINPUT_TOUCH_USER_CALIBRATION_SAVE
+				SaveMouseCalibration(gdriverGetDriverInstanceNumber((GDriver *)m), &m->caldata, sizeof(GMouseCalibration));
+			#endif
+			if (gmvmt(m)->calsave)
+				gmvmt(m)->calsave(m, &m->caldata, sizeof(GMouseCalibration));
+		}
+
+		// Force an initial reading
+		m->r.buttons = 0;
+		GetMouseReading(m);
+
+		// Clear the screen using the GWIN default background color
+		#if GFX_USE_GWIN
+			gdispGClear(m->display, gwinGetDefaultBgColor());
+		#else
+			gdispGClear(m->display, GDISP_STARTUP_COLOR);
+		#endif
+
+		return err;
+	}
+#endif
+
+void _gmouseInit(void) {
+	// GINPUT_MOUSE_DRIVER_LIST is defined - create each driver instance
+	#if defined(GINPUT_MOUSE_DRIVER_LIST)
+		{
+			int		i;
+
+			extern GDriverVMTList					GINPUT_MOUSE_DRIVER_LIST;
+			static const struct GDriverVMT const *	dclist[] = {GINPUT_MOUSE_DRIVER_LIST};
+
+			for(i = 0; i < sizeof(dclist)/sizeof(dclist[0]); i++) {
+                if (!(dclist[i]->flags & GMOUSE_VFLG_DYNAMICONLY))
+					gdriverRegister(dclist[i], GDISP);
+			}
+		}
+
+	// One and only one mouse
+	#else
+		{
+			extern GDriverVMTList			GMOUSEVMT_OnlyOne;
+
+            if (!(GMOUSEVMT_OnlyOne->flags & GMOUSE_VFLG_DYNAMICONLY))
+					gdriverRegister(GMOUSEVMT_OnlyOne, GDISP);
+		}
+	#endif
+
 }
 
-void ginputSetMouseDisplay(uint16_t instance, GDisplay *g) {
-	if (instance)
+void _gmouseDeinit(void) {
+	gtimerDeinit(&MouseTimer);
+}
+
+bool_t _gmouseInitDriver(GDriver *g, void *display, unsigned driverinstance, unsigned systeminstance) {
+    #define m   ((GMouse *)g)
+    (void) systeminstance;
+
+	// The initial display is passed in the parameter for mice
+	m->display = display;
+
+	#if !GINPUT_TOUCH_NOTOUCH
+		// Should this mouse start in finger mode? (according to the VMT)
+		if ((gmvmt(m)->d.flags & GMOUSE_VFLG_DEFAULTFINGER))
+			m->flags |= GMOUSE_FLG_FINGERMODE;
+	#endif
+
+	// Init the mouse
+    if (!gmvmt(m)->init((GMouse *)g, driverinstance))
+        return FALSE;
+
+	// Ensure the Poll timer is started
+	if (!gtimerIsActive(&MouseTimer))
+		gtimerStart(&MouseTimer, MousePoll, 0, TRUE, GINPUT_MOUSE_POLL_PERIOD);
+
+    return TRUE;
+
+    #undef m
+}
+
+void _gmousePostInitDriver(GDriver *g) {
+    #define     m   ((GMouse *)g)
+
+	#if !GINPUT_TOUCH_STARTRAW
+		m->flags |= GMOUSE_FLG_CLIP;
+	#endif
+
+    #if !GINPUT_TOUCH_NOCALIBRATE && !GINPUT_TOUCH_STARTRAW
+        if ((gmvmt(m)->d.flags & GMOUSE_VFLG_CALIBRATE)) {
+            GMouseCalibration		*pc;
+
+            #if GINPUT_TOUCH_USER_CALIBRATION_LOAD
+                if ((pc = (GMouseCalibration *)LoadMouseCalibration(gdriverGetDriverInstanceNumber((GDriver *)m), sizeof(GMouseCalibration)))) {
+                    memcpy(&m->caldata, pc, sizeof(GMouseCalibration));
+                    #if GINPUT_TOUCH_USER_CALIBRATION_FREE
+                        gfxFree(pc);
+                    #endif
+                    m->flags |= GMOUSE_FLG_CALIBRATE;
+                } else
+            #endif
+            if (gmvmt(m)->calload && (pc = (GMouseCalibration *)gmvmt(m)->calload(m, sizeof(GMouseCalibration)))) {
+                memcpy(&m->caldata, pc, sizeof(GMouseCalibration));
+                if ((gmvmt(m)->d.flags & GMOUSE_VFLG_CAL_LOADFREE))
+                    gfxFree(pc);
+                m->flags |= GMOUSE_FLG_CALIBRATE;
+            }
+			#if !GINPUT_TOUCH_NOCALIBRATE_GUI
+				else
+					while (CalibrateMouse(m));
+			#endif
+        }
+    #endif
+
+    // Get the first reading
+    GetMouseReading(m);
+
+    #undef m
+}
+
+void _gmouseDeInitDriver(GDriver *g) {
+    (void) g;
+}
+
+GSourceHandle ginputGetMouse(unsigned instance) {
+	if (instance == GMOUSE_ALL_INSTANCES)
+		return (GSourceHandle)&MouseTimer;
+    return (GSourceHandle)gdriverGetInstance(GDRIVER_TYPE_MOUSE, instance);
+}
+
+void ginputSetMouseDisplay(unsigned instance, GDisplay *g) {
+	GMouse *m;
+
+	if (!(m = (GMouse *)gdriverGetInstance(GDRIVER_TYPE_MOUSE, instance)))
 		return;
 
-	MouseConfig.display = g ? g : GDISP;
+	m->display = g ? g : GDISP;
 }
 
-GDisplay *ginputGetMouseDisplay(uint16_t instance) {
-	if (instance)
+GDisplay *ginputGetMouseDisplay(unsigned instance) {
+	GMouse *m;
+
+	if (!(m = (GMouse *)gdriverGetInstance(GDRIVER_TYPE_MOUSE, instance)))
 		return 0;
 
-	return MouseConfig.display;
+	return m->display;
 }
 
-bool_t ginputGetMouseStatus(uint16_t instance, GEventMouse *pe) {
+bool_t ginputGetMouseStatus(unsigned instance, GEventMouse *pe) {
+	GMouse *m;
+
 	// Win32 threads don't seem to recognise priority and/or pre-emption
 	// so we add a sleep here to prevent 100% polled applications from locking up.
 	gfxSleepMilliseconds(1);
 
-	if (instance || (MouseConfig.flags & (FLG_INIT_DONE|FLG_IN_CAL)) != FLG_INIT_DONE)
+	if (!(m = (GMouse *)gdriverGetInstance(GDRIVER_TYPE_MOUSE, instance)))
 		return FALSE;
 
-	pe->type = GINPUT_MOUSE_EVENT_TYPE;
-	pe->instance = instance;
-	pe->x = MouseConfig.t.x;
-	pe->y = MouseConfig.t.y;
-	pe->z = MouseConfig.t.z;
-	pe->current_buttons = MouseConfig.t.buttons;
-	pe->last_buttons = MouseConfig.last_buttons;
-	if (pe->current_buttons & ~pe->last_buttons & GINPUT_MOUSE_BTN_LEFT)
-		pe->meta = GMETA_MOUSE_DOWN;
-	else if (~pe->current_buttons & pe->last_buttons & GINPUT_MOUSE_BTN_LEFT)
-		pe->meta = GMETA_MOUSE_UP;
-	else
-		pe->meta = GMETA_NONE;
+	#if !GINPUT_TOUCH_NOCALIBRATE_GUI
+		if ((m->flags & GMOUSE_FLG_IN_CAL))
+			return FALSE;
+	#endif
+
+	#if !GINPUT_TOUCH_NOTOUCH
+		pe->type = (gmvmt(m)->d.flags & GMOUSE_VFLG_TOUCH) ? GEVENT_TOUCH : GEVENT_MOUSE;
+	#else
+		pe->type = GEVENT_MOUSE;
+	#endif
+	pe->x = m->r.x;
+	pe->y = m->r.y;
+	pe->z = m->r.z;
+	pe->buttons = m->r.buttons;
+	pe->display = m->display;
 	return TRUE;
 }
 
-bool_t ginputCalibrateMouse(uint16_t instance) {
-	#if !GINPUT_MOUSE_NEED_CALIBRATION
-		(void) instance;
-		
-		return FALSE;
-	#else
+#if !GINPUT_TOUCH_NOTOUCH
+	void ginputSetFingerMode(unsigned instance, bool_t on) {
+		GMouse *m;
 
-		const coord_t height  =  gdispGGetHeight(MouseConfig.display);
-		const coord_t width  =  gdispGGetWidth(MouseConfig.display);
-		#if GINPUT_MOUSE_CALIBRATE_EXTREMES
-			const MousePoint cross[]  =  {{0, 0},
-									{(width - 1) , 0},
-									{(width - 1) , (height - 1)},
-									{(width / 2), (height / 2)}}; /* Check point */
-		#else
-			const MousePoint cross[]  =  {{(width / 4), (height / 4)},
-									{(width - (width / 4)) , (height / 4)},
-									{(width - (width / 4)) , (height - (height / 4))},
-									{(width / 2), (height / 2)}}; /* Check point */
-		#endif
-		MousePoint points[GINPUT_MOUSE_CALIBRATION_POINTS];
-		const MousePoint	*pc;
-		MousePoint *pt;
-		int32_t px, py;
-		unsigned i, j;
-		font_t	font1, font2;
-		#if GINPUT_MOUSE_MAX_CALIBRATION_ERROR >= 0
-			unsigned	err;
-		#endif
-
-		if (instance || (MouseConfig.flags & FLG_IN_CAL))
-			return FALSE;
-
-		font1 = gdispOpenFont(GINPUT_MOUSE_CALIBRATION_FONT);
-		font2 = gdispOpenFont(GINPUT_MOUSE_CALIBRATION_FONT2);
-
-		MouseConfig.flags |= FLG_IN_CAL;
-		gtimerStop(&MouseTimer);
-		MouseConfig.flags &= ~(FLG_CAL_OK|FLG_CAL_SAVED|FLG_CAL_RAW);
-
-		#if GDISP_NEED_CLIP
-			gdispGSetClip(MouseConfig.display, 0, 0, width, height);
-		#endif
-
-		#if GINPUT_MOUSE_MAX_CALIBRATION_ERROR >= 0
-			while(1) {
-		#endif
-				gdispGClear(MouseConfig.display, Blue);
-
-				gdispGFillStringBox(MouseConfig.display, 0, 5, width, 30, GINPUT_MOUSE_CALIBRATION_TEXT, font1,  White, Blue, justifyCenter);
-
-				for(i = 0, pt = points, pc = cross; i < GINPUT_MOUSE_CALIBRATION_POINTS; i++, pt++, pc++) {
-					_tsDrawCross(pc);
-
-					do {
-
-						/* Wait for the mouse to be pressed */
-						while(get_raw_reading(&MouseConfig.t), !(MouseConfig.t.buttons & GINPUT_MOUSE_BTN_LEFT))
-							gfxSleepMilliseconds(20);
-
-						/* Average all the samples while the mouse is down */
-						for(px = py = 0, j = 0;
-								gfxSleepMilliseconds(20),			/* Settling time between readings */
-								get_raw_reading(&MouseConfig.t),
-								(MouseConfig.t.buttons & GINPUT_MOUSE_BTN_LEFT);
-								j++) {
-							px += MouseConfig.t.x;
-							py += MouseConfig.t.y;
-						}
-
-					} while(!j);
-
-					pt->x = px / j;
-					pt->y = py / j;
-
-					_tsClearCross(pc);
-
-					if (i >= 1 && pt->x == (pt-1)->x && pt->y == (pt-1)->y) {
-						gdispGFillStringBox(MouseConfig.display, 0, 35, width, 40, GINPUT_MOUSE_CALIBRATION_SAME_TEXT, font2,  Red, Yellow, justifyCenter);
-						gfxSleepMilliseconds(5000);
-						gdispGFillArea(MouseConfig.display, 0, 35, width, 40, Blue);
-					}
-
-				}
-
-				/* Apply 3 point calibration algorithm */
-				_tsDo3PointCalibration(cross, points, MouseConfig.display, &MouseConfig.caldata);
-
-				 /* Verification of correctness of calibration (optional) :
-				 *  See if the 4th point (Middle of the screen) coincides with the calibrated
-				 *  result. If point is within +/- Squareroot(ERROR) pixel margin, then successful calibration
-				 *  Else, start from the beginning.
-				 */
-		#if GINPUT_MOUSE_MAX_CALIBRATION_ERROR >= 0
-				/* Transform the co-ordinates */
-				MouseConfig.t.x = points[3].x;
-				MouseConfig.t.y = points[3].y;
-				_tsTransform(&MouseConfig.t, &MouseConfig.caldata);
-				_tsOrientClip(&MouseConfig.t, MouseConfig.display, FALSE);
-
-				/* Calculate the delta */
-				err = (MouseConfig.t.x - cross[3].x) * (MouseConfig.t.x - cross[3].x) +
-					(MouseConfig.t.y - cross[3].y) * (MouseConfig.t.y - cross[3].y);
-
-				if (err <= GINPUT_MOUSE_MAX_CALIBRATION_ERROR * GINPUT_MOUSE_MAX_CALIBRATION_ERROR)
-					break;
-
-				gdispGFillStringBox(MouseConfig.display, 0, 35, width, 40, GINPUT_MOUSE_CALIBRATION_ERROR_TEXT, font2,  Red, Yellow, justifyCenter);
-				gfxSleepMilliseconds(5000);
-			}
-		#endif
-
-		// Restart everything
-		gdispCloseFont(font1);
-		gdispCloseFont(font2);
-		MouseConfig.flags |= FLG_CAL_OK;
-		MouseConfig.last_buttons = 0;
-		get_calibrated_reading(&MouseConfig.t);
-		MouseConfig.flags &= ~FLG_IN_CAL;
-		if ((MouseConfig.flags & FLG_INIT_DONE))
-			gtimerStart(&MouseTimer, MousePoll, 0, TRUE, GINPUT_MOUSE_POLL_PERIOD);
-		
-		// Save the calibration data (if possible)
-		if (MouseConfig.fnsavecal) {
-			MouseConfig.fnsavecal(instance, (const uint8_t *)&MouseConfig.caldata, sizeof(MouseConfig.caldata));
-			MouseConfig.flags |= FLG_CAL_SAVED;
-		}
-
-		// Clear the screen using the GWIN default background color
-		#if GFX_USE_GWIN
-			gdispGClear(MouseConfig.display, gwinGetDefaultBgColor());
-		#else
-			gdispGClear(MouseConfig.display, Black);
-		#endif
-	
-		return TRUE;
-	#endif
-}
-
-/* Set the routines to save and fetch calibration data.
- * This function should be called before first calling ginputGetMouse() for a particular instance
- *	as the ginputGetMouse() routine may attempt to fetch calibration data and perform a startup calibration if there is no way to get it.
- *	If this is called after ginputGetMouse() has been called and the driver requires calibration storage, it will immediately save the data is has already obtained.
- * The 'requireFree' parameter indicates if the fetch buffer must be free()'d to deallocate the buffer provided by the Fetch routine.
- */
-void ginputSetMouseCalibrationRoutines(uint16_t instance, GMouseCalibrationSaveRoutine fnsave, GMouseCalibrationLoadRoutine fnload, bool_t requireFree) {
-	#if GINPUT_MOUSE_NEED_CALIBRATION
-		if (instance)
+		if (!(m = (GMouse *)gdriverGetInstance(GDRIVER_TYPE_MOUSE, instance)))
 			return;
 
-		MouseConfig.fnloadcal = fnload;
-		MouseConfig.fnsavecal = fnsave;
-		if (requireFree)
-			MouseConfig.flags |= FLG_CAL_FREE;
+		if (on)
+			m->flags |= GMOUSE_FLG_FINGERMODE;
 		else
-			MouseConfig.flags &= ~FLG_CAL_FREE;
-		#if GINPUT_MOUSE_LLD_CALIBRATION_LOADSAVE
-			if (!MouseConfig.fnloadcal) {
-				MouseConfig.fnloadcal = ginput_lld_mouse_calibration_load;
-				MouseConfig.flags &= ~FLG_CAL_FREE;
-			}
-			if (!MouseConfig.fnsavecal)
-				MouseConfig.fnsavecal = ginput_lld_mouse_calibration_save;
-		#endif
-		if (MouseConfig.fnsavecal && (MouseConfig.flags & (FLG_CAL_OK|FLG_CAL_SAVED)) == FLG_CAL_OK) {
-			MouseConfig.fnsavecal(instance, (const uint8_t *)&MouseConfig.caldata, sizeof(MouseConfig.caldata));
-			MouseConfig.flags |= FLG_CAL_SAVED;
-		}
-	#else
-		(void)instance, (void)fnsave, (void)fnload, (void)requireFree;
-	#endif
-}
+			m->flags &= ~GMOUSE_FLG_FINGERMODE;
 
-/* Test if a particular mouse instance requires routines to save its calibration data. */
-bool_t ginputRequireMouseCalibrationStorage(uint16_t instance) {
-	if (instance)
-		return FALSE;
+	}
+#endif
 
-	#if GINPUT_MOUSE_NEED_CALIBRATION && !GINPUT_MOUSE_LLD_CALIBRATION_LOADSAVE
-		return TRUE;
-	#else
-		return FALSE;
-	#endif
-}
+#if !GINPUT_TOUCH_NOCALIBRATE_GUI
+	uint32_t ginputCalibrateMouse(unsigned instance) {
+		GMouse *m;
+
+		// Find the instance
+		if (!(m = (GMouse *)gdriverGetInstance(GDRIVER_TYPE_MOUSE, instance)))
+			return 0;
+
+		// Check it needs calibration
+        if (!(gmvmt(m)->d.flags & GMOUSE_VFLG_CALIBRATE))
+        	return 0;
+
+		return CalibrateMouse(m);
+	}
+#endif
 
 /* Wake up the mouse driver from an interrupt service routine (there may be new readings available) */
-void ginputMouseWakeup(void) {
+void _gmouseWakeup(GMouse *m) {
+	if (m)
+		m->flags |= GMOUSE_FLG_NEEDREAD;
 	gtimerJab(&MouseTimer);
 }
 
 /* Wake up the mouse driver from an interrupt service routine (there may be new readings available) */
-void ginputMouseWakeupI(void) {
+void _gmouseWakeupI(GMouse *m) {
+	if (m)
+		m->flags |= GMOUSE_FLG_NEEDREAD;
 	gtimerJabI(&MouseTimer);
 }
 

@@ -114,7 +114,7 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 			// Is the mouse currently captured by this widget?
 			if ((h->flags & (GWIN_FLG_WIDGET|GWIN_FLG_MOUSECAPTURE)) == (GWIN_FLG_WIDGET|GWIN_FLG_MOUSECAPTURE)) {
 				gh = h;
-				if ((pme->last_buttons & ~pme->current_buttons & GINPUT_MOUSE_BTN_LEFT)) {
+				if ((pme->buttons & GMETA_MOUSE_UP)) {
 					gh->flags &= ~GWIN_FLG_MOUSECAPTURE;
 					if (wvmt->MouseUp)
 						wvmt->MouseUp(gw, pme->x - gh->x, pme->y - gh->y);
@@ -133,7 +133,7 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 
 		// Process any mouse down over the highest order window if it is an enabled widget
 		if (gh && (gh->flags & (GWIN_FLG_WIDGET|GWIN_FLG_SYSENABLED)) == (GWIN_FLG_WIDGET|GWIN_FLG_SYSENABLED)) {
-			if ((~pme->last_buttons & pme->current_buttons & GINPUT_MOUSE_BTN_LEFT)) {
+			if ((pme->buttons & GMETA_MOUSE_DOWN)) {
 				gh->flags |= GWIN_FLG_MOUSECAPTURE;
 				if (wvmt->MouseDown)
 					wvmt->MouseDown(gw, pme->x - gh->x, pme->y - gh->y);
@@ -234,6 +234,7 @@ void _gwidgetInit(void)
 {
 	geventListenerInit(&gl);
 	geventRegisterCallback(&gl, gwidgetEvent, 0);
+	geventAttachSource(&gl, ginputGetMouse(GMOUSE_ALL_INSTANCES), GLISTEN_MOUSEMETA|GLISTEN_MOUSEDOWNMOVES);
 }
 
 void _gwidgetDeinit(void)
@@ -427,13 +428,10 @@ bool_t gwinAttachListener(GListener *pl) {
 }
 
 #if GFX_USE_GINPUT && GINPUT_NEED_MOUSE
-	bool_t gwinAttachMouse(uint16_t instance) {
-		GSourceHandle	gsh;
-
-		if (!(gsh = ginputGetMouse(instance)))
-			return FALSE;
-
-		return geventAttachSource(&gl, gsh, GLISTEN_MOUSEMETA|GLISTEN_MOUSEDOWNMOVES);
+	bool_t DEPRECATED("This call can now be removed. Attaching the mouse to GWIN is now automatic.") gwinAttachMouse(uint16_t instance) {
+		// This is now a NULL event because we automatically attach to all mice in the system.
+		(void) instance;
+		return TRUE;
 	}
 #endif
 

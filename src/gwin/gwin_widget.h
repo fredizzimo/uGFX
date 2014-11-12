@@ -199,7 +199,7 @@ void gwinSetDefaultStyle(const GWidgetStyle *pstyle, bool_t updateAll);
  * @brief   Get the current default style.
  *
  * @return	The current default style.
- * 
+ *
  * @api
  */
 const GWidgetStyle *gwinGetDefaultStyle(void);
@@ -305,17 +305,7 @@ void gwinSetCustomDraw(GHandle gh, CustomWidgetDrawFunction fn, void *param);
 bool_t gwinAttachListener(GListener *pl);
 
 #if (GFX_USE_GINPUT && GINPUT_NEED_MOUSE) || defined(__DOXYGEN__)
-	/**
-	 * @brief	Set the mouse to be used to control the widgets
-	 * @return	TRUE on success
-	 *
-	 * @param[in] instance	The mouse instance
-	 *
-	 * @note	Every widget uses the same mouse.
-	 *
-	 * @api
-	 */
-	bool_t gwinAttachMouse(uint16_t instance);
+	bool_t DEPRECATED("This call can now be removed. Attaching the mouse to GWIN is now automatic.") gwinAttachMouse(uint16_t instance);
 #endif
 
 #if (GFX_USE_GINPUT && GINPUT_NEED_TOGGLE) || defined(__DOXYGEN__)

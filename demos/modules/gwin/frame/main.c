@@ -33,7 +33,7 @@ static void _createWidgets(void) {
     wi.text = "Surprise!";
     gwinLabelCreate(0, &wi);
 
-    // Apply the frame parameters    
+    // Apply the frame parameters
     wi.g.width = 300;
     wi.g.height = 200;
     wi.g.y = 10;
@@ -107,7 +107,7 @@ static void _createWidgets(void) {
     wi.g.x = 10;
     wi.g.y = 90;
     ghWindow1 = gwinWindowCreate(0, &wi.g);
-    
+
     _updateColor();
 }
 
@@ -116,9 +116,6 @@ int main(void) {
 
     // Initialize the display
     gfxInit();
-
-    // Attach the mouse input
-    gwinAttachMouse(0);
 
     // Set the widget defaults
     gwinSetDefaultFont(gdispOpenFont("*"));

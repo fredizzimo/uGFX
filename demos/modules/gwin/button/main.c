@@ -39,7 +39,7 @@ static void createWidgets(void) {
 	gwinWidgetClearInit(&wi);
 	wi.g.show = TRUE;
 
-	// Apply the button parameters	
+	// Apply the button parameters
 	wi.g.width = 100;
 	wi.g.height = 30;
 	wi.g.y = 10;
@@ -66,9 +66,6 @@ int main(void) {
 	gwinSetDefaultFont(gdispOpenFont("UI2"));
 	gwinSetDefaultStyle(&WhiteWidgetStyle, FALSE);
 	gdispClear(White);
-
-	// Attach the mouse input
-	gwinAttachMouse(0);
 
 	// create the widget
 	createWidgets();

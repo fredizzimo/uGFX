@@ -211,6 +211,16 @@
 //#define GFX_USE_GINPUT                               FALSE
 
 //#define GINPUT_NEED_MOUSE                            FALSE
+//    #define GINPUT_TOUCH_STARTRAW                    FALSE
+//    #define GINPUT_TOUCH_NOTOUCH                     FALSE
+//    #define GINPUT_TOUCH_NOCALIBRATE                 FALSE
+//    #define GINPUT_TOUCH_NOCALIBRATE_GUI             FALSE
+//    #define GINPUT_MOUSE_POLL_PERIOD                 25
+//    #define GINPUT_MOUSE_CLICK_TIME                  300
+//    #define GINPUT_TOUCH_CXTCLICK_TIME               700
+//    #define GINPUT_TOUCH_USER_CALIBRATION_LOAD       FALSE
+//    #define GINPUT_TOUCH_USER_CALIBRATION_FREE       FALSE
+//    #define GINPUT_TOUCH_USER_CALIBRATION_SAVE       FALSE
 //#define GINPUT_NEED_KEYBOARD                         FALSE
 //#define GINPUT_NEED_TOGGLE                           FALSE
 //#define GINPUT_NEED_DIAL                             FALSE

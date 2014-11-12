@@ -10,7 +10,7 @@
 #if GFX_USE_GDISP
 
 #define GDISP_DRIVER_VMT			GDISPVMT_X11
-#include "drivers/multiple/X/gdisp_lld_config.h"
+#include "gdisp_lld_config.h"
 #include "src/gdisp/driver.h"
 
 #ifndef GDISP_FORCE_24BIT
@@ -27,8 +27,45 @@
 #define GDISP_FLG_READY				(GDISP_FLG_DRIVER<<0)
 
 #if GINPUT_NEED_MOUSE
-	/* Include mouse support code */
+	// Include mouse support code
+	#define GMOUSE_DRIVER_VMT		GMOUSEVMT_X11
 	#include "src/ginput/driver_mouse.h"
+
+	// Forward definitions
+	static bool_t XMouseInit(GMouse *m, unsigned driverinstance);
+	static bool_t XMouseRead(GMouse *m, GMouseReading *prd);
+
+	const GMouseVMT const GMOUSE_DRIVER_VMT[1] = {{
+		{
+			GDRIVER_TYPE_MOUSE,
+			GMOUSE_VFLG_NOPOLL|GMOUSE_VFLG_DYNAMICONLY,
+				// Extra flags for testing only
+				//GMOUSE_VFLG_TOUCH|GMOUSE_VFLG_SELFROTATION|GMOUSE_VFLG_DEFAULTFINGER
+				//GMOUSE_VFLG_CALIBRATE|GMOUSE_VFLG_CAL_EXTREMES|GMOUSE_VFLG_CAL_TEST|GMOUSE_VFLG_CAL_LOADFREE
+				//GMOUSE_VFLG_ONLY_DOWN|GMOUSE_VFLG_POORUPDOWN
+			sizeof(GMouse),
+			_gmouseInitDriver, _gmousePostInitDriver, _gmouseDeInitDriver
+		},
+		1,				// z_max
+		0,				// z_min
+		1,				// z_touchon
+		0,				// z_touchoff
+		{				// pen_jitter
+			0,				// calibrate
+			0,				// click
+			0				// move
+		},
+		{				// finger_jitter
+			0,				// calibrate
+			2,				// click
+			2				// move
+		},
+		XMouseInit,		// init
+		0,				// deinit
+		XMouseRead,		// get
+		0,				// calsave
+		0				// calload
+	}};
 #endif
 
 #include <X11/Xlib.h>
@@ -45,15 +82,16 @@ static Colormap			cmap;
 static XVisualInfo		vis;
 static XContext			cxt;
 static Atom				wmDelete;
-#if GINPUT_NEED_MOUSE
-	static coord_t		mousex, mousey;
-	static uint16_t		mousebuttons;
-#endif
 
 typedef struct xPriv {
 	Pixmap			pix;
 	GC 				gc;
 	Window			win;
+	#if GINPUT_NEED_MOUSE
+		coord_t		mousex, mousey;
+		uint16_t	buttons;
+		GMouse *	mouse;
+	#endif
 } xPriv;
 
 static void ProcessEvent(GDisplay *g, xPriv *priv) {
@@ -80,37 +118,31 @@ static void ProcessEvent(GDisplay *g, xPriv *priv) {
 		break;
 #if GINPUT_NEED_MOUSE
 	case ButtonPress:
-		mousex = evt.xbutton.x;
-		mousey = evt.xbutton.y;
+		priv->mousex = evt.xbutton.x;
+		priv->mousey = evt.xbutton.y;
 		switch(evt.xbutton.button){
-		case 1:	mousebuttons |= GINPUT_MOUSE_BTN_LEFT;		break;
-		case 2:	mousebuttons |= GINPUT_MOUSE_BTN_MIDDLE;	break;
-		case 3:	mousebuttons |= GINPUT_MOUSE_BTN_RIGHT;		break;
-		case 4:	mousebuttons |= GINPUT_MOUSE_BTN_4;			break;
+		case 1:	priv->buttons |= GINPUT_MOUSE_BTN_LEFT;		break;
+		case 2:	priv->buttons |= GINPUT_MOUSE_BTN_MIDDLE;	break;
+		case 3:	priv->buttons |= GINPUT_MOUSE_BTN_RIGHT;	break;
+		case 4:	priv->buttons |= GINPUT_MOUSE_BTN_4;		break;
 		}
-		#if GINPUT_MOUSE_POLL_PERIOD == TIME_INFINITE
-			ginputMouseWakeup();
-		#endif
+		_gmouseWakeup(priv->mouse);
 		break;
 	case ButtonRelease:
-		mousex = evt.xbutton.x;
-		mousey = evt.xbutton.y;
+		priv->mousex = evt.xbutton.x;
+		priv->mousey = evt.xbutton.y;
 		switch(evt.xbutton.button){
-		case 1:	mousebuttons &= ~GINPUT_MOUSE_BTN_LEFT;		break;
-		case 2:	mousebuttons &= ~GINPUT_MOUSE_BTN_MIDDLE;	break;
-		case 3:	mousebuttons &= ~GINPUT_MOUSE_BTN_RIGHT;	break;
-		case 4:	mousebuttons &= ~GINPUT_MOUSE_BTN_4;		break;
+		case 1:	priv->buttons &= ~GINPUT_MOUSE_BTN_LEFT;	break;
+		case 2:	priv->buttons &= ~GINPUT_MOUSE_BTN_MIDDLE;	break;
+		case 3:	priv->buttons &= ~GINPUT_MOUSE_BTN_RIGHT;	break;
+		case 4:	priv->buttons &= ~GINPUT_MOUSE_BTN_4;		break;
 		}
-		#if GINPUT_MOUSE_POLL_PERIOD == TIME_INFINITE
-			ginputMouseWakeup();
-		#endif
+		_gmouseWakeup(priv->mouse);
 		break;
 	case MotionNotify:
-		mousex = evt.xmotion.x;
-		mousey = evt.xmotion.y;
-		#if GINPUT_MOUSE_POLL_PERIOD == TIME_INFINITE
-			ginputMouseWakeup();
-		#endif
+		priv->mousex = evt.xmotion.x;
+		priv->mousey = evt.xmotion.y;
+		_gmouseWakeup(priv->mouse);
 		break;
 #endif
 	}
@@ -231,6 +263,11 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	XSetBackground(dis, priv->gc, BlackPixel(dis, scr));
 	XSync(dis, TRUE);
 
+	// Create the associated mouse before the map
+	#if GINPUT_NEED_MOUSE
+		priv->mouse = (GMouse *)gdriverRegister((const GDriverVMT const *)GMOUSE_DRIVER_VMT, g);
+	#endif
+
 	XSelectInput(dis, priv->win, StructureNotifyMask);
 	XMapWindow(dis, priv->win);
 
@@ -322,16 +359,21 @@ LLDSPEC void gdisp_lld_draw_pixel(GDisplay *g)
 #endif
 
 #if GINPUT_NEED_MOUSE
-
-	void ginput_lld_mouse_init(void) {}
-
-	void ginput_lld_mouse_get_reading(MouseReading *pt) {
-		pt->x = mousex;
-		pt->y = mousey;
-		pt->z = (mousebuttons & GINPUT_MOUSE_BTN_LEFT) ? 100 : 0;
-		pt->buttons = mousebuttons;
+	static bool_t XMouseInit(GMouse *m, unsigned driverinstance) {
+		(void)	m;
+		(void)	driverinstance;
+		return TRUE;
 	}
+	static bool_t XMouseRead(GMouse *m, GMouseReading *pt) {
+		xPriv	*	priv;
 
+		priv = m->display->priv;
+		pt->x = priv->mousex;
+		pt->y = priv->mousey;
+		pt->z = (priv->buttons & GINPUT_MOUSE_BTN_LEFT) ? 1 : 0;
+		pt->buttons = priv->buttons;
+		return TRUE;
+	}
 #endif /* GINPUT_NEED_MOUSE */
 
 #endif /* GFX_USE_GDISP */
