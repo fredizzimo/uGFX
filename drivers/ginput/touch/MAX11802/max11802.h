@@ -15,7 +15,7 @@
 // LSB of register addresses specifies read (1) or write (0)
 #define MAX11802_CMD_MEASUREXY 	(0x70 << 1)
 #define MAX11802_CMD_MEASUREXYZ	(0x72 << 1)
-#define MAX11802_CMD_GEN_WR		(0x01 << 1)		// General config register
+#define MAX11802_CMD_GEN_WR		(0x01 << 1)				// General config register
 #define MAX11802_CMD_RES_WR		(0x02 << 1)
 #define MAX11802_CMD_AVG_WR    	(0x03 << 1)
 #define MAX11802_CMD_SAMPLE_WR	(0x04 << 1)

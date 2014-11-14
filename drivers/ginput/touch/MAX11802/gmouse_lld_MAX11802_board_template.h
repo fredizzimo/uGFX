@@ -61,7 +61,7 @@ static inline uint8_t gfintWriteCommand(GMouse* m, uint8_t command) {
 /*
  *	Read 2 bytes as 16-bit value (command to read must have been sent previously)
  *	Note: Analog value is in bits 15..4, tags (reading status) in bits 3..0
-*/
+ */
 static inline uint16_t read_value(GMouse* m) {
 
 }

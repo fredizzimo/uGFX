@@ -18,18 +18,21 @@
 // Get the hardware interface
 #include "gmouse_lld_MAX11802_board.h"
 
-// Register values to set
-#define MAX11802_MODE    0x0E		// Direct conversion with averaging
+/* Register values to set */
+#define MAX11802_MODE    0x0E		/* Direct conversion with averaging */
 #define MAX11802_AVG     0x55
 #define MAX11802_TIMING  0x77
 #define MAX11802_DELAY   0x55
 
 #define Z_MIN		0
-#define Z_MAX		1
+#define Z_MAX       1
+
+
+
 
 static bool_t MouseInit(GMouse* m, unsigned driverinstance)
 {
-	uint8_t *p;
+	const uint8_t *p;
 
 	static const uint8_t commandList[] = {
 		MAX11802_CMD_GEN_WR, 0xf0,					// General config - leave TIRQ enabled, even though we ignore it ATM
@@ -49,11 +52,15 @@ static bool_t MouseInit(GMouse* m, unsigned driverinstance)
 		return FALSE;
 
 	aquire_bus(m);
-
 	for (p = commandList; p < commandList+sizeof(commandList); p += 2)
 		write_command(m, p[0], p[1]);
-	
+    release_bus(m);             // Need to release bus after each access to reset interface in chip
+                                // (and in some cases, to allow sharing of SPI bus if board logic/OS manages it)
+    // Setup complete here
+
+
 	// Read something as a test
+    aquire_bus(m);
 	if (write_command(m, MAX11802_CMD_MODE_RD, 0) != MAX11802_MODE) {
 		release_bus(m);
 		return FALSE;
@@ -63,6 +70,9 @@ static bool_t MouseInit(GMouse* m, unsigned driverinstance)
 
 	return TRUE;
 }
+
+
+
 
 static bool_t read_xyz(GMouse* m, GMouseReading* pdr)
 {
@@ -77,10 +87,11 @@ static bool_t read_xyz(GMouse* m, GMouseReading* pdr)
 
 	// Start the conversion
 	gfintWriteCommand(m, MAX11802_CMD_MEASUREXY);		// just write command
+    release_bus(m);
 
     /**
-	 * put a delay in here, since conversion will take a finite time - longer if reading Z as well
-	 * Potentially 1msec for 3 axes with 8us conversion time per sample, 8 samples per average
+	 * put a delay in here, since conversion will take a finite time - longer if we were reading Z as well
+	 * Potentially at least 1msec for 3 axes with 8us conversion time per sample, 8 samples per average
 	 * Note Maxim AN5435-software to do calculation (www.maximintegrated.com/design/tools/appnotes/5435/AN5435-software.zip)
 	 *
 	 * We'll just use a fixed delay to avoid too much polling/bus activity
@@ -95,7 +106,7 @@ static bool_t read_xyz(GMouse* m, GMouseReading* pdr)
 	* We work around this by reading the registers once more after the tags indicate they are ready.
 	* There's also a separate counter to guard against never getting valid readings.
 	*
-	* Read the two or three readings required in a single burst, swapping x and y order if necessary
+	* Read the two readings required in a single burst, swapping x and y order if necessary
 	*
 	* Reading Z is possible but complicated requiring two z readings, multiplication and division, various constant ratio's,
 	* 	and interpolation in relation to the X and Y readings. It is not a simple pressure reading.
@@ -105,21 +116,22 @@ static bool_t read_xyz(GMouse* m, GMouseReading* pdr)
 	readyCount = notReadyCount = 0;
 	do {
 		// Get a set of readings
+	    aquire_bus(m);
 	    gfintWriteCommand(m, MAX11802_CMD_XPOSITION);
 		#if defined(GINPUT_MOUSE_YX_INVERTED) && GINPUT_MOUSE_YX_INVERTED
-			pdr->y = read_value(m);
+	        pdr->y = read_value(m);
 			pdr->x = read_value(m);
 		#else
 			pdr->x = read_value(m);
 			pdr->y = read_value(m);
 		#endif
+        release_bus(m);
 
 		// Test the result validity
 		if (((pdr->x | pdr->y) & 0x03) == 0x03) {
 
 			// Has it been too long? If so give up
 			if (++notReadyCount >= 5) {
-				release_bus(m);
 				return FALSE;
 			}
 
@@ -132,8 +144,6 @@ static bool_t read_xyz(GMouse* m, GMouseReading* pdr)
 		readyCount++;
 
 	} while (readyCount < 2);
-	
-	release_bus(m);
 
 	/**
 	 *	format of each value returned by MAX11802:
@@ -143,18 +153,20 @@ static bool_t read_xyz(GMouse* m, GMouseReading* pdr)
 	 */
 
     // Was there a valid touch?
-    if ((pt->x & 0x03) == 0x02) {
+    if (((pdr->x | pdr->y) & 0x03) != 0x0) {
     	pdr->z = Z_MIN;
     	return TRUE;
     }
 
-    // Strip the tags
-	pt->x >>= 4;
-	pt->y >>= 4;
+    // Strip the tags (we need to take care because coord_t is signed - and sign bit gets extended on shift!)
+    pdr->x = (uint16_t)(pdr->x) >> 4;
+    pdr->y = (uint16_t)(pdr->y) >> 4;
    	pdr->z = Z_MAX;
 
     return TRUE;
 }
+
+
 
 const GMouseVMT const GMOUSE_DRIVER_VMT[1] = {{
 	{
@@ -167,8 +179,8 @@ const GMouseVMT const GMOUSE_DRIVER_VMT[1] = {{
 	},
 	Z_MAX,			// z_max
 	Z_MIN,			// z_min
+	Z_MAX,  		// z_touchon
 	Z_MIN,			// z_touchoff
-	Z_MAX,			// z_touchon
 	{				// pen_jitter
 		GMOUSE_MAX11802_PEN_CALIBRATE_ERROR,		// calibrate
 		GMOUSE_MAX11802_PEN_CLICK_ERROR,			// click
