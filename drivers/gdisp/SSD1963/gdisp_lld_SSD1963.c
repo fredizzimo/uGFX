@@ -16,7 +16,6 @@
 #define CALC_PERIOD(w,b,f,p)				(p+b+w+f)
 #define CALC_FPR(w,h,hb,hf,hp,vb,vf,vp,fps)	((fps * CALC_PERIOD(w,hb,hf,hp) * CALC_PERIOD(h,vb,vf,vp) * 1048576)/100000000)
 
-
 typedef struct LCD_Parameters {
 	coord_t		width, height;					// Panel width and height
 	uint16_t	hbporch;						// Horizontal Back Porch
@@ -45,9 +44,6 @@ typedef struct LCD_Parameters {
 		/* Set the lcd panel interface type */										// default TFT mode
 		#define LCD_PANEL_TYPE_SERIAL_RGB_MODE			((1<<6) << 8)				// Serial RGB mode
 		#define LCD_PANEL_TYPE_SERIAL_RGB_DUMMY_MODE	(((1<<5) | (1<<6)) << 8)	// Serial RGB+dummy mode
-
-
-
 } LCD_Parameters;
 
 #include "board_SSD1963.h"
@@ -56,11 +52,14 @@ typedef struct LCD_Parameters {
 /* Driver local definitions.                                                 */
 /*===========================================================================*/
 
+#ifndef GDISP_SSD1963_NO_INIT
+	#define GDISP_SSD1963_NO_INIT	FALSE
+#endif
 #ifndef GDISP_INITIAL_CONTRAST
 	#define GDISP_INITIAL_CONTRAST	50
 #endif
 #ifndef GDISP_INITIAL_BACKLIGHT
-	#define GDISP_INITIAL_BACKLIGHT	90
+	#define GDISP_INITIAL_BACKLIGHT	100
 #endif
 
 /*===========================================================================*/
@@ -72,9 +71,9 @@ typedef struct LCD_Parameters {
 #define dummy_read(g)               { volatile uint16_t dummy; dummy = read_data(g); (void) dummy; }
 #define write_reg(g, reg, data)		{ write_index(g, reg); write_data(g, data); }
 #define write_data16(g, data)		{ write_data(g, (data)>>8); write_data(g, (data) & 0xFF); }
+#define read_reg(g, reg)            { write_index(g, reg); read_data(g); }
 
 static inline void set_viewport(GDisplay* g) {
-
 	switch(g->g.Orientation) {
 		default:
 		case GDISP_ROTATE_0:
@@ -114,39 +113,34 @@ static inline void set_viewport(GDisplay* g) {
 			write_index(g, SSD1963_WRITE_MEMORY_START);
 			break;
 	}
-
-
-
-
 }
 
 /**
  * The backlight is controlled by the controller.
+ *	percent - the value 0..100 for brightness (duty cycle)
+ *
+ *	Backlight appears to be forced off (by chip) when display blanked
  */
 static inline void set_backlight(GDisplay *g, uint8_t percent) {
-	//duty_cycle is 00..FF
-	//Work in progress: the SSD1963 has a built-in PWM, its output can
-	//be used by a Dynamic Background Control or by a host (user)
-	//Check your LCD's hardware, the PWM connection is default left open and instead
-	//connected to a LED connection on the breakout board
+	// The SSD1963 has a built-in PWM (duty_cycle 00..FF).
+	// Its output can be used by a Dynamic Background Control or by a host (user)
+	// Check your LCD's hardware, the PWM connection is default left open and instead
+	// connected to a LED connection on the breakout board
+	
 	write_index(g, SSD1963_SET_PWM_CONF);		//set PWM for BackLight
-	write_data(g, 4);							// PWMF[7:0] = 4,
-												// PWM signal frequency = PLL clock / (256 * (PWMF[7:0] + 1)) / 256
-												//                      = aprox 366Hz for a PLL freq = 120MHz
-	if ( percent==0xFF )						// use percent==0xFF to turn off SSD1963 pwm in power SLEEP or DEEP SLEEP mode
+	write_data(g, 0x01);
+	//	write_data(g, 0x0E);					// PWMF[7:0] = 2, PWM base freq = PLL/(256*(1+5))/256 = 300Hz for a PLL freq = 120MHz (source: Displaytech)
+	if (percent == 0xFF)						// use percent==0xFF to turn off SSD1963 pwm in power SLEEP or DEEP SLEEP mode
 		write_data(g, 0x00);
+	else if (percent >= 100)
+		write_data(g, 0x00FF);					// Fully on for any percentage >= 100
 	else
-		write_data(g, (55+percent*2) & 0x00FF);
-	write_data(g, 0x01);						// controlled by host (not DBC), enabled
-	write_data(g, 0x00);						// DBC manual brightness; Set the brightness level: 00 Dimmest, FF Brightest
-	write_data(g, 0x00);						// DBC minimum brightness; Set the minimum brightness level: 00 Dimmest, FF Brightest
-	write_data(g, 0x00);						// Brightness prescaler of Transition Effect; Set the brightness prescaler: 0 Dimmest, F Brightest
-
+		write_data(g, (percent*255)/100 & 0x00FF);
+	write_data(g, 0x01);						// Controlled by host (not DBC), enabled
+	write_data(g, 0xFF);						// DBC manual brightness (not used - zero would work)
+	write_data(g, 0x60);						// DBC minimum brightness (not used - zero would work)
+	write_data(g, 0x0F);						// Brightness prescaler - active when Transition Effect enable A5 = 1
 }
-
-/*===========================================================================*/
-/* Driver interrupt handlers.                                                */
-/*===========================================================================*/
 
 /*===========================================================================*/
 /* Driver exported functions.                                                */
@@ -155,6 +149,13 @@ static inline void set_backlight(GDisplay *g, uint8_t percent) {
 LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	LCD_Parameters *	lcdp;
 
+/*
+ *	Some displays (e.g. Displaytech) have an on-board setup process which just requires that we don't touch anything for a time after power up.
+ *	For this type of display define GDISP_SSD1963_NO_INIT as TRUE, and implement an appropriate delay in the board file.
+ *	With such displays we can skip most of the initialisation. We also skip pulsing the reset pin, since it
+ *	will introduce an extra second or so of display to the startup time.
+ */
+
 	// The private area for this controller is the LCD timings
 	lcdp = (void *)&DisplayTimings[g->controllerdisplay];
 	g->priv = lcdp;
@@ -162,68 +163,79 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	// Initialise the board interface
 	init_board(g);
 
-	// Hardware reset
-	setpin_reset(g, TRUE);
-	gfxSleepMilliseconds(20);
-	setpin_reset(g, FALSE);
-	gfxSleepMilliseconds(20);
+	#if !GDISP_SSD1963_NO_INIT
+		// Hardware reset
+		setpin_reset(g, TRUE);
+		gfxSleepMilliseconds(20);
+		setpin_reset(g, FALSE);
+		gfxSleepMilliseconds(20);
+	#endif
 
 	// Get the bus for the following initialisation commands
 	acquire_bus(g);
-	
-	write_index(g, SSD1963_SOFT_RESET);
-	gfxSleepMilliseconds(5);
 
-	/* Driver PLL config */
-	write_index(g, SSD1963_SET_PLL_MN);
-	write_data(g, 35);								// PLLclk = REFclk (10Mhz) * 36 (360Mhz)
-	write_data(g, 2);								// SYSclk = PLLclk / 3  (120MHz)
-	write_data(g, 4);								// Apply calculation bit, else it is ignored
-	write_reg(g, SSD1963_SET_PLL, 0x01);			// Enable PLL
-	gfxSleepMilliseconds(5);
-	write_reg(g, SSD1963_SET_PLL, 0x03);			// Use PLL
-	gfxSleepMilliseconds(5);
-	write_index(g, SSD1963_SOFT_RESET);
-	gfxSleepMilliseconds(5);
+	#if !GDISP_SSD1963_NO_INIT
+		write_index(g, SSD1963_SOFT_RESET);             // Software reset - clears almost everything (apart from PLL)
+		gfxSleepMilliseconds(5);
 
-	/* LCD panel parameters */
-	write_index(g, SSD1963_SET_GDISP_MODE);
-	write_data(g, lcdp->flags & 0xFF);
-	write_data(g, (lcdp->flags >> 8) & 0xFF);
-	write_data16(g, lcdp->width-1);
-	write_data16(g, lcdp->height-1);
-	write_data(g, 0x00);							// RGB
+		/* Driver PLL config */
+		write_index(g, SSD1963_SET_PLL_MN);
+		write_data(g, 35);								// PLLclk = REFclk (10Mhz) * 36 (360Mhz)
+		write_data(g, 2);								// SYSclk = PLLclk / 3  (120MHz)
+		write_data(g, 4);								// Apply calculation bit, else it is ignored
+		write_reg(g, SSD1963_SET_PLL, 0x01);			// Enable PLL
+		gfxSleepMilliseconds(5);
+		write_reg(g, SSD1963_SET_PLL, 0x03);			// Use PLL
+		gfxSleepMilliseconds(5);
+		write_index(g, SSD1963_SOFT_RESET);             // Software reset - clears almost everything (apart from PLL)
+		gfxSleepMilliseconds(5);
+
+		/* LCD panel parameters */
+		write_index(g, SSD1963_SET_GDISP_MODE);
+		write_data(g, lcdp->flags & 0xFF);
+		write_data(g, (lcdp->flags >> 8) & 0xFF);
+		//**	write_data(g, 0x18);					//Enabled dithering
+		//**	write_data(g, 0x00);
+		write_data16(g, lcdp->width-1);
+		write_data16(g, lcdp->height-1);
+		write_data(g, 0x00);							// RGB - line sequences for serial TFT
+	#endif
+
+	// From Displaytech example - for larger horizontal resolutions - not sure if display-specific
+	if (lcdp->width >= 640)
+		write_reg(g, SSD1963_SET_ADDRESS_MODE, 2);		// Flip horizontal direction
 
 	write_reg(g, SSD1963_SET_PIXEL_DATA_INTERFACE, SSD1963_PDI_16BIT565);
 
-	/* LCD Clock specs */
-	write_index(g, SSD1963_SET_LSHIFT_FREQ);
-	write_data(g, (lcdp->fpr >> 16) & 0xFF);
-	write_data(g, (lcdp->fpr >> 8) & 0xFF);
-	write_data(g, lcdp->fpr & 0xFF);
+	#if !GDISP_SSD1963_NO_INIT
+		/* LCD Clock specs */
+		write_index(g, SSD1963_SET_LSHIFT_FREQ);
+		write_data(g, (lcdp->fpr >> 16) & 0xFF);
+		write_data(g, (lcdp->fpr >> 8) & 0xFF);
+		write_data(g, lcdp->fpr & 0xFF);
 
-	write_index(g, SSD1963_SET_HORI_PERIOD);
-	write_data16(g, lcdp->hperiod);
-	write_data16(g, lcdp->hpulse + lcdp->hbporch);
-	write_data(g, lcdp->hpulse);
-	write_data(g, 0x00);
-	write_data(g, 0x00);
-	write_data(g, 0x00);
+		write_index(g, SSD1963_SET_HORI_PERIOD);
+		write_data16(g, lcdp->hperiod);
+		write_data16(g, lcdp->hpulse + lcdp->hbporch);
+		write_data(g, lcdp->hpulse);
+		write_data(g, 0x00);
+		write_data(g, 0x00);
+		write_data(g, 0x00);
 
-	write_index(g, SSD1963_SET_VERT_PERIOD);
-	write_data16(g, lcdp->vperiod);
-	write_data16(g, lcdp->vpulse + lcdp->vbporch);
-	write_data(g, lcdp->vpulse);
-	write_data(g, 0x00);
-	write_data(g, 0x00);
+		write_index(g, SSD1963_SET_VERT_PERIOD);
+		write_data16(g, lcdp->vperiod);
+		write_data16(g, lcdp->vpulse + lcdp->vbporch);
+		write_data(g, lcdp->vpulse);
+		write_data(g, 0x00);
+		write_data(g, 0x00);
+	#endif
 
 	/* Tear effect indicator ON. This is used to tell the host MCU when the driver is not refreshing the panel (during front/back porch) */
 	write_reg(g, SSD1963_SET_TEAR_ON, 0x00);
 
-
 	/* Turn on */
 	write_index(g, SSD1963_SET_DISPLAY_ON);
-
+	
 	/* Turn on the back-light */
 	set_backlight(g, GDISP_INITIAL_BACKLIGHT);
 
@@ -265,32 +277,33 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			switch((powermode_t)g->p.ptr) {
 				case powerOff:
 					acquire_bus(g);
+					write_index(g, SSD1963_EXIT_SLEEP_MODE);
+					gfxSleepMilliseconds(5);
+					write_index(g, SSD1963_SET_DISPLAY_OFF);
+					write_index(g, SSD1963_SET_DEEP_SLEEP);
 					release_bus(g);
 					break;
 				case powerOn:
 					acquire_bus(g);
 					dummy_read(g);
 					dummy_read(g);
-					/* Wait for 1msec to let the PLL stable if was stopped by deep sleep mode  */
-					gfxSleepMilliseconds(100);
-					write_index(g, SSD1963_EXIT_SLEEP_MODE);
-					gfxSleepMilliseconds(5);
-					/* Restore the back-light */
-					set_backlight(g, gdispGGetBacklight(g));
+
+					gfxSleepMilliseconds(100);					// Wait for 1msec to let the PLL stable if was stopped by deep sleep mode
+                    write_index(g, SSD1963_EXIT_SLEEP_MODE);	// need this in case we were in 'normal' sleep mode
+                    gfxSleepMilliseconds(5);
+					set_backlight(g, gdispGGetBacklight(g));	// Restore the back-light
 					release_bus(g);
 					break;
 				case powerSleep:
 					acquire_bus(g);
-					/* Turn off the back-light pwm from SSD1963 */
-					set_backlight(g, 0xFF);
+					set_backlight(g, 0xFF);						// Turn off the back-light pwm from SSD1963
 					write_index(g, SSD1963_ENTER_SLEEP_MODE);
 					gfxSleepMilliseconds(5);
 					release_bus(g);
 					break;
 				case powerDeepSleep:
 					acquire_bus(g);
-					/* Turn off the back-light pwm from SSD1963 */
-					set_backlight(g, 0xFF);
+					set_backlight(g, 0xFF);						// Turn off the back-light pwm from SSD1963
 					write_index(g, SSD1963_ENTER_SLEEP_MODE);
 					write_index(g, SSD1963_SET_DEEP_SLEEP);
 					release_bus(g);
@@ -350,7 +363,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			g->g.Backlight = (unsigned)g->p.ptr;
 			return;
 
-		//case GDISP_CONTROL_CONTRAST:
+		//case GDISP_CONTROL_CONTRAST: - see DDS1963_SET_POST_PROC command - contrast, brightness, saturation
 		default:
 			return;
 		}
