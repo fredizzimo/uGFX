@@ -156,15 +156,14 @@ extern "C" {
      * @return  A pointer to the data or NULL on failure
      *
 	 * @param[in] instance		The mouse input instance number
+	 * @param[in] data			Where the data should be placed
 	 * @param[in] sz    		The size in bytes of the data to retrieve.
 	 *
      * @note    This routine is provided by the user application. It is only
      *          called if GINPUT_TOUCH_USER_CALIBRATION_LOAD has been set to TRUE in the
      *          users gfxconf.h file.
-     * @note    If GINPUT_TOUCH_USER_CALIBRATION_FREE has been set to TRUE in the users
-     *          gfxconf.h file then the buffer returned will be free'd using gfxFree().
      */
-    void *LoadMouseCalibration(unsigned instance, size_t sz);
+    bool_t LoadMouseCalibration(unsigned instance, void *data, size_t sz);
 
     /**
      * @brief   Save a set of mouse calibration data

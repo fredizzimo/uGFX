@@ -134,12 +134,12 @@
 	#endif
 	/**
 	 * @brief   Milliseconds to generate a CXTCLICK on a touch device.
-	 * @details	Defaults to 700 millseconds
+	 * @details	Defaults to 500 millseconds
 	 * @note	If you hold the touch down for longer than this a CXTCLICK is generated
 	 * 			but only on a touch device.
 	 */
 	#ifndef GINPUT_TOUCH_CXTCLICK_TIME
-		#define GINPUT_TOUCH_CXTCLICK_TIME				700
+		#define GINPUT_TOUCH_CXTCLICK_TIME				500
 	#endif
    /**
      * @brief   There is a user supplied routine to load mouse calibration data
@@ -148,14 +148,6 @@
      */
 	#ifndef GINPUT_TOUCH_USER_CALIBRATION_LOAD
 		#define GINPUT_TOUCH_USER_CALIBRATION_LOAD		FALSE
-	#endif
-   /**
-     * @brief   The buffer returned by the users @p LoadMouseCalibration() routine must be gfxFree()'d
-	 * 			by the mouse code.
-	 * @details	Defaults to FALSE
-     */
-	#ifndef GINPUT_TOUCH_USER_CALIBRATION_FREE
-		#define GINPUT_TOUCH_USER_CALIBRATION_FREE		FALSE
 	#endif
    /**
      * @brief   There is a user supplied routine to save mouse calibration data

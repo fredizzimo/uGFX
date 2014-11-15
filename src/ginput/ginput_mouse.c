@@ -462,7 +462,7 @@ static void MousePoll(void *param) {
 			gdispGSetClip(m->display, 0, 0, w, h);
 		#endif
 
-		// Ensure we get minimaly processed readings for the calibration
+		// Ensure we get minimally processed readings for the calibration
 		m->flags |= GMOUSE_FLG_IN_CAL;
 
 		// Set up our calibration locations
@@ -519,7 +519,7 @@ static void MousePoll(void *param) {
 						gfxSleepMilliseconds(CALIBRATION_POLL_PERIOD);
 					}
 
-					// Ignore presses less than CALIBRATION_MAXPRESS_PERIOD milliseconds
+					// Ignore presses less than CALIBRATION_MINPRESS_PERIOD milliseconds
 				} while(j < CALIBRATION_MINPRESS_PERIOD/CALIBRATION_POLL_PERIOD);
 				points[i].x = px / j;
 				points[i].y = py / j;
@@ -689,23 +689,13 @@ void _gmousePostInitDriver(GDriver *g) {
 
     #if !GINPUT_TOUCH_NOCALIBRATE && !GINPUT_TOUCH_STARTRAW
         if ((gmvmt(m)->d.flags & GMOUSE_VFLG_CALIBRATE)) {
-            GMouseCalibration		*pc;
-
             #if GINPUT_TOUCH_USER_CALIBRATION_LOAD
-                if ((pc = (GMouseCalibration *)LoadMouseCalibration(gdriverGetDriverInstanceNumber((GDriver *)m), sizeof(GMouseCalibration)))) {
-                    memcpy(&m->caldata, pc, sizeof(GMouseCalibration));
-                    #if GINPUT_TOUCH_USER_CALIBRATION_FREE
-                        gfxFree(pc);
-                    #endif
+                if (LoadMouseCalibration(gdriverGetDriverInstanceNumber((GDriver *)m), &m->caldata, sizeof(GMouseCalibration))))
                     m->flags |= GMOUSE_FLG_CALIBRATE;
-                } else
+                else
             #endif
-            if (gmvmt(m)->calload && (pc = (GMouseCalibration *)gmvmt(m)->calload(m, sizeof(GMouseCalibration)))) {
-                memcpy(&m->caldata, pc, sizeof(GMouseCalibration));
-                if ((gmvmt(m)->d.flags & GMOUSE_VFLG_CAL_LOADFREE))
-                    gfxFree(pc);
+            if (gmvmt(m)->calload && gmvmt(m)->calload(m, &m->caldata, sizeof(GMouseCalibration))))
                 m->flags |= GMOUSE_FLG_CALIBRATE;
-            }
 			#if !GINPUT_TOUCH_NOCALIBRATE_GUI
 				else
 					while (CalibrateMouse(m));

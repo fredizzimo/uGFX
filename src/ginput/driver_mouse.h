@@ -74,7 +74,6 @@ typedef struct GMouseVMT {
 		#define GMOUSE_VFLG_CALIBRATE		0x0010			// This device requires calibration
 		#define GMOUSE_VFLG_CAL_EXTREMES	0x0020			// Use edge to edge calibration
 		#define GMOUSE_VFLG_CAL_TEST		0x0040			// Test the results of the calibration
-		#define GMOUSE_VFLG_CAL_LOADFREE    0x0080          // Call gfxFree on the buffer returned by the VMT calload() routine.
 		#define GMOUSE_VFLG_ONLY_DOWN		0x0100			// This device returns a valid position only when the mouse is down
 		#define GMOUSE_VFLG_POORUPDOWN		0x0200			// Position readings during up/down are unreliable
 		#define GMOUSE_VFLG_DYNAMICONLY		0x8000			// This mouse driver should not be statically initialized eg Win32
@@ -89,8 +88,8 @@ typedef struct GMouseVMT {
 	bool_t	(*init)(GMouse *m, unsigned driverinstance);	// Required
 	void	(*deinit)(GMouse *m);							// Optional
 	bool_t	(*get)(GMouse *m, GMouseReading *prd);			// Required
-	void	(*calsave)(GMouse *m, void *buf, size_t sz);	// Optional
-	const char *(*calload)(GMouse *m, size_t sz);			// Optional: Can return NULL if no data is saved.
+	void	(*calsave)(GMouse *m, const void *buf, size_t sz);	// Optional
+	bool_t	(*calload)(GMouse *m, void *buf, size_t sz);	// Optional
 } GMouseVMT;
 
 #define gmvmt(m)		((const GMouseVMT const *)((m)->d.vmt))
