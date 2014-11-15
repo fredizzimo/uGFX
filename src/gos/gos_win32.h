@@ -6,7 +6,7 @@
  */
 
 /**
- * @file    src/gos/gfx_win32.h
+ * @file    src/gos/gos_win32.h
  * @brief   GOS - Operating System Support header file for WIN32.
  */
 

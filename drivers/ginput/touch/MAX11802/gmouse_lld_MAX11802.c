@@ -18,17 +18,14 @@
 // Get the hardware interface
 #include "gmouse_lld_MAX11802_board.h"
 
-/* Register values to set */
-#define MAX11802_MODE    0x0E		/* Direct conversion with averaging */
+// Register values to set
+#define MAX11802_MODE    0x0E		// Direct conversion with averaging
 #define MAX11802_AVG     0x55
 #define MAX11802_TIMING  0x77
 #define MAX11802_DELAY   0x55
 
 #define Z_MIN		0
-#define Z_MAX       1
-
-
-
+#define Z_MAX		1
 
 static bool_t MouseInit(GMouse* m, unsigned driverinstance)
 {
@@ -70,9 +67,6 @@ static bool_t MouseInit(GMouse* m, unsigned driverinstance)
 
 	return TRUE;
 }
-
-
-
 
 static bool_t read_xyz(GMouse* m, GMouseReading* pdr)
 {
@@ -119,7 +113,7 @@ static bool_t read_xyz(GMouse* m, GMouseReading* pdr)
 	    aquire_bus(m);
 	    gfintWriteCommand(m, MAX11802_CMD_XPOSITION);
 		#if defined(GINPUT_MOUSE_YX_INVERTED) && GINPUT_MOUSE_YX_INVERTED
-	        pdr->y = read_value(m);
+			pdr->y = read_value(m);
 			pdr->x = read_value(m);
 		#else
 			pdr->x = read_value(m);
@@ -165,8 +159,6 @@ static bool_t read_xyz(GMouse* m, GMouseReading* pdr)
 
     return TRUE;
 }
-
-
 
 const GMouseVMT const GMOUSE_DRIVER_VMT[1] = {{
 	{

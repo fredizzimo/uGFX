@@ -23,7 +23,7 @@
 	/**
 	 * @brief   Should mouse/touch functions be included.
 	 * @details	Defaults to FALSE
-	 * @note	Also add the a mouse/touch hardware driver to your makefile.
+	 * @note	Also add a mouse/touch hardware driver to your makefile.
 	 * 			Eg.
 	 * 				include $(GFXLIB)/drivers/ginput/touch/MCU/ginput_lld.mk
 	 */
@@ -33,7 +33,7 @@
 	/**
 	 * @brief   Should keyboard functions be included.
 	 * @details	Defaults to FALSE
-	 * @note	Also add the a keyboard hardware driver to your makefile.
+	 * @note	Also add a keyboard hardware driver to your makefile.
 	 * 			Eg.
 	 * 				include $(GFXLIB)/drivers/ginput/keyboard/XXXX/ginput_lld.mk
 	 */
@@ -43,7 +43,7 @@
 	/**
 	 * @brief   Should hardware toggle/switch/button functions be included.
 	 * @details	Defaults to FALSE
-	 * @note	Also add the a toggle hardware driver to your makefile.
+	 * @note	Also add a toggle hardware driver to your makefile.
 	 * 			Eg.
 	 * 				include $(GFXLIB)/drivers/ginput/toggle/Pal/ginput_lld.mk
 	 */
@@ -53,7 +53,7 @@
 	/**
 	 * @brief   Should analog dial functions be included.
 	 * @details	Defaults to FALSE
-	 * @note	Also add the a dial hardware driver to your makefile.
+	 * @note	Also add a dial hardware driver to your makefile.
 	 * 			Eg.
 	 * 				include $(GFXLIB)/drivers/ginput/dial/analog/ginput_lld.mk
 	 */

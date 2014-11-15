@@ -17,9 +17,9 @@
  *
  * @pre			GFX_USE_GDISP must be set to TRUE in gfxconf.h
  *
- * @note		Each drawing routine supports a gispXXXX and a gdispGXXXX function. The difference is that the
- * 				gdispXXXX function does not require a display to be specified. Note there is a slight anomoly
- * 				in the naming with gdispGBlitArea() vs gdispBlitAreaEx() and gdispBlitArea(), the later of
+ * @note		Each drawing routine supports a gdispXXXX and a gdispGXXXX function. The difference is that the
+ * 				gdispXXXX function does not require a display to be specified. Note there is a slight anomaly
+ * 				in the naming with gdispGBlitArea() vs gdispBlitAreaEx() and gdispBlitArea(), the latter of
  * 				which is now deprecated.
  * @{
  */
@@ -1094,7 +1094,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 #define gdispGSetContrast(g, percent)				gdispGControl((g), GDISP_CONTROL_CONTRAST, (void *)(unsigned)(percent))
 #define gdispSetContrast(percent)					gdispGControl(GDISP, GDISP_CONTROL_CONTRAST, (void *)(unsigned)(percent))
 
-/* More interesting macro's */
+/* More interesting macros */
 
 /**
  * @brief   Reset the clip area to the full screen

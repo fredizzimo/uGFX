@@ -6,7 +6,7 @@
  */
 
 /**
- * @file    src/gos/gfx_win32.c
+ * @file    src/gos/gos_win32.c
  * @brief   GOS Win32 Operating System support.
  */
 #include "gfx.h"
