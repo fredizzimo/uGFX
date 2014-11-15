@@ -25,6 +25,16 @@
 #include "DejaVuSans16.c"
 #endif
 
+#if defined(GDISP_INCLUDE_FONT_DEJAVUSANS20_AA) && GDISP_INCLUDE_FONT_DEJAVUSANS20_AA
+#define GDISP_FONT_FOUND
+#include "DejaVuSans20_aa.c"
+#endif
+
+#if defined(GDISP_INCLUDE_FONT_DEJAVUSANS20) && GDISP_INCLUDE_FONT_DEJAVUSANS20
+#define GDISP_FONT_FOUND
+#include "DejaVuSans20.c"
+#endif
+
 #if defined(GDISP_INCLUDE_FONT_DEJAVUSANS24_AA) && GDISP_INCLUDE_FONT_DEJAVUSANS24_AA
 #define GDISP_FONT_FOUND
 #include "DejaVuSans24_aa.c"

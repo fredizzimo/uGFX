@@ -50,10 +50,12 @@ rm -f *.c
 build DejaVuSans.ttf DejaVuSans10 bwfont 10 bw
 build DejaVuSans.ttf DejaVuSans12 bwfont 12 bw
 build DejaVuSans.ttf DejaVuSans16 rlefont 16 bw
+build DejaVuSans.ttf DejaVuSans20 rlefont 20 bw
 build DejaVuSans.ttf DejaVuSans24 rlefont 24 bw
 build DejaVuSans.ttf DejaVuSans32 rlefont 32 bw
 build DejaVuSans.ttf DejaVuSans12_aa rlefont 12
 build DejaVuSans.ttf DejaVuSans16_aa rlefont 16
+build DejaVuSans.ttf DejaVuSans20_aa rlefont 20
 build DejaVuSans.ttf DejaVuSans24_aa rlefont 24
 build DejaVuSans.ttf DejaVuSans32_aa rlefont 32
 build DejaVuSans-Bold.ttf DejaVuSansBold12 bwfont 12 bw
