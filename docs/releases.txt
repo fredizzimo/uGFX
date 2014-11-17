@@ -37,6 +37,7 @@ FEATURE:	Mouse/Touch now support both pen and finger mode.
 DEPRECATE:	gwinAttachMouse() is now handled automaticly.
 FEATURE:	Added MAX11802 touch driver by user steved
 FEATURE:	Added STM32F429i-Discovery board support
+FEATURE:	Added DejaVuSans20 and DejaVuSans20_aa built-in fonts
 
 
 *** Release 2.1 ***
