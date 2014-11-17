@@ -1,6 +1,6 @@
 
 
-/* Start of automatically generated font definition for phpP3Zkdt. */
+/* Start of automatically generated font definition for DejaVuSans20. */
 
 #ifndef MF_RLEFONT_INTERNALS
 #define MF_RLEFONT_INTERNALS
@@ -11,7 +11,7 @@
 #error The font file is not compatible with this version of mcufont.
 #endif
 
-static const uint8_t mf_rlefont_phpP3Zkdt_dictionary_data[320] = {
+static const uint8_t mf_rlefont_DejaVuSans20_dictionary_data[320] = {
     0x05, 0x0a, 0x81, 0x03, 0x17, 0x05, 0x81, 0x0b, 0x81, 0x84, 0x0b, 0x04, 0x83, 0x03, 0x82, 0x0b, 
     0x81, 0x02, 0x81, 0x02, 0x85, 0x12, 0x81, 0x0a, 0x80, 0x01, 0x80, 0x40, 0x18, 0x01, 0x87, 0x0b, 
     0x12, 0x81, 0x12, 0x81, 0x12, 0x81, 0x12, 0x81, 0x10, 0x04, 0x81, 0x1e, 0x11, 0x06, 0x81, 0x83, 
@@ -34,7 +34,7 @@ static const uint8_t mf_rlefont_phpP3Zkdt_dictionary_data[320] = {
     0xaa, 0x34, 0x1c, 0x34, 0x9c, 0x38, 0x20, 0x37, 0xba, 0x34, 0x28, 0x34, 0x3b, 0x34, 0x39, 0x40, 
 };
 
-static const uint16_t mf_rlefont_phpP3Zkdt_dictionary_offsets[110] = {
+static const uint16_t mf_rlefont_DejaVuSans20_dictionary_offsets[110] = {
     0x0000, 0x0001, 0x0004, 0x0005, 0x0009, 0x000b, 0x000d, 0x000f, 
     0x0011, 0x0014, 0x0015, 0x0018, 0x001b, 0x001d, 0x0020, 0x0028, 
     0x0029, 0x002b, 0x002c, 0x002d, 0x002f, 0x0031, 0x0033, 0x0036, 
@@ -51,7 +51,7 @@ static const uint16_t mf_rlefont_phpP3Zkdt_dictionary_offsets[110] = {
     0x0135, 0x0137, 0x0139, 0x013b, 0x013e, 0x0140, 
 };
 
-static const uint8_t mf_rlefont_phpP3Zkdt_glyph_data_0[1558] = {
+static const uint8_t mf_rlefont_DejaVuSans20_glyph_data_0[1558] = {
     0x06, 0x00, 0x10, 0x08, 0x1a, 0x83, 0x65, 0x22, 0x29, 0x70, 0x10, 0x0a, 0x3e, 0x80, 0x7b, 0xd0, 
     0x80, 0x7b, 0x5f, 0xfc, 0xb7, 0x10, 0x11, 0x1a, 0x5e, 0x5f, 0xea, 0x20, 0x1f, 0x8c, 0x38, 0xa6, 
     0x3d, 0x33, 0x6e, 0x33, 0x3e, 0xa7, 0x38, 0x5b, 0x38, 0xa6, 0x3d, 0x33, 0x6e, 0x33, 0x19, 0x3d, 
@@ -152,7 +152,7 @@ static const uint8_t mf_rlefont_phpP3Zkdt_glyph_data_0[1558] = {
     0x3f, 0x42, 0x93, 0x43, 0xc2, 0x10, 
 };
 
-static const uint16_t mf_rlefont_phpP3Zkdt_glyph_offsets_0[95] = {
+static const uint16_t mf_rlefont_DejaVuSans20_glyph_offsets_0[95] = {
     0x0000, 0x0003, 0x000b, 0x0016, 0x0037, 0x0058, 0x0084, 0x00a7, 
     0x00aa, 0x00b7, 0x00c5, 0x00d9, 0x00e5, 0x00ed, 0x00f4, 0x00fa, 
     0x0104, 0x0114, 0x011f, 0x012f, 0x013d, 0x0155, 0x0165, 0x017d, 
@@ -167,11 +167,11 @@ static const uint16_t mf_rlefont_phpP3Zkdt_glyph_offsets_0[95] = {
     0x05b1, 0x05c8, 0x05d9, 0x05e5, 0x05f5, 0x05fb, 0x060b, 
 };
 
-static const struct mf_rlefont_char_range_s mf_rlefont_phpP3Zkdt_char_ranges[] = {
-    {32, 95, mf_rlefont_phpP3Zkdt_glyph_offsets_0, mf_rlefont_phpP3Zkdt_glyph_data_0},
+static const struct mf_rlefont_char_range_s mf_rlefont_DejaVuSans20_char_ranges[] = {
+    {32, 95, mf_rlefont_DejaVuSans20_glyph_offsets_0, mf_rlefont_DejaVuSans20_glyph_data_0},
 };
 
-const struct mf_rlefont_s mf_rlefont_phpP3Zkdt = {
+const struct mf_rlefont_s mf_rlefont_DejaVuSans20 = {
     {
     "DejaVu Sans Book 20",
     "DejaVuSans20",
@@ -188,24 +188,24 @@ const struct mf_rlefont_s mf_rlefont_phpP3Zkdt = {
     &mf_rlefont_render_character,
     },
     4, /* version */
-    mf_rlefont_phpP3Zkdt_dictionary_data,
-    mf_rlefont_phpP3Zkdt_dictionary_offsets,
+    mf_rlefont_DejaVuSans20_dictionary_data,
+    mf_rlefont_DejaVuSans20_dictionary_offsets,
     62, /* rle dict count */
     109, /* total dict count */
     1, /* char range count */
-    mf_rlefont_phpP3Zkdt_char_ranges,
+    mf_rlefont_DejaVuSans20_char_ranges,
 };
 
 #ifdef MF_INCLUDED_FONTS
 /* List entry for searching fonts by name. */
-static const struct mf_font_list_s mf_rlefont_phpP3Zkdt_listentry = {
+static const struct mf_font_list_s mf_rlefont_DejaVuSans20_listentry = {
     MF_INCLUDED_FONTS,
-    (struct mf_font_s*)&mf_rlefont_phpP3Zkdt
+    (struct mf_font_s*)&mf_rlefont_DejaVuSans20
 };
 #undef MF_INCLUDED_FONTS
-#define MF_INCLUDED_FONTS (&mf_rlefont_phpP3Zkdt_listentry)
+#define MF_INCLUDED_FONTS (&mf_rlefont_DejaVuSans20_listentry)
 #endif
 
 
-/* End of automatically generated font definition for phpP3Zkdt. */
+/* End of automatically generated font definition for DejaVuSans20. */
 

@@ -1,6 +1,6 @@
 
 
-/* Start of automatically generated font definition for phpr8HlMQ. */
+/* Start of automatically generated font definition for DejaVuSans24_aa. */
 
 #ifndef MF_RLEFONT_INTERNALS
 #define MF_RLEFONT_INTERNALS
@@ -11,7 +11,7 @@
 #error The font file is not compatible with this version of mcufont.
 #endif
 
-static const uint8_t mf_rlefont_phpr8HlMQ_dictionary_data[486] = {
+static const uint8_t mf_rlefont_DejaVuSans24_aa_dictionary_data[486] = {
     0x05, 0x0b, 0x09, 0x81, 0x12, 0x81, 0x81, 0x05, 0x81, 0x0b, 0x0d, 0x17, 0x10, 0x28, 0x0b, 0x86, 
     0x12, 0x81, 0x12, 0x81, 0x08, 0x0e, 0x06, 0x84, 0x40, 0x1d, 0x80, 0xce, 0x8b, 0x08, 0x8b, 0x15, 
     0x80, 0xc3, 0x80, 0xcb, 0xca, 0x81, 0x12, 0x0a, 0x02, 0x81, 0xc7, 0x41, 0x3e, 0x01, 0xc9, 0x80, 
@@ -45,7 +45,7 @@ static const uint8_t mf_rlefont_phpr8HlMQ_dictionary_data[486] = {
     0x0f, 0x60, 0x08, 0x4e, 0x0d, 0x28, 
 };
 
-static const uint16_t mf_rlefont_phpr8HlMQ_dictionary_offsets[156] = {
+static const uint16_t mf_rlefont_DejaVuSans24_aa_dictionary_offsets[156] = {
     0x0000, 0x0001, 0x0002, 0x0003, 0x0006, 0x000a, 0x000b, 0x000c, 
     0x000d, 0x000e, 0x0010, 0x0014, 0x0015, 0x0016, 0x0017, 0x0018, 
     0x001a, 0x001c, 0x001f, 0x0020, 0x0022, 0x0024, 0x0026, 0x0027, 
@@ -68,7 +68,7 @@ static const uint16_t mf_rlefont_phpr8HlMQ_dictionary_offsets[156] = {
     0x01e0, 0x01e2, 0x01e4, 0x01e6, 
 };
 
-static const uint8_t mf_rlefont_phpr8HlMQ_glyph_data_0[3979] = {
+static const uint8_t mf_rlefont_DejaVuSans24_aa_glyph_data_0[3979] = {
     0x06, 0x00, 0x10, 0x08, 0x25, 0x22, 0x8a, 0x2e, 0x3d, 0x2e, 0x0d, 0x0d, 0x2e, 0x48, 0x20, 0x22, 
     0x10, 0x0a, 0x1e, 0xb7, 0x96, 0x96, 0x10, 0x11, 0x58, 0x50, 0x05, 0x6d, 0x30, 0x48, 0x1d, 0x09, 
     0xf5, 0x01, 0x6f, 0x1d, 0x0d, 0x0b, 0x30, 0x05, 0x6d, 0x37, 0x02, 0x0f, 0x07, 0x00, 0x33, 0x2f, 
@@ -320,7 +320,7 @@ static const uint8_t mf_rlefont_phpr8HlMQ_glyph_data_0[3979] = {
     0x00, 0x01, 0x04, 0x08, 0x0c, 0x47, 0x55, 0x01, 0x25, 0x56, 0x10, 
 };
 
-static const uint16_t mf_rlefont_phpr8HlMQ_glyph_offsets_0[95] = {
+static const uint16_t mf_rlefont_DejaVuSans24_aa_glyph_offsets_0[95] = {
     0x0000, 0x0003, 0x0011, 0x0017, 0x0066, 0x00ad, 0x0120, 0x017c, 
     0x017f, 0x01ac, 0x01db, 0x0207, 0x0210, 0x0219, 0x0222, 0x0227, 
     0x024f, 0x029c, 0x02af, 0x02e3, 0x031d, 0x034d, 0x0378, 0x03bb, 
@@ -335,14 +335,14 @@ static const uint16_t mf_rlefont_phpr8HlMQ_glyph_offsets_0[95] = {
     0x0e5a, 0x0e95, 0x0eda, 0x0efc, 0x0f2f, 0x0f36, 0x0f69, 
 };
 
-static const struct mf_rlefont_char_range_s mf_rlefont_phpr8HlMQ_char_ranges[] = {
-    {32, 95, mf_rlefont_phpr8HlMQ_glyph_offsets_0, mf_rlefont_phpr8HlMQ_glyph_data_0},
+static const struct mf_rlefont_char_range_s mf_rlefont_DejaVuSans24_aa_char_ranges[] = {
+    {32, 95, mf_rlefont_DejaVuSans24_aa_glyph_offsets_0, mf_rlefont_DejaVuSans24_aa_glyph_data_0},
 };
 
-const struct mf_rlefont_s mf_rlefont_phpr8HlMQ = {
+const struct mf_rlefont_s mf_rlefont_DejaVuSans24_aa = {
     {
     "DejaVu Sans Book 20",
-    "DejaVuSans20",
+    "DejaVuSans20_aa",
     20, /* width */
     21, /* height */
     6, /* min x advance */
@@ -356,24 +356,24 @@ const struct mf_rlefont_s mf_rlefont_phpr8HlMQ = {
     &mf_rlefont_render_character,
     },
     4, /* version */
-    mf_rlefont_phpr8HlMQ_dictionary_data,
-    mf_rlefont_phpr8HlMQ_dictionary_offsets,
+    mf_rlefont_DejaVuSans24_aa_dictionary_data,
+    mf_rlefont_DejaVuSans24_aa_dictionary_offsets,
     107, /* rle dict count */
     155, /* total dict count */
     1, /* char range count */
-    mf_rlefont_phpr8HlMQ_char_ranges,
+    mf_rlefont_DejaVuSans24_aa_char_ranges,
 };
 
 #ifdef MF_INCLUDED_FONTS
 /* List entry for searching fonts by name. */
-static const struct mf_font_list_s mf_rlefont_phpr8HlMQ_listentry = {
+static const struct mf_font_list_s mf_rlefont_DejaVuSans24_aa_listentry = {
     MF_INCLUDED_FONTS,
-    (struct mf_font_s*)&mf_rlefont_phpr8HlMQ
+    (struct mf_font_s*)&mf_rlefont_DejaVuSans24_aa
 };
 #undef MF_INCLUDED_FONTS
-#define MF_INCLUDED_FONTS (&mf_rlefont_phpr8HlMQ_listentry)
+#define MF_INCLUDED_FONTS (&mf_rlefont_DejaVuSans24_aa_listentry)
 #endif
 
 
-/* End of automatically generated font definition for phpr8HlMQ. */
+/* End of automatically generated font definition for DejaVuSans24_aa. */
 
