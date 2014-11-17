@@ -694,7 +694,7 @@ void _gmousePostInitDriver(GDriver *g) {
                     m->flags |= GMOUSE_FLG_CALIBRATE;
                 else
             #endif
-            if (gmvmt(m)->calload && gmvmt(m)->calload(m, &m->caldata, sizeof(GMouseCalibration))))
+            if (gmvmt(m)->calload && gmvmt(m)->calload(m, &m->caldata, sizeof(GMouseCalibration)))
                 m->flags |= GMOUSE_FLG_CALIBRATE;
 			#if !GINPUT_TOUCH_NOCALIBRATE_GUI
 				else
