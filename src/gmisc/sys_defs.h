@@ -25,6 +25,9 @@
 /* Type definitions                                                          */
 /*===========================================================================*/
 
+// Forward definition
+typedef struct point point;
+
 /**
  * @brief	Sample data formats
  * @note	These are defined regardless of whether you use the GMISC module
@@ -60,11 +63,13 @@ typedef int32_t	fixed;
  * @brief   Macros to convert to and from a fixed point.
  * @{
  */
-#define FIXED(x)		((fixed)(x)<<16)			/* @< integer to fixed */
-#define NONFIXED(x)		((x)>>16)					/* @< fixed to integer */
-#define FIXED0_5		32768						/* @< 0.5 as a fixed (used for rounding) */
-#define FP2FIXED(x)		((fixed)((x)*65536.0))		/* @< floating point to fixed */
-#define FIXED2FP(x)		((double)(x)/65536.0)		/* @< fixed to floating point */
+#define FIXED(x)			((fixed)(x)<<16)						/* @< integer to fixed */
+#define NONFIXED(x)			((x)>>16)								/* @< fixed to integer */
+#define FIXED0_5			32768									/* @< 0.5 as a fixed (used for rounding) */
+#define FP2FIXED(x)			((fixed)((x)*65536.0))					/* @< floating point to fixed */
+#define FIXED2FP(x)			((double)(x)/65536.0)					/* @< fixed to floating point */
+#define FIXEDMUL(a,b)		((fixed)((((long long)(a))*(b))>>16))	/* @< fixed,fixed multiplication */
+#define FIXEDMULINT(a,b)	((a)*(b))								/* @< integer,fixed multiplication */
 /** @} */
 
 /**
@@ -90,6 +95,7 @@ extern "C" {
 #if GMISC_NEED_ARRAYOPS || defined(__DOXYGEN__)
 	/**
 	 * @brief				Convert from one array format to another array format.
+	 * @pre					Requires GFX_USE_GMISC and GMISC_NEED_ARRAYOPS
 	 *
 	 * @param[in] srcfmt		The format of the source array
 	 * @param[in] src			The source array
@@ -131,6 +137,7 @@ extern "C" {
 		/**
 		 * @brief	Fast Table Based Trig functions
 		 * @return	A double in the range -1.0 .. 0.0 .. 1.0
+		 * @pre		Requires GFX_USE_GMISC and GMISC_NEED_FASTTRIG
 		 *
 		 * @param[in] degrees	The angle in degrees (not radians)
 		 *
@@ -145,6 +152,7 @@ extern "C" {
 		 *
 		 * @brief	Fast Table Based Trig functions
 		 * @return	A double in the range -1.0 .. 0.0 .. 1.0
+		 * @pre		Requires GFX_USE_GMISC and GMISC_NEED_FASTTRIG
 		 *
 		 * @param[in] degrees	The angle in degrees 0 .. 359
 		 *
@@ -166,6 +174,7 @@ extern "C" {
 		/**
 		 * @brief	Fast Table Based Trig functions
 		 * @return	A fixed point in the range -1.0 .. 0.0 .. 1.0
+		 * @pre		Requires GFX_USE_GMISC and GMISC_NEED_FIXEDTRIG
 		 *
 		 * @param[in] degrees	The angle in degrees (not radians)
 		 *
@@ -180,6 +189,7 @@ extern "C" {
 		 *
 		 * @brief	Fast Table Based Trig functions
 		 * @return	A fixed point in the range -1.0 .. 0.0 .. 1.0
+		 * @pre		Requires GFX_USE_GMISC and GMISC_NEED_FIXEDTRIG
 		 *
 		 * @param[in] degrees	The angle in degrees 0 .. 359
 		 *
@@ -195,10 +205,11 @@ extern "C" {
 		/** @} */
 #endif
 
-#if GMISC_NEED_INVSQRT
+#if GMISC_NEED_INVSQRT || defined(__DOXYGEN__)
 		/**
 		 * @brief	Fast inverse square root function (x^-1/2)
 		 * @return	The approximate inverse square root
+		 * @pre		Requires GFX_USE_GMISC and GMISC_NEED_INVSQRT
 		 *
 		 * @param[in] n	The number to find the inverse square root of
 		 *
@@ -212,6 +223,243 @@ extern "C" {
 		 */
 		float invsqrt(float n);
 #endif
+
+#if GMISC_NEED_MATRIXFLOAT2D || defined(__DOXYGEN__)
+
+	/**
+	 * @brief	A matrix for doing 2D graphics using floats
+	 * @pre		Requires GFX_USE_GMISC and GMISC_NEED_MATRIXFLOAT2D
+	 */
+	typedef struct MatrixFloat2D {
+		float	a00, a01, a02;
+		float	a10, a11, a12;
+		float	a20, a21, a22;
+	} MatrixFloat2D;
+
+	/**
+	 * @brief	Apply the matrix to a set of points
+	 * @pre		Requires GFX_USE_GMISC and GMISC_NEED_MATRIXFLOAT2D
+	 *
+	 * @param[in] dst	The destination array of points
+	 * @param[in] src	The source array of points
+	 * @param[in] m		The matrix to apply
+	 * @param[in] cnt	How many points are in the array
+	 *
+	 * @note	In-place matrix application is allowed ie. dst = src
+	 *
+	 * @api
+	 */
+	void gmiscMatrixFloat2DApplyToPoints(point *dst, const point *src, const MatrixFloat2D *m, int cnt);
+
+	/**
+	 * @brief	Set the 2D matrix to the identity matrix
+	 * @pre		Requires GFX_USE_GMISC and GMISC_NEED_MATRIXFLOAT2D
+	 *
+	 * @param[in] m		The matrix to set to identity
+	 *
+	 * @api
+	 */
+	void gmiscMatrixFloat2DSetIdentity(MatrixFloat2D *m);
+
+	/**
+	 * @brief	Multiple two 2D matrixes together
+	 * @pre		Requires GFX_USE_GMISC and GMISC_NEED_MATRIXFLOAT2D
+	 *
+	 * @param[in] dst	The destination matrix
+	 * @param[in] src1	The first source matrix
+	 * @param[in] src2	The second source matrix
+	 *
+	 * @note	In-place matrix application is NOT allowed ie. dst != src1, dst != src2
+	 *
+	 * @api
+	 */
+	void gmiscMatrixFloat2DMultiply(MatrixFloat2D *dst, const MatrixFloat2D *src1, const MatrixFloat2D *src2);
+
+	/**
+	 * @brief	Add an x,y translation to a matrix
+	 * @pre		Requires GFX_USE_GMISC and GMISC_NEED_MATRIXFLOAT2D
+	 *
+	 * @param[in] dst		The destination matrix
+	 * @param[in] src		The source matrix. Can be NULL
+	 * @param[in] tx, ty	The x and y translation to apply
+	 *
+	 * @note	In-place matrix operation is NOT allowed ie. dst != src
+	 * @note	If no source matrix is provided, it is equivalent to applying the operation
+	 * 			to an identity matrix. It also is a much simpler operation requiring no multiplication.
+	 *
+	 * @api
+	 */
+	void gmiscMatrixFloat2DApplyTranslation(MatrixFloat2D *dst, const MatrixFloat2D *src, float tx, float ty);
+
+	/**
+	 * @brief	Add x,y scaling to a matrix
+	 * @pre		Requires GFX_USE_GMISC and GMISC_NEED_MATRIXFLOAT2D
+	 *
+	 * @param[in] dst		The destination matrix
+	 * @param[in] src		The source matrix. Can be NULL
+	 * @param[in] sx, sy	The scaling to apply in the x and y direction. Negative numbers give reflection.
+	 *
+	 * @note	In-place matrix operation is NOT allowed ie. dst != src
+	 * @note	If no source matrix is provided, it is equivalent to applying the operation
+	 * 			to an identity matrix. It also is a much simpler operation requiring no multiplication.
+	 *
+	 * @api
+	 */
+	void gmiscMatrixFloat2DApplyScale(MatrixFloat2D *dst, const MatrixFloat2D *src, float sx, float sy);
+
+	/**
+	 * @brief	Add x,y shear to a matrix
+	 * @pre		Requires GFX_USE_GMISC and GMISC_NEED_MATRIXFLOAT2D
+	 *
+	 * @param[in] dst		The destination matrix
+	 * @param[in] src		The source matrix. Can be NULL
+	 * @param[in] sx, sy	The shear to apply in the x and y direction.
+	 *
+	 * @note	In-place matrix operation is NOT allowed ie. dst != src
+	 * @note	If no source matrix is provided, it is equivalent to applying the operation
+	 * 			to an identity matrix. It also is a much simpler operation requiring no multiplication.
+	 *
+	 * @api
+	 */
+	void gmiscMatrixFloat2DApplyShear(MatrixFloat2D *dst, const MatrixFloat2D *src, float sx, float sy);
+
+	/**
+	 * @brief	Add rotation to a matrix
+	 * @pre		Requires GFX_USE_GMISC and GMISC_NEED_MATRIXFLOAT2D
+	 *
+	 * @param[in] dst		The destination matrix
+	 * @param[in] src		The source matrix. Can be NULL
+	 * @param[in] angle		The angle to apply in degrees (not radians).
+	 *
+	 * @note	In-place matrix operation is NOT allowed ie. dst != src
+	 * @note	If no source matrix is provided, it is equivalent to applying the operation
+	 * 			to an identity matrix. It also is a much simpler operation.
+	 * @note	If GMISC_NEED_FASTTRIG is defined then the fast table sin and cos lookup's will be used
+	 * 			rather than the C library versions.
+	 *
+	 * @api
+	 */
+	void gmiscMatrixFloat2DApplyRotation(MatrixFloat2D *dst, const MatrixFloat2D *src, int angle);
+#endif
+
+#if GMISC_NEED_MATRIXFIXED2D || defined(__DOXYGEN__)
+
+	/**
+	 * @brief	A matrix for doing 2D graphics using fixed point maths
+	 * @pre		Requires GFX_USE_GMISC and GMISC_NEED_MATRIXFIXED2D
+	 */
+	typedef struct MatrixFixed2D {
+		fixed	a00, a01, a02;
+		fixed	a10, a11, a12;
+		fixed	a20, a21, a22;
+	} MatrixFixed2D;
+
+	/**
+	 * @brief	Apply the matrix to a set of points
+	 * @pre		Requires GFX_USE_GMISC and GMISC_NEED_MATRIXFIXED2D
+	 *
+	 * @param[in] dst	The destination array of points
+	 * @param[in] src	The source array of points
+	 * @param[in] m		The matrix to apply
+	 * @param[in] cnt	How many points are in the array
+	 *
+	 * @note	In-place matrix application is allowed ie. dst = src
+	 *
+	 * @api
+	 */
+	void gmiscMatrixFixed2DApplyToPoints(point *dst, const point *src, const MatrixFixed2D *m, int cnt);
+
+	/**
+	 * @brief	Set the 2D matrix to the identity matrix
+	 * @pre		Requires GFX_USE_GMISC and GMISC_NEED_MATRIXFIXED2D
+	 *
+	 * @param[in] m		The matrix to set to identity
+	 *
+	 * @api
+	 */
+	void gmiscMatrixFixed2DSetIdentity(MatrixFixed2D *m);
+
+	/**
+	 * @brief	Multiple two 2D matrixes together
+	 * @pre		Requires GFX_USE_GMISC and GMISC_NEED_MATRIXFIXED2D
+	 *
+	 * @param[in] dst	The destination matrix
+	 * @param[in] src1	The first source matrix
+	 * @param[in] src2	The second source matrix
+	 *
+	 * @note	In-place matrix application is NOT allowed ie. dst != src1, dst != src2
+	 *
+	 * @api
+	 */
+	void gmiscMatrixFixed2DMultiply(MatrixFixed2D *dst, const MatrixFixed2D *src1, const MatrixFixed2D *src2);
+
+	/**
+	 * @brief	Add an x,y translation to a matrix
+	 * @pre		Requires GFX_USE_GMISC and GMISC_NEED_MATRIXFIXED2D
+	 *
+	 * @param[in] dst		The destination matrix
+	 * @param[in] src		The source matrix. Can be NULL
+	 * @param[in] tx, ty	The x and y translation to apply
+	 *
+	 * @note	In-place matrix operation is NOT allowed ie. dst != src
+	 * @note	If no source matrix is provided, it is equivalent to applying the operation
+	 * 			to an identity matrix. It also is a much simpler operation requiring no multiplication.
+	 *
+	 * @api
+	 */
+	void gmiscMatrixFixed2DApplyTranslation(MatrixFixed2D *dst, const MatrixFixed2D *src, fixed tx, fixed ty);
+
+	/**
+	 * @brief	Add x,y scaling to a matrix
+	 * @pre		Requires GFX_USE_GMISC and GMISC_NEED_MATRIXFIXED2D
+	 *
+	 * @param[in] dst		The destination matrix
+	 * @param[in] src		The source matrix. Can be NULL
+	 * @param[in] sx, sy	The scaling to apply in the x and y direction. Negative numbers give reflection.
+	 *
+	 * @note	In-place matrix operation is NOT allowed ie. dst != src
+	 * @note	If no source matrix is provided, it is equivalent to applying the operation
+	 * 			to an identity matrix. It also is a much simpler operation requiring no multiplication.
+	 *
+	 * @api
+	 */
+	void gmiscMatrixFixed2DApplyScale(MatrixFixed2D *dst, const MatrixFixed2D *src, fixed sx, fixed sy);
+
+	/**
+	 * @brief	Add x,y shear to a matrix
+	 * @pre		Requires GFX_USE_GMISC and GMISC_NEED_MATRIXFIXED2D
+	 *
+	 * @param[in] dst		The destination matrix
+	 * @param[in] src		The source matrix. Can be NULL
+	 * @param[in] sx, sy	The shear to apply in the x and y direction.
+	 *
+	 * @note	In-place matrix operation is NOT allowed ie. dst != src
+	 * @note	If no source matrix is provided, it is equivalent to applying the operation
+	 * 			to an identity matrix. It also is a much simpler operation requiring no multiplication.
+	 *
+	 * @api
+	 */
+	void gmiscMatrixFixed2DApplyShear(MatrixFixed2D *dst, const MatrixFixed2D *src, fixed sx, fixed sy);
+
+	#if GMISC_NEED_FIXEDTRIG || defined(__DOXYGEN__)
+		/**
+		 * @brief	Add rotation to a matrix
+		 * @pre		Requires GFX_USE_GMISC and GMISC_NEED_MATRIXFIXED2D and GMISC_NEED_FIXEDTRIG
+		 *
+		 * @param[in] dst		The destination matrix
+		 * @param[in] src		The source matrix. Can be NULL
+		 * @param[in] angle		The angle to apply in degrees (not radians).
+		 *
+		 * @note	In-place matrix operation is NOT allowed ie. dst != src
+		 * @note	If no source matrix is provided, it is equivalent to applying the operation
+		 * 			to an identity matrix. It also is a much simpler operation requiring no multiplication.
+		 *
+		 * @api
+		 */
+		void gmiscMatrixFixed2DApplyRotation(MatrixFixed2D *dst, const MatrixFixed2D *src, int angle);
+	#endif
+#endif
+
 #ifdef __cplusplus
 }
 #endif
