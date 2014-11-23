@@ -2,7 +2,7 @@
 *** Releases                                                              ***
 *****************************************************************************
 
-*** Changes After 2.1 ***
+*** Release 2.2 ***
 FEATURE:	Added nested containers demo
 FEATURE:	Revised GWIN redraw strategy
 FEATURE:	Added generic framebuffer driver
