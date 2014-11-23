@@ -142,4 +142,3 @@ void gfxDeinit(void)
 	#endif
 	_gosDeinit();
 }
-
