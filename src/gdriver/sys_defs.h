@@ -8,7 +8,7 @@
 /**
  * @file    src/gdriver/sys_defs.h
  *
- * @addtogroup GINPUT
+ * @addtogroup GDRIVER
  *
  * @brief		Module to support registering and unregistering of drivers
  *
@@ -81,7 +81,7 @@ typedef struct GDriverVMT {
  * 				const MyDriverVMTtype a[1] = {{...}};
  * 				const MyDriverVMTtype b[1] = {{...}};
  * 				...
- * 				#define DRIVER_LIST		a, b
+ * 				\#define DRIVER_LIST		a, b
  * 				extern GDriverVMTList	DRIVER_LIST;	// Now treated as single element arrays of GDriverVMT
  * 				const GDriverVMT const * mylist = { DRIVER_LIST };
  * 				</code>
@@ -157,4 +157,3 @@ extern "C" {
 
 #endif /* _GDRIVER_H */
 /** @} */
-
