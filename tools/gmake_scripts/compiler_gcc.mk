@@ -9,9 +9,12 @@
 # See readme.txt for the make API
 #
 
+# Copy this pseudo variable so we can path expand it
+MLIST := $(MAKEFILE_LIST)
+
 # Win32 Nasty - must convert all paths into a format make can handle
 ifeq ($(basename $(OPT_OS)),win32)
-  PATHEXPAND := ARCH XCC XCXX XAS XLD XOC XOD XSZ XAR PROJECT BUILDDIR SRC DEFS LIBS INCPATH LIBPATH $(PATHLIST)
+  PATHEXPAND := ARCH XCC XCXX XAS XLD XOC XOD XSZ XAR PROJECT BUILDDIR SRC DEFS LIBS INCPATH LIBPATH MLIST $(PATHLIST)
 
   # First convert \'s to /'s
   $(foreach var,$(PATHEXPAND),$(eval $(var):=$$(subst \,/,$($(var)))))
@@ -24,7 +27,7 @@ ifeq ($(basename $(OPT_OS)),win32)
 endif
 
 # Where are we
-CURRENTDIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+CURRENTDIR := $(dir $(abspath $(lastword $(MLIST))))
 
 # Handle cpu specific options
 ifneq ($(OPT_CPU),)
@@ -69,10 +72,10 @@ endif
 
 # Default project name is the project directory name
 ifeq ($(PROJECT),)
-  ifneq ($(firstword $(abspath $(firstword $(MAKEFILE_LIST)))),$(lastword $(abspath $(firstword $(MAKEFILE_LIST)))))
+  ifneq ($(firstword $(abspath $(firstword $(MLIST)))),$(lastword $(abspath $(firstword $(MLIST)))))
     $(error Your directory contains spaces. Gmake barfs at that. Please define PROJECT)
   endif
-  PROJECT := $(notdir $(patsubst %/,%,$(dir $(abspath $(firstword $(MAKEFILE_LIST))))))
+  PROJECT := $(notdir $(patsubst %/,%,$(dir $(abspath $(firstword $(MLIST))))))
 endif
 
 # Output directories
