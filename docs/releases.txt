@@ -2,6 +2,9 @@
 *** Releases                                                              ***
 *****************************************************************************
 
+*** Changes after 2.2 ***
+
+
 *** Release 2.2 ***
 FEATURE:	Added nested containers demo
 FEATURE:	Revised GWIN redraw strategy
