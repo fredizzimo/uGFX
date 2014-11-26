@@ -157,6 +157,20 @@
 	#ifndef GINPUT_TOUCH_USER_CALIBRATION_SAVE
 		#define GINPUT_TOUCH_USER_CALIBRATION_SAVE		FALSE
 	#endif
+   /**
+     * @brief   Define multiple static mice
+	 * @details	When not defined the system automatically detects a single linked mouse driver
+	 * @note	The references to GMOUSEVMT_Win32 in the definition would be replaced
+	 * 			by the names of the VMT for each of the static mice you want to
+	 * 			include.
+	 * @note	Dynamic mice associated automatically with a display eg Win32, X or GFXnet
+	 * 			do not need to be specified in this list as the associated display driver will register
+	 * 			them automatically as the display is created.
+     */
+	#if defined(__DOXYGEN__)
+		#define GMOUSE_DRIVER_LIST						GMOUSEVMT_Win32, GMOUSEVMT_Win32
+	#endif
+
 /** @} */
 
 #endif /* _GINPUT_OPTIONS_H */

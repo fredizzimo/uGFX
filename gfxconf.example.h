@@ -223,6 +223,7 @@
 //    #define GINPUT_TOUCH_USER_CALIBRATION_LOAD       FALSE
 //    #define GINPUT_TOUCH_USER_CALIBRATION_FREE       FALSE
 //    #define GINPUT_TOUCH_USER_CALIBRATION_SAVE       FALSE
+//    #define GMOUSE_DRIVER_LIST                       GMOUSEVMT_Win32, GMOUSEVMT_Win32
 //#define GINPUT_NEED_KEYBOARD                         FALSE
 //#define GINPUT_NEED_TOGGLE                           FALSE
 //#define GINPUT_NEED_DIAL                             FALSE
