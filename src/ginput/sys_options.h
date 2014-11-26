@@ -25,7 +25,7 @@
 	 * @details	Defaults to FALSE
 	 * @note	Also add a mouse/touch hardware driver to your makefile.
 	 * 			Eg.
-	 * 				include $(GFXLIB)/drivers/ginput/touch/MCU/ginput_lld.mk
+	 * 				include $(GFXLIB)/drivers/ginput/touch/MCU/driver.mk
 	 */
 	#ifndef GINPUT_NEED_MOUSE
 		#define GINPUT_NEED_MOUSE		FALSE
@@ -35,7 +35,7 @@
 	 * @details	Defaults to FALSE
 	 * @note	Also add a keyboard hardware driver to your makefile.
 	 * 			Eg.
-	 * 				include $(GFXLIB)/drivers/ginput/keyboard/XXXX/ginput_lld.mk
+	 * 				include $(GFXLIB)/drivers/ginput/keyboard/XXXX/driver.mk
 	 */
 	#ifndef GINPUT_NEED_KEYBOARD
 		#define GINPUT_NEED_KEYBOARD	FALSE
@@ -45,7 +45,7 @@
 	 * @details	Defaults to FALSE
 	 * @note	Also add a toggle hardware driver to your makefile.
 	 * 			Eg.
-	 * 				include $(GFXLIB)/drivers/ginput/toggle/Pal/ginput_lld.mk
+	 * 				include $(GFXLIB)/drivers/ginput/toggle/Pal/driver.mk
 	 */
 	#ifndef GINPUT_NEED_TOGGLE
 		#define GINPUT_NEED_TOGGLE		FALSE
@@ -55,7 +55,7 @@
 	 * @details	Defaults to FALSE
 	 * @note	Also add a dial hardware driver to your makefile.
 	 * 			Eg.
-	 * 				include $(GFXLIB)/drivers/ginput/dial/analog/ginput_lld.mk
+	 * 				include $(GFXLIB)/drivers/ginput/dial/analog/driver.mk
 	 */
 	#ifndef GINPUT_NEED_DIAL
 		#define GINPUT_NEED_DIAL		FALSE
@@ -116,7 +116,7 @@
 	#endif
 	/**
 	 * @brief   Milliseconds between mouse polls.
-	 * @details	Defaults to 25 millseconds
+	 * @details	Defaults to 25 milliseconds
 	 * @note	How often mice should be polled. More often leads to smoother mouse movement
 	 * 			but increases CPU usage.
 	 */
@@ -126,7 +126,7 @@
 
 	/**
 	 * @brief   Maximum length of CLICK in milliseconds
-	 * @details	Defaults to 300 millseconds
+	 * @details	Defaults to 300 milliseconds
 	 * @note	Mouse down to Mouse up times greater than this are not clicks.
 	 */
 	#ifndef GINPUT_MOUSE_CLICK_TIME
@@ -134,7 +134,7 @@
 	#endif
 	/**
 	 * @brief   Milliseconds to generate a CXTCLICK on a touch device.
-	 * @details	Defaults to 500 millseconds
+	 * @details	Defaults to 500 milliseconds
 	 * @note	If you hold the touch down for longer than this a CXTCLICK is generated
 	 * 			but only on a touch device.
 	 */
