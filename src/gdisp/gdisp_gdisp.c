@@ -561,6 +561,8 @@ static void line_clip(GDisplay *g) {
 /* Driver exported functions.                                                */
 /*===========================================================================*/
 
+typedef const GDISPVMT const GDISPVMTLIST[];
+
 void _gdispInit(void)
 {
 	// GDISP_DRIVER_LIST is defined - create each driver instance
@@ -568,19 +570,19 @@ void _gdispInit(void)
 		{
 			unsigned	i;
 
-			extern GDriverVMTList					GDISP_DRIVER_LIST;
-			static const struct GDriverVMT const *	dclist[] = {GDISP_DRIVER_LIST};
+			extern GDISPVMTLIST				GDISP_DRIVER_LIST;
+			static GDISPVMTLIST dclist[] = {GDISP_DRIVER_LIST};
 
 			for(i = 0; i < sizeof(dclist)/sizeof(dclist[0]); i++)
-				gdriverRegister(dclist[i], 0);
+				gdriverRegister(&dclist[i]->d, 0);
 		}
 	#elif GDISP_TOTAL_DISPLAYS > 1
 		{
 			unsigned	i;
-			extern GDriverVMTList					GDISPVMT_OnlyOne;
+			extern GDISPVMTLIST				GDISPVMT_OnlyOne;
 
 			for(i = 0; i < GDISP_TOTAL_DISPLAYS; i++)
-				gdriverRegister(GDISPVMT_OnlyOne, 0);
+				gdriverRegister(&GDISPVMT_OnlyOne->d, 0);
 		}
 	#else
 		{
