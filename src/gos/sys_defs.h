@@ -38,9 +38,9 @@
 	typedef unsigned short	uint16_t;
 	typedef long			int32_t;
 	typedef unsigned long	uint32_t;
+	/** @} */
+
 	/**
-	 * @}
-	 *
 	 * @brief	Various platform (and operating system) dependent types
 	 * @note	Your platform may use slightly different definitions to these
 	 * @{
@@ -51,18 +51,25 @@
 	typedef short			semcount_t;
 	typedef int				threadreturn_t;
 	typedef int				threadpriority_t;
-
-	/**
-	 * @brief	Declare a thread stack and function
-	 * @{
-	 */
-	#define DECLARE_THREAD_FUNCTION(fnName, param)	threadreturn_t fnName(void *param)
-	#define DECLARE_THREAD_STACK(name, sz)			uint8_t name[sz];
 	/** @} */
 
 	/**
-	 * @}
+	 * @brief	Declare a thread function
 	 *
+	 * @param[in] fnName	The name of the function
+	 * @param[in] param 	A custom parameter that is passed to the function
+	 */
+	#define DECLARE_THREAD_FUNCTION(fnName, param)	threadreturn_t fnName(void *param)
+
+	/**
+	 * @brief	Declare a thread stack
+	 *
+	 * @param[in] name 		The name of the stack
+	 * @param[in] sz 		The size of the stack
+	 */
+	#define DECLARE_THREAD_STACK(name, sz)			uint8_t name[sz];
+
+	/**
 	 * @brief	Various platform (and operating system) constants
 	 * @note	Your platform may use slightly different definitions to these
 	 * @{
