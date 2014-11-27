@@ -37,4 +37,3 @@
 //#define GFX_USE_OS_OSX		FALSE
 
 #endif /* _GFXCONF_H */
-

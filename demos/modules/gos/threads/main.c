@@ -45,6 +45,8 @@ threadreturn_t Thread1_function(void* param)
 		printf("Message from Thread 1\r\n");
 		gfxSleepMilliseconds(500);
 	}
+
+	return (threadreturn_t)0;
 }
 
 /*
@@ -59,6 +61,8 @@ threadreturn_t Thread2_function(void* param)
 		printf("Message from Thread 2: %s\r\n", (char*)param);
 		gfxSleepMilliseconds(500);
 	}
+
+	return (threadreturn_t)0;
 }
 
 int main(void)
