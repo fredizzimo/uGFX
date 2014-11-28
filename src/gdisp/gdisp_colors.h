@@ -9,6 +9,8 @@
  * @file    src/gdisp/gdisp_colors.h
  * @brief   GDISP color definitions header file.
  *
+ * @details	GDISP color definitions and macros
+ *
  * @defgroup Colors Colors
  * @ingroup GDISP
  * @{
@@ -22,20 +24,24 @@
 #if GFX_USE_GDISP || defined(__DOXYGEN__)
 
 /**
- * For pixel formats we do some assignment of codes to enable
- * format auto-calculation. (Undocumented).
+ * @name	Color system masks
+ *
+ * @details For pixel formats we do some assignment of codes to enable
+ * 			format auto-calculation. (Undocumented).
  * 			0x2RGB			TRUECOLOR	RGB format, R = red bits, G = green bits, B = blue bits
  * 			0x3RGB			TRUECOLOR	BGR format, R = red bits, G = green bits, B = blue bits
  * 			0x40XX			GRAYSCALE	XX = bits
  * 			0x60XX			PALLETTE	XX = bits
  * 			0x8XXX			CUSTOM format.
+ * @{
  */
 #define GDISP_COLORSYSTEM_MASK			0xF000
 #define GDISP_COLORSYSTEM_RGB			0x2000
 #define GDISP_COLORSYSTEM_BGR			0x3000
+/** @} */
 
 /**
- * @brief   Color Type Constants
+ * @name   Color Type Constants
  * @{
  */
 #define GDISP_COLORSYSTEM_TRUECOLOR		0x2000
@@ -44,7 +50,7 @@
 /** @} */
 
 /**
- * @brief   Pixel Format Constants
+ * @name   Pixel Format Constants
  * @{
  */
 #define GDISP_PIXELFORMAT_MONO		(GDISP_COLORSYSTEM_GRAYSCALE|0x0001)
@@ -97,11 +103,14 @@
 	 * @brief	The color system (grayscale, palette or truecolor)
 	 */
 	#define COLOR_SYSTEM			GDISP_COLORSYSTEM_TRUECOLOR
+
 	/**
 	 * @brief	The number of bits in a color value
 	 */
 	#define COLOR_BITS			16
+
 	/**
+	 * @name	Color bits
 	 * @brief	The number of bits for each of red, green and blue
 	 * @{
 	 */
@@ -109,7 +118,9 @@
 	#define COLOR_BITS_G		6
 	#define COLOR_BITS_B		5
 	/** @} */
+
 	/**
+	 * @name	Color bit shifts
 	 * @brief	The number of bits to shift each of red, green and blue to put it in the correct place in the color
 	 * @{
 	 */
@@ -117,24 +128,27 @@
 	#define COLOR_SHIFT_G		5
 	#define COLOR_SHIFT_B		0
 	/** @} */
+
 	/**
 	 * @brief	Does the color need masking to remove invalid bits
 	 */
 	#define COLOR_NEEDS_MASK	FALSE
+
 	/**
 	 * @brief	If the color needs masking to remove invalid bits, this is the mask
 	 */
 	#define COLOR_MASK			0xFFFF
+
 	/**
 	 * @brief   The color type
-	 * @{
 	 */
 	#define COLOR_TYPE			uint16_t
-	/** @} */
+
 	/**
 	 * @brief	The number of bits in the color type (not necessarily the same as COLOR_BITS).
 	 */
 	#define COLOR_TYPE_BITS		16
+
 	/**
 	 * @brief   Convert a luminance (0 to 255) into a color value.
 	 * @note	The word "Luma" is used instead of grey or gray due to the spelling ambiguities of the word grey
@@ -144,15 +158,20 @@
 	 * 			@p LUMA_OF() which uses (0.25R + 0.5G + 0.25B).
 	 */
 	#define LUMA2COLOR(l)		((color_t)((((l) & 0xF8)<<8) | (((l) & 0xFC)<<3) | (((l) & 0xF8)>>3)))
+
 	/**
 	 * @brief   Convert red, green, blue (each 0 to 255) into a color value.
 	 */
 	#define RGB2COLOR(r,g,b)	((color_t)((((r) & 0xF8)<<8) | (((g) & 0xFC)<<3) | (((b) & 0xF8)>>3)))
+
 	/**
 	 * @brief   Convert a 6 digit HTML code (hex) into a color value.
 	 */
 	#define HTML2COLOR(h)		((color_t)((((h) & 0xF80000)>>8) | (((h) & 0x00FC00)>>5) | (((h) & 0x0000F8)>>3)))
+
 	/**
+	 * @name	Extraction macros (quick)
+	 *
 	 * @brief   Extract the luma/red/green/blue component (0 to 255) of a color value.
 	 * @note	This uses quick and dirty bit shifting. If you want more exact colors
 	 * 			use @p EXACT_RED_OF() etc which uses multiplies and divides. For constant
@@ -169,7 +188,10 @@
 	#define GREEN_OF(c)			(((c)&0x007E)>>3)
 	#define BLUE_OF(c)			(((c)&0x001F)<<3)
 	/** @} */
+
 	/**
+	 * @name	Extraction macros (precise)
+	 *
 	 * @brief   Extract the exact luma/red/green/blue component (0 to 255) of a color value.
 	 * @note	This uses multiplies and divides rather than bit shifting.
 	 * 			This gives exact equivalent colors at the expense of more cpu intensive
