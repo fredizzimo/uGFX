@@ -190,14 +190,14 @@
 	/**
 	 * @brief	Put the current thread to sleep for the specified period in microseconds
 	 *
-	 * @param[in] ms	The number microseconds to sleep
+	 * @param[in] us	The number microseconds to sleep
 	 *
 	 * @note		Specifying TIME_IMMEDIATE will return immediately (no sleeping)
 	 * @note		Specifying TIME_INFINITE will sleep forever.
 	 *
 	 * @api
 	 */
-	void gfxSleepMicroseconds(delaytime_t ms);
+	void gfxSleepMicroseconds(delaytime_t us);
 
 	/**
 	 * @brief	Get the current operating system tick time
