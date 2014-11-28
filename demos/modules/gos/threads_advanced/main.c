@@ -88,7 +88,9 @@ int main(void)
 	/* Initialize the timer */
 	gtimerInit(&gt);
 
-	/* Create a static thread from the default heap with normal priority. No parameter passed */
+	/* Create a static thread from the default heap with normal priority.
+	 * We pass a the parameter to the thread which tells the thread whether to return or not
+	 */
 	thd = gfxThreadCreate(NULL, 128, NORMAL_PRIORITY, Thread_function, (void*)&exitThread);
 
 	/* Start the timer. The callback function will be called once after 2000ms
