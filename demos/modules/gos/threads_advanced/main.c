@@ -96,7 +96,7 @@ int main(void)
 	 */
 	gtimerStart(&gt, timerCallback, (void*)&exitThread, FALSE, 2000);
 
-    while(TRUE) {
-    	gfxSleepMilliseconds(500);
-    }   
+	while(TRUE) {
+		gfxSleepMilliseconds(500);
+	}   
 }
