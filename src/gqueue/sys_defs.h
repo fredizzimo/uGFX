@@ -90,6 +90,7 @@ extern "C" {
 #endif
 
 /**
+ * @name	Initialisation functions
  * @brief	Initialise a queue.
  *
  * @param[in]	pqueue	A pointer to the queue
@@ -107,6 +108,7 @@ void gfxQueueFSyncInit(gfxQueueFSync *pqueue);
 /** @} */
 
 /**
+ * @name	Deinitialisation functions
  * @brief	De-Initialise a queue.
  *
  * @param[in]	pqueue	A pointer to the queue
@@ -120,6 +122,7 @@ void gfxQueueFSyncDeinit(gfxQueueFSync *pqueue);
 /** @} */
 
 /**
+ * @name	Get() Functions
  * @brief	Get an item from the head of the queue (and remove it from the queue).
  * @return	NULL if the timeout expires before an item is available
  *
@@ -140,6 +143,7 @@ gfxQueueFSyncItem *gfxQueueFSyncGet(gfxQueueFSync *pqueue, delaytime_t ms);
 /** @} */
 
 /**
+ * @name	Put() Functions
  * @brief	Put an item on the end of the queue.
  * @return	none for ASync and GSync queues; For FSync queues - FALSE on timeout, otherwise TRUE
  *
@@ -163,6 +167,7 @@ bool_t gfxQueueFSyncPut(gfxQueueFSync *pqueue, gfxQueueFSyncItem *pitem, delayti
 /** @} */
 
 /**
+ * @name	Pop() Functions
  * @brief	Pop an item from the head of the queue (and remove it from the queue).
  * @details	This is exactly the same as the Get operation above.
  *
@@ -176,6 +181,7 @@ bool_t gfxQueueFSyncPut(gfxQueueFSync *pqueue, gfxQueueFSyncItem *pitem, delayti
 /** @} */
 
 /**
+ * @name	Push() Functions
  * @brief	Push an item into the start of the queue.
  * @return	none for ASync and GSync queues; For FSync queues - FALSE on timeout, otherwise TRUE
  *
@@ -199,6 +205,7 @@ bool_t gfxQueueFSyncPush(gfxQueueFSync *pqueue, gfxQueueFSyncItem *pitem, delayt
 /** @} */
 
 /**
+ * @name	Insert() Functions
  * @brief	Insert an item on the queue after the specified item.
  * @return	none for ASync and GSync queues; For FSync queues - FALSE on timeout, otherwise TRUE
  *
@@ -224,6 +231,7 @@ bool_t gfxQueueFSyncInsert(gfxQueueFSync *pqueue, gfxQueueFSyncItem *pitem, gfxQ
 /** @} */
 
 /**
+ * @name	Remove() Functions
  * @brief	Remove an item from the queue.
  * @note	Removes the specified item from the queue where-ever it is in the queue
  *
@@ -246,6 +254,7 @@ void gfxQueueFSyncRemove(gfxQueueFSync *pqueue, gfxQueueFSyncItem *pitem);
 /** @} */
 
 /**
+ * @name	isEmpty() Functions
  * @brief	Is the queue empty?
  * @return	TRUE if the queue is empty
  *
@@ -265,6 +274,7 @@ void gfxQueueFSyncRemove(gfxQueueFSync *pqueue, gfxQueueFSyncItem *pitem);
 /** @} */
 
 /**
+ * @name	IsInQueue() Functions
  * @brief	Is an item in the queue?
  * @return	TRUE if the item is in the queue?
  *
@@ -286,6 +296,7 @@ bool_t gfxQueueFSyncIsInI(gfxQueueFSync *pqueue, const gfxQueueFSyncItem *pitem)
 /** @} */
 
 /**
+ * @name	Peek() Functions
  * @brief	Get the first item from the head of the queue but do not remove it from the queue.
  * @return	NULL if no item is available.
  *
@@ -310,6 +321,7 @@ bool_t gfxQueueFSyncIsInI(gfxQueueFSync *pqueue, const gfxQueueFSyncItem *pitem)
 /** @} */
 
 /**
+ * @name	Next() Functions
  * @brief	Get the next item in the queue (but do not remove it from the queue).
  * @return	NULL if no item is available.
  *
@@ -334,6 +346,7 @@ bool_t gfxQueueFSyncIsInI(gfxQueueFSync *pqueue, const gfxQueueFSyncItem *pitem)
 /** @} */
 
 /**
+ * @name		BufferAlloc() Functions
  * @brief		Allocate some buffers and put them on the free list
  * @return		TRUE is it succeeded. FALSE on allocation failure.
  *
@@ -341,10 +354,13 @@ bool_t gfxQueueFSyncIsInI(gfxQueueFSync *pqueue, const gfxQueueFSyncItem *pitem)
  * @param[in] size	The size (in bytes) of each buffer
  *
  * @api
+ * @{
  */
 bool_t gfxBufferAlloc(unsigned num, size_t size);
+/** @} */
 
 /**
+ * @name		BufferIsAvailable() Functions
  * @brief		Is there one or more buffers currently available on the free list
  * @return		TRUE if there are buffers in the free list
  *
@@ -355,6 +371,7 @@ bool_t gfxBufferIsAvailable(void);
 /** @} */
 
 /**
+ * @name		BufferGet() Functions
  * @brief		Get a buffer from the free list
  * @return		A GDataBuffer pointer or NULL if the timeout is exceeded
  *
@@ -368,6 +385,7 @@ GDataBuffer *gfxBufferGetI(void);
 /** @} */
 
 /**
+ * @name		BufferRelease) Functions
  * @brief		Release a buffer back to the free list
  *
  * @param[in] pd		The buffer to put (back) on the free-list.
