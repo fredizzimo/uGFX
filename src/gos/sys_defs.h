@@ -27,7 +27,7 @@
 	/*===========================================================================*/
 
 	/**
-	 * @brief	Various integer sizes
+	 * @name	Various integer sizes
 	 * @note	Your platform may use slightly different definitions to these
 	 * @{
 	 */
@@ -41,7 +41,7 @@
 	/** @} */
 
 	/**
-	 * @brief	Various platform (and operating system) dependent types
+	 * @name	Various platform (and operating system) dependent types
 	 * @note	Your platform may use slightly different definitions to these
 	 * @{
 	 */
@@ -70,7 +70,7 @@
 	#define DECLARE_THREAD_STACK(name, sz)			uint8_t name[sz];
 
 	/**
-	 * @brief	Various platform (and operating system) constants
+	 * @name	Various platform (and operating system) constants
 	 * @note	Your platform may use slightly different definitions to these
 	 * @{
 	 */

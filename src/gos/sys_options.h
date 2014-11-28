@@ -17,7 +17,7 @@
 #define _GOS_OPTIONS_H
 
 /**
- * @name    GOS The operating system to use. One (and only one) of these must be defined.
+ * @name    The operating system to use. One (and only one) of these must be defined.
  * @{
  */
 	/**
