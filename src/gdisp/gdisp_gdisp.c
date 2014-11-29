@@ -2339,10 +2339,10 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 		}
 
 		#if GDISP_NEED_ARCSECTORS
-			gdispGFillArcSectors(g, x+radius, y+radius, radius, 0x0C, color);
-			gdispGFillArcSectors(g, x+cx-1-radius, y+radius, radius, 0x03, color);
-			gdispGFillArcSectors(g, x+cx-1-radius, y+cy-1-radius, radius, 0xC0, color);
-			gdispGFillArcSectors(g, x+radius, y+cy-1-radius, radius, 0x30, color);
+			gdispGDrawArcSectors(g, x+radius, y+radius, radius, 0x0C, color);
+			gdispGDrawArcSectors(g, x+cx-1-radius, y+radius, radius, 0x03, color);
+			gdispGDrawArcSectors(g, x+cx-1-radius, y+cy-1-radius, radius, 0xC0, color);
+			gdispGDrawArcSectors(g, x+radius, y+cy-1-radius, radius, 0x30, color);
 		#else
 			gdispGDrawArc(g, x+radius, y+radius, radius, 90, 180, color);
 			gdispGDrawArc(g, x+cx-1-radius, y+radius, radius, 0, 90, color);
