@@ -27,12 +27,18 @@
 #define GEVENT_GWIN_SLIDER		(GEVENT_GWIN_CTRL_FIRST+1)
 
 typedef struct GEventGWinSlider {
-	GEventType		type;				// The type of this event (GEVENT_GWIN_BUTTON)
+	GEventType		type;				// The type of this event (GEVENT_GWIN_SLIDER)
 	GHandle			gwin;				// The slider that is returning results
 	#if GWIN_WIDGET_TAGS
 		WidgetTag	tag;				// The slider tag
 	#endif
 	int				position;
+
+	uint8_t			action;
+		#define GSLIDER_EVENT_SET		4		/* Slider position is set. This is the only event returned by default   */
+		#define GSLIDER_EVENT_CANCEL	3		/* Slider position changing has been cancelled */
+		#define GSLIDER_EVENT_START		2		/* Slider position has started changing */
+		#define GSLIDER_EVENT_MOVE		1		/* Slider position has been moved */
 } GEventGWinSlider;
 
 // There are currently no GEventGWinSlider listening flags - use 0
@@ -122,6 +128,19 @@ void gwinSliderSetPosition(GHandle gh, int pos);
  * @api
  */
 #define gwinSliderGetPosition(gh)		(((GSliderObject *)(gh))->pos)
+
+/**
+ * @brief   Should the slider send extended events.
+ *
+ * @param[in] gh		The window handle (must be a slider window)
+ * @param[in] enabled	TRUE to enable extended events, FALSE to disable them
+ *
+ * @note	The slider by default will only send slider events with an action of GSLIDER_EVENT_SET.
+ * 			This call can be used to enable other slider action's to be sent as events
+ *
+ * @api
+ */
+void gwinSliderSendExtendedEvents(GHandle gh, bool_t enabled);
 
 /**
  * @brief	Some custom slider drawing routines

@@ -16,6 +16,8 @@
 
 #include "gwin_class.h"
 
+#define GSLIDER_FLG_EXTENDED_EVENTS		(GWIN_FIRST_CONTROL_FLAG<<0)
+
 #ifndef GWIN_SLIDER_DEAD_BAND
 	#define GWIN_SLIDER_DEAD_BAND	5
 #endif
@@ -24,23 +26,58 @@
 	#define GWIN_SLIDER_TOGGLE_INC	20			// How many toggles to go from minimum to maximum
 #endif
 
+// Calculate the slider position from the display position
+static int CalculatePosFromDPos(GSliderObject *gsw) {
+	// Set the new position
+	if (gsw->w.g.width < gsw->w.g.height) {
+		if (gsw->dpos > gsw->w.g.height-GWIN_SLIDER_DEAD_BAND)
+			return gsw->min;
+		if (gsw->dpos < GWIN_SLIDER_DEAD_BAND)
+			return gsw->max;
+		return ((int)(gsw->w.g.height-1-gsw->dpos-GWIN_SLIDER_DEAD_BAND))*(gsw->max-gsw->min)/(gsw->w.g.height-2*GWIN_SLIDER_DEAD_BAND) + gsw->min;
+	}
+	if (gsw->dpos > gsw->w.g.width-GWIN_SLIDER_DEAD_BAND)
+		return gsw->max;
+	if (gsw->dpos < GWIN_SLIDER_DEAD_BAND)
+		return gsw->min;
+	return ((int)(gsw->dpos-GWIN_SLIDER_DEAD_BAND))*(gsw->max-gsw->min)/(gsw->w.g.width-2*GWIN_SLIDER_DEAD_BAND) + gsw->min;
+}
+
 // Send the slider event
-static void SendSliderEvent(GWidgetObject *gw) {
+static void SendSliderEvent(GSliderObject *gsw, uint8_t action) {
 	GSourceListener	*	psl;
 	GEvent *			pe;
 	#define pse			((GEventGWinSlider *)pe)
 
-	// Trigger a GWIN Button Event
+	// Does this slider want more than just SET events?
+	if (action != GSLIDER_EVENT_SET && !(gsw->w.g.flags & GSLIDER_FLG_EXTENDED_EVENTS))
+		return;
+
 	psl = 0;
 	while ((psl = geventGetSourceListener(GWIDGET_SOURCE, psl))) {
+		// Work out which action to send.
+		// This precedence order helps provide some protection against missed events.
+		// Saving it into srcflags works regardless of if a buffer is available.
+		if (psl->srcflags < action)
+			psl->srcflags = action;
+
+		// Skip sending if no buffer is available
 		if (!(pe = geventGetEventBuffer(psl)))
 			continue;
+
+		// Fill in the event
 		pse->type = GEVENT_GWIN_SLIDER;
-		pse->gwin = (GHandle)gw;
-		pse->position = ((GSliderObject *)gw)->pos;
+		pse->gwin = (GHandle)gsw;
+		pse->action = psl->srcflags;
 		#if GWIN_WIDGET_TAGS
-			pse->tag = gw->tag;
+			pse->tag = gsw->w.tag;
 		#endif
+
+		// If it is a cancel or set use the defined position else use the calculated position.
+		pse->position = pse->action >= GSLIDER_EVENT_CANCEL ? gsw->pos : CalculatePosFromDPos(gsw);
+
+		// Cleanup and send.
+		psl->srcflags = 0;
 		geventSendEvent(psl);
 	}
 
@@ -56,76 +93,72 @@ static void ResetDisplayPos(GSliderObject *gsw) {
 }
 
 #if GINPUT_NEED_MOUSE
+	// Set the display position from the mouse position
+	static void SetDisplayPosFromMouse(GSliderObject *gsw, coord_t x, coord_t y) {
+		if (gsw->w.g.width < gsw->w.g.height)
+			gsw->dpos = y < 0 ? 0 : (y >= gsw->w.g.height ? gsw->w.g.height-1 : y);
+		else
+			gsw->dpos = x < 0 ? 0 : (x >= gsw->w.g.width ? gsw->w.g.width-1 : x);
+	}
+
 	// A mouse up event
 	static void MouseUp(GWidgetObject *gw, coord_t x, coord_t y) {
 		#define gsw		((GSliderObject *)gw)
-		#define gh		((GHandle)gw)
 
-		#if GWIN_BUTTON_LAZY_RELEASE
-			// Clip to the slider
-			if (x < 0) x = 0;
-			else if (x >= gh->width) x = gh->width-1;
-			if (y < 0) y = 0;
-			else if (y >= gh->height) x = gh->height-1;
-		#else
+		#if !GWIN_BUTTON_LAZY_RELEASE
 			// Are we over the slider?
-			if (x < 0 || x >= gh->width || y < 0 || y >= gh->height) {
+			if (x < 0 || x >= gsw->w.g.width || y < 0 || y >= gsw->w.g.height) {
 				// No - restore the slider
 				ResetDisplayPos(gsw);
-				_gwinUpdate(gh);
+				_gwinUpdate(&gsw->w.g);
+				SendSliderEvent(gsw, GSLIDER_EVENT_CANCEL);
 				return;
 			}
 		#endif
 
 		// Set the new position
-		if (gh->width < gh->height) {
-			if (y > gh->height-GWIN_SLIDER_DEAD_BAND)
-				gsw->pos = gsw->min;
-			else if (y < GWIN_SLIDER_DEAD_BAND)
-				gsw->pos = gsw->max;
-			else
-				gsw->pos = (uint16_t)((int32_t)(gh->height-1-y-GWIN_SLIDER_DEAD_BAND)*(gsw->max-gsw->min)/(gh->height-2*GWIN_SLIDER_DEAD_BAND) + gsw->min);
-		} else {
-			if (x > gh->width-GWIN_SLIDER_DEAD_BAND)
-				gsw->pos = gsw->max;
-			else if (x < GWIN_SLIDER_DEAD_BAND)
-				gsw->pos = gsw->min;
-			else
-				gsw->pos = (uint16_t)((int32_t)(x-GWIN_SLIDER_DEAD_BAND)*(gsw->max-gsw->min)/(gh->width-2*GWIN_SLIDER_DEAD_BAND) + gsw->min);
-		}
+		SetDisplayPosFromMouse(gsw, x, y);
+		gsw->pos = CalculatePosFromDPos(gsw);
 
+		// Update the display
 		ResetDisplayPos(gsw);
-		_gwinUpdate(gh);
+		_gwinUpdate(&gsw->w.g);
 
 		// Generate the event
-		SendSliderEvent(gw);
-		#undef gh
+		SendSliderEvent(gsw, GSLIDER_EVENT_SET);
+
 		#undef gsw
 	}
 
-	// A mouse move (or mouse down) event
+	// A mouse down event
+	static void MouseDown(GWidgetObject *gw, coord_t x, coord_t y) {
+		#define gsw		((GSliderObject *)gw)
+
+		// Determine the display position
+		SetDisplayPosFromMouse(gsw, x, y);
+
+		// Update the display
+		_gwinUpdate(&gsw->w.g);
+
+		// Send the event
+		SendSliderEvent(gsw, GSLIDER_EVENT_START);
+
+		#undef gsw
+	}
+
+	// A mouse move event
 	static void MouseMove(GWidgetObject *gw, coord_t x, coord_t y) {
 		#define gsw		((GSliderObject *)gw)
 
-		// Determine the temporary display position (with range checking)
-		if (gw->g.width < gw->g.height) {
-			if (y < 0)
-				gsw->dpos = 0;
-			else if (y >= gw->g.height)
-				gsw->dpos = gw->g.height-1;
-			else
-				gsw->dpos = y;
-		} else {
-			if (x < 0)
-				gsw->dpos = 0;
-			else if (x >= gw->g.width)
-				gsw->dpos = gw->g.width-1;
-			else
-				gsw->dpos = x;
-		}
+		// Determine the display position
+		SetDisplayPosFromMouse(gsw, x, y);
 
 		// Update the display
-		_gwinUpdate(&gw->g);
+		_gwinUpdate(&gsw->w.g);
+
+		// Send the event
+		SendSliderEvent(gsw, GSLIDER_EVENT_MOVE);
+
 		#undef gsw
 	}
 #endif
@@ -136,11 +169,11 @@ static void ResetDisplayPos(GSliderObject *gsw) {
 		#define gsw		((GSliderObject *)gw)
 
 		if (role) {
-			gwinSliderSetPosition((GHandle)gw, gsw->pos+(gsw->max-gsw->min)/GWIN_SLIDER_TOGGLE_INC);
-			SendSliderEvent(gw);
+			gwinSliderSetPosition(&gsw->w.g, gsw->pos+(gsw->max-gsw->min)/GWIN_SLIDER_TOGGLE_INC);
+			SendSliderEvent(gsw, GSLIDER_EVENT_SET);
 		} else {
-			gwinSliderSetPosition((GHandle)gw, gsw->pos-(gsw->max-gsw->min)/GWIN_SLIDER_TOGGLE_INC);
-			SendSliderEvent(gw);
+			gwinSliderSetPosition(&gsw->w.g, gsw->pos-(gsw->max-gsw->min)/GWIN_SLIDER_TOGGLE_INC);
+			SendSliderEvent(gsw, GSLIDER_EVENT_SET);
 		}
 		#undef gsw
 	}
@@ -167,10 +200,10 @@ static void ResetDisplayPos(GSliderObject *gsw) {
 		gsw->pos = (uint16_t)((uint32_t)value*(gsw->max-gsw->min)/max + gsw->min);
 
 		ResetDisplayPos(gsw);
-		_gwinUpdate((GHandle)gw);
+		_gwinUpdate(&gsw->w.g);
 
 		// Generate the event
-		SendSliderEvent(gw);
+		SendSliderEvent(gsw, GSLIDER_EVENT_SET);
 		#undef gsw
 	}
 
@@ -197,7 +230,7 @@ static const gwidgetVMT sliderVMT = {
 	gwinSliderDraw_Std,			// The default drawing routine
 	#if GINPUT_NEED_MOUSE
 		{
-			0,						// Process mouse down events (NOT USED)
+			MouseDown,				// Process mouse down events
 			MouseUp,				// Process mouse up events
 			MouseMove,				// Process mouse move events
 		},
@@ -273,6 +306,16 @@ void gwinSliderSetPosition(GHandle gh, int pos) {
 	_gwinUpdate(gh);
 
 	#undef gsw
+}
+
+void gwinSliderSendExtendedEvents(GHandle gh, bool_t enabled) {
+	if (gh->vmt != (gwinVMT *)&sliderVMT)
+		return;
+
+	if (enabled)
+		gh->flags |= GSLIDER_FLG_EXTENDED_EVENTS;
+	else
+		gh->flags &= ~GSLIDER_FLG_EXTENDED_EVENTS;
 }
 
 /*----------------------------------------------------------

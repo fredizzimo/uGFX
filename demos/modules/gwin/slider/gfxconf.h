@@ -56,6 +56,7 @@
 #define GWIN_NEED_WINDOWMANAGER	TRUE
 #define GWIN_NEED_WIDGET		TRUE
 #define GWIN_NEED_SLIDER		TRUE
+#define GWIN_NEED_CONSOLE		TRUE
 
 /* Features for the GINPUT subsystem. */
 #define GINPUT_NEED_MOUSE		TRUE
