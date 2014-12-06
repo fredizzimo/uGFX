@@ -3,6 +3,7 @@
 *****************************************************************************
 
 *** Changes after 2.2 ***
+FEATURE:	Added more events to the slider widget
 
 
 *** Release 2.2 ***
