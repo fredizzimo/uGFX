@@ -142,10 +142,12 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		if (!(g->flags & GDISP_FLG_NEEDFLUSH))
 			return;
 
+		acquire_bus(g);
 		write_cmd(g, SSD1306_SETSTARTLINE | 0);
 
 		for(i=0; i < GDISP_SCREEN_HEIGHT/8 * SSD1306_PAGE_WIDTH; i+=SSD1306_PAGE_WIDTH)
 			write_data(g, RAM(g)+i, SSD1306_PAGE_WIDTH);
+		release_bus(g);
 	}
 #endif
 
