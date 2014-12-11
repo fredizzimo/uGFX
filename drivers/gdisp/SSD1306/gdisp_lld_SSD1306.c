@@ -170,8 +170,8 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			y = GDISP_SCREEN_HEIGHT-1 - g->p.y;
 			break;
 		case GDISP_ROTATE_270:
-			x = GDISP_SCREEN_HEIGHT-1 - g->p.y;
-			x = g->p.x;
+			x = GDISP_SCREEN_WIDTH-1 - g->p.y;
+			y = g->p.x;
 			break;
 		}
 		if (gdispColor2Native(g->p.color) != Black)
@@ -201,7 +201,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			y = GDISP_SCREEN_HEIGHT-1 - g->p.y;
 			break;
 		case GDISP_ROTATE_270:
-			x = GDISP_SCREEN_HEIGHT-1 - g->p.y;
+			x = GDISP_SCREEN_WIDTH-1 - g->p.y;
 			y = g->p.x;
 			break;
 		}
