@@ -151,6 +151,16 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	}
 #endif
 
+#if GDISP_HARDWARE_CLEARS
+	LLDSPEC void gdisp_lld_clear(GDisplay *g) {
+		uint8_t fill = (g->p.color == Black) ? 0 : 0xff;
+		int bytes = GDISP_SCREEN_WIDTH * GDISP_SCREEN_HEIGHT/8;
+		int off;
+		for (off = 0; off < bytes; off++)
+			RAM(g)[off] = fill;
+	}
+#endif
+
 #if GDISP_HARDWARE_DRAWPIXEL
 	LLDSPEC void gdisp_lld_draw_pixel(GDisplay *g) {
 		coord_t		x, y;
