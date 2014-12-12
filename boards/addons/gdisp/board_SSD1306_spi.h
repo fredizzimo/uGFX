@@ -16,65 +16,60 @@
 #ifndef _GDISP_LLD_BOARD_H
 #define _GDISP_LLD_BOARD_H
 
-// The command byte to put on the front of each page line
-#define SSD1306_PAGE_PREFIX		0x40			 		// Co = 0, D/C = 1
+// Pin & SPI setup
 
-// For a multiple display configuration we would put all this in a structure and then
-//	set g->board to that structure.
-#define SSD1306_RESET_PORT		GPIOB
-#define SSD1306_RESET_PIN		5
-#define SSD1306_MISO_PORT		GPIOB
-#define SSD1306_MISO_PIN		8
-#define SSD1306_MOSI_PORT		GPIOB
-#define SSD1306_MOSI_PIN		7
-#define SSD1306_SCK_PORT		GPIOB
-#define SSD1306_SCK_PIN			6
-#define SSD1306_CS_PORT			GPIOB
-#define SSD1306_CS_PIN			5
-#define SET_RST					palSetPad(SSD1306_RESET_PORT, SSD1306_RESET_PIN);
-#define CLR_RST					palClearPad(SSD1306_RESET_PORT, SSD1306_RESET_PIN);
+#define SPI_DRIVER (&SPID2)
+#define SPI_PORT GPIOB
+#define SCK_PAD  13
+#define MISO_PAD 14
+#define MOSI_PAD 15
 
-/*
- * SPI1 configuration structure.
- * Speed 42MHz, CPHA=0, CPOL=0, 8bits frames, MSb transmitted first.
- * The slave select line is the pin 4 on the port GPIOA.
- */
-static const SPIConfig spi1config = {
-	0,
-	/* HW dependent part.*/
-	SSD1306_MISO_PORT,
-	SSD1306_MISO_PIN,
-	0
-	//SPI_CR1_BR_0
-};
+#define CS_PORT     GPIOC
+#define RESET_PORT  GPIOC
+#define DNC_PORT    GPIOC
+#define CS_PAD     7        // 0 = chip selected
+#define RESET_PAD  8        // 0 = reset
+#define DNC_PAD    9        // control=0, data=1
 
-#if GFX_USE_OS_CHIBIOS
-	static int32_t thdPriority = 0;
-#endif
+static SPIConfig spi_cfg = { NULL, CS_PORT, CS_PAD, 0 };
 
 static inline void init_board(GDisplay *g) {
-	unsigned	i;
-
-	// As we are not using multiple displays we set g->board to NULL as we don't use it.
-	g->board = 0;
-
-
-	switch(g->controllerdisplay) {
-	case 0:											// Set up for Display 0
-		// RESET pin.
-		palSetPadMode(SSD1306_RESET_PORT, SSD1306_RESET_PIN, PAL_MODE_OUTPUT_PUSHPULL);
-
-		palSetPadMode(SSD1306_MISO_PORT, SSD1306_MISO_PIN, 	PAL_MODE_ALTERNATE(1)|
-															PAL_STM32_OSPEED_HIGHEST);
-		palSetPadMode(SSD1306_MOSI_PORT, SSD1306_MOSI_PIN, 	PAL_MODE_ALTERNATE(1)|
-															PAL_STM32_OSPEED_HIGHEST);
-		palSetPadMode(SSD1306_SCK_PORT,  SSD1306_SCK_PIN,  	PAL_MODE_ALTERNATE(1)|
-															PAL_STM32_OSPEED_HIGHEST);
-		palSetPad(SSD1306_CS_PORT, SSD1306_CS_PIN);
-		palSetPadMode(SSD1306_CS_PORT,   SSD1306_CS_PIN,   	PAL_MODE_ALTERNATE(1)|
-															PAL_STM32_OSPEED_HIGHEST);
-		spiInit();
-		break;
+	(void) g;
+	g->board = 0; 
+	// Maximum speed of SSD1306 is 10Mhz, so set SPI speed less or = to that.  
+	//
+	// STM32 specific setup
+	// STM32_PCLK1 is APB1 frequence in hertz.
+	// STM32_PCLK2 is APB2 frequence in hertz.
+	// See manual clock diagram to determine APB1 or APB2 for spi in use. 
+	// SPI2 uses APB1 clock on stm32151
+	// BR bits divide PCLK as follows
+	// 000  /2   =   16 MHz
+	// 001  /4   =   8 MHz
+	// 010  /8   =   4 MHz
+	// 011  /16  =   2 MHz
+	// 100  /32  =   1 MHz
+	// 101  /64  =   500 kHz
+	// 110  /128 =   250 kHz
+	// 111  /256 =   125 kHz
+	unsigned long spi_clk = STM32_PCLK1 / 2;
+	unsigned code = 0;
+	while (spi_clk > 10000000) {
+		code++;
+		spi_clk /= 2;
+	}
+	spi_cfg.cr1 |= (code << 3);
+	
+	if (g->controllerdisplay == 0) {
+		palSetPadMode(SPI_PORT, SCK_PAD, PAL_MODE_ALTERNATE(5)|PAL_STM32_OTYPE_PUSHPULL|PAL_STM32_OSPEED_MID2);
+		palSetPadMode(SPI_PORT, MOSI_PAD, PAL_MODE_ALTERNATE(5)|PAL_STM32_OTYPE_PUSHPULL|PAL_STM32_OSPEED_MID2);
+		palSetPadMode(SPI_PORT, MISO_PAD, PAL_MODE_ALTERNATE(5));
+		palSetPadMode(RESET_PORT, RESET_PAD, PAL_MODE_OUTPUT_PUSHPULL);
+		palSetPadMode(CS_PORT, CS_PAD, PAL_MODE_OUTPUT_PUSHPULL);
+		palSetPadMode(DNC_PORT, DNC_PAD, PAL_MODE_OUTPUT_PUSHPULL);
+		palSetPad(CS_PORT, CS_PAD);
+		palSetPad(RESET_PORT, RESET_PAD);
+		palClearPad(DNC_PORT, DNC_PAD); 
 	}
 }
 
@@ -82,55 +77,39 @@ static inline void post_init_board(GDisplay *g) {
 	(void) g;
 }
 
+
 static inline void setpin_reset(GDisplay *g, bool_t state) {
 	(void) g;
-	if(state)
-		CLR_RST
-	else
-		SET_RST
+	palWritePad(RESET_PORT, RESET_PAD, !state);
 }
 
 static inline void acquire_bus(GDisplay *g) {
 	(void) g;
-	#if GFX_USE_OS_CHIBIOS
-		thdPriority = (int32_t)chThdGetPriority();
-		chThdSetPriority(HIGHPRIO);
-	#endif
-	spiAcquireBus(&SPID1);
+	spiAcquireBus(SPI_DRIVER);
+	spiStart(SPI_DRIVER, &spi_cfg); 
+	spiSelect(SPI_DRIVER);
 }
 
 static inline void release_bus(GDisplay *g) {
 	(void) g;
-	#if GFX_USE_OS_CHIBIOS
-		chThdSetPriority(thdPriority);
-	#endif
-	spiReleaseBus(&SPID1);
+	spiUnselect(SPI_DRIVER);
+	spiStop(SPI_DRIVER);
+	spiReleaseBus(SPI_DRIVER);
 }
 
 static inline void write_cmd(GDisplay *g, uint8_t cmd) {
-	uint8_t command[2];
-	(void)	g;
-
-	command[0] = 0x00;		// Co = 0, D/C = 0
-	command[1] = cmd;
-
-	spiStart(&SPID1, &spi1config);
-	spiSelect(&SPID1);
-	spiStartSend(&SPID1, 2, command);
-	spiUnselect(&SPID1);
-	spiStop(&SPID1);
+	(void) g;
+	static uint8_t buf;
+	palClearPad(DNC_PORT, DNC_PAD);
+	buf = cmd;
+	spiSend(SPI_DRIVER, 1, &buf);
 }
 
 static inline void write_data(GDisplay *g, uint8_t* data, uint16_t length) {
 	(void) g;
-
-	spiStart(&SPID1, &spi1config);
-	spiSelect(&SPID1);
-	spiStartSend(&SPID1, length, data);
-	spiUnselect(&SPID1);
-	spiStop(&SPID1);
+	palSetPad(DNC_PORT, DNC_PAD);
+	spiSend(SPI_DRIVER, length, data);
 }
 
 
 #endif /* _GDISP_LLD_BOARD_H */
-
