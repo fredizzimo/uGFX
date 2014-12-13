@@ -286,6 +286,34 @@
 	#ifndef GWIN_PROGRESSBAR_AUTO
 	 	#define GWIN_PROGRESSBAR_AUTO			FALSE
 	#endif
+	/**
+	 * @brief	Should the slider avoid snapping to a fixed position when the mouse is released
+	 * @details	Defaults to FALSE
+	 * @note	If FALSE the slider will snap to the closest set-able position when the
+	 * 			mouse is released. If TRUE it will maintain the position the
+	 * 			mouse was released at, except when at the minimum and maximum slider values.
+	 */
+	#ifndef GWIN_SLIDER_NOSNAP
+	 	#define GWIN_SLIDER_NOSNAP				FALSE
+	#endif
+	/**
+	 * @brief	The number of pixels of dead-band at each end of the slider
+	 * @details	Defaults to 5
+	 * @note	A dead-band is required because fingers can often cannot
+	 * 			accurately control the slider peg at the edges of the slider
+	 */
+	#ifndef GWIN_SLIDER_DEAD_BAND
+		#define GWIN_SLIDER_DEAD_BAND			5
+	#endif
+	/**
+	 * @brief	How many toggles it takes to go from minimum to maximum value on a slider
+	 * @details	Defaults to 20
+	 * @note	When the slider is being operated by a toggle device this setting describes
+	 * 			how many toggles are required to go from end to end.
+	 */
+	#ifndef GWIN_SLIDER_TOGGLE_INC
+		#define GWIN_SLIDER_TOGGLE_INC			20
+	#endif
 /** @} */
 
 #endif /* _GWIN_OPTIONS_H */
