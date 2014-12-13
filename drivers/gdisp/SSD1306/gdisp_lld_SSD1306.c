@@ -166,6 +166,46 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	}
 #endif
 
+#if GDISP_HARDWARE_FILLS
+	LLDSPEC void gdisp_lld_fill_area(GDisplay *g) {
+		coord_t sy = g->p.y;
+		coord_t ey = sy + g->p.cy - 1;
+		coord_t sx = g->p.x;
+		coord_t ex = g->p.x + g->p.cx - 1;
+		if (g->g.Orientation == GDISP_ROTATE_90 || g->g.Orientation == GDISP_ROTATE_270) {
+			coord_t tmp; 
+			tmp = sx; sx = sy; sy = tmp;
+			tmp = ex; ex = ey; ey = tmp;
+		}
+		unsigned spage = sy / 8; 
+		uint8_t * base = RAM(g) + GDISP_SCREEN_WIDTH * spage;
+		uint8_t mask = 0xff << (sy&7);
+		unsigned zpages = (ey / 8) - spage;
+		coord_t col;
+		if (gdispColor2Native(g->p.color)==Black) {
+			while (zpages--) {
+				for (col = sx; col <= ex; col++)
+					base[col] &= ~mask;
+				mask = 0xff;
+				base += GDISP_SCREEN_WIDTH;
+			}
+			mask &= (0xff >> (7 - (ey&7)));
+			for (col = sx; col <= ex; col++)
+				base[col] &= ~mask;
+		} else {
+			while (zpages--) {
+				for (col = sx; col <= ex; col++)
+					base[col] |= mask;
+				mask = 0xff;
+				base += GDISP_SCREEN_WIDTH;
+			}
+			mask &= (0xff >> (7 - (ey&7)));
+			for (col = sx; col <= ex; col++)
+				base[col] |= mask;
+		}
+	}
+#endif
+
 #if GDISP_HARDWARE_DRAWPIXEL
 	LLDSPEC void gdisp_lld_draw_pixel(GDisplay *g) {
 		coord_t x = g->p.x;
