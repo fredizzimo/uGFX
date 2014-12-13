@@ -50,6 +50,11 @@ static void createWidgets(void) {
 	// Set slider 2 to return extended events
 	gwinSliderSendExtendedEvents(ghSlider2, TRUE);
 
+	// Some options to try
+	//gwinSliderSetRange(ghSlider1, 0, 70000);
+	//gwinSliderSetRange(ghSlider2, -4, 4);
+	//gwinSliderSetRange(ghSlider1, 4, -4);
+
 	// Console to display slider events
 	wi.g.y = 40; wi.g.x = 40; wi.g.width = gdispGetWidth()-50; wi.g.height = gdispGetHeight()-50;
 	ghConsole = gwinConsoleCreate(0, &wi.g);
@@ -90,7 +95,7 @@ int main(void) {
 				case GSLIDER_EVENT_START:	sAction = "START";		break;
 				default:					sAction = "????";		break;
 				}
-				gwinPrintf(ghConsole, "Slider %s = %d%% %s\n", gwinGetText(pe->gwin), pe->position, sAction);
+				gwinPrintf(ghConsole, "Slider %s = %d %s\n", gwinGetText(pe->gwin), pe->position, sAction);
 				break;
 
 			default:

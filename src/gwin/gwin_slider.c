@@ -18,29 +18,29 @@
 
 #define GSLIDER_FLG_EXTENDED_EVENTS		(GWIN_FIRST_CONTROL_FLAG<<0)
 
-#ifndef GWIN_SLIDER_DEAD_BAND
-	#define GWIN_SLIDER_DEAD_BAND	5
-#endif
-
-#ifndef GWIN_SLIDER_TOGGLE_INC
-	#define GWIN_SLIDER_TOGGLE_INC	20			// How many toggles to go from minimum to maximum
-#endif
-
 // Calculate the slider position from the display position
 static int CalculatePosFromDPos(GSliderObject *gsw) {
+	int		halfbit;
+
 	// Set the new position
 	if (gsw->w.g.width < gsw->w.g.height) {
-		if (gsw->dpos > gsw->w.g.height-GWIN_SLIDER_DEAD_BAND)
+		if (gsw->dpos >= gsw->w.g.height-GWIN_SLIDER_DEAD_BAND)
 			return gsw->min;
 		if (gsw->dpos < GWIN_SLIDER_DEAD_BAND)
 			return gsw->max;
-		return ((int)(gsw->w.g.height-1-gsw->dpos-GWIN_SLIDER_DEAD_BAND))*(gsw->max-gsw->min)/(gsw->w.g.height-2*GWIN_SLIDER_DEAD_BAND) + gsw->min;
+		halfbit = gsw->w.g.height/2-GWIN_SLIDER_DEAD_BAND;
+		if (gsw->min > gsw->max)
+			halfbit = -halfbit;
+		return (((int)(gsw->w.g.height-(GWIN_SLIDER_DEAD_BAND+1)-gsw->dpos))*(gsw->max-gsw->min) + halfbit)/(gsw->w.g.height-(2*GWIN_SLIDER_DEAD_BAND+1)) + gsw->min;
 	}
-	if (gsw->dpos > gsw->w.g.width-GWIN_SLIDER_DEAD_BAND)
+	if (gsw->dpos >= gsw->w.g.width-GWIN_SLIDER_DEAD_BAND)
 		return gsw->max;
 	if (gsw->dpos < GWIN_SLIDER_DEAD_BAND)
 		return gsw->min;
-	return ((int)(gsw->dpos-GWIN_SLIDER_DEAD_BAND))*(gsw->max-gsw->min)/(gsw->w.g.width-2*GWIN_SLIDER_DEAD_BAND) + gsw->min;
+	halfbit = gsw->w.g.width/2-GWIN_SLIDER_DEAD_BAND;
+	if (gsw->min > gsw->max)
+		halfbit = -halfbit;
+	return (((int)gsw->dpos-GWIN_SLIDER_DEAD_BAND)*(gsw->max-gsw->min) + halfbit)/(gsw->w.g.width-(2*GWIN_SLIDER_DEAD_BAND+1)) + gsw->min;
 }
 
 // Send the slider event
@@ -87,9 +87,9 @@ static void SendSliderEvent(GSliderObject *gsw, uint8_t action) {
 // Reset the display position back to the value predicted by the saved slider position
 static void ResetDisplayPos(GSliderObject *gsw) {
 	if (gsw->w.g.width < gsw->w.g.height)
-		gsw->dpos = gsw->w.g.height-1-((gsw->w.g.height-1)*(gsw->pos-gsw->min))/(gsw->max-gsw->min);
+		gsw->dpos = gsw->w.g.height-1-(gsw->w.g.height-1)*(gsw->pos-gsw->min)/(gsw->max-gsw->min);
 	else
-		gsw->dpos = ((gsw->w.g.width-1)*(gsw->pos-gsw->min))/(gsw->max-gsw->min);
+		gsw->dpos = (gsw->w.g.width-1)*(gsw->pos-gsw->min)/(gsw->max-gsw->min);
 }
 
 #if GINPUT_NEED_MOUSE
@@ -121,7 +121,22 @@ static void ResetDisplayPos(GSliderObject *gsw) {
 		gsw->pos = CalculatePosFromDPos(gsw);
 
 		// Update the display
-		ResetDisplayPos(gsw);
+		#if GWIN_SLIDER_NOSNAP
+			//only adjust dpos if it equals one of the end values.
+			if (gsw->w.g.width < gsw->w.g.height) {
+				if (gsw->pos == gsw->min)
+					gsw->dpos = gsw->w.g.height-1;
+				else if (gsw->pos == gsw->max)
+					gsw->dpos = 0;
+			} else {
+				if (gsw->pos == gsw->max)
+					gsw->dpos = gsw->w.g.width-1;
+				else if (gsw->pos == gsw->min)
+					gsw->dpos = 0;
+			}
+		#else
+			ResetDisplayPos(gsw);
+		#endif
 		_gwinUpdate(&gsw->w.g);
 
 		// Generate the event
@@ -413,6 +428,7 @@ void gwinSliderDraw_Image(GWidgetObject *gw, void *param) {
 	gdispGDrawStringBox(gw->g.display, gw->g.x+1, gw->g.y+1, gw->g.width-2, gw->g.height-2, gw->text, gw->g.font, pcol->text, justifyCenter);
 
 	#undef gsw
+	#undef gi
 }
 #endif /* GDISP_NEED_IMAGE */
 

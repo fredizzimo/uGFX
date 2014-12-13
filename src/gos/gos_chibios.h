@@ -29,7 +29,7 @@
  */
 
 #if CH_KERNEL_MAJOR == 3
-	typedef char	bool_t;
+	typedef bool	bool_t;
 #endif
 
 typedef systime_t	delaytime_t;
