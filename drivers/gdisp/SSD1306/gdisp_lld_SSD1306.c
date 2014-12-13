@@ -159,7 +159,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 #if GDISP_HARDWARE_CLEARS
 	LLDSPEC void gdisp_lld_clear(GDisplay *g) {
-		uint8_t fill = (g->p.color == Black) ? 0 : 0xff;
+		uint8_t fill = (gdispColor2Native(g->p.color) == Black) ? 0 : 0xff;
 		int bytes = GDISP_SCREEN_WIDTH * GDISP_SCREEN_HEIGHT/8;
 		memset(RAM(g), fill, bytes);
 		g->flags |= GDISP_FLG_NEEDFLUSH;
