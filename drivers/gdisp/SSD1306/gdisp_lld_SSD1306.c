@@ -14,6 +14,7 @@
 #include "src/gdisp/driver.h"
 
 #include "board_SSD1306.h"
+#include <string.h>   // for memset
 
 /*===========================================================================*/
 /* Driver local definitions.                                                 */
@@ -136,16 +137,32 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 #if GDISP_HARDWARE_FLUSH
 	LLDSPEC void gdisp_lld_flush(GDisplay *g) {
-		unsigned	i;
+		uint8_t * ram;
+		unsigned pages;
 
 		// Don't flush if we don't need it.
 		if (!(g->flags & GDISP_FLG_NEEDFLUSH))
 			return;
+		ram = RAM(g);
+		pages = GDISP_SCREEN_HEIGHT/8;
 
+		acquire_bus(g);
 		write_cmd(g, SSD1306_SETSTARTLINE | 0);
 
-		for(i=0; i < GDISP_SCREEN_HEIGHT/8 * SSD1306_PAGE_WIDTH; i+=SSD1306_PAGE_WIDTH)
-			write_data(g, RAM(g)+i, SSD1306_PAGE_WIDTH);
+		while (pages--) {
+			write_data(g, ram, SSD1306_PAGE_WIDTH);
+			ram += SSD1306_PAGE_WIDTH;
+		}
+		release_bus(g);
+	}
+#endif
+
+#if GDISP_HARDWARE_CLEARS
+	LLDSPEC void gdisp_lld_clear(GDisplay *g) {
+		uint8_t fill = (g->p.color == Black) ? 0 : 0xff;
+		int bytes = GDISP_SCREEN_WIDTH * GDISP_SCREEN_HEIGHT/8;
+		memset(RAM(g), fill, bytes);
+		g->flags |= GDISP_FLG_NEEDFLUSH;
 	}
 #endif
 
@@ -168,8 +185,8 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			y = GDISP_SCREEN_HEIGHT-1 - g->p.y;
 			break;
 		case GDISP_ROTATE_270:
-			x = GDISP_SCREEN_HEIGHT-1 - g->p.y;
-			x = g->p.x;
+			x = GDISP_SCREEN_WIDTH-1 - g->p.y;
+			y = g->p.x;
 			break;
 		}
 		if (gdispColor2Native(g->p.color) != Black)
@@ -199,7 +216,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			y = GDISP_SCREEN_HEIGHT-1 - g->p.y;
 			break;
 		case GDISP_ROTATE_270:
-			x = GDISP_SCREEN_HEIGHT-1 - g->p.y;
+			x = GDISP_SCREEN_WIDTH-1 - g->p.y;
 			y = g->p.x;
 			break;
 		}
