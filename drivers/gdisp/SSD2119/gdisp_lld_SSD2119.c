@@ -152,7 +152,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay* g) {
 	gfxSleepMicroseconds(5);
 
 	// Configure pixel color format and MCU interface parameters.
-	write_reg(g, SSD2119_REG_ENTRY_MODE, 0x6830); // ENTRY_MODE_DEFAULT
+	write_reg(g, SSD2119_REG_ENTRY_MODE, 0x6838); // ENTRY_MODE_DEFAULT
 	gfxSleepMicroseconds(5);
 
 	// Set analog parameters.
@@ -267,7 +267,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay* g) {
 
 #if GDISP_HARDWARE_FILLS && defined(GDISP_USE_DMA)
 	LLDSPEC void gdisp_lld_fill_area(GDisplay* g) {
-		uint16_t	c;
+		LLDCOLOR_TYPE	c;
 
 		c = gdispColor2Native(g->p.color);
 		acquire_bus(g);
@@ -285,7 +285,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay* g) {
 
 	LLDSPEC void gdisp_lld_blit_area(GDisplay* g) {
 		pixel_t*	buffer;
-		coord_t		ynct;
+		coord_t		ycnt;
 
 		buffer = (pixel_t*)g->p.ptr + g->p.x1 + g->p.y1 * g->p.x2;
 
@@ -355,8 +355,8 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay* g) {
 			switch((orientation_t)g->p.ptr) {
 			case GDISP_ROTATE_0:
 				acquire_bus(g);
-				/* ID = 11 AM = 0 */
-				write_reg(g, SSD2119_REG_ENTRY_MODE, 0x6830);
+				/* ID = 11 AM = 1 */
+				write_reg(g, SSD2119_REG_ENTRY_MODE, 0x6838);
 				release_bus(g);
 				g->g.Height = GDISP_SCREEN_HEIGHT;
 				g->g.Width = GDISP_SCREEN_WIDTH;
