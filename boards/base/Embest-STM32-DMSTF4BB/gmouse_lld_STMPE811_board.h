@@ -39,7 +39,7 @@
 
 static const I2CConfig i2ccfg = {
 	OPMODE_I2C,
-	400000,
+	200000,						// Conservative please
 	FAST_DUTY_CYCLE_2,
 };
 
