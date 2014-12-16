@@ -159,7 +159,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 #if GDISP_HARDWARE_CLEARS
 	LLDSPEC void gdisp_lld_clear(GDisplay *g) {
-		uint8_t fill = (gdispColor2Native(g->p.color) == Black) ? 0 : 0xff;
+		uint8_t fill = (gdispColor2Native(g->p.color) == gdispColor2Native(Black)) ? 0 : 0xff;
 		int bytes = GDISP_SCREEN_WIDTH * GDISP_SCREEN_HEIGHT/8;
 		memset(RAM(g), fill, bytes);
 		g->flags |= GDISP_FLG_NEEDFLUSH;
@@ -168,21 +168,47 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 #if GDISP_HARDWARE_FILLS
 	LLDSPEC void gdisp_lld_fill_area(GDisplay *g) {
-		coord_t sy = g->p.y;
-		coord_t ey = sy + g->p.cy - 1;
-		coord_t sx = g->p.x;
-		coord_t ex = g->p.x + g->p.cx - 1;
-		if (g->g.Orientation == GDISP_ROTATE_90 || g->g.Orientation == GDISP_ROTATE_270) {
-			coord_t tmp; 
-			tmp = sx; sx = sy; sy = tmp;
-			tmp = ex; ex = ey; ey = tmp;
+		coord_t		sy, ey;
+		coord_t		sx, ex;
+		coord_t		col;
+		unsigned	spage, zpages;
+		uint8_t *	base;
+		uint8_t		mask;
+
+		switch(g->g.Orientation) {
+		default:
+		case GDISP_ROTATE_0:
+			sx = g->p.x;
+			ex = g->p.x + g->p.cx - 1;
+			sy = g->p.y;
+			ey = sy + g->p.cy - 1;
+			break;
+		case GDISP_ROTATE_90:
+			sx = g->p.y;
+			ex = g->p.y + g->p.cy - 1;
+			sy = GDISP_SCREEN_HEIGHT - g->p.x - g->p.cx;
+			ey = GDISP_SCREEN_HEIGHT-1 - g->p.x;
+			break;
+		case GDISP_ROTATE_180:
+			sx = GDISP_SCREEN_WIDTH - g->p.x - g->p.cx;
+			ex = GDISP_SCREEN_WIDTH-1 - g->p.x;
+			sy = GDISP_SCREEN_HEIGHT - g->p.y - g->p.cy;
+			ey = GDISP_SCREEN_HEIGHT-1 - g->p.y;
+			break;
+		case GDISP_ROTATE_270:
+			sx = GDISP_SCREEN_WIDTH - g->p.y - g->p.cy;
+			ex = GDISP_SCREEN_WIDTH-1 - g->p.y;
+			sy = g->p.x;
+			ey = g->p.x + g->p.cx - 1;
+			break;
 		}
-		unsigned spage = sy / 8; 
-		uint8_t * base = RAM(g) + GDISP_SCREEN_WIDTH * spage;
-		uint8_t mask = 0xff << (sy&7);
-		unsigned zpages = (ey / 8) - spage;
-		coord_t col;
-		if (gdispColor2Native(g->p.color)==Black) {
+
+		spage = sy / 8;
+		base = RAM(g) + GDISP_SCREEN_WIDTH * spage;
+		mask = 0xff << (sy&7);
+		zpages = (ey / 8) - spage;
+
+		if (gdispColor2Native(g->p.color) == gdispColor2Native(Black)) {
 			while (zpages--) {
 				for (col = sx; col <= ex; col++)
 					base[col] &= ~mask;
@@ -208,13 +234,28 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 #if GDISP_HARDWARE_DRAWPIXEL
 	LLDSPEC void gdisp_lld_draw_pixel(GDisplay *g) {
-		coord_t x = g->p.x;
-		coord_t y = g->p.y;
-		if (g->g.Orientation == GDISP_ROTATE_90 || g->g.Orientation == GDISP_ROTATE_270) {
-			coord_t tmp; 
-			tmp = x; x = y; y = tmp;
+		coord_t		x, y;
+
+		switch(g->g.Orientation) {
+		default:
+		case GDISP_ROTATE_0:
+			x = g->p.x;
+			y = g->p.y;
+			break;
+		case GDISP_ROTATE_90:
+			x = g->p.y;
+			y = GDISP_SCREEN_HEIGHT-1 - g->p.x;
+			break;
+		case GDISP_ROTATE_180:
+			x = GDISP_SCREEN_WIDTH-1 - g->p.x;
+			y = GDISP_SCREEN_HEIGHT-1 - g->p.y;
+			break;
+		case GDISP_ROTATE_270:
+			x = GDISP_SCREEN_WIDTH-1 - g->p.y;
+			y = g->p.x;
+			break;
 		}
-		if (gdispColor2Native(g->p.color) != Black)
+		if (gdispColor2Native(g->p.color) != gdispColor2Native(Black))
 			RAM(g)[xyaddr(x, y)] |= xybit(y);
 		else
 			RAM(g)[xyaddr(x, y)] &= ~xybit(y);
@@ -224,11 +265,26 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 #if GDISP_HARDWARE_PIXELREAD
 	LLDSPEC color_t gdisp_lld_get_pixel_color(GDisplay *g) {
-		coord_t x = g->p.x;
-		coord_t y = g->p.y;
-		if (g->g.Orientation == GDISP_ROTATE_90 || g->g.Orientation == GDISP_ROTATE_270) {
-			coord_t tmp; 
-			tmp = x; x = y; y = tmp;
+		coord_t		x, y;
+
+		switch(g->g.Orientation) {
+		default:
+		case GDISP_ROTATE_0:
+			x = g->p.x;
+			y = g->p.y;
+			break;
+		case GDISP_ROTATE_90:
+			x = g->p.y;
+			y = GDISP_SCREEN_HEIGHT-1 - g->p.x;
+			break;
+		case GDISP_ROTATE_180:
+			x = GDISP_SCREEN_WIDTH-1 - g->p.x;
+			y = GDISP_SCREEN_HEIGHT-1 - g->p.y;
+			break;
+		case GDISP_ROTATE_270:
+			x = GDISP_SCREEN_WIDTH-1 - g->p.y;
+			y = g->p.x;
+			break;
 		}
 		return (RAM(g)[xyaddr(x, y)] & xybit(y)) ? White : Black;
 	}
@@ -262,8 +318,8 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		case GDISP_CONTROL_ORIENTATION:
 			if (g->g.Orientation == (orientation_t)g->p.ptr)
 				return;
-			orientation_t orient = (orientation_t)g->p.ptr;
-			switch(orient) {
+			switch((orientation_t)g->p.ptr) {
+			/* Rotation is handled by the drawing routines */
 			case GDISP_ROTATE_0:
 			case GDISP_ROTATE_180:
 				g->g.Height = GDISP_SCREEN_HEIGHT;
@@ -277,33 +333,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			default:
 				return;
 			}
-			// Remap the rows and columns according to orientation.  This just
-			// eliminates the need to reverse x or y directions in the drawing
-			// routines.  There is still the need to swap x and y for 90 and 270.
-			// However, without these, the hardware fill routine would be much
-			// more complicated. 
-			acquire_bus(g);
-			switch(orient) {
-			default:
-			case GDISP_ROTATE_0:
-				write_cmd(g, SSD1306_COLSCANDEC);
-				write_cmd(g, SSD1306_ROWSCANDEC);
-				break;
-			case GDISP_ROTATE_180:
-				write_cmd(g, SSD1306_COLSCANINC);
-				write_cmd(g, SSD1306_ROWSCANINC);
-				break;
-			case GDISP_ROTATE_90:
-				write_cmd(g, SSD1306_COLSCANDEC);
-				write_cmd(g, SSD1306_ROWSCANINC);
-				break;
-			case GDISP_ROTATE_270:
-				write_cmd(g, SSD1306_COLSCANINC);
-				write_cmd(g, SSD1306_ROWSCANDEC);
-				break;
-			}
-			release_bus(g);
-			g->g.Orientation = orient;
+			g->g.Orientation = (orientation_t)g->p.ptr;
 			return;
 
 		case GDISP_CONTROL_CONTRAST:
