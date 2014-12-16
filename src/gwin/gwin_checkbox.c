@@ -158,14 +158,19 @@ void gwinCheckboxDraw_CheckOnLeft(GWidgetObject *gw, void *param) {
 	if (gw->g.vmt != (gwinVMT *)&checkboxVMT) return;
 	pcol = getDrawColors(gw);
 
+	// Get the dimension of the check box (sans text)
 	ld = gw->g.width < gw->g.height ? gw->g.width : gw->g.height;
+
+	// Draw the empty check box
 	gdispGFillArea(gw->g.display, gw->g.x+1, gw->g.y+1, ld, ld-2, gw->pstyle->background);
 	gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, ld, ld, pcol->edge);
 
+	// Draw the check
 	df = ld < 4 ? 1 : 2;
 	if (gw->g.flags & GCHECKBOX_FLG_CHECKED)
 		gdispGFillArea(gw->g.display, gw->g.x+df, gw->g.y+df, ld-2*df, ld-2*df, pcol->fill);
 
+	// Draw the text
 	gdispGFillStringBox(gw->g.display, gw->g.x+ld+1, gw->g.y, gw->g.width-ld-1, gw->g.height, gw->text, gw->g.font, pcol->text, gw->pstyle->background, justifyLeft);
 	#undef gcw
 }
@@ -179,15 +184,22 @@ void gwinCheckboxDraw_CheckOnRight(GWidgetObject *gw, void *param) {
 	if (gw->g.vmt != (gwinVMT *)&checkboxVMT) return;
 	pcol = getDrawColors(gw);
 
+	// Get the dimension of the check box (sans text)
 	ld = gw->g.width < gw->g.height ? gw->g.width : gw->g.height;
-	ep = gw->g.width-ld-1;
+
+	// Get the position of the check box
+	ep = gw->g.width-ld;
+
+	// Draw the empty check box
 	gdispGFillArea(gw->g.display, gw->g.x+ep-1, gw->g.y+1, ld, ld-2, gw->pstyle->background);
 	gdispGDrawBox(gw->g.display, gw->g.x+ep, gw->g.y, ld, ld, pcol->edge);
 
+	// Draw the check
 	df = ld < 4 ? 1 : 2;
 	if (gw->g.flags & GCHECKBOX_FLG_CHECKED)
 		gdispGFillArea(gw->g.display, gw->g.x+ep+df, gw->g.y+df, ld-2*df, ld-2*df, pcol->fill);
 
+	// Draw the text
 	gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, ep-1, gw->g.height, gw->text, gw->g.font, pcol->text, gw->pstyle->background, justifyRight);
 	#undef gcw
 }
