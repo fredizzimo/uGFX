@@ -22,7 +22,7 @@
     	"Orientations",
     	[
     		{
-    			"User": "Default",
+    			"User": "Native",
     			"Library": "GDISP_ROTATE_0"
     		},
     		{
@@ -32,6 +32,18 @@
     		{
     			"User": "Landscape",
     			"Library": "GDISP_ROTATE_LANDSCAPE"
+    		},
+    		{
+    			"User": "Rotate 90 degree",
+    			"Library": "GDISP_ROTATE_90"
+    		},
+    		{
+    			"User": "Rotate 180 degree",
+    			"Library": "GDISP_ROTATE_180"
+    		},
+    		{
+    			"User": "Rotate 270 degree",
+    			"Library": "GDISP_ROTATE_270"
     		}
     	],
         "Colors",
