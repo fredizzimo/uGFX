@@ -31,6 +31,12 @@
 #ifndef GDISP_INITIAL_BACKLIGHT
 	#define GDISP_INITIAL_BACKLIGHT	100
 #endif
+#ifndef GDISP_USE_DMA
+	#define GDISP_USE_DMA			FALSE
+#endif
+#ifndef GDISP_NO_DMA_FROM_STACK
+	#define GDISP_NO_DMA_FROM_STACK	FALSE
+#endif
 
 #include "drivers/gdisp/SSD2119/ssd2119.h"
 
@@ -265,9 +271,13 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay* g) {
 	}
 #endif
 
-#if GDISP_HARDWARE_FILLS && defined(GDISP_USE_DMA)
+#if GDISP_HARDWARE_FILLS && GDISP_USE_DMA
 	LLDSPEC void gdisp_lld_fill_area(GDisplay* g) {
-		LLDCOLOR_TYPE	c;
+		#if GDISP_NO_DMA_FROM_STACK
+			static LLDCOLOR_TYPE	c;
+		#else
+			LLDCOLOR_TYPE	c;
+		#endif
 
 		c = gdispColor2Native(g->p.color);
 		acquire_bus(g);
@@ -278,7 +288,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay* g) {
 	}
 #endif
 
-#if GDISP_HARDWARE_BITFILLS && defined(GDISP_USE_DMA)
+#if GDISP_HARDWARE_BITFILLS && GDISP_USE_DMA
 	#if GDISP_PIXELFORMAT != GDISP_LLD_PIXELFORMAT
 		#error "GDISP: SSD2119: BitBlit is only available in RGB565 pixel format"
 	#endif
