@@ -33,11 +33,15 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f4xx_fmc.h"
 #include "ch.h"
+#include "stm32f4xx_fmc.h"
 //#include "stm32f4xx_rcc.h"
 
-#define assert_param(expr) chDbgAssert(expr,"STPeriph FMC","")
+#if CH_KERNEL_MAJOR == 3
+	#define assert_param(expr) chDbgAssert(expr,"STPeriph FMC")
+#else
+	#define assert_param(expr) chDbgAssert(expr,"STPeriph FMC","")
+#endif
 
 /** @addtogroup STM32F4xx_StdPeriph_Driver
   * @{

@@ -1,7 +1,8 @@
-#include "stm32f429i_discovery_sdram.h"
-#include "stm32f4xx_fmc.h"
 #include "ch.h"
 #include "hal.h"
+
+#include "stm32f429i_discovery_sdram.h"
+#include "stm32f4xx_fmc.h"
 
 /**
   * @brief  Configures the FMC and GPIOs to interface with the SDRAM memory.

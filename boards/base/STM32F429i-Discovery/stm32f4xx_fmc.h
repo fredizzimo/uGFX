@@ -28,11 +28,19 @@
  extern "C" {
 #endif
 
-//FIXME this should not be needed
+// HACKS to fix portability issues.
 #define STM32F429_439xx
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx.h"
+
+// More HACKS to fix portability issues.
+#if !defined(FMC_Bank2) && !defined(FMC_Bank3)
+	#define	FMC_Bank2	FMC_Bank2_3
+	#define	FMC_Bank3	FMC_Bank2_3
+#endif
+
+
 
 /** @addtogroup STM32F4xx_StdPeriph_Driver
   * @{
