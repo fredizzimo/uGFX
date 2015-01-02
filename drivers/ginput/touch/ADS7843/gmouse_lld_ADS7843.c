@@ -50,7 +50,7 @@ const GMouseVMT const GMOUSE_DRIVER_VMT[1] = {{
 		GDRIVER_TYPE_TOUCH,
 		GMOUSE_VFLG_TOUCH | GMOUSE_VFLG_CALIBRATE | GMOUSE_VFLG_CAL_TEST |
 			GMOUSE_VFLG_ONLY_DOWN | GMOUSE_VFLG_POORUPDOWN,
-		sizeof(GMouse)+BOARD_DATA_SIZE,
+		sizeof(GMouse)+GMOUSE_ADS7843_BOARD_DATA_SIZE,
 		_gmouseInitDriver,
 		_gmousePostInitDriver,
 		_gmouseDeInitDriver
