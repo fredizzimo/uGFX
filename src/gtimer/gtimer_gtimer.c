@@ -196,7 +196,7 @@ void gtimerStop(GTimer *pt) {
 	gfxMutexEnter(&mutex);
 	if (pt->flags & GTIMER_FLG_SCHEDULED) {
 		// Cancel it!
-		if (pt->next == pt->prev)
+		if (pt->next == pt)
 			pTimerHead = 0;
 		else {
 			pt->next->prev = pt->prev;
