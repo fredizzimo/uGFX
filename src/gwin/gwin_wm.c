@@ -312,6 +312,40 @@ void _gwinUpdate(GHandle gh) {
 	TriggerRedraw();
 }
 
+#if GWIN_NEED_CONTAINERS
+	void _gwinRippleVisibility(void) {
+		GHandle		gh;
+
+		// Check each window's visibility is consistent with its parents
+		for(gh = gwinGetNextWindow(0); gh; gh = gwinGetNextWindow(gh)) {
+			switch(gh->flags & (GWIN_FLG_SYSVISIBLE|GWIN_FLG_VISIBLE)) {
+			case GWIN_FLG_VISIBLE:
+				if (!gh->parent || (gh->parent->flags & GWIN_FLG_SYSVISIBLE)) {
+					// We have been made visible
+					gh->flags |= (GWIN_FLG_SYSVISIBLE|GWIN_FLG_NEEDREDRAW|GWIN_FLG_BGREDRAW);
+					RedrawPending |= DOREDRAW_VISIBLES;
+				}
+				break;
+			case (GWIN_FLG_VISIBLE|GWIN_FLG_SYSVISIBLE):
+				if (!gh->parent || (gh->parent->flags & GWIN_FLG_SYSVISIBLE))
+					break;
+				// Parent has been made invisible
+				gh->flags &= ~GWIN_FLG_SYSVISIBLE;
+				break;
+			case GWIN_FLG_SYSVISIBLE:
+				// We have been made invisible
+				gh->flags &= ~GWIN_FLG_SYSVISIBLE;
+				if (!gh->parent || (gh->parent->flags & GWIN_FLG_SYSVISIBLE)) {
+					// The parent is visible so we must clear the area we took
+					gh->flags |= (GWIN_FLG_NEEDREDRAW|GWIN_FLG_BGREDRAW);
+					RedrawPending |= DOREDRAW_INVISIBLES;
+				}
+				break;
+			}
+		}
+	}
+#endif
+
 bool_t _gwinDrawStart(GHandle gh) {
 	// This test should occur inside the lock. We do this
 	//	here as well as an early out (more efficient).
@@ -398,38 +432,15 @@ void gwinRedraw(GHandle gh) {
 		if (visible) {
 			// Mark us as visible
 			gh->flags |= GWIN_FLG_VISIBLE;
-
-			// Do we want to be added to the display
-			if (!(gh->flags & GWIN_FLG_SYSVISIBLE) && (!gh->parent || (gh->parent->flags & GWIN_FLG_SYSVISIBLE))) {
-				// Check each window's visibility is consistent with its parents
-				for(gh = gwinGetNextWindow(0); gh; gh = gwinGetNextWindow(gh)) {
-					if ((gh->flags & (GWIN_FLG_SYSVISIBLE|GWIN_FLG_VISIBLE)) == GWIN_FLG_VISIBLE && (!gh->parent || (gh->parent->flags & GWIN_FLG_SYSVISIBLE)))
-						gh->flags |= (GWIN_FLG_SYSVISIBLE|GWIN_FLG_NEEDREDRAW|GWIN_FLG_BGREDRAW);		// Fix it and mark for redraw
-				}
-
-				// Mark for redraw
-				RedrawPending |= DOREDRAW_VISIBLES;
-				TriggerRedraw();
-			}
 		} else {
 			// Mark us as not visible
 			gh->flags &= ~GWIN_FLG_VISIBLE;
-
-			// Do we need to be removed from the display
-			if ((gh->flags & GWIN_FLG_SYSVISIBLE)) {
-				gh->flags |= (GWIN_FLG_NEEDREDRAW|GWIN_FLG_BGREDRAW);
-
-				// Check each window's visibility is consistent with its parents
-				for(gh = gwinGetNextWindow(0); gh; gh = gwinGetNextWindow(gh)) {
-					if ((gh->flags & GWIN_FLG_SYSVISIBLE) && (!(gh->flags & GWIN_FLG_VISIBLE) || (gh->parent && !(gh->parent->flags & GWIN_FLG_SYSVISIBLE))))
-						gh->flags &= ~GWIN_FLG_SYSVISIBLE;				// Fix it
-				}
-
-				// Mark for redraw - no need to redraw children
-				RedrawPending |= DOREDRAW_INVISIBLES;
-				TriggerRedraw();
-			}
 		}
+
+		// Fix everything up
+		_gwinRippleVisibility();
+		if (RedrawPending)
+			TriggerRedraw();
 	}
 #else
 	void gwinSetVisible(GHandle gh, bool_t visible) {
@@ -639,18 +650,21 @@ static void WM_Redraw(GHandle gh) {
 				gh->vmt->AfterClear(gh);
 		}
 
-		// Redraw is done
-		gh->flags &= ~(GWIN_FLG_NEEDREDRAW|GWIN_FLG_BGREDRAW|GWIN_FLG_PARENTREVEAL);
-
 		#if GWIN_NEED_CONTAINERS
 			// If this is container but not a parent reveal, mark any visible children for redraw
 			//	We redraw our children here as we have overwritten them in redrawing the parent
-			//	as GDISP/GWIN doesn't yet support complex clipping regions.
+			//	as GDISP/GWIN doesn't support complex clipping regions.
 			if ((gh->flags & (GWIN_FLG_CONTAINER|GWIN_FLG_PARENTREVEAL)) == GWIN_FLG_CONTAINER) {
+
+				// Container redraw is done
+				gh->flags &= ~(GWIN_FLG_NEEDREDRAW|GWIN_FLG_BGREDRAW|GWIN_FLG_PARENTREVEAL);
+
 				for(gh = gwinGetFirstChild(gh); gh; gh = gwinGetSibling(gh))
 					_gwinUpdate(gh);
+				return;
 			}
 		#endif
+
 	} else {
 		if ((gh->flags & GWIN_FLG_BGREDRAW)) {
 			GHandle		gx;
@@ -660,8 +674,15 @@ static void WM_Redraw(GHandle gh) {
 					// Child redraw is done
 					gh->flags &= ~(GWIN_FLG_NEEDREDRAW|GWIN_FLG_BGREDRAW|GWIN_FLG_PARENTREVEAL);
 
+
 					// Get the parent to redraw the area
 					gh = gh->parent;
+
+					// The parent is already marked for redraw - don't do it now.
+					if ((gh->flags & GWIN_FLG_NEEDREDRAW))
+						return;
+
+					// Use the existing clipping region and redraw now
 					gh->flags |= (GWIN_FLG_BGREDRAW|GWIN_FLG_PARENTREVEAL);
 					goto redo_redraw;
 				}
@@ -682,11 +703,12 @@ static void WM_Redraw(GHandle gh) {
 						gdispGFillArea(gx->display, gx->x, gx->y, gx->width, gx->height, gx->bgcolor);
 				}
 			}
-		}
 
-		// Redraw is done
-		gh->flags &= ~(GWIN_FLG_NEEDREDRAW|GWIN_FLG_BGREDRAW|GWIN_FLG_PARENTREVEAL);
+		}
 	}
+
+	// Redraw is done
+	gh->flags &= ~(GWIN_FLG_NEEDREDRAW|GWIN_FLG_BGREDRAW|GWIN_FLG_PARENTREVEAL);
 }
 
 static void WM_Size(GHandle gh, coord_t w, coord_t h) {
@@ -739,7 +761,7 @@ static void WM_Size(GHandle gh, coord_t w, coord_t h) {
 
 					// Move to their old relative location. THe WM_Move() will adjust as necessary
 					for(child = gwinGetFirstChild(gh); child; child = gwinGetSibling(child))
-						WM_Move(gh, child->x-gh->x-((const gcontainerVMT *)gh->parent->vmt)->LeftBorder(gh->parent), child->y-gh->y-((const gcontainerVMT *)gh->parent->vmt)->TopBorder(gh->parent));
+						WM_Move(child, child->x-gh->x-((const gcontainerVMT *)gh->vmt)->LeftBorder(gh), child->y-gh->y-((const gcontainerVMT *)gh->vmt)->TopBorder(gh));
 				}
 			#endif
 
@@ -756,38 +778,49 @@ static void WM_Size(GHandle gh, coord_t w, coord_t h) {
 
 				// Move to their old relative location. THe WM_Move() will adjust as necessary
 				for(child = gwinGetFirstChild(gh); child; child = gwinGetSibling(child))
-					WM_Move(gh, child->x-gh->x-((const gcontainerVMT *)gh->parent->vmt)->LeftBorder(gh->parent), child->y-gh->y-((const gcontainerVMT *)gh->parent->vmt)->TopBorder(gh->parent));
+					WM_Move(child, child->x-gh->x-((const gcontainerVMT *)gh->vmt)->LeftBorder(gh), child->y-gh->y-((const gcontainerVMT *)gh->vmt)->TopBorder(gh));
 			}
 		#endif
 	}
 }
 
 static void WM_Move(GHandle gh, coord_t x, coord_t y) {
-	coord_t		v;
+	coord_t		u, v;
 
 	#if GWIN_NEED_CONTAINERS
 		if (gh->parent) {
 			// Clip to the parent size
-			v = gh->parent->width - ((const gcontainerVMT *)gh->parent->vmt)->LeftBorder(gh->parent) - ((const gcontainerVMT *)gh->parent->vmt)->RightBorder(gh->parent);
-			if (x+gh->width > v)	x = v-gh->width;
+			u = gh->parent->width - ((const gcontainerVMT *)gh->parent->vmt)->LeftBorder(gh->parent) - ((const gcontainerVMT *)gh->parent->vmt)->RightBorder(gh->parent);
 			v = gh->parent->height - ((const gcontainerVMT *)gh->parent->vmt)->TopBorder(gh->parent) - ((const gcontainerVMT *)gh->parent->vmt)->BottomBorder(gh->parent);
-			if (y+gh->height > v)	y = v-gh->height;
-			if (x < 0) x = 0;
-			if (y < 0) y = 0;
+		} else
+	#endif
+	{
+		// Clip to the screen
+		u = gdispGGetWidth(gh->display);
+		v = gdispGGetHeight(gh->display);
+	}
 
-			// Convert to absolute position
+	// Make sure we are positioned in the appropriate area
+	if (x+gh->width > u)	x = u-gh->width;
+	if (x < 0) x = 0;
+	if (y+gh->height > v)	y = v-gh->height;
+	if (y < 0) y = 0;
+
+	// Make sure we don't overflow the appropriate area
+	u -= x;
+	v -= y;
+	if (gh->width < u)	u = gh->width;
+	if (gh->height < v)	v = gh->height;
+	if (u != gh->width || v != gh->height)
+		WM_Size(gh, u, v);
+
+	#if GWIN_NEED_CONTAINERS
+		if (gh->parent) {
+			// Convert to a screen relative position
 			x += gh->parent->x + ((const gcontainerVMT *)gh->parent->vmt)->LeftBorder(gh->parent);
 			y += gh->parent->y + ((const gcontainerVMT *)gh->parent->vmt)->TopBorder(gh->parent);
 		}
 	#endif
-
-	// Clip to the screen
-	v = gdispGGetWidth(gh->display);
-	if (x+gh->width > v)	x = v-gh->width;
-	v = gdispGGetHeight(gh->display);
-	if (y+gh->height > v)	y = v-gh->height;
-	if (x < 0) x = 0;
-	if (y < 0) y = 0;
 
 	// If there has been no move just exit
 	if (gh->x == x && gh->y == y)
@@ -800,8 +833,8 @@ static void WM_Move(GHandle gh, coord_t x, coord_t y) {
 		_gwinFlushRedraws(REDRAW_WAIT);
 
 		// Do the move
-		v = gh->x; gh->x = x; x = v;
-		v = gh->y; gh->y = y; y = v;
+		u = gh->x; gh->x = x;
+		v = gh->y; gh->y = y;
 
 		#if GWIN_NEED_CONTAINERS
 			// Any children need to be moved
@@ -810,14 +843,14 @@ static void WM_Move(GHandle gh, coord_t x, coord_t y) {
 
 				// Move to their old relative location. THe WM_Move() will adjust as necessary
 				for(child = gwinGetFirstChild(gh); child; child = gwinGetSibling(child))
-					WM_Move(gh, child->x-x-((const gcontainerVMT *)gh->parent->vmt)->LeftBorder(gh->parent), child->y-y-((const gcontainerVMT *)gh->parent->vmt)->TopBorder(gh->parent));
+					WM_Move(child, child->x-u-((const gcontainerVMT *)gh->vmt)->LeftBorder(gh), child->y-v-((const gcontainerVMT *)gh->vmt)->TopBorder(gh));
 			}
 		#endif
 
 		gwinSetVisible(gh, TRUE);
 	} else {
-		v = gh->x; gh->x = x; x = v;
-		v = gh->y; gh->y = y; y = v;
+		u = gh->x; gh->x = x;
+		v = gh->y; gh->y = y;
 
 		#if GWIN_NEED_CONTAINERS
 			// Any children need to be moved
@@ -826,7 +859,7 @@ static void WM_Move(GHandle gh, coord_t x, coord_t y) {
 
 				// Move to their old relative location. THe WM_Move() will adjust as necessary
 				for(child = gwinGetFirstChild(gh); child; child = gwinGetSibling(child))
-					WM_Move(gh, child->x-x-((const gcontainerVMT *)gh->parent->vmt)->LeftBorder(gh->parent), child->y-y-((const gcontainerVMT *)gh->parent->vmt)->TopBorder(gh->parent));
+					WM_Move(child, child->x-u-((const gcontainerVMT *)gh->vmt)->LeftBorder(gh), child->y-v-((const gcontainerVMT *)gh->vmt)->TopBorder(gh));
 			}
 		#endif
 	}

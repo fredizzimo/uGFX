@@ -351,6 +351,17 @@ bool_t _gwinWMAdd(GHandle gh, const GWindowInit *pInit);
 	 * @notapi
 	 */
 	#define _gcontainerRedraw		_gwidgetRedraw
+
+	/**
+	 * @brief	The visibility of something has changed. Ripple the changes.
+	 *
+	 * @note	Does not actually trigger the redraw. It just marks as ready for redraw any
+	 * 			visibility changes.
+	 *
+	 * @notapi
+	 */
+	void _gwinRippleVisibility(void);
+
 #endif
 
 #ifdef __cplusplus
