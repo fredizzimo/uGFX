@@ -27,7 +27,8 @@ static void ResetDisplayPos(GProgressbarObject *gsw) {
 // We have to deinitialize the timer which auto updates the progressbar if any
 static void _destroy(GHandle gh) {
 	#if GWIN_PROGRESSBAR_AUTO
-		gtimerDeinit( &((GProgressbarObject *)gh)->gt );
+		gtimerStop(&((GProgressbarObject *)gh)->gt);
+		gtimerDeinit(&((GProgressbarObject *)gh)->gt);
 	#endif
 
 	_gwidgetDestroy(gh);
