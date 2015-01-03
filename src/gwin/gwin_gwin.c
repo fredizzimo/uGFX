@@ -16,6 +16,8 @@
 
 #include "gwin_class.h"
 
+#include <string.h>
+
 /*-----------------------------------------------
  * Data
  *-----------------------------------------------*/
@@ -96,6 +98,10 @@ GHandle _gwindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pInit
 	#if GDISP_NEED_TEXT
 		pgw->font = defaultFont;
 	#endif
+
+	// Make sure we don't create nasty problems for ourselves
+	if (vmt->size > sizeof(GWindowObject))
+		memset(pgw+1, 0, vmt->size - sizeof(GWindowObject));
 
 	if (!_gwinWMAdd(pgw, pInit)) {
 		if ((pgw->flags & GWIN_FLG_DYNAMIC))
