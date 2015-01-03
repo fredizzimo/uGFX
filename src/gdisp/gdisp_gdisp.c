@@ -3312,6 +3312,9 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 	}
 
 	coord_t gdispGetStringWidth(const char* str, font_t font) {
+		if (!str)
+			return 0;
+
 		/* No mutex required as we only read static data */
 		return mf_get_string_width(font, str, 0, 0);
 	}
