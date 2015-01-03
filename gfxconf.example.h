@@ -179,6 +179,8 @@
 //#define GWIN_NEED_CONTAINERS                         FALSE
 //    #define GWIN_NEED_CONTAINER                      FALSE
 //    #define GWIN_NEED_FRAME                          FALSE
+//    #define GWIN_NEED_TABSET                         FALSE
+//        #define GWIN_TABSET_TABHEIGHT                18
 
 
 ///////////////////////////////////////////////////////////////////////////

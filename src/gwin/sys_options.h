@@ -128,6 +128,13 @@
 	#ifndef GWIN_NEED_RADIO
 		#define GWIN_NEED_RADIO		FALSE
 	#endif
+	/**
+	 * @brief   Should tabset functions be included.
+	 * @details	Defaults to FALSE
+	 */
+	#ifndef GWIN_NEED_TABSET
+		#define GWIN_NEED_TABSET	FALSE
+	#endif
 /**
  * @}
  *
@@ -313,6 +320,13 @@
 	 */
 	#ifndef GWIN_SLIDER_TOGGLE_INC
 		#define GWIN_SLIDER_TOGGLE_INC			20
+	#endif
+	/**
+	 * @brief	The height in pixels of a row of tabs in a tabset
+	 * @details	Defaults to 18
+	 */
+	#ifndef GWIN_TABSET_TABHEIGHT
+		#define GWIN_TABSET_TABHEIGHT			18
 	#endif
 /** @} */
 

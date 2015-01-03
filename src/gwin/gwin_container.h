@@ -156,6 +156,9 @@ extern "C" {
 #if GWIN_NEED_FRAME || defined(__DOXYGEN__)
 	#include "gwin_frame.h"
 #endif
+#if GWIN_NEED_TABSET || defined(__DOXYGEN__)
+	#include "gwin_tabset.h"
+#endif
 
 #endif /* _GCONTAINER_H */
 /** @} */

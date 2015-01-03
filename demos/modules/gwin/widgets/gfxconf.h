@@ -75,6 +75,8 @@
 #define GWIN_NEED_CONTAINERS                         TRUE
     #define GWIN_NEED_CONTAINER                      TRUE
 
+#define GWIN_NEED_TABSET                             TRUE
+
 ///////////////////////////////////////////////////////////////////////////
 // GEVENT                                                                //
 ///////////////////////////////////////////////////////////////////////////
