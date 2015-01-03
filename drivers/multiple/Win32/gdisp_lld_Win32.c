@@ -31,8 +31,9 @@
 // The only time you might want to turn this off is
 // if you are debugging drawing and want to see each
 // pixel as it is set.
-#define GDISP_WIN32_USE_INDIRECT_UPDATE		TRUE
-//#define GDISP_WIN32_USE_INDIRECT_UPDATE		FALSE
+#ifndef GDISP_WIN32_USE_INDIRECT_UPDATE
+	#define GDISP_WIN32_USE_INDIRECT_UPDATE		TRUE
+#endif
 
 // How far extra windows (multiple displays) should be offset from the first.
 #define DISPLAY_X_OFFSET		50
