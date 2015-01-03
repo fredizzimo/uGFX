@@ -348,7 +348,7 @@ extern "C" {
 	 *
 	 * @api
 	 */
-	#define gwinShow(gh)		gwinSetVisible(gh, TRUE);
+	#define gwinShow(gh)		gwinSetVisible(gh, TRUE)
 
 	/**
 	 * @brief	Makes a widget become invisible
@@ -357,7 +357,7 @@ extern "C" {
 	 *
 	 * @api
 	 */
-	#define gwinHide(gh)		gwinSetVisible(gh, FALSE);
+	#define gwinHide(gh)		gwinSetVisible(gh, FALSE)
 
 	/**
 	 * @brief	Gets the visibility of a window
@@ -394,7 +394,7 @@ extern "C" {
 	 *
 	 * @api
 	 */
-	#define gwinEnable(gh)		gwinSetEnabled(gh, TRUE);
+	#define gwinEnable(gh)		gwinSetEnabled(gh, TRUE)
 
 	/**
 	 * @brief	Disables a widget
@@ -403,7 +403,7 @@ extern "C" {
 	 *
 	 * @api
 	 */
-	#define gwinDisable(gh)		gwinSetEnabled(gh, FALSE);
+	#define gwinDisable(gh)		gwinSetEnabled(gh, FALSE)
 
 	/**
 	 * @brief	Gets the enabled state of a window
