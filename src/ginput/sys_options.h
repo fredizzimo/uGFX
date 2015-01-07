@@ -170,7 +170,51 @@
 	#if defined(__DOXYGEN__)
 		#define GMOUSE_DRIVER_LIST						GMOUSEVMT_Win32, GMOUSEVMT_Win32
 	#endif
-
+	/**
+	 * @brief   Milliseconds between keyboard polls.
+	 * @details	Defaults to 200 milliseconds
+	 * @note	How often keyboards should be polled.
+	 */
+	#ifndef GINPUT_KEYBOARD_POLL_PERIOD
+		#define GINPUT_KEYBOARD_POLL_PERIOD				200
+	#endif
+   /**
+     * @brief   Define multiple static keyboards
+	 * @details	When not defined the system automatically detects a single linked keyboard driver
+	 * @note	The references to GKEYBOARDVMT_Win32 in the definition would be replaced
+	 * 			by the names of the VMT for each of the static keyboards you want to
+	 * 			include.
+	 * @note	Dynamic keyboards associated automatically with a display eg Win32, X or GFXnet
+	 * 			do not need to be specified in this list as the display driver will register
+	 * 			them automatically as the display is created.
+     */
+	#if defined(__DOXYGEN__)
+		#define GKEYBOARD_DRIVER_LIST					GMOUSEVMT_Win32, GMOUSEVMT_Win32
+	#endif
+   /**
+     * @brief   Turn off the layout engine.
+	 * @details	When defined the layout engine is removed from the code and characters
+	 * 			are passed directly from the keyboard driver to the application.
+	 * @note	Turning off the layout engine just saves code if it is not needed.
+     */
+	#ifndef GKEYBOARD_LAYOUT_OFF
+		#define GKEYBOARD_LAYOUT_OFF					FALSE
+	#endif
+	/**
+	 * @brief   Various Keyboard Layouts that can be included.
+	 * @details	A keyboard layout controls conversion of scancodes to characters
+	 * 			and enables one keyboard to have multiple language mappings.
+	 * @note	Defining a layout does not make it active. The keyboard driver
+	 * 			must have it active as the default or the application must
+	 * 			use @p ginputSetKeyboardLayout() to set the active layout.
+	 * @note	Multiple layouts can be included but only one will be active
+	 * 			at a time (per keyboard).
+	 * @{
+	 */
+	#ifndef GKEYBOARD_LAYOUT_SCANCODE2_US
+		#define GKEYBOARD_LAYOUT_SCANCODE2_US			FALSE				// US Keyboard using the ScanCode 2 set.
+	#endif
+	/** @} */
 /** @} */
 
 #endif /* _GINPUT_OPTIONS_H */

@@ -230,6 +230,10 @@
 //    #define GINPUT_TOUCH_USER_CALIBRATION_SAVE       FALSE
 //    #define GMOUSE_DRIVER_LIST                       GMOUSEVMT_Win32, GMOUSEVMT_Win32
 //#define GINPUT_NEED_KEYBOARD                         FALSE
+//    #define GINPUT_KEYBOARD_POLL_PERIOD              200
+//    #define GKEYBOARD_DRIVER_LIST                    GKEYBOARDVMT_Win32, GKEYBOARDVMT_Win32
+//    #define GKEYBOARD_LAYOUT_OFF                     FALSE
+//        #define GKEYBOARD_LAYOUT_SCANCODE2_US        FALSE
 //#define GINPUT_NEED_TOGGLE                           FALSE
 //#define GINPUT_NEED_DIAL                             FALSE
 
