@@ -9,21 +9,45 @@
 
 #if GFX_USE_GDISP
 
-#define GDISP_DRIVER_VMT			GDISPVMT_X11
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <X11/Xresource.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#define GDISP_DRIVER_VMT				GDISPVMT_X11
 #include "gdisp_lld_config.h"
 #include "src/gdisp/driver.h"
 
+// Configuration parameters for this driver
 #ifndef GDISP_FORCE_24BIT
-	#define GDISP_FORCE_24BIT	FALSE
-#endif
-
-#ifndef GDISP_SCREEN_HEIGHT
-	#define GDISP_SCREEN_HEIGHT		480
+	#define GDISP_FORCE_24BIT			FALSE
 #endif
 #ifndef GDISP_SCREEN_WIDTH
-	#define GDISP_SCREEN_WIDTH		640
+	#define GDISP_SCREEN_WIDTH			640
+#endif
+#ifndef GDISP_SCREEN_HEIGHT
+	#define GDISP_SCREEN_HEIGHT			480
+#endif
+#ifndef GKEYBOARD_X_NO_LAYOUT
+	/**
+	 * Setting this to TRUE turns off the layout engine.
+	 * In this situation "cooked" characters are returned but
+	 * shift states etc are lost.
+	 * As only a limited number of keyboard layouts are currently
+	 * defined for X in uGFX (currently none), setting this
+	 * to TRUE enables the X keyboard mapping to be pass non-English
+	 * characters to uGFX or to handle non-standard keyboard layouts at
+	 * the expense of losing special function keys etc.
+	 */
+	// We set this to TRUE by default as currently the X layout code is not complete!
+	#define GKEYBOARD_X_NO_LAYOUT		TRUE
+#endif
+#ifndef GKEYBOARD_X_DEFAULT_LAYOUT
+	#define GKEYBOARD_X_DEFAULT_LAYOUT	KeyboardLayout_X_US
 #endif
 
+// Driver status flags
 #define GDISP_FLG_READY				(GDISP_FLG_DRIVER<<0)
 
 #if GINPUT_NEED_MOUSE
@@ -68,11 +92,73 @@
 	}};
 #endif
 
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <X11/Xresource.h>
-#include <stdio.h>
-#include <stdlib.h>
+#if GINPUT_NEED_KEYBOARD
+	// Include mouse support code
+	#define GKEYBOARD_DRIVER_VMT		GKEYBOARDVMT_X
+	#include "src/ginput/driver_keyboard.h"
+
+	#if !GKEYBOARD_X_NO_LAYOUT
+		#if GKEYBOARD_LAYOUT_OFF
+			#error "The X keyboard driver is using the layout engine. Please set GKEYBOARD_LAYOUT_OFF=FALSE or GKEYBOARD_X_NO_LAYOUT=TRUE."
+		#endif
+
+		// Forward definitions
+		extern uint8_t	GKEYBOARD_X_DEFAULT_LAYOUT[];
+
+		#include "src/ginput/keyboard_microcode.h"
+		#include <X11/keysym.h>
+
+		// This is the layout code for the English US keyboard.
+		//	We make it public so that a user can switch to a different layout if required.
+		uint8_t	KeyboardLayout_X_US[] = {
+			KMC_HEADERSTART, KMC_HEADER_ID1, KMC_HEADER_ID2, KMC_HEADER_VER_1,
+
+			// TODO
+			#error "The code to do keyboard layouts in X is not complete."
+
+			// Transient Shifters: SHIFT, CTRL, ALT, WINKEY
+			// Locking Shifters: CAPSLOCK, NUMLOCK and SCROLLLOCK
+			// Keyup, Repeat
+			// 0 - 9
+			// A - Z
+			// Number pad
+			// Symbols
+			// Special Keys
+			// Anything else
+			// EOF
+			KMC_RECORDSTART, 0
+		};
+	#elif !GKEYBOARD_LAYOUT_OFF
+		#warning "The X keyboard driver is not using the layout engine. If no other keyboard is using it consider defining GKEYBOARD_LAYOUT_OFF=TRUE to save code size."
+	#endif
+
+	// Forward definitions
+	static bool_t XKeyboardInit(GKeyboard *k, unsigned driverinstance);
+	static int XKeyboardGetData(GKeyboard *k, uint8_t *pch, int sz);
+
+	const GKeyboardVMT const GKEYBOARD_DRIVER_VMT[1] = {{
+		{
+			GDRIVER_TYPE_KEYBOARD,
+			GKEYBOARD_VFLG_NOPOLL,			//  GKEYBOARD_VFLG_DYNAMICONLY
+			sizeof(GKeyboard),
+			_gkeyboardInitDriver, _gkeyboardPostInitDriver, _gkeyboardDeInitDriver
+		},
+	 	// The default keyboard layout
+		#if GKEYBOARD_X_NO_LAYOUT
+			0,
+		#else
+			GKEYBOARD_X_DEFAULT_LAYOUT,
+		#endif
+		XKeyboardInit,			// init
+		0,						// deinit
+		XKeyboardGetData,		// getdata
+		0						// putdata		void	(*putdata)(GKeyboard *k, char ch);		Optional
+	}};
+
+	static int			keypos;
+	static uint8_t		keybuffer[8];
+	static GKeyboard	*keyboard;
+#endif
 
 static bool_t			initdone;
 static Display			*dis;
@@ -97,7 +183,8 @@ typedef struct xPriv {
 static void ProcessEvent(GDisplay *g, xPriv *priv) {
 	switch(evt.type) {
 	case MapNotify:
-		XSelectInput(dis, evt.xmap.window, StructureNotifyMask | ExposureMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask);
+		XSelectInput(dis, evt.xmap.window,
+				StructureNotifyMask|ExposureMask|ButtonPressMask|ButtonReleaseMask|PointerMotionMask|KeyPressMask|KeyReleaseMask|KeymapStateMask);
 		g->flags |= GDISP_FLG_READY;
 		break;
 	case UnmapNotify:
@@ -116,35 +203,62 @@ static void ProcessEvent(GDisplay *g, xPriv *priv) {
 			evt.xexpose.width, evt.xexpose.height,
 			evt.xexpose.x, evt.xexpose.y);
 		break;
-#if GINPUT_NEED_MOUSE
-	case ButtonPress:
-		priv->mousex = evt.xbutton.x;
-		priv->mousey = evt.xbutton.y;
-		switch(evt.xbutton.button){
-		case 1:	priv->buttons |= GINPUT_MOUSE_BTN_LEFT;		break;
-		case 2:	priv->buttons |= GINPUT_MOUSE_BTN_MIDDLE;	break;
-		case 3:	priv->buttons |= GINPUT_MOUSE_BTN_RIGHT;	break;
-		case 4:	priv->buttons |= GINPUT_MOUSE_BTN_4;		break;
-		}
-		_gmouseWakeup(priv->mouse);
-		break;
-	case ButtonRelease:
-		priv->mousex = evt.xbutton.x;
-		priv->mousey = evt.xbutton.y;
-		switch(evt.xbutton.button){
-		case 1:	priv->buttons &= ~GINPUT_MOUSE_BTN_LEFT;	break;
-		case 2:	priv->buttons &= ~GINPUT_MOUSE_BTN_MIDDLE;	break;
-		case 3:	priv->buttons &= ~GINPUT_MOUSE_BTN_RIGHT;	break;
-		case 4:	priv->buttons &= ~GINPUT_MOUSE_BTN_4;		break;
-		}
-		_gmouseWakeup(priv->mouse);
-		break;
-	case MotionNotify:
-		priv->mousex = evt.xmotion.x;
-		priv->mousey = evt.xmotion.y;
-		_gmouseWakeup(priv->mouse);
-		break;
-#endif
+	#if GINPUT_NEED_MOUSE
+		case ButtonPress:
+			priv->mousex = evt.xbutton.x;
+			priv->mousey = evt.xbutton.y;
+			switch(evt.xbutton.button){
+			case 1:	priv->buttons |= GINPUT_MOUSE_BTN_LEFT;		break;
+			case 2:	priv->buttons |= GINPUT_MOUSE_BTN_MIDDLE;	break;
+			case 3:	priv->buttons |= GINPUT_MOUSE_BTN_RIGHT;	break;
+			case 4:	priv->buttons |= GINPUT_MOUSE_BTN_4;		break;
+			}
+			_gmouseWakeup(priv->mouse);
+			break;
+		case ButtonRelease:
+			priv->mousex = evt.xbutton.x;
+			priv->mousey = evt.xbutton.y;
+			switch(evt.xbutton.button){
+			case 1:	priv->buttons &= ~GINPUT_MOUSE_BTN_LEFT;	break;
+			case 2:	priv->buttons &= ~GINPUT_MOUSE_BTN_MIDDLE;	break;
+			case 3:	priv->buttons &= ~GINPUT_MOUSE_BTN_RIGHT;	break;
+			case 4:	priv->buttons &= ~GINPUT_MOUSE_BTN_4;		break;
+			}
+			_gmouseWakeup(priv->mouse);
+			break;
+		case MotionNotify:
+			priv->mousex = evt.xmotion.x;
+			priv->mousey = evt.xmotion.y;
+			_gmouseWakeup(priv->mouse);
+			break;
+	#endif
+	#if GINPUT_NEED_KEYBOARD
+		case KeymapNotify:
+			XRefreshKeyboardMapping(&evt.xmapping);
+			break;
+		case KeyPress:
+			#if !GKEYBOARD_X_NO_LAYOUT
+				// TODO
+				#error "The code to do keyboard layouts in X is not complete."
+			#endif
+			 /* ignore these when there is no layout engine */
+			break;
+		case KeyRelease:
+			#if !GKEYBOARD_X_NO_LAYOUT
+				// TODO
+				#error "The code to do keyboard layouts in X is not complete."
+			#endif
+			if (keyboard && !keyboard->pLayout && keypos < (int)sizeof(keybuffer)) {
+				int		len;
+
+				len = XLookupString(&evt.xkey, (char *)(keybuffer+keypos), sizeof(keybuffer)-keypos, /*&keysym*/0, NULL);
+				if (len > 0) {
+					keypos += len;
+					_gkeyboardWakeup(keyboard);
+				}
+			}
+			break;
+	#endif
 	}
 }
 
@@ -375,5 +489,33 @@ LLDSPEC void gdisp_lld_draw_pixel(GDisplay *g)
 		return TRUE;
 	}
 #endif /* GINPUT_NEED_MOUSE */
+
+#if GINPUT_NEED_KEYBOARD
+	static bool_t XKeyboardInit(GKeyboard *k, unsigned driverinstance) {
+		(void)	driverinstance;
+
+		// Only one please
+		if (keyboard)
+			return FALSE;
+
+		keyboard = k;
+		return TRUE;
+	}
+
+	static int XKeyboardGetData(GKeyboard *k, uint8_t *pch, int sz) {
+		int		i, j;
+		(void)	k;
+
+		if (!keypos)
+			return 0;
+
+		for(i = 0; i < keypos && i < sz; i++)
+			pch[i] = keybuffer[i];
+		keypos -= i;
+		for(j=0; j < keypos; j++)
+			keybuffer[j] = keybuffer[i+j];
+		return i;
+	}
+#endif /* GINPUT_NEED_KEYBOARD */
 
 #endif /* GFX_USE_GDISP */
