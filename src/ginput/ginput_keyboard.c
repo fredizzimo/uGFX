@@ -20,10 +20,6 @@
 	#include <stdio.h>
 #endif
 
-#if GKEYBOARD_LAYOUT_OFF
-	#error "Win32: The Win32 keyboard driver requires the layout engine. Please set GKEYBOARD_LAYOUT_OFF to FALSE."
-#endif
-
 // Get the keyboard driver interface
 #include "driver_keyboard.h"
 #include "keyboard_microcode.h"
