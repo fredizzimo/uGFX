@@ -104,6 +104,9 @@
 //    #define GDISP_NEED_IMAGE_PNG                     FALSE
 //    #define GDISP_NEED_IMAGE_ACCOUNTING              FALSE
 
+//#define GDISP_NEED_PIXMAP                            FALSE
+//    #define GDISP_NEED_PIXMAP_IMAGE                  FALSE
+
 //#define GDISP_DEFAULT_ORIENTATION                    GDISP_ROTATE_LANDSCAPE    // If not defined the native hardware orientation is used.
 //#define GDISP_LINEBUF_SIZE                           128
 //#define GDISP_STARTUP_COLOR                          Black

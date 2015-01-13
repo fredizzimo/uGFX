@@ -1,5 +1,6 @@
 GFXSRC +=   $(GFXLIB)/src/gdisp/gdisp_gdisp.c \
 			$(GFXLIB)/src/gdisp/gdisp_fonts.c \
+			$(GFXLIB)/src/gdisp/gdisp_pixmap.c \
 			$(GFXLIB)/src/gdisp/gdisp_image.c \
 			$(GFXLIB)/src/gdisp/gdisp_image_native.c \
 			$(GFXLIB)/src/gdisp/gdisp_image_gif.c \

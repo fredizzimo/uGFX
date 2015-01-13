@@ -177,6 +177,13 @@
 	#ifndef GDISP_NEED_IMAGE
 		#define GDISP_NEED_IMAGE				FALSE
 	#endif
+	/**
+	 * @brief   Is the image interface required.
+	 * @details	Defaults to FALSE
+	 */
+	#ifndef GDISP_NEED_PIXMAP
+		#define GDISP_NEED_PIXMAP				FALSE
+	#endif
 /**
  * @}
  *
@@ -336,6 +343,15 @@
 	 */
 	#ifndef GDISP_NEED_ANTIALIAS
 		#define GDISP_NEED_ANTIALIAS			FALSE
+	#endif
+/**
+ * @}
+ *
+ * @name	GDISP Pixmap Options
+ * @{
+ */
+	#ifndef GDISP_NEED_PIXMAP_IMAGE
+		#define GDISP_NEED_PIXMAP_IMAGE			FALSE
 	#endif
 /**
  * @}

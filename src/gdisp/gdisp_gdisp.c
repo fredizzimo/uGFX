@@ -625,12 +625,12 @@ void _gdispDeinit(void)
 bool_t _gdispInitDriver(GDriver *g, void *param, unsigned driverinstance, unsigned systeminstance) {
 	#define		gd		((GDisplay *)g)
 	bool_t		ret;
-	(void)		param;
 
 	// Intialise fields
 	gd->systemdisplay = systeminstance;
 	gd->controllerdisplay = driverinstance;
 	gd->flags = 0;
+	gd->priv = param;
 	MUTEX_INIT(gd);
 
 	// Call the driver init

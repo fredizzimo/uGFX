@@ -1113,6 +1113,10 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 #if GDISP_NEED_IMAGE || defined(__DOXYGEN__)
 	#include "gdisp_image.h"
 #endif
+#if GDISP_NEED_PIXMAP || defined(__DOXYGEN__)
+	#include "gdisp_pixmap.h"
+#endif
+
 
 #endif /* GFX_USE_GDISP */
 

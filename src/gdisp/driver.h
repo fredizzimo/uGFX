@@ -21,16 +21,46 @@
 // Include the GDRIVER infrastructure
 #include "src/gdriver/sys_defs.h"
 
+// Are we currently compiling the driver itself?
+#if defined(GDISP_DRIVER_VMT)
+	#define	IN_DRIVER			TRUE
+#else
+	#define	IN_DRIVER			FALSE
+#endif
+
+// Is this a multiple driver situation?
+#if defined(GDISP_DRIVER_LIST)
+	#define IS_MULTIPLE			TRUE
+#else
+	#define IS_MULTIPLE			FALSE
+#endif
+
+// Do we need to use VMT calling rather than direct calls to the driver?
+#if IS_MULTIPLE || GDISP_NEED_PIXMAP
+	#define USE_VMT				TRUE
+#else
+	#define USE_VMT				FALSE
+#endif
+
+// Are we in the pixmap virtual driver
+#ifndef IN_PIXMAP_DRIVER
+	#define IN_PIXMAP_DRIVER	FALSE
+#endif
+
+//------------------------------------------------------------------------------------------------------------
+
 // Our special auto-detect hardware code which uses the VMT.
 #define HARDWARE_AUTODETECT		2
 
-#if defined(GDISP_DRIVER_LIST) && !defined(GDISP_DRIVER_VMT)
+#if USE_VMT && !IN_DRIVER
 	// Multiple controllers the default is to hardware detect
 	#define HARDWARE_DEFAULT		HARDWARE_AUTODETECT
 #else
-	// The default is to call the routines directly
+	// The default is not to include code functions that aren't needed
 	#define HARDWARE_DEFAULT		FALSE
 #endif
+
+//------------------------------------------------------------------------------------------------------------
 
 /**
  * @name    GDISP hardware accelerated support
@@ -191,9 +221,66 @@
 	#endif
 /** @} */
 
-/*===========================================================================*/
-/* External declarations.                                                    */
-/*===========================================================================*/
+//------------------------------------------------------------------------------------------------------------
+
+// For pixmaps certain routines MUST not be FALSE as they are needed for pixmap drawing
+//	Similarly some routines MUST not be TRUE as pixmap's don't provide them.
+#if GDISP_NEED_PIXMAP && !IN_DRIVER
+	#if !GDISP_HARDWARE_DEINIT
+		#undef GDISP_HARDWARE_DEINIT
+		#define GDISP_HARDWARE_DEINIT		HARDWARE_AUTODETECT
+	#endif
+	#if !GDISP_HARDWARE_DRAWPIXEL
+		#undef GDISP_HARDWARE_DRAWPIXEL
+		#define GDISP_HARDWARE_DRAWPIXEL	HARDWARE_AUTODETECT
+	#endif
+	#if !GDISP_HARDWARE_PIXELREAD
+		#undef GDISP_HARDWARE_PIXELREAD
+		#define GDISP_HARDWARE_PIXELREAD	HARDWARE_AUTODETECT
+	#endif
+	#if !GDISP_HARDWARE_CONTROL
+		#undef GDISP_HARDWARE_CONTROL
+		#define GDISP_HARDWARE_CONTROL		HARDWARE_AUTODETECT
+	#endif
+	#if GDISP_HARDWARE_FLUSH == TRUE
+		#undef GDISP_HARDWARE_FLUSH
+		#define GDISP_HARDWARE_FLUSH		HARDWARE_AUTODETECT
+	#endif
+	#if GDISP_HARDWARE_STREAM_WRITE == TRUE
+		#undef GDISP_HARDWARE_STREAM_WRITE
+		#define GDISP_HARDWARE_STREAM_WRITE	HARDWARE_AUTODETECT
+	#endif
+	#if GDISP_HARDWARE_STREAM_READ == TRUE
+		#undef GDISP_HARDWARE_STREAM_READ
+		#define GDISP_HARDWARE_STREAM_READ	HARDWARE_AUTODETECT
+	#endif
+	#if GDISP_HARDWARE_CLEARS == TRUE
+		#undef GDISP_HARDWARE_CLEARS
+		#define GDISP_HARDWARE_CLEARS		HARDWARE_AUTODETECT
+	#endif
+	#if GDISP_HARDWARE_FILLS == TRUE
+		#undef GDISP_HARDWARE_FILLS
+		#define GDISP_HARDWARE_FILLS		HARDWARE_AUTODETECT
+	#endif
+	#if GDISP_HARDWARE_BITFILLS == TRUE
+		#undef GDISP_HARDWARE_BITFILLS
+		#define GDISP_HARDWARE_BITFILLS		HARDWARE_AUTODETECT
+	#endif
+	#if GDISP_HARDWARE_SCROLL == TRUE
+		#undef GDISP_HARDWARE_SCROLL
+		#define GDISP_HARDWARE_SCROLL		HARDWARE_AUTODETECT
+	#endif
+	#if GDISP_HARDWARE_QUERY == TRUE
+		#undef GDISP_HARDWARE_QUERY
+		#define GDISP_HARDWARE_QUERY		HARDWARE_AUTODETECT
+	#endif
+	#if GDISP_HARDWARE_CLIP == TRUE
+		#undef GDISP_HARDWARE_CLIP
+		#define GDISP_HARDWARE_CLIP			HARDWARE_AUTODETECT
+	#endif
+#endif
+
+//------------------------------------------------------------------------------------------------------------
 
 /* Verify information for packed pixels and define a non-packed pixel macro */
 #if !GDISP_PACKED_PIXELS
@@ -223,6 +310,8 @@
 	 */
 	void gdispPackPixels(const pixel_t *buf, coord_t cx, coord_t x, coord_t y, color_t color);
 #endif
+
+//------------------------------------------------------------------------------------------------------------
 
 struct GDisplay {
 	struct GDriver				d;					// This must be the first element
@@ -309,14 +398,16 @@ typedef struct GDISPVMT {
 	void (*flush)(GDisplay *g);						// Uses no parameters
 } GDISPVMT;
 
+//------------------------------------------------------------------------------------------------------------
+
 // Do we need function definitions or macro's (via the VMT)
-#if !defined(GDISP_DRIVER_LIST) || defined(GDISP_DRIVER_VMT) || defined(__DOXYGEN__)
+#if IN_DRIVER || !USE_VMT || defined(__DOXYGEN__)
 	#ifdef __cplusplus
 	extern "C" {
 	#endif
 
 	// Should the driver routines should be static or not
-	#if defined(GDISP_DRIVER_LIST)
+	#if USE_VMT
 		#define LLDSPEC         static
 	#else
 		#define LLDSPEC
@@ -325,8 +416,8 @@ typedef struct GDISPVMT {
 	/**
 	 * @brief   Initialize the driver.
 	 * @return	TRUE if successful.
-	 * @param[in]	g				The driver structure
-	 * @param[out]	g->g	The driver must fill in the GDISPControl structure
+	 * @param[in]	g					The driver structure
+	 * @param[out]	g->g				The driver must fill in the GDISPControl structure
 	 */
 	LLDSPEC	bool_t gdisp_lld_init(GDisplay *g);
 
@@ -602,16 +693,18 @@ typedef struct GDISPVMT {
 	#define gdisp_lld_set_clip(g)			gvmt(g)->setclip(g)
 #endif
 
+//------------------------------------------------------------------------------------------------------------
+
 // If compiling the driver then build the VMT and set the low level driver color macros.
-#ifdef GDISP_DRIVER_VMT
+#if IN_DRIVER
 
 	// Make sure the driver has a valid model
 	#if !GDISP_HARDWARE_STREAM_WRITE && !GDISP_HARDWARE_DRAWPIXEL
 		#error "GDISP Driver: Either GDISP_HARDWARE_STREAM_WRITE or GDISP_HARDWARE_DRAWPIXEL must be TRUE"
 	#endif
 
-	// If we are not using multiple displays then hard-code the VMT name
-	#if !defined(GDISP_DRIVER_LIST)
+	// If we are not using multiple displays then hard-code the VMT name (except for the pixmap driver)
+	#if !IS_MULTIPLE && !IN_PIXMAP_DRIVER
 		#undef GDISP_DRIVER_VMT
 		#define GDISP_DRIVER_VMT		GDISPVMT_OnlyOne
 	#endif
@@ -706,6 +799,8 @@ typedef struct GDISPVMT {
 			0,
 		#endif
 	}};
+
+	//--------------------------------------------------------------------------------------------------------
 
 	/* Low level driver pixel format information */
 	//-------------------------
@@ -956,6 +1051,12 @@ typedef struct GDISPVMT {
 
 #endif
 
+//------------------------------------------------------------------------------------------------------------
+
+#undef IN_PIXMAP_DRIVER
+#undef IS_MULTIPLE
+#undef IN_DRIVER
+#undef USE_VMT
 #endif	/* GFX_USE_GDISP */
 
 #endif	/* _GDISP_LLD_H */
