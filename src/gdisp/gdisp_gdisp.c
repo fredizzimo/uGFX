@@ -574,21 +574,25 @@ void _gdispInit(void)
 			static GDISPVMTLIST dclist[] = {GDISP_DRIVER_LIST};
 
 			for(i = 0; i < sizeof(dclist)/sizeof(dclist[0]); i++)
-				gdriverRegister(&dclist[i]->d, 0);
+				if (!(dclist[i]->d.flags & GDISP_VFLG_DYNAMICONLY))
+					gdriverRegister(&dclist[i]->d, 0);
 		}
 	#elif GDISP_TOTAL_DISPLAYS > 1
 		{
 			unsigned	i;
 			extern GDISPVMTLIST				GDISPVMT_OnlyOne;
 
-			for(i = 0; i < GDISP_TOTAL_DISPLAYS; i++)
-				gdriverRegister(&GDISPVMT_OnlyOne->d, 0);
+			if (!(GDISPVMT_OnlyOne->d.flags & GDISP_VFLG_DYNAMICONLY)) {
+				for(i = 0; i < GDISP_TOTAL_DISPLAYS; i++)
+					gdriverRegister(&GDISPVMT_OnlyOne->d, 0);
+			}
 		}
 	#else
 		{
-			extern GDriverVMTList					GDISPVMT_OnlyOne;
+			extern GDISPVMTLIST				GDISPVMT_OnlyOne;
 
-			gdriverRegister(GDISPVMT_OnlyOne, 0);
+			if (!(GDISPVMT_OnlyOne->d.flags & GDISP_VFLG_DYNAMICONLY))
+				gdriverRegister(&GDISPVMT_OnlyOne->d, 0);
 		}
 	#endif
 
@@ -647,7 +651,9 @@ void _gdispPostInitDriver(GDriver *g) {
 
 	// Set orientation, clip
 	#if defined(GDISP_DEFAULT_ORIENTATION) && GDISP_NEED_CONTROL && GDISP_HARDWARE_CONTROL
-		gdispGControl(gd, GDISP_CONTROL_ORIENTATION, (void *)GDISP_DEFAULT_ORIENTATION);
+		// Pixmaps should stay in their created orientation (at least initially)
+		if (!(gvmt(gd)->flags & GDISP_VFLG_PIXMAP))
+			gdispGControl(gd, GDISP_CONTROL_ORIENTATION, (void *)GDISP_DEFAULT_ORIENTATION);
 	#endif
 	#if GDISP_NEED_VALIDATION || GDISP_NEED_CLIP
 		gdispGSetClip(gd, 0, 0, gd->g.Width, gd->g.Height);

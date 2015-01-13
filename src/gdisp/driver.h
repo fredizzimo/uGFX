@@ -377,6 +377,8 @@ struct GDisplay {
 
 typedef struct GDISPVMT {
 	GDriverVMT	d;
+		#define GDISP_VFLG_DYNAMICONLY		0x0001		// This display should never be statically initialised
+		#define GDISP_VFLG_PIXMAP			0x0002		// This is a pixmap display
 	bool_t (*init)(GDisplay *g);
 	void (*deinit)(GDisplay *g);
 	void (*writestart)(GDisplay *g);				// Uses p.x,p.y  p.cx,p.cy
@@ -707,6 +709,11 @@ typedef struct GDISPVMT {
 	#if !IS_MULTIPLE && !IN_PIXMAP_DRIVER
 		#undef GDISP_DRIVER_VMT
 		#define GDISP_DRIVER_VMT		GDISPVMT_OnlyOne
+	#endif
+
+	// Default the flags if the driver doesn't specify any
+	#ifndef GDISP_DRIVER_VMT_FLAGS
+		#define GDISP_DRIVER_VMT_FLAGS		0
 	#endif
 
 	// Routines needed by the general driver VMT

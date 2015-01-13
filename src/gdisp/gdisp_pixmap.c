@@ -31,6 +31,7 @@
 #define GDISP_HARDWARE_CONTROL			TRUE
 #define IN_PIXMAP_DRIVER				TRUE
 #define GDISP_DRIVER_VMT				GDISPVMT_pixmap
+#define GDISP_DRIVER_VMT_FLAGS			(GDISP_VFLG_DYNAMICONLY|GDISP_VFLG_PIXMAP)
 
 // This pseudo driver currently only supports unpacked formats with more than 8 bits per pixel
 //	that is, we only support GRAY_SCALE and PALETTE with 8 bits per pixel or any unpacked TRUE_COLOR format.
