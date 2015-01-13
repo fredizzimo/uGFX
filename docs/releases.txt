@@ -6,8 +6,12 @@
 FEATURE:	Added more events to the slider widget
 FIX:		Clean up visibility issues
 FIX:		Correct moving of containers
+FIX:		Fix GTIMER bug that could cause all timers to stop.
+FIX:		Various minor driver fixes
+FEATURE:	Add support for STM32 CCM memory with DMA in SSD1289 and SSD2119
 FEATURE:	New Tabset GWIN widget
-FEATURE:	New keyboard driver interface
+FEATURE:	New keyboard driver interface with drivers for Win32 and X
+FEATURE:	Support for keyboard layouts for non-english keyboards
 FEATURE:	GDISP now supports pixmaps (in memory drawing)
 
 
