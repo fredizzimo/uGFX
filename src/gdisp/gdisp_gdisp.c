@@ -651,8 +651,10 @@ void _gdispPostInitDriver(GDriver *g) {
 
 	// Set orientation, clip
 	#if defined(GDISP_DEFAULT_ORIENTATION) && GDISP_NEED_CONTROL && GDISP_HARDWARE_CONTROL
-		// Pixmaps should stay in their created orientation (at least initially)
-		if (!(gvmt(gd)->flags & GDISP_VFLG_PIXMAP))
+		#if GDISP_NEED_PIXMAP
+			// Pixmaps should stay in their created orientation (at least initially)
+			if (!(gvmt(gd)->d.flags & GDISP_VFLG_PIXMAP))
+		#endif
 			gdispGControl(gd, GDISP_CONTROL_ORIENTATION, (void *)GDISP_DEFAULT_ORIENTATION);
 	#endif
 	#if GDISP_NEED_VALIDATION || GDISP_NEED_CLIP
