@@ -5,10 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    src/gos/gos_win32.c
- * @brief   GOS Win32 Operating System support.
- */
 #include "gfx.h"
 
 #if GFX_USE_OS_WIN32

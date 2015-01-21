@@ -5,41 +5,9 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    src/gdisp/gdisp_image_bmp.c
- * @brief   GDISP native image code.
- *
- * @defgroup Image Image
- * @ingroup GDISP
- */
 #include "gfx.h"
 
 #if GFX_USE_GDISP && GDISP_NEED_IMAGE && GDISP_NEED_IMAGE_BMP
-
-#ifndef GDISP_NEED_IMAGE_BMP_1
-	#define GDISP_NEED_IMAGE_BMP_1		TRUE
-#endif
-#ifndef GDISP_NEED_IMAGE_BMP_4
-	#define GDISP_NEED_IMAGE_BMP_4		TRUE
-#endif
-#ifndef GDISP_NEED_IMAGE_BMP_4_RLE
-	#define GDISP_NEED_IMAGE_BMP_4_RLE	TRUE
-#endif
-#ifndef GDISP_NEED_IMAGE_BMP_8
-	#define GDISP_NEED_IMAGE_BMP_8		TRUE
-#endif
-#ifndef GDISP_NEED_IMAGE_BMP_8_RLE
-	#define GDISP_NEED_IMAGE_BMP_8_RLE	TRUE
-#endif
-#ifndef GDISP_NEED_IMAGE_BMP_16
-	#define GDISP_NEED_IMAGE_BMP_16		TRUE
-#endif
-#ifndef GDISP_NEED_IMAGE_BMP_24
-	#define GDISP_NEED_IMAGE_BMP_24		TRUE
-#endif
-#ifndef GDISP_NEED_IMAGE_BMP_32
-	#define GDISP_NEED_IMAGE_BMP_32		TRUE
-#endif
 
 /**
  * Helper Routines Needed
@@ -901,4 +869,3 @@ delaytime_t gdispImageNext_BMP(gdispImage *img) {
 }
 
 #endif /* GFX_USE_GDISP && GDISP_NEED_IMAGE && GDISP_NEED_IMAGE_BMP */
-/** @} */

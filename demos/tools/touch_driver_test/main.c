@@ -30,8 +30,8 @@
 #include "gfx.h"
 
 // We get nasty and look at some internal structures - get the relevant information
-#include "src/gdriver/sys_defs.h"
-#include "src/ginput/driver_mouse.h"
+#include "src/gdriver/gdriver.h"
+#include "src/ginput/ginput_driver_mouse.h"
 
 #include <string.h>
 

@@ -5,13 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    src/gdisp/gdisp_image_gif.c
- * @brief   GDISP native image code.
- *
- * @defgroup Image Image
- * @ingroup GDISP
-*/
 #include "gfx.h"
 
 #if GFX_USE_GDISP && GDISP_NEED_IMAGE && GDISP_NEED_IMAGE_GIF
@@ -1205,4 +1198,3 @@ delaytime_t gdispImageNext_GIF(gdispImage *img) {
 }
 
 #endif /* GFX_USE_GDISP && GDISP_NEED_IMAGE && GDISP_NEED_IMAGE_GIF */
-/** @} */

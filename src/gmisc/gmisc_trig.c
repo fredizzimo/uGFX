@@ -5,13 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    src/gmisc/gmisc_trig.c
- * @brief   GMISC Trig Functions.
- *
- * @addtogroup GMISC
- * @{
- */
 #include "gfx.h"
 
 #if GFX_USE_GMISC
@@ -187,4 +180,3 @@
 #endif
 
 #endif /* GFX_USE_GMISC */
-/** @} */

@@ -23,7 +23,7 @@
 #ifndef _GWIDGET_H
 #define _GWIDGET_H
 
-/* This file is included within "src/gwin/sys_defs.h" */
+/* This file is included within "src/gwin/gwin.h" */
 
 // Forward definition
 struct GWidgetObject;

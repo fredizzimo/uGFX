@@ -20,7 +20,7 @@
 
 #define GDISP_DRIVER_VMT			GDISPVMT_ILI9341
 #include "drivers/gdisp/ILI9341/gdisp_lld_config.h"
-#include "src/gdisp/driver.h"
+#include "src/gdisp/gdisp_driver.h"
 
 #include "board_ILI9341.h"
 

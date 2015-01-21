@@ -39,8 +39,8 @@
 	#error "GDISP Pixmap: Pixmap's do not currently support the specified GDISP_LLD_PIXELFORMAT"
 #endif
 
-#include "src/gdisp/driver.h"
-#include "src/gdriver/sys_defs.h"
+#include "src/gdisp/gdisp_driver.h"
+#include "src/gdriver/gdriver.h"
 
 typedef struct pixmap {
 	#if GDISP_NEED_PIXMAP_IMAGE

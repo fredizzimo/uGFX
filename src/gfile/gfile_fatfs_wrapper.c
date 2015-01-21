@@ -5,12 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    src/gfile/gfile_fatfs_wrapper.c
- * @brief   GFILE FATFS wrapper.
- *
- */
-
 #include "gfx.h"
 
 #if GFX_USE_GFILE && GFILE_NEED_FATFS

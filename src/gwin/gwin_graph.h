@@ -22,7 +22,7 @@
 #ifndef _GWIN_GRAPH_H
 #define _GWIN_GRAPH_H
 
-/* This file is included within "src/gwin/sys_defs.h" */
+/* This file is included within "src/gwin/gwin.h" */
 
 typedef enum GGraphPointType_e {
 	GGRAPH_POINT_NONE, GGRAPH_POINT_DOT, GGRAPH_POINT_SQUARE, GGRAPH_POINT_CIRCLE

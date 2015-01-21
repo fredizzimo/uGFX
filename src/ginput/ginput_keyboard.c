@@ -21,8 +21,8 @@
 #endif
 
 // Get the keyboard driver interface
-#include "driver_keyboard.h"
-#include "keyboard_microcode.h"
+#include "ginput_driver_keyboard.h"
+#include "ginput_keyboard_microcode.h"
 
 // The keyboard poll timer
 static GTIMER_DECL(KeyboardTimer);

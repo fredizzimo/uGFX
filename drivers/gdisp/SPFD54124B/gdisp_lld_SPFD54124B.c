@@ -25,7 +25,7 @@
 #endif
 
 #include "drivers/gdisp/SPFD54124B/gdisp_lld_config.h"
-#include "src/gdisp/driver.h"
+#include "src/gdisp/gdisp_driver.h"
 
 #include "board_SPFD54124B.h"
 

@@ -22,7 +22,7 @@
 #ifndef _GWIN_GL3D_H
 #define _GWIN_GL3D_H
 
-/* This file is included within "src/gwin/sys_defs.h" */
+/* This file is included within "src/gwin/gwin.h" */
 
 
 // A gl3d window

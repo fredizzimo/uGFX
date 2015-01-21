@@ -21,7 +21,7 @@
 
 #define GDISP_DRIVER_VMT			GDISPVMT_R61505U
 #include "drivers/gdisp/R61505U/gdisp_lld_config.h"
-#include "src/gdisp/driver.h"
+#include "src/gdisp/gdisp_driver.h"
 
 #include "board_R61505U.h"
 

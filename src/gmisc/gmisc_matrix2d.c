@@ -5,10 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    src/gmisc/gmisc_matrix2d.c
- * @brief   GMISC 2D matrix operations code.
- */
 #include "gfx.h"
 
 #if GFX_USE_GMISC

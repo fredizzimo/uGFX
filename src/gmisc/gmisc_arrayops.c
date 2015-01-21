@@ -5,13 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    src/gmisc/gmisc_arrayops.c
- * @brief   GMISC Array Operations code.
- *
- * @addtogroup GMISC
- * @{
- */
 #include "gfx.h"
 
 #if GFX_USE_GMISC && GMISC_NEED_ARRAYOPS
@@ -223,4 +216,3 @@ void gmiscArrayConvert(ArrayDataFormat srcfmt, void *src, ArrayDataFormat dstfmt
 }
 
 #endif /* GFX_USE_GMISC && GMISC_NEED_ARRAYOPS */
-/** @} */

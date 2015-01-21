@@ -17,7 +17,7 @@
 
 #if GFX_USE_GINPUT && GINPUT_NEED_DIAL
 
-#include "driver_dial.h"
+#include "ginput_driver_dial.h"
 
 static GTIMER_DECL(DialTimer);
 static struct DialStatus_t {

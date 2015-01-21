@@ -24,7 +24,7 @@
 #ifndef _GWIN_CONSOLE_H
 #define _GWIN_CONSOLE_H
 
-/* This file is included within "src/gwin/sys_defs.h" */
+/* This file is included within "src/gwin/gwin.h" */
 
 // A console window. Supports wrapped text writing and a cursor.
 typedef struct GConsoleObject {

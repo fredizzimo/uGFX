@@ -5,10 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    src/gdisp/gdisp_image_png.c
- * @brief   GDISP native image code.
- */
 #include "gfx.h"
 
 #if GFX_USE_GDISP && GDISP_NEED_IMAGE && GDISP_NEED_IMAGE_PNG
@@ -16,4 +12,3 @@
 #error "PNG support not implemented yet"
 
 #endif /* GFX_USE_GDISP && GDISP_NEED_IMAGE && GDISP_NEED_IMAGE_PNG */
-/** @} */

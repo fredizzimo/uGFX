@@ -1,18 +1,18 @@
 GFXINC +=   $(GFXLIB)
 GFXSRC +=	$(GFXLIB)/src/gfx.c
 
-include $(GFXLIB)/src/gos/sys_make.mk
-include $(GFXLIB)/src/gdriver/sys_make.mk
-include $(GFXLIB)/src/gqueue/sys_make.mk
-include $(GFXLIB)/src/gdisp/sys_make.mk
-include $(GFXLIB)/src/gevent/sys_make.mk
-include $(GFXLIB)/src/gtimer/sys_make.mk
-include $(GFXLIB)/src/gwin/sys_make.mk
-include $(GFXLIB)/src/ginput/sys_make.mk
-include $(GFXLIB)/src/gadc/sys_make.mk
-include $(GFXLIB)/src/gaudio/sys_make.mk
-include $(GFXLIB)/src/gmisc/sys_make.mk
-include $(GFXLIB)/src/gfile/sys_make.mk
+include $(GFXLIB)/src/gos/gos.mk
+include $(GFXLIB)/src/gdriver/gdriver.mk
+include $(GFXLIB)/src/gqueue/gqueue.mk
+include $(GFXLIB)/src/gdisp/gdisp.mk
+include $(GFXLIB)/src/gevent/gevent.mk
+include $(GFXLIB)/src/gtimer/gtimer.mk
+include $(GFXLIB)/src/gwin/gwin.mk
+include $(GFXLIB)/src/ginput/ginput.mk
+include $(GFXLIB)/src/gadc/gadc.mk
+include $(GFXLIB)/src/gaudio/gaudio.mk
+include $(GFXLIB)/src/gmisc/gmisc.mk
+include $(GFXLIB)/src/gfile/gfile.mk
 
 # Include the boards and drivers
 ifneq ($(GFXBOARD),)

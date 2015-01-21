@@ -10,7 +10,7 @@
 #if GFX_USE_GAUDIO && GAUDIO_NEED_PLAY
 
 /* Include the driver defines */
-#include "src/gaudio/driver_play.h"
+#include "src/gaudio/gaudio_driver_play.h"
 
 /* Include the vs1053 registers */
 #include "drivers/gaudio/vs1053/vs1053.h"

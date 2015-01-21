@@ -46,7 +46,7 @@
 #define CALIBRATION_ERROR_HEIGHT		40
 
 // Get the mouse driver interface
-#include "driver_mouse.h"
+#include "ginput_driver_mouse.h"
 
 // The mouse poll timer
 static GTIMER_DECL(MouseTimer);

@@ -11,7 +11,7 @@
 
 #define GDISP_DRIVER_VMT		GDISPVMT_PCD8544
 #include "drivers/gdisp/PCD8544/gdisp_lld_config.h"
-#include "src/gdisp/driver.h"
+#include "src/gdisp/gdisp_driver.h"
 #include "board_PCD8544.h"
 
 /*===========================================================================*/

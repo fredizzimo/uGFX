@@ -5,14 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    src/gdisp/gdisp_fonts.c
- * @brief   GDISP Font Handling.
- *
- * @addtogroup GDISP
- * @{
- */
-
 #include "gfx.h"
 
 #if GFX_USE_GDISP && GDISP_NEED_TEXT
@@ -93,4 +85,3 @@ const char *gdispGetFontName(font_t font) {
 }
 
 #endif /* GFX_USE_GDISP && GDISP_NEED_TEXT */
-/** @} */

@@ -11,7 +11,7 @@
 
 #define GDISP_DRIVER_VMT			GDISPVMT_SSD1963
 #include "drivers/gdisp/SSD1963/gdisp_lld_config.h"
-#include "src/gdisp/driver.h"
+#include "src/gdisp/gdisp_driver.h"
 
 #define CALC_PERIOD(w,b,f,p)				(p+b+w+f)
 #define CALC_FPR(w,h,hb,hf,hp,vb,vf,vp,fps)	((fps * CALC_PERIOD(w,hb,hf,hp) * CALC_PERIOD(h,vb,vf,vp) * 1048576)/100000000)

@@ -5,12 +5,6 @@
 /* disk I/O modules and attach it to FatFs module with common interface. */
 /*-----------------------------------------------------------------------*/
 
-/**
- * @file    src/gfile/gfile_fatfs_diskio_chibios.c
- * @brief   GFILE FATFS wrapper.
- *
- */
-
 #include "gfx.h"
 
 #if GFX_USE_GFILE && GFILE_NEED_FATFS && GFX_USE_OS_CHIBIOS

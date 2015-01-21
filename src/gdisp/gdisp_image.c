@@ -5,13 +5,6 @@
  *              http://ugfx.org/license.html
  */
 
-/**
- * @file    src/gdisp/gdisp_image.c
- * @brief   GDISP generic image code.
- *
- * @defgroup Image Image
- * @ingroup GDISP
- */
 #include "gfx.h"
 
 #if GFX_USE_GDISP && GDISP_NEED_IMAGE
@@ -230,4 +223,3 @@ void gdispImageFree(gdispImage *img, void *ptr, size_t sz) {
 }
 
 #endif /* GFX_USE_GDISP && GDISP_NEED_IMAGE */
-/** @} */
