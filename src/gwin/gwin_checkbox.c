@@ -16,6 +16,10 @@
 
 #include "gwin_class.h"
 
+// Parameters for button custom draw
+#define TOP_FADE				50		// (TOP_FADE/255)% fade to white for top of button
+#define BOTTOM_FADE				25		// (BOTTOM_FADE/255)% fade to black for bottom of button
+
 // Our checked state
 #define GCHECKBOX_FLG_CHECKED		(GWIN_FIRST_CONTROL_FLAG<<0)
 
@@ -203,5 +207,42 @@ void gwinCheckboxDraw_CheckOnRight(GWidgetObject *gw, void *param) {
 	gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, ep-1, gw->g.height, gw->text, gw->g.font, pcol->text, gw->pstyle->background, justifyRight);
 	#undef gcw
 }
+
+#if GWIN_FLAT_STYLING
+	void gwinCheckboxDraw_Button(GWidgetObject *gw, void *param) {
+		const GColorSet *	pcol;
+		(void)				param;
+
+		if (gw->g.vmt != (gwinVMT *)&checkboxVMT)	return;
+		pcol = getDrawColors(gw);
+
+		gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width-1, gw->g.height-1, gw->text, gw->g.font, pcol->text, pcol->fill, justifyCenter);
+		gdispGDrawLine(gw->g.display, gw->g.x+gw->g.width-1, gw->g.y, gw->g.x+gw->g.width-1, gw->g.y+gw->g.height-1, pcol->edge);
+		gdispGDrawLine(gw->g.display, gw->g.x, gw->g.y+gw->g.height-1, gw->g.x+gw->g.width-2, gw->g.y+gw->g.height-1, pcol->edge);
+	}
+#else
+	void gwinCheckboxDraw_Button(GWidgetObject *gw, void *param) {
+		const GColorSet *	pcol;
+		fixed				alpha;
+		fixed				dalpha;
+		coord_t				i;
+		color_t				tcol, bcol;
+		(void)				param;
+
+		if (gw->g.vmt != (gwinVMT *)&checkboxVMT)	return;
+		pcol = getDrawColors(gw);
+
+		/* Fill the box blended from variants of the fill color */
+		tcol = gdispBlendColor(White, pcol->fill, TOP_FADE);
+		bcol = gdispBlendColor(Black, pcol->fill, BOTTOM_FADE);
+		dalpha = FIXED(255)/gw->g.height;
+		for(alpha = 0, i = 0; i < gw->g.height; i++, alpha += dalpha)
+			gdispGDrawLine(gw->g.display, gw->g.x, gw->g.y+i, gw->g.x+gw->g.width-2, gw->g.y+i, gdispBlendColor(bcol, tcol, NONFIXED(alpha)));
+
+		gdispGDrawStringBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width-1, gw->g.height-1, gw->text, gw->g.font, pcol->text, justifyCenter);
+		gdispGDrawLine(gw->g.display, gw->g.x+gw->g.width-1, gw->g.y, gw->g.x+gw->g.width-1, gw->g.y+gw->g.height-1, pcol->edge);
+		gdispGDrawLine(gw->g.display, gw->g.x, gw->g.y+gw->g.height-1, gw->g.x+gw->g.width-2, gw->g.y+gw->g.height-1, pcol->edge);
+	}
+#endif
 
 #endif /* (GFX_USE_GWIN && GWIN_NEED_CHECKBOX) */

@@ -116,6 +116,7 @@ bool_t gwinCheckboxIsChecked(GHandle gh);
  */
 void gwinCheckboxDraw_CheckOnLeft(GWidgetObject *gw, void *param);
 void gwinCheckboxDraw_CheckOnRight(GWidgetObject *gw, void *param);
+void gwinCheckboxDraw_Button(GWidgetObject *gw, void *param);
 /** @} */
 
 #ifdef __cplusplus

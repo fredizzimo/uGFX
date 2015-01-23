@@ -13,6 +13,9 @@ FEATURE:	New Tabset GWIN widget
 FEATURE:	New keyboard driver interface with drivers for Win32 and X
 FEATURE:	Support for keyboard layouts for non-english keyboards
 FEATURE:	GDISP now supports pixmaps (in memory drawing)
+FEATURE:	Rename files to improve experience in certain brain-dead IDE's
+FEATURE:	Add a checkbox "Toggle Button" custom draw
+FEATURE:	Add Tetris as an application demo.
 
 
 *** Release 2.2 ***

@@ -87,7 +87,7 @@ static GHandle		ghConsole;
 static GHandle		ghPgButtons, ghPgSliders, ghPgCheckboxes, ghPgLabels, ghPgRadios, ghPgLists, ghPgImages, ghPgProgressbars;
 static GHandle		ghButton1, ghButton2, ghButton3, ghButton4;
 static GHandle		ghSlider1, ghSlider2, ghSlider3, ghSlider4;
-static GHandle		ghCheckbox1, ghCheckbox2, ghCheckDisableAll;
+static GHandle		ghCheckbox1, ghCheckbox2, ghCheckbox3, ghCheckDisableAll;
 static GHandle		ghLabelSlider1, ghLabelSlider2, ghLabelSlider3, ghLabelSlider4, ghLabelRadio1;
 static GHandle		ghRadio1, ghRadio2;
 static GHandle		ghRadioBlack, ghRadioWhite, ghRadioYellow;
@@ -303,7 +303,7 @@ static void createWidgets(void) {
 	ghSlider4 = gwinSliderCreate(0, &wi);
 	gwinSliderSetPosition(ghSlider4, 76);
 
-	// Checkboxes - for the 2nd checkbox we apply special drawing before making it visible
+	// Checkboxes - for the 2nd and 3rd checkbox we apply special drawing before making it visible
 	wi.g.parent = ghPgCheckboxes;
 	wi.g.width = CHECKBOX_WIDTH; wi.g.height = CHECKBOX_HEIGHT; wi.g.x = 5;
 	wi.g.y = 5; wi.text = "C1";
@@ -311,8 +311,11 @@ static void createWidgets(void) {
 	wi.customDraw = gwinCheckboxDraw_CheckOnRight;
 	wi.g.y += wi.g.height+1; wi.text = "C2";
 	ghCheckbox2 = gwinCheckboxCreate(0, &wi);
-	wi.customDraw = 0; wi.g.width = DISABLEALL_WIDTH;
+	wi.customDraw = gwinCheckboxDraw_Button;
+	wi.g.y += wi.g.height+1; wi.text = "C3"; wi.g.width = BUTTON_WIDTH; wi.g.height = BUTTON_HEIGHT;
+	ghCheckbox3 = gwinCheckboxCreate(0, &wi);
 	wi.g.y += wi.g.height+1; wi.text = "Disable All";
+	wi.customDraw = 0; wi.g.width = DISABLEALL_WIDTH; wi.g.height = CHECKBOX_HEIGHT;
 	ghCheckDisableAll = gwinCheckboxCreate(0, &wi);
 
     // Labels
@@ -478,6 +481,7 @@ static void setEnabled(bool_t ena) {
 	// Checkboxes we need to do individually so we don't disable the checkbox to re-enable everything
 	gwinSetEnabled(ghCheckbox1, ena);
 	gwinSetEnabled(ghCheckbox2, ena);
+	gwinSetEnabled(ghCheckbox3, ena);
 	//gwinSetEnabled(ghCheckDisableAll, TRUE);
 }
 
