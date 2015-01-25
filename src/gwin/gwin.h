@@ -547,6 +547,40 @@ extern "C" {
 		 */
 		GHandle gwinGetNextWindow(GHandle gh);
 
+		/**
+		 * @brief	Set a window or widget to flash
+		 *
+		 * @param[in] gh		The window handle
+		 * @param[in] flash		Enable or disable the flashing of the window
+		 *
+		 * @note	The window is automatically redrawn if it supports self-redrawing.
+		 * @note	When a window is set to flash, its appearance changes in some
+		 * 			way every flash period (GWIN_FLASHING_PERIOD). How its appearance
+		 * 			changes depends on the draw for each window/widget.
+		 *
+		 * @pre		Requires GWIN_NEED_FLASHING to be TRUE
+		 *
+		 * @api
+		 */
+		void gwinSetFlashing(GHandle gh, bool_t flash);
+
+		/**
+		 * @brief	Enables flashing of a window or widget
+		 *
+		 * @param[in] gh		The window handle
+		 *
+		 * @api
+		 */
+		#define gwinFlash(gh)		gwinSetFlashing(gh, TRUE)
+
+		/**
+		 * @brief	Disables a widget
+		 *
+		 * @param[in] gh		The window handle
+		 *
+		 * @api
+		 */
+		#define gwinNoFlash(gh)		gwinSetFlashing(gh, FALSE)
 	#endif
 
 	#if GDISP_NEED_TEXT || defined(__DOXYGEN__)

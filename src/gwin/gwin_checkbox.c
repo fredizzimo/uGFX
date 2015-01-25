@@ -216,6 +216,11 @@ void gwinCheckboxDraw_CheckOnRight(GWidgetObject *gw, void *param) {
 		if (gw->g.vmt != (gwinVMT *)&checkboxVMT)	return;
 		pcol = getDrawColors(gw);
 
+		#if GWIN_NEED_FLASHING
+			// Flash the on and off state.
+			pcol = _gwinGetFlashedColor(gw, pcol, TRUE);
+		#endif
+
 		gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width-1, gw->g.height-1, gw->text, gw->g.font, pcol->text, pcol->fill, justifyCenter);
 		gdispGDrawLine(gw->g.display, gw->g.x+gw->g.width-1, gw->g.y, gw->g.x+gw->g.width-1, gw->g.y+gw->g.height-1, pcol->edge);
 		gdispGDrawLine(gw->g.display, gw->g.x, gw->g.y+gw->g.height-1, gw->g.x+gw->g.width-2, gw->g.y+gw->g.height-1, pcol->edge);
@@ -231,6 +236,11 @@ void gwinCheckboxDraw_CheckOnRight(GWidgetObject *gw, void *param) {
 
 		if (gw->g.vmt != (gwinVMT *)&checkboxVMT)	return;
 		pcol = getDrawColors(gw);
+
+		#if GWIN_NEED_FLASHING
+			// Flash the on and off state.
+			pcol = _gwinGetFlashedColor(gw, pcol, TRUE);
+		#endif
 
 		/* Fill the box blended from variants of the fill color */
 		tcol = gdispBlendColor(White, pcol->fill, TOP_FADE);

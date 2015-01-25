@@ -51,6 +51,7 @@
 #define GFX_USE_GWIN                                 TRUE
 
 #define GWIN_NEED_WINDOWMANAGER                      TRUE
+	#define GWIN_NEED_FLASHING						 TRUE
 
 #define GWIN_NEED_CONSOLE                            TRUE
     #define GWIN_CONSOLE_USE_HISTORY                 TRUE

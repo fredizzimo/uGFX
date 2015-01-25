@@ -47,6 +47,7 @@
 #define GWIN_FLG_MINIMIZED				0x00100000			// @< The window is minimized
 #define GWIN_FLG_MAXIMIZED				0x00200000			// @< The window is maximized
 #define GWIN_FLG_MOUSECAPTURE			0x00400000			// @< The window has captured the mouse
+#define GWIN_FLG_FLASHING				0x00800000			// @< The window is flashing - see the _gwinFlashState boolean
 #define GWIN_FIRST_WM_FLAG				0x01000000			// @< 8 bits free for the window manager to use
 #define GWIN_LAST_WM_FLAG				0x80000000			// @< 8 bits free for the window manager to use
 /** @} */
@@ -165,7 +166,9 @@ typedef struct gwinVMT {
 	/**
 	 * @brief	The current window manager
 	 */
-	extern GWindowManager * _GWINwm;
+	extern	GWindowManager * _GWINwm;
+	extern	bool_t			_gwinFlashState;
+
 #endif
 
 #ifdef __cplusplus
@@ -313,6 +316,20 @@ bool_t _gwinWMAdd(GHandle gh, const GWindowInit *pInit);
 	 * @notapi
 	 */
 	void _gwinSendEvent(GHandle gh, GEventType type);
+
+
+	#if GWIN_NEED_FLASHING || defined(__DOXYGEN__)
+		/**
+		 * @brief	Convert a chosen style color set pressed/enabled etc if flashing
+		 * @return	The colorset - after flashing is taken into account
+		 *
+		 * @param[in]	gw				The widget
+		 * @param[in]	pcol			The style color set that has been chosen to reflect the state of the widget
+		 * @param[in]	flashOffState	Whether the off-state should be flashed as well. If false, only the
+		 * 								pressed color set is flashed.
+		 */
+		const GColorSet *_gwinGetFlashedColor(GWidgetObject *gw, const GColorSet *pcol, bool_t flashOffState);
+	#endif
 #endif
 
 #if GWIN_NEED_CONTAINERS || defined(__DOXYGEN__)

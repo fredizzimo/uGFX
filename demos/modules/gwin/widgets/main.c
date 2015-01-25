@@ -79,6 +79,8 @@ static const GWidgetStyle YellowWidgetStyle = {
 static font_t		font;
 static GListener	gl;
 static GHandle		ghConsole;
+static GTimer		FlashTimer;
+
 #if GWIN_NEED_TABSET
 	static GHandle		ghTabset;
 #else
@@ -485,6 +487,12 @@ static void setEnabled(bool_t ena) {
 	//gwinSetEnabled(ghCheckDisableAll, TRUE);
 }
 
+static void FlashOffFn(void *param) {
+	(void)	param;
+
+	gwinNoFlash(ghCheckbox3);
+}
+
 int main(void) {
 	GEvent *			pe;
 
@@ -517,6 +525,7 @@ int main(void) {
     // We want to listen for widget events
 	geventListenerInit(&gl);
 	gwinAttachListener(&gl);
+	gtimerInit(&FlashTimer);
 
 	#if !GWIN_NEED_TABSET
 		// Press the Tab we want visible
@@ -543,6 +552,11 @@ int main(void) {
 			if (((GEventGWinCheckbox *)pe)->gwin == ghCheckDisableAll) {
 				gwinPrintf(ghConsole, "%s All\n", ((GEventGWinCheckbox *)pe)->isChecked ? "Disable" : "Enable");
 				setEnabled(!((GEventGWinCheckbox *)pe)->isChecked);
+
+			// If it is the toggle button checkbox start the flash.
+			} else if (((GEventGWinCheckbox *)pe)->gwin == ghCheckbox3) {
+				gwinFlash(ghCheckbox3);
+				gtimerStart(&FlashTimer, FlashOffFn, 0, FALSE, 3000);
 			}
 			break;
 

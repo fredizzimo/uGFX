@@ -328,6 +328,21 @@
 	#ifndef GWIN_TABSET_TABHEIGHT
 		#define GWIN_TABSET_TABHEIGHT			18
 	#endif
+	/**
+	 * @brief	Should flashing of widgets be supported
+	 * @details	Defaults to FALSE
+	 * @pre		Requires GWIN_NEED_WINDOWMANAGER to be TRUE
+	 */
+	#ifndef GWIN_NEED_FLASHING
+		#define GWIN_NEED_FLASHING				FALSE
+	#endif
+	/**
+	 * @brief	What is the period for the flashing timer
+	 * @details	Defaults to 250 milliseconds
+	 */
+	#ifndef GWIN_FLASHING_PERIOD
+		#define GWIN_FLASHING_PERIOD			250
+	#endif
 /** @} */
 
 #endif /* _GWIN_OPTIONS_H */

@@ -161,9 +161,13 @@
 // The default window manager
 extern const GWindowManager	GNullWindowManager;
 GWindowManager *			_GWINwm;
+bool_t						_gwinFlashState;
 
 static gfxSem				gwinsem;
 static gfxQueueASync		_GWINList;
+#if GWIN_NEED_FLASHING
+	static GTimer			FlashTimer;
+#endif
 #if !GWIN_REDRAW_IMMEDIATE
 	static GTimer			RedrawTimer;
 	static void				RedrawTimerFn(void *param);
@@ -171,6 +175,7 @@ static gfxQueueASync		_GWINList;
 static volatile uint8_t		RedrawPending;
 	#define DOREDRAW_INVISIBLES		0x01
 	#define DOREDRAW_VISIBLES		0x02
+	#define DOREDRAW_FLASHRUNNING	0x04
 
 
 /*-----------------------------------------------
@@ -181,6 +186,9 @@ void _gwmInit(void)
 {
 	gfxSemInit(&gwinsem, 1, 1);
 	gfxQueueASyncInit(&_GWINList);
+	#if GWIN_NEED_FLASHING
+		gtimerInit(&FlashTimer);
+	#endif
 	#if !GWIN_REDRAW_IMMEDIATE
 		gtimerInit(&RedrawTimer);
 		gtimerStart(&RedrawTimer, RedrawTimerFn, 0, TRUE, TIME_INFINITE);
@@ -562,6 +570,73 @@ void gwinRedrawDisplay(GDisplay *g, bool_t preserve) {
 GHandle gwinGetNextWindow(GHandle gh) {
 	return gh ? (GHandle)gfxQueueASyncNext(&gh->wmq) : (GHandle)gfxQueueASyncPeek(&_GWINList);
 }
+
+#if GWIN_NEED_FLASHING
+	static void FlashTimerFn(void *param) {
+		GHandle		gh;
+		(void)		param;
+
+		// Assume we will be stopping
+		RedrawPending &= ~DOREDRAW_FLASHRUNNING;
+
+		// Swap the flash state
+		_gwinFlashState = !_gwinFlashState;
+
+		// Redraw all flashing windows
+		for(gh = (GHandle)gfxQueueASyncPeek(&_GWINList); gh; gh = (GHandle)gfxQueueASyncNext(&gh->wmq)) {
+			if ((gh->flags & GWIN_FLG_FLASHING)) {
+				RedrawPending |= DOREDRAW_FLASHRUNNING;
+				_gwinUpdate(gh);
+			}
+		}
+
+		// Do we have no flashers left?
+		if (!(RedrawPending & DOREDRAW_FLASHRUNNING))
+			gtimerStop(&FlashTimer);
+	}
+
+	void gwinSetFlashing(GHandle gh, bool_t flash) {
+
+		// Start flashing?
+		if (flash) {
+			gh->flags |= GWIN_FLG_FLASHING;			// A redraw will occur on the next flash period.
+
+			// Start the flash timer if needed
+			if (!(RedrawPending & DOREDRAW_FLASHRUNNING)) {
+				RedrawPending |= DOREDRAW_FLASHRUNNING;
+
+				// Ensure we start the timer with flash bit on
+				_gwinFlashState = FALSE;
+				FlashTimerFn(0);														// First flash
+				gtimerStart(&FlashTimer, FlashTimerFn, 0, TRUE, GWIN_FLASHING_PERIOD);	// Subsequent flashes
+			}
+
+		// Stop flashing?
+		} else if ((gh->flags & GWIN_FLG_FLASHING)) {
+			gh->flags &= ~GWIN_FLG_FLASHING;
+			// We need to manually redraw as the timer is now turned off for this window
+			_gwinUpdate(gh);
+		}
+	}
+
+	#if GWIN_NEED_WIDGET
+		const GColorSet *_gwinGetFlashedColor(GWidgetObject *gw, const GColorSet *pcol, bool_t flashOffState) {
+			// Does the flashing state affect the current colors?
+			if ((gw->g.flags & GWIN_FLG_FLASHING) && _gwinFlashState) {
+
+				// For a pressed state show an unpressed state
+				if (pcol == &gw->pstyle->pressed)
+					pcol = &gw->pstyle->enabled;
+
+				// For a non-pressed state (if allowed) show a pressed state
+				else if (flashOffState && pcol == &gw->pstyle->enabled)
+					pcol = &gw->pstyle->pressed;
+			}
+			return pcol;
+		}
+	#endif
+#endif
+
 
 /*-----------------------------------------------
  * "Null" Window Manager Routines

@@ -203,7 +203,12 @@ void gwinRadioDraw_Radio(GWidgetObject *gw, void *param) {
 
 		if (gw->g.vmt != (gwinVMT *)&radioVMT) return;
 		pcol = getDrawColors(gw);
-	
+
+		#if GWIN_NEED_FLASHING
+			// Flash only the on state.
+			pcol = _gwinGetFlashedColor(gw, pcol, FALSE);
+		#endif
+
 		gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width-1, gw->g.height-1, gw->text, gw->g.font, pcol->text, pcol->fill, justifyCenter);
 		gdispGDrawLine(gw->g.display, gw->g.x+gw->g.width-1, gw->g.y, gw->g.x+gw->g.width-1, gw->g.y+gw->g.height-1, pcol->edge);
 		gdispGDrawLine(gw->g.display, gw->g.x, gw->g.y+gw->g.height-1, gw->g.x+gw->g.width-2, gw->g.y+gw->g.height-1, pcol->edge);
@@ -214,6 +219,11 @@ void gwinRadioDraw_Radio(GWidgetObject *gw, void *param) {
 
 		if (gw->g.vmt != (gwinVMT *)&radioVMT)	return;
 		pcol = getDrawColors(gw);
+
+		#if GWIN_NEED_FLASHING
+			// Flash only the on state.
+			pcol = _gwinGetFlashedColor(gw, pcol, FALSE);
+		#endif
 
 		if ((gw->g.flags & GRADIO_FLG_PRESSED)) {
 			gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, pcol->edge);
