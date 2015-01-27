@@ -623,16 +623,15 @@ static void MousePoll(void *param) {
 	}
 #endif
 
-typedef const GMouseVMT const GMOUSEVMTLIST[];
-
 void _gmouseInit(void) {
 	// GINPUT_MOUSE_DRIVER_LIST is defined - create each driver instance
 	#if defined(GINPUT_MOUSE_DRIVER_LIST)
 		{
 			int		i;
+			typedef const GMouseVMT const GMOUSEVMTLIST[1];
 
-			extern GMOUSEVMTLIST				GINPUT_MOUSE_DRIVER_LIST;
-			static GMOUSEVMTLIST	dclist[] = {GINPUT_MOUSE_DRIVER_LIST};
+			extern GMOUSEVMTLIST GINPUT_MOUSE_DRIVER_LIST;
+			static const GMouseVMT * const dclist[] = {GINPUT_MOUSE_DRIVER_LIST};
 
 			for(i = 0; i < sizeof(dclist)/sizeof(dclist[0]); i++) {
                 if (!(dclist[i]->d.flags & GMOUSE_VFLG_DYNAMICONLY))
@@ -643,7 +642,7 @@ void _gmouseInit(void) {
 	// One and only one mouse
 	#else
 		{
-			extern GMOUSEVMTLIST			GMOUSEVMT_OnlyOne;
+			extern const GMouseVMT const GMOUSEVMT_OnlyOne[1];
 
             if (!(GMOUSEVMT_OnlyOne->d.flags & GMOUSE_VFLG_DYNAMICONLY))
 					gdriverRegister(&GMOUSEVMT_OnlyOne->d, GDISP);

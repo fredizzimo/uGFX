@@ -457,16 +457,15 @@ static void KeyboardPoll(void *param) {
 	}
 }
 
-typedef const GKeyboardVMT const GKEYBOARDVMTLIST[];
-
 void _gkeyboardInit(void) {
 	// GINPUT_KEYBOARD_DRIVER_LIST is defined - create each driver instance
 	#if defined(GINPUT_KEYBOARD_DRIVER_LIST)
 		{
 			int		i;
+			typedef const GKeyboardVMT const GKEYBOARDVMTLIST[1];
 
-			extern GKEYBOARDVMTLIST				GINPUT_KEYBOARD_DRIVER_LIST;
-			static GKEYBOARDVMTLIST	dclist[] = {GINPUT_KEYBOARD_DRIVER_LIST};
+			extern GKEYBOARDVMTLIST GINPUT_KEYBOARD_DRIVER_LIST;
+			static const GKeyboardVMT *	const dclist[] = {GINPUT_KEYBOARD_DRIVER_LIST};
 
 			for(i = 0; i < sizeof(dclist)/sizeof(dclist[0]); i++) {
                 if (!(dclist[i]->d.flags & GKEYBOARD_VFLG_DYNAMICONLY))
@@ -477,7 +476,7 @@ void _gkeyboardInit(void) {
 	// One and only one mouse
 	#else
 		{
-			extern GKEYBOARDVMTLIST			GKEYBOARDVMT_OnlyOne;
+			extern const GKeyboardVMT const GKEYBOARDVMT_OnlyOne[1];
 
             if (!(GKEYBOARDVMT_OnlyOne->d.flags & GKEYBOARD_VFLG_DYNAMICONLY))
 					gdriverRegister(&GKEYBOARDVMT_OnlyOne->d, 0);
