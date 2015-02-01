@@ -15,7 +15,9 @@ FEATURE:	Support for keyboard layouts for non-english keyboards
 FEATURE:	GDISP now supports pixmaps (in memory drawing)
 FEATURE:	Rename files to improve experience in certain brain-dead IDE's
 FEATURE:	Add a checkbox "Toggle Button" custom draw
-FEATURE:	Add Tetris as an application demo.
+FEATURE:	Add Tetris as an application demo
+FEATURE:	Add HY-MiniSTM32V board support
+FEATURE:	Add GWIN feature to flash any window/widget
 
 
 *** Release 2.2 ***
