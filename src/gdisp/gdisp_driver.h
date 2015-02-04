@@ -1019,41 +1019,24 @@ typedef struct GDISPVMT {
 		 * @note	For use only by low level drivers
 		 */
 		#define gdispNative2Color(c)	(c)
+	#elif COLOR_SYSTEM == GDISP_COLORSYSTEM_GRAYSCALE || LLDCOLOR_SYSTEM == GDISP_COLORSYSTEM_GRAYSCALE
+		#if GDISP_HARDWARE_USE_EXACT_COLOR
+			#define gdispColor2Native(c)	LLDLUMA2COLOR(EXACT_LUMA_OF(c))
+			#define gdispNative2Color(c)	LUMA2COLOR(LLDEXACT_LUMA_OF(c))
+		#else
+			#define gdispColor2Native(c)	LLDLUMA2COLOR(LUMA_OF(c))
+			#define gdispNative2Color(c)	LUMA2COLOR(LLDLUMA_OF(c))
+		#endif
+	#elif COLOR_SYSTEM == GDISP_COLORSYSTEM_TRUECOLOR && LLDCOLOR_SYSTEM == GDISP_COLORSYSTEM_TRUECOLOR
+		#if GDISP_HARDWARE_USE_EXACT_COLOR
+			#define gdispColor2Native(c)	LLDRGB2COLOR(EXACT_RED_OF(c), EXACT_GREEN_OF(c), EXACT_BLUE_OF(c))
+			#define gdispNative2Color(c)	RGB2COLOR(LLDEXACT_RED_OF(c), LLDEXACT_GREEN_OF(c), LLDEXACT_BLUE_OF(c))
+		#else
+			#define gdispColor2Native(c)	LLDRGB2COLOR(RED_OF(c), GREEN_OF(c), BLUE_OF(c))
+			#define gdispNative2Color(c)	RGB2COLOR(LLDRED_OF(c), LLDGREEN_OF(c), LLDBLUE_OF(c))
+		#endif
 	#else
-		static LLDCOLOR_TYPE gdispColor2Native(color_t c) {
-			#if COLOR_SYSTEM == GDISP_COLORSYSTEM_GRAYSCALE || LLDCOLOR_SYSTEM == GDISP_COLORSYSTEM_GRAYSCALE
-				#if GDISP_HARDWARE_USE_EXACT_COLOR
-					return LLDLUMA2COLOR(EXACT_LUMA_OF(c));
-				#else
-					return LLDLUMA2COLOR(LUMA_OF(c));
-				#endif
-			#elif COLOR_SYSTEM == GDISP_COLORSYSTEM_TRUECOLOR && LLDCOLOR_SYSTEM == GDISP_COLORSYSTEM_TRUECOLOR
-				#if GDISP_HARDWARE_USE_EXACT_COLOR
-					return LLDRGB2COLOR(EXACT_RED_OF(c), EXACT_GREEN_OF(c), EXACT_BLUE_OF(c));
-				#else
-					return LLDRGB2COLOR(RED_OF(c), GREEN_OF(c), BLUE_OF(c));
-				#endif
-			#else
-				#error "GDISP: This pixel format conversion is not supported yet"
-			#endif
-		}
-		static color_t gdispNative2Color(LLDCOLOR_TYPE c) {
-			#if COLOR_SYSTEM == GDISP_COLORSYSTEM_GRAYSCALE || LLDCOLOR_SYSTEM == GDISP_COLORSYSTEM_GRAYSCALE
-				#if GDISP_HARDWARE_USE_EXACT_COLOR
-					return LUMA2COLOR(LLDEXACT_LUMA_OF(c));
-				#else
-					return LUMA2COLOR(LLDLUMA_OF(c));
-				#endif
-			#elif COLOR_SYSTEM == GDISP_COLORSYSTEM_TRUECOLOR && LLDCOLOR_SYSTEM == GDISP_COLORSYSTEM_TRUECOLOR
-				#if GDISP_HARDWARE_USE_EXACT_COLOR
-					return RGB2COLOR(LLDEXACT_RED_OF(c), LLDEXACT_GREEN_OF(c), LLDEXACT_BLUE_OF(c));
-				#else
-					return RGB2COLOR(LLDRED_OF(c), LLDGREEN_OF(c), LLDBLUE_OF(c));
-				#endif
-			#else
-				#error "GDISP: This pixel format conversion is not supported yet"
-			#endif
-		}
+		#error "GDISP: This pixel format conversion is not supported yet"
 	#endif
 
 #endif
