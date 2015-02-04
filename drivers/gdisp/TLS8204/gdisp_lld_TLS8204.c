@@ -82,8 +82,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	write_cmd(g, TLS8204_SET_FUNC);
 	write_cmd(g, TLS8204_SET_VLCD7 + ((GDISP_INITIAL_CONTRAST * 2 + 22) >> 7));
 	write_cmd(g, TLS8204_SET_DISPLAY_NORMAL);
-	write_cmd(g, TLS8204_SET_X + 0);
-	write_cmd(g, TLS8204_SET_Y + 0/8);
+
 
 	// Finish Init
 	post_init_board(g);
@@ -107,6 +106,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 #if GDISP_HARDWARE_FLUSH
 	LLDSPEC void gdisp_lld_flush(GDisplay *g) {
+		unsigned	y;
 
 		// Don't flush if we don't need it.
 		if (!(g->flags & GDISP_FLG_NEEDFLUSH))
@@ -114,10 +114,12 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 		acquire_bus(g);
 
-		write_cmd(g, TLS8204_SET_X + 0);  	// X = 0
-		write_cmd(g, TLS8204_SET_Y + 0/8);  // Y = 0
+		for(y = 0; y < GDISP_TLS8204_HEIGHT/8; y++) {
+			write_cmd(g, TLS8204_SET_X | 0);  	// X = 0
+			write_cmd(g, TLS8204_SET_Y | y);  // Y = 0
 
-		write_data(g, RAM(g), GDISP_SCREEN_BYTES);
+			write_data(g, RAM(g)+y*GDISP_TLS8204_WIDTH, GDISP_SCREEN_BYTES);
+		}
 
 		release_bus(g);
 	}
@@ -152,7 +154,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			y = g->p.y;
 		#endif
 
-		if (gdispColor2Native(g->p.color) != gdispColor2Native(Black)) {
+		if (g->p.color != Black) {
 			RAM(g)[xyaddr(x, y)] |= xybit(y);
 		} else {
 			RAM(g)[xyaddr(x, y)] &= ~xybit(y);
