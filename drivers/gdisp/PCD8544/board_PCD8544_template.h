@@ -21,6 +21,11 @@ static inline void setpin_reset(GDisplay *g, bool_t state) {
 	(void) state;
 }
 
+static inline void set_backlight(GDisplay *g, uint8_t percent) {
+	(void) g;
+	(void) percent;
+}
+
 static inline void acquire_bus(GDisplay *g) {
 	(void) g;
 }
