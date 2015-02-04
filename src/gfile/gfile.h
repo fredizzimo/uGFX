@@ -372,15 +372,15 @@ extern "C" {
 		int vfnprintg(GFILE *f, int maxlen, const char *fmt, va_list arg);
 		int fnprintg(GFILE *f, int maxlen, const char *fmt, ...);
 		#define vfprintg(f,m,a)			vfnprintg(f,0,m,a)
-		#define fprintg(f,m,...)		fnprintg(f,0,m,...)
+		#define fprintg(f,m,...)		fnprintg(f,0,m,__VA_ARGS__)
 		#define vprintg(m,a)			vfnprintg(gfileStdOut,0,m,a)
-		#define printg(m,...)			fnprintg(gfileStdOut,0,m,...)
+		#define printg(m,...)			fnprintg(gfileStdOut,0,m,__VA_ARGS__)
 
 		#if GFILE_NEED_STRINGS
 			int vsnprintg(char *buf, int maxlen, const char *fmt, va_list arg);
 			int snprintg(char *buf, int maxlen, const char *fmt, ...);
 			#define vsprintg(s,m,a)		vsnprintg(s,0,m,a)
-			#define sprintg(s,m,...)	snprintg(s,0,m,...)
+			#define sprintg(s,m,...)	snprintg(s,0,m,__VA_ARGS__)
 		#endif
 	#endif
 
@@ -390,7 +390,7 @@ extern "C" {
 		int vfscang(GFILE *f, const char *fmt, va_list arg);
 		int fscang(GFILE *f, const char *fmt, ...);
 		#define vscang(f,a)			vfscang(gfileStdIn,f,a)
-		#define scang(f,...)		fscang(gfileStdIn,f,...)
+		#define scang(f,...)		fscang(gfileStdIn,f,__VA_ARGS__)
 
 		#if GFILE_NEED_STRINGS
 			int vsscang(const char *buf, const char *fmt, va_list arg);
@@ -431,13 +431,13 @@ extern "C" {
 		#define feof(f)					gfileEOF(f)
 
 		#define vfprintf(f,m,a)			vfnprintg(f,0,m,a)
-		#define fprintf(f,m,...)		fnprintg(f,0,m,...)
+		#define fprintf(f,m,...)		fnprintg(f,0,m,__VA_ARGS__)
 		#define vprintf(m,a)			vfnprintg(gfileStdOut,0,m,a)
-		#define printf(m,...)			fnprintg(gfileStdOut,0,m,...)
+		#define printf(m,...)			fnprintg(gfileStdOut,0,m,__VA_ARGS__)
 		#define vsnprintf(s,n,m,a)		vsnprintg(s,n,m,a)
-		#define snprintf(s,n,m,...)		snprintg(s,n,m,...)
+		#define snprintf(s,n,m,...)		snprintg(s,n,m,__VA_ARGS__)
 		#define vsprintf(s,m,a)			vsnprintg(s,0,m,a)
-		#define sprintf(s,m,...)		snprintg(s,0,m,...)
+		#define sprintf(s,m,...)		snprintg(s,0,m,__VA_ARGS__)
 		//TODO
 		//void clearerr ( FILE * stream );
 		//int ferror ( FILE * stream );
