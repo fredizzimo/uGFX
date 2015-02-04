@@ -59,7 +59,7 @@
  *
  * You must specify a GDISP_PIXELFORMAT that the application will work in. This
  *   is translated into each drivers internal pixel format by the driver. You the
- *   pixel format that is most common accross your drivers (for efficiency).
+ *   pixel format that is most common across your drivers (for efficiency).
  *
  * Optionally, you can also specify hardware characteristics that are common to
  * all your controllers. This significantly improves code and speed efficiency
@@ -76,9 +76,22 @@
  * 		#define GDISP_HARDWARE_DRAWPIXEL	TRUE
  * 		#define GDISP_HARDWARE_FILLS		TRUE
  */
-#define GDISP_TOTAL_DISPLAYS    2
+#if GFX_USE_OS_WIN32 || GFX_USE_OS_LINUX || GFX_USE_OS_OSX
+	// Emulator
+	#define GDISP_TOTAL_DISPLAYS    2
 
-//#define GDISP_DRIVER_LIST     GDISPVMT_Win32, GDISPVMT_Win32
-//#define GDISP_PIXELFORMAT     GDISP_PIXELFORMAT_RGB888
+	//#define GDISP_DRIVER_LIST     GDISPVMT_Win32, GDISPVMT_Win32
+	//#define GDISP_PIXELFORMAT     GDISP_PIXELFORMAT_RGB888
+
+#elif !defined(GDISP_TOTAL_DISPLAYS) && (!defined(GDISP_PIXELFORMAT) || !defined(GDISP_DRIVER_LIST))
+	#error "gfxconf.h: You have not defined multiple displays properly. Try defining GDISP_TOTAL_DISPLAY or, GDISP_PIXELFORMAT and GDISP_DRIVER_LIST in your makefile"
+#endif
+
+/*
+ * The following are needed only for the sprintg() call
+ */
+#define GFX_USE_GFILE						TRUE
+#define GFILE_NEED_PRINTG					TRUE
+#define GFILE_NEED_STRINGS					TRUE
 
 #endif /* _GFXCONF_H */

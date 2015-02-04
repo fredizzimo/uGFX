@@ -70,7 +70,7 @@
 
 			/* Draw draw draw */
 			gdispGDrawBox(g, 10, 10, width/2, height/2, Yellow);
-			sprintf(buf, "Display %u", display);
+			sprintg(buf, "Display %u", display);
 			gdispGFillStringBox(g, width/2, height/2, width/2-10, height/2-10, buf, f, White, Blue, justifyCenter);
 			gdispGDrawLine(g, 5, 30, width-50, height-40, Red);
 
@@ -108,7 +108,7 @@
 
 			/* Draw draw draw */
 			gdispDrawBox(10, 10, width/2, height/2, Yellow);
-			sprintf(buf, "Display %u", display);
+			sprintg(buf, "Display %u", display);
 			gdispFillStringBox(width/2, height/2, width/2-10, height/2-10, buf, f, White, Blue, justifyCenter);
 			gdispDrawLine(5, 30, width-50, height-40, Red);
 
