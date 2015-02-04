@@ -73,10 +73,6 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	write_cmd(g, PCD8544_SET_VOP		| (0x40));
 	write_cmd(g, PCD8544_SET_FUNC);
 	write_cmd(g, PCD8544_SET_DISPLAY	| PCD8544_DISPLAY_MODE_NORMAL);
-	write_cmd(g, PCD8544_SET_X);		// X = 0
-	write_cmd(g, PCD8544_SET_Y);		// Y = 0
-
-	write_data(g, 0x00, GDISP_SCREEN_BYTES);
 
 	// Finish Init
 	post_init_board(g);
@@ -146,7 +142,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			y = g->p.y;
 		#endif
 
-		if (gdispColor2Native(g->p.color) != Black) {
+		if (g->p.color != Black) {
 			RAM(g)[xyaddr(x, y)] |= xybit(y);
 		} else {
 			RAM(g)[xyaddr(x, y)] &= ~xybit(y);
