@@ -157,15 +157,6 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	}
 #endif
 
-#if GDISP_HARDWARE_CLEARS
-	LLDSPEC void gdisp_lld_clear(GDisplay *g) {
-		uint8_t fill = (gdispColor2Native(g->p.color) == gdispColor2Native(Black)) ? 0 : 0xff;
-		int bytes = GDISP_SCREEN_WIDTH * GDISP_SCREEN_HEIGHT/8;
-		memset(RAM(g), fill, bytes);
-		g->flags |= GDISP_FLG_NEEDFLUSH;
-	}
-#endif
-
 #if GDISP_HARDWARE_FILLS
 	LLDSPEC void gdisp_lld_fill_area(GDisplay *g) {
 		coord_t		sy, ey;
@@ -204,7 +195,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		}
 
 		spage = sy / 8;
-		base = RAM(g) + GDISP_SCREEN_WIDTH * spage;
+		base = RAM(g) + SSD1306_PAGE_OFFSET + SSD1306_PAGE_WIDTH * spage;
 		mask = 0xff << (sy&7);
 		zpages = (ey / 8) - spage;
 
@@ -213,7 +204,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 				for (col = sx; col <= ex; col++)
 					base[col] &= ~mask;
 				mask = 0xff;
-				base += GDISP_SCREEN_WIDTH;
+				base += SSD1306_PAGE_WIDTH;
 			}
 			mask &= (0xff >> (7 - (ey&7)));
 			for (col = sx; col <= ex; col++)
@@ -223,7 +214,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 				for (col = sx; col <= ex; col++)
 					base[col] |= mask;
 				mask = 0xff;
-				base += GDISP_SCREEN_WIDTH;
+				base += SSD1306_PAGE_WIDTH;
 			}
 			mask &= (0xff >> (7 - (ey&7)));
 			for (col = sx; col <= ex; col++)
