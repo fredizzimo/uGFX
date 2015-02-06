@@ -222,6 +222,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			for (col = sx; col <= ex; col++)
 				base[col] |= mask;
 		}
+		g->flags |= GDISP_FLG_NEEDFLUSH;
 	}
 #endif
 
