@@ -16,6 +16,7 @@
 
 #define GDISP_HARDWARE_FLUSH			TRUE		// This controller requires flushing
 #define GDISP_HARDWARE_DRAWPIXEL		TRUE
+#define GDISP_HARDWARE_PIXELREAD		TRUE
 #define GDISP_HARDWARE_CONTROL			TRUE
 
 // Set this to your frame buffer pixel format.

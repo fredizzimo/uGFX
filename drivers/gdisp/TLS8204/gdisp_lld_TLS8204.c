@@ -38,6 +38,8 @@
 #define xyaddr(x, y)	((x) + ((y) >> 3) * GDISP_TLS8204_WIDTH)
 #define xybit(y)		(1 << ((y) & 7))
 
+#define LCD_START_LINE_ADDR		(66-2)
+
 /*===========================================================================*/
 /* Driver exported functions.                                                */
 /*===========================================================================*/
@@ -73,16 +75,18 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	gfxSleepMilliseconds(100);
 
 	// H0H1 = 01
-	write_cmd(g, TLS8204_SET_FUNC  		| TLS8204_H0_BIT);
-	write_cmd(g, TLS8204_SET_BIAS_4);
+	write_cmd(g, TLS8204_SET_FUNC  			| TLS8204_H0_BIT);
+	write_cmd(g, TLS8204_SET_BIAS_6);
 	write_cmd(g, TLS8204_SET_Y_LSB_FIRST);
-	write_cmd(g, TLS8204_SET_VLCD0_6 + ((GDISP_INITIAL_CONTRAST * 2 + 22) & 0x7F));
+	write_cmd(g, TLS8204_SET_VLCD0_6		| ((GDISP_INITIAL_CONTRAST * 2 + 22) & 0x7F));
+	write_cmd(g, TLS8204_SET_STARTLINE_S6	| ((LCD_START_LINE_ADDR>>6) & 0x01));
+	write_cmd(g, TLS8204_SET_STARTLINE_S0_5	| (LCD_START_LINE_ADDR & ((1<<6)-1)));
 
 	// H0H1 = 00
 	write_cmd(g, TLS8204_SET_FUNC);
 	write_cmd(g, TLS8204_SET_VLCD7 + ((GDISP_INITIAL_CONTRAST * 2 + 22) >> 7));
+	write_cmd(g, TLS8204_SET_DISPLAY_OFF);
 	write_cmd(g, TLS8204_SET_DISPLAY_NORMAL);
-
 
 	// Finish Init
 	post_init_board(g);
@@ -122,6 +126,8 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		}
 
 		release_bus(g);
+
+		g->flags &= ~GDISP_FLG_NEEDFLUSH;
 	}
 #endif
 
@@ -161,6 +167,33 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		}
 
 		g->flags |= GDISP_FLG_NEEDFLUSH;
+	}
+#endif
+
+#if GDISP_HARDWARE_PIXELREAD
+	LLDSPEC color_t gdisp_lld_get_pixel_color(GDisplay *g) {
+		coord_t		x, y;
+
+		switch(g->g.Orientation) {
+		default:
+		case GDISP_ROTATE_0:
+			x = g->p.x;
+			y = g->p.y;
+			break;
+		case GDISP_ROTATE_90:
+			x = g->p.y;
+			y = GDISP_SCREEN_HEIGHT-1 - g->p.x;
+			break;
+		case GDISP_ROTATE_180:
+			x = GDISP_SCREEN_WIDTH-1 - g->p.x;
+			y = GDISP_SCREEN_HEIGHT-1 - g->p.y;
+			break;
+		case GDISP_ROTATE_270:
+			x = GDISP_SCREEN_WIDTH-1 - g->p.y;
+			y = g->p.x;
+			break;
+		}
+		return (RAM(g)[xyaddr(x, y)] & xybit(y)) ? White : Black;
 	}
 #endif
 

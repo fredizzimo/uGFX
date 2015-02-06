@@ -154,6 +154,8 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			ram += SSD1306_PAGE_WIDTH;
 		}
 		release_bus(g);
+
+		g->flags &= ~GDISP_FLG_NEEDFLUSH;
 	}
 #endif
 

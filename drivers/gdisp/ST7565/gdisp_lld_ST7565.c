@@ -155,6 +155,8 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			write_data(g, RAM(g) + (p*GDISP_SCREEN_WIDTH), GDISP_SCREEN_WIDTH);
 		}
 		release_bus(g);
+
+		g->flags &= ~GDISP_FLG_NEEDFLUSH;
 	}
 #endif
 

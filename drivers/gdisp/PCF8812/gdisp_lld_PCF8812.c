@@ -120,6 +120,8 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		write_data(g, RAM(g), GDISP_MATRIX_BYTES);
 
 		release_bus(g);
+
+		g->flags &= ~GDISP_FLG_NEEDFLUSH;
 	}
 #endif
 
@@ -159,6 +161,33 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		}
 
 		g->flags |= GDISP_FLG_NEEDFLUSH;
+	}
+#endif
+
+#if GDISP_HARDWARE_PIXELREAD
+	LLDSPEC color_t gdisp_lld_get_pixel_color(GDisplay *g) {
+		coord_t		x, y;
+
+		switch(g->g.Orientation) {
+		default:
+		case GDISP_ROTATE_0:
+			x = g->p.x;
+			y = g->p.y;
+			break;
+		case GDISP_ROTATE_90:
+			x = g->p.y;
+			y = GDISP_SCREEN_HEIGHT-1 - g->p.x;
+			break;
+		case GDISP_ROTATE_180:
+			x = GDISP_SCREEN_WIDTH-1 - g->p.x;
+			y = GDISP_SCREEN_HEIGHT-1 - g->p.y;
+			break;
+		case GDISP_ROTATE_270:
+			x = GDISP_SCREEN_WIDTH-1 - g->p.y;
+			y = g->p.x;
+			break;
+		}
+		return (RAM(g)[xyaddr(x, y)] & xybit(y)) ? White : Black;
 	}
 #endif
 
