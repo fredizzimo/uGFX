@@ -182,14 +182,14 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			break;
 		case GDISP_ROTATE_90:
 			x = g->p.y;
-			y = GDISP_SCREEN_HEIGHT-1 - g->p.x;
+			y = GDISP_TLS8204_HEIGHT-1 - g->p.x;
 			break;
 		case GDISP_ROTATE_180:
-			x = GDISP_SCREEN_WIDTH-1 - g->p.x;
-			y = GDISP_SCREEN_HEIGHT-1 - g->p.y;
+			x = GDISP_TLS8204_WIDTH-1 - g->p.x;
+			y = GDISP_TLS8204_HEIGHT-1 - g->p.y;
 			break;
 		case GDISP_ROTATE_270:
-			x = GDISP_SCREEN_WIDTH-1 - g->p.y;
+			x = GDISP_TLS8204_WIDTH-1 - g->p.y;
 			y = g->p.x;
 			break;
 		}
