@@ -33,7 +33,6 @@
 #define PORT_DC			UEXT_PORT_PIN6
 #define PIN_DC			UEXT_PORTPIN_PIN6
 
-
 #if PIO_METHOD == PIO_METHOD_AT91
 	#define PinIsOutput(port,pin)		((port)->PIO_OER = 1 << (pin), (port)->PIO_PER = 1 << (pin), (port)->PIO_MDDR = 1 << (pin), (port)->PIO_PPUDR = 1 << (pin))
 	#define PinSet(port,pin)			(port)->PIO_SODR = 1 << (pin)
@@ -58,9 +57,9 @@
 				PinSet(UEXT_SPI_MOSI_PORT, UEXT_SPI_MOSI_PORTPIN);
 			else
 				PinClear(UEXT_SPI_MOSI_PORT, UEXT_SPI_MOSI_PORTPIN);
-			spi_delay(1000);
+			spi_delay(1);
 			PinClear(UEXT_SPI_SCK_PORT, UEXT_SPI_SCK_PORTPIN);
-			spi_delay(1000);
+			spi_delay(1);
 			PinSet(UEXT_SPI_SCK_PORT, UEXT_SPI_SCK_PORTPIN);
 		}
 	}
@@ -101,7 +100,7 @@
 		UEXT_SPI_PORT->PIO_PPUER		= 1<<UEXT_SPI_MISO_PORTPIN;	\
 		UEXT_SPI_PORT->PIO_PDR			= (1<<UEXT_SPI_CS_PORTPIN) | (1<<UEXT_SPI_SCK_PORTPIN) | (1<<UEXT_SPI_MOSI_PORTPIN) | (1<<UEXT_SPI_MISO_PORTPIN); \
 		UEXT_SPI_PORT->UEXT_SPI_PERIPH	= (1<<UEXT_SPI_CS_PORTPIN) | (1<<UEXT_SPI_SCK_PORTPIN) | (1<<UEXT_SPI_MOSI_PORTPIN) | (1<<UEXT_SPI_MISO_PORTPIN); \
-		AT91C_BASE_PMC->PMC_PCER	= 1 << UEXT_SPI_ID;				\
+		AT91C_BASE_PMC->PMC_PCER		= 1 << UEXT_SPI_ID;			\
 		UEXT_SPI_DEV->SPI_CR			= 0x81;						\
 		UEXT_SPI_DEV->SPI_CR			= 0x81;						\
 		UEXT_SPI_DEV->SPI_CR			= 0x01;						\
