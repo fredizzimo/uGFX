@@ -27,6 +27,7 @@
 // Number of milliseconds for the startup logo - 0 means disabled.
 #if GDISP_NEED_STARTUP_LOGO
 	#define GDISP_STARTUP_LOGO_TIMEOUT		1000
+	#define GDISP_STARTUP_LOGO_COLOR		White
 #else
 	#define GDISP_STARTUP_LOGO_TIMEOUT		0
 #endif
@@ -536,7 +537,7 @@ static void line_clip(GDisplay *g) {
 
 		// Simple but crude!
 		for(p = blks; p < blks+sizeof(blks)/sizeof(blks[0]); p+=4)
-			gdispGFillArea(g, x+p[0]*w, y+p[1]*w, p[2]*w, p[3]*w, Blue);
+			gdispGFillArea(g, x+p[0]*w, y+p[1]*w, p[2]*w, p[3]*w, GDISP_STARTUP_LOGO_COLOR);
 	}
 #endif
 
