@@ -69,9 +69,14 @@
 			height = gdispGGetHeight(g);
 
 			/* Draw draw draw */
-			gdispGDrawBox(g, 10, 10, width/2, height/2, Yellow);
 			sprintg(buf, "Display %u", display);
-			gdispGFillStringBox(g, width/2, height/2, width/2-10, height/2-10, buf, f, White, Blue, justifyCenter);
+			if (width < 128) {
+				gdispGDrawBox(g, 0, 0, width/2, height/2, Yellow);
+				gdispGFillStringBox(g, 0, height/2, width, height/2, buf, f, Black, Blue, justifyCenter);
+			} else {
+				gdispGDrawBox(g, 10, 10, width/2, height/2, Yellow);
+				gdispGFillStringBox(g, width/2, height/2, width/2-10, height/2-10, buf, f, White, Blue, justifyCenter);
+			}
 			gdispGDrawLine(g, 5, 30, width-50, height-40, Red);
 
 			for(i = 5, j = 0; i < width && j < height; i += 7, j += i/20)
@@ -107,9 +112,14 @@
 			height = gdispGetHeight();
 
 			/* Draw draw draw */
-			gdispDrawBox(10, 10, width/2, height/2, Yellow);
 			sprintg(buf, "Display %u", display);
-			gdispFillStringBox(width/2, height/2, width/2-10, height/2-10, buf, f, White, Blue, justifyCenter);
+			if (width < 128) {
+				gdispDrawBox(0, 0, width/2, height/2, Yellow);
+				gdispFillStringBox(0, height/2, width, height/2, buf, f, Black, Blue, justifyCenter);
+			} else {
+				gdispDrawBox(10, 10, width/2, height/2, Yellow);
+				gdispFillStringBox(width/2, height/2, width/2-10, height/2-10, buf, f, White, Blue, justifyCenter);
+			}
 			gdispDrawLine(5, 30, width-50, height-40, Red);
 
 			for(i = 5, j = 0; i < width && j < height; i += 7, j += i/20)
