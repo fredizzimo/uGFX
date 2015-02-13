@@ -80,6 +80,9 @@
 #if GINPUT_NEED_TOGGLE
 	/* Include toggle support code */
 	#include "src/ginput/ginput_driver_toggle.h"
+
+	// Hack until toggle use gdriver.
+	static GDisplay *toggleWindow;
 #endif
 
 #if GINPUT_NEED_MOUSE
@@ -649,13 +652,13 @@ static LRESULT myWindowProc(HWND hWnd,	UINT Msg, WPARAM wParam, LPARAM lParam)
 		// Paint the toggle area
 		#if GINPUT_NEED_TOGGLE
 			if (ps.rcPaint.bottom >= GDISP_SCREEN_HEIGHT && (g->flags & GDISP_FLG_HASTOGGLE)) {
-				pen = CreatePen(PS_SOLID, 1, gdispColor2Native(Black));
-				hbrOn = CreateSolidBrush(gdispColor2Native(Blue));
-				hbrOff = CreateSolidBrush(gdispColor2Native(Gray));
+				pen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
+				hbrOn = CreateSolidBrush(RGB(0, 0, 255));
+				hbrOff = CreateSolidBrush(RGB(128, 128, 128));
 				old = SelectObject(dc, pen);
 				MoveToEx(dc, 0, GDISP_SCREEN_HEIGHT, &p);
 				LineTo(dc, GDISP_SCREEN_WIDTH, GDISP_SCREEN_HEIGHT);
-				for(pos = 0, bit=1; pos < wWidth; pos=rect.right, bit <<= 1) {
+				for(pos = 0, bit=1; pos < GDISP_SCREEN_WIDTH; pos=rect.right, bit <<= 1) {
 					rect.left = pos;
 					rect.right = pos + GDISP_SCREEN_WIDTH/8;
 					rect.top = GDISP_SCREEN_HEIGHT;
@@ -804,8 +807,10 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 	// Turn on toggles for the first GINPUT_TOGGLE_CONFIG_ENTRIES windows
 	#if GINPUT_NEED_TOGGLE
-		if (g->controllerdisplay < GINPUT_TOGGLE_CONFIG_ENTRIES)
+		if (g->controllerdisplay < GINPUT_TOGGLE_CONFIG_ENTRIES) {
 			g->flags |= GDISP_FLG_HASTOGGLE;
+			toggleWindow = g;
+		}
 	#endif
 
 	// Create a private area for this window
@@ -1571,25 +1576,32 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 #endif
 
 #if GINPUT_NEED_TOGGLE
-	#if GINPUT_TOGGLE_CONFIG_ENTRIES > GDISP_DRIVER_COUNT_WIN32
-		#error "GDISP Win32: GINPUT_TOGGLE_CONFIG_ENTRIES must not be greater than GDISP_DRIVER_COUNT_WIN32"
+	#if GINPUT_TOGGLE_CONFIG_ENTRIES > 1
+		#error "GDISP Win32: GINPUT_TOGGLE_CONFIG_ENTRIES must be 1 until Toggles can use GDriver"
 	#endif
 
-	GToggleConfig GInputToggleConfigTable[GINPUT_TOGGLE_CONFIG_ENTRIES];
+	const GToggleConfig GInputToggleConfigTable[GINPUT_TOGGLE_CONFIG_ENTRIES];
 
 	void ginput_lld_toggle_init(const GToggleConfig *ptc) {
 		// Save the associated window struct
-		ptc->id = &GDISP_WIN32[ptc - GInputToggleConfigTable];
+		//ptc->id = &GDISP_WIN32[ptc - GInputToggleConfigTable];
+		((GToggleConfig *)ptc)->id = 0;
 
 		// We have 8 buttons per window.
-		ptc->mask = 0xFF;
+		((GToggleConfig *)ptc)->mask = 0xFF;
 
 		// No inverse or special mode
-		ptc->invert = 0x00;
-		ptc->mode = 0;
+		((GToggleConfig *)ptc)->invert = 0x00;
+		((GToggleConfig *)ptc)->mode = 0;
 	}
 	unsigned ginput_lld_toggle_getbits(const GToggleConfig *ptc) {
-		return ((GDisplay *)(ptc->id))->priv->toggles;
+		(void)		ptc;
+
+		// This should use ID
+		if (!toggleWindow)
+			return 0;
+		return ((winPriv *)toggleWindow->priv)->toggles;
+		//return ((winPriv *)((GDisplay *)(ptc->id))->priv)->toggles;
 	}
 #endif /* GINPUT_NEED_TOGGLE */
 

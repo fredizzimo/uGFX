@@ -229,7 +229,7 @@ static void gwinListDefaultDraw(GWidgetObject* gw, void* param);
 				qix = 0;
 
 				for (i = 0; qi; qix = qi, qi = gfxQueueASyncNext(qi), i++) {
-					if ((qi2li->flags & GLIST_FLG_SELECTED))
+					if ((qi2li->flags & GLIST_FLG_SELECTED)) {
 						if (qix) {
 							qi2li->flags &=~ GLIST_FLG_SELECTED;
 							qix2li->flags |= GLIST_FLG_SELECTED;
