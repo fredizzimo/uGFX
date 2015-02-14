@@ -18,8 +18,8 @@
 
 // Parameters for various shapes
 #define RND_CNR_SIZE			5		// Rounded corner size for rounded buttons
-#define ARROWHEAD_DIVIDER		4		// A quarter of the height for the arrow head
-#define ARROWBODY_DIVIDER		4		// A quarter of the width for the arrow body
+#define ARROWHEAD_DIVIDER		0		// What fraction of the length for the arrow head. Use 0 for 45 degree arrow head.
+#define ARROWBODY_DIVIDER		2		// What fraction of the width for the arrow body
 #define TOP_FADE				50		// (TOP_FADE/255)% fade to white for top of button
 #define BOTTOM_FADE				25		// (BOTTOM_FADE/255)% fade to black for bottom of button
 
@@ -223,14 +223,42 @@ static const GColorSet *getDrawColors(GWidgetObject *gw) {
 		if (gw->g.vmt != (gwinVMT *)&buttonVMT)	return;
 		pcol = getDrawColors(gw);
 
-		arw[0].x = gw->g.width/2; arw[0].y = 0;
-		arw[1].x = gw->g.width-1; arw[1].y = gw->g.height/ARROWHEAD_DIVIDER;
-		arw[2].x = (gw->g.width + gw->g.width/ARROWBODY_DIVIDER)/2; arw[2].y = gw->g.height/ARROWHEAD_DIVIDER;
-		arw[3].x = (gw->g.width + gw->g.width/ARROWBODY_DIVIDER)/2; arw[3].y = gw->g.height-1;
-		arw[4].x = (gw->g.width - gw->g.width/ARROWBODY_DIVIDER)/2; arw[4].y = gw->g.height-1;
-		arw[5].x = (gw->g.width - gw->g.width/ARROWBODY_DIVIDER)/2; arw[5].y = gw->g.height/ARROWHEAD_DIVIDER;
-		arw[6].x = 0; arw[6].y = gw->g.height/ARROWHEAD_DIVIDER;
+		// Create the arrow polygon
+		arw[0].x = (gw->g.width-1)/2;				// Point center
+		arw[0].y = 0;								// Arrow start
+		arw[3].y = gw->g.height-1;					// Arrow end
+		#if ARROWHEAD_DIVIDER == 0
+			if (gw->g.height <= arw[0].x) {
+				arw[1].y = arw[3].y;				// End of head
+				arw[1].x = arw[0].x+arw[3].y;		// Width of head  (side 1)
+				arw[2].x = arw[1].x;				// Width of shaft (side 1)
+				arw[4].x = arw[0].x-arw[3].y;		// Width of head  (side 2)
+				arw[6].x = arw[4].x;				// Width of shaft (side 2)
+			} else {
+				arw[1].y = arw[0].x;
+				arw[1].x = arw[0].x << 1;
+				arw[2].x = arw[0].x + arw[0].x/ARROWBODY_DIVIDER;
+				arw[4].x = arw[0].x - arw[0].x/ARROWBODY_DIVIDER;
+				arw[6].x = 0;
+			}
+		#else
+			arw[1].y = gw->g.height/ARROWHEAD_DIVIDER;
+			arw[1].x = arw[0].x << 1;
+			arw[2].x = arw[0].x + arw[0].x/ARROWBODY_DIVIDER;
+			arw[4].x = arw[0].x - arw[0].x/ARROWBODY_DIVIDER;
+			arw[6].x = 0;
+		#endif
 
+		// Fill in the rest from the special points
+		/* arw[0].x set */											/* arw[0].y set */
+		/* arw[1].x set */											/* arw[1].y set */
+		/* arw[2].x set */											arw[2].y = arw[1].y;
+		arw[3].x = arw[2].x;										/* arw[3].y set */
+		/* arw[4].x set */											arw[4].y = arw[3].y;
+		arw[5].x = arw[4].x;										arw[5].y = arw[1].y;
+		/* arw[6].x set */											arw[6].y = arw[1].y;
+
+		// Draw
 		gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->pstyle->background);
 		gdispGFillConvexPoly(gw->g.display, gw->g.x, gw->g.y, arw, 7, pcol->fill);
 		gdispGDrawPoly(gw->g.display, gw->g.x, gw->g.y, arw, 7, pcol->edge);
@@ -245,14 +273,42 @@ static const GColorSet *getDrawColors(GWidgetObject *gw) {
 		if (gw->g.vmt != (gwinVMT *)&buttonVMT)	return;
 		pcol = getDrawColors(gw);
 
-		arw[0].x = gw->g.width/2; arw[0].y = gw->g.height-1;
-		arw[1].x = gw->g.width-1; arw[1].y = gw->g.height-1-gw->g.height/ARROWHEAD_DIVIDER;
-		arw[2].x = (gw->g.width + gw->g.width/ARROWBODY_DIVIDER)/2; arw[2].y = gw->g.height-1-gw->g.height/ARROWHEAD_DIVIDER;
-		arw[3].x = (gw->g.width + gw->g.width/ARROWBODY_DIVIDER)/2; arw[3].y = 0;
-		arw[4].x = (gw->g.width - gw->g.width/ARROWBODY_DIVIDER)/2; arw[4].y = 0;
-		arw[5].x = (gw->g.width - gw->g.width/ARROWBODY_DIVIDER)/2; arw[5].y = gw->g.height-1-gw->g.height/ARROWHEAD_DIVIDER;
-		arw[6].x = 0; arw[6].y = gw->g.height-1-gw->g.height/ARROWHEAD_DIVIDER;
+		// Create the arrow polygon
+		arw[0].x = (gw->g.width-1)/2;				// Point center
+		arw[0].y = gw->g.height-1;					// Arrow start
+		arw[3].y = 0;								// Arrow end
+		#if ARROWHEAD_DIVIDER == 0
+			if (gw->g.height <= arw[0].x) {
+				arw[1].y = arw[3].y;				// End of head
+				arw[1].x = arw[0].x+arw[0].y;		// Width of head  (side 1)
+				arw[2].x = arw[1].x;				// Width of shaft (side 1)
+				arw[4].x = arw[0].x-arw[0].y;		// Width of head  (side 2)
+				arw[6].x = arw[4].x;				// Width of shaft (side 2)
+			} else {
+				arw[1].y = arw[0].y - arw[0].x;
+				arw[1].x = arw[0].x << 1;
+				arw[2].x = arw[0].x + arw[0].x/ARROWBODY_DIVIDER;
+				arw[4].x = arw[0].x - arw[0].x/ARROWBODY_DIVIDER;
+				arw[6].x = 0;
+			}
+		#else
+			arw[1].y = arw[0].y - gw->g.height/ARROWHEAD_DIVIDER;
+			arw[1].x = arw[0].x << 1;
+			arw[2].x = arw[0].x + arw[0].x/ARROWBODY_DIVIDER;
+			arw[4].x = arw[0].x - arw[0].x/ARROWBODY_DIVIDER;
+			arw[6].x = 0;
+		#endif
 
+		// Fill in the rest from the special points
+		/* arw[0].x set */											/* arw[0].y set */
+		/* arw[1].x set */											/* arw[1].y set */
+		/* arw[2].x set */											arw[2].y = arw[1].y;
+		arw[3].x = arw[2].x;										/* arw[3].y set */
+		/* arw[4].x set */											arw[4].y = arw[3].y;
+		arw[5].x = arw[4].x;										arw[5].y = arw[1].y;
+		/* arw[6].x set */											arw[6].y = arw[1].y;
+
+		// Draw
 		gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->pstyle->background);
 		gdispGFillConvexPoly(gw->g.display, gw->g.x, gw->g.y, arw, 7, pcol->fill);
 		gdispGDrawPoly(gw->g.display, gw->g.x, gw->g.y, arw, 7, pcol->edge);
@@ -267,14 +323,42 @@ static const GColorSet *getDrawColors(GWidgetObject *gw) {
 		if (gw->g.vmt != (gwinVMT *)&buttonVMT)	return;
 		pcol = getDrawColors(gw);
 
-		arw[0].x = 0; arw[0].y = gw->g.height/2;
-		arw[1].x = gw->g.width/ARROWHEAD_DIVIDER; arw[1].y = 0;
-		arw[2].x = gw->g.width/ARROWHEAD_DIVIDER; arw[2].y = (gw->g.height - gw->g.height/ARROWBODY_DIVIDER)/2;
-		arw[3].x = gw->g.width-1; arw[3].y = (gw->g.height - gw->g.height/ARROWBODY_DIVIDER)/2;
-		arw[4].x = gw->g.width-1; arw[4].y = (gw->g.height + gw->g.height/ARROWBODY_DIVIDER)/2;
-		arw[5].x = gw->g.width/ARROWHEAD_DIVIDER; arw[5].y = (gw->g.height + gw->g.height/ARROWBODY_DIVIDER)/2;
-		arw[6].x = gw->g.width/ARROWHEAD_DIVIDER; arw[6].y = gw->g.height-1;
+		// Create the arrow polygon
+		arw[0].y = (gw->g.height-1)/2;				// Point center
+		arw[0].x = 0;								// Arrow start
+		arw[3].x = gw->g.width-1;					// Arrow end
+		#if ARROWHEAD_DIVIDER == 0
+			if (gw->g.width <= arw[0].y) {
+				arw[1].x = arw[3].x;				// End of head
+				arw[1].y = arw[0].y+arw[3].x;		// Width of head  (side 1)
+				arw[2].y = arw[1].y;				// Width of shaft (side 1)
+				arw[4].y = arw[0].y-arw[3].x;		// Width of head  (side 2)
+				arw[6].y = arw[4].y;				// Width of shaft (side 2)
+			} else {
+				arw[1].x = arw[0].y;
+				arw[1].y = arw[0].y << 1;
+				arw[2].y = arw[0].y + arw[0].y/ARROWBODY_DIVIDER;
+				arw[4].y = arw[0].y - arw[0].y/ARROWBODY_DIVIDER;
+				arw[6].y = 0;
+			}
+		#else
+			arw[1].x = gw->g.width/ARROWHEAD_DIVIDER;
+			arw[1].y = arw[0].y << 1;
+			arw[2].y = arw[0].y + arw[0].y/ARROWBODY_DIVIDER;
+			arw[4].y = arw[0].y - arw[0].y/ARROWBODY_DIVIDER;
+			arw[6].y = 0;
+		#endif
 
+		// Fill in the rest from the special points
+		/* arw[0].x set */											/* arw[0].y set */
+		/* arw[1].x set */											/* arw[1].y set */
+		arw[2].x = arw[1].x;										/* arw[2].y set */
+		/* arw[3].y set */											arw[3].y = arw[2].y;
+		arw[4].x = arw[3].x;										/* arw[4].y set */
+		arw[5].x = arw[1].x;										arw[5].y = arw[4].y;
+		arw[6].x = arw[1].x;										/* arw[6].y set */
+
+		// Draw
 		gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->pstyle->background);
 		gdispGFillConvexPoly(gw->g.display, gw->g.x, gw->g.y, arw, 7, pcol->fill);
 		gdispGDrawPoly(gw->g.display, gw->g.x, gw->g.y, arw, 7, pcol->edge);
@@ -289,14 +373,42 @@ static const GColorSet *getDrawColors(GWidgetObject *gw) {
 		if (gw->g.vmt != (gwinVMT *)&buttonVMT)	return;
 		pcol = getDrawColors(gw);
 
-		arw[0].x = gw->g.width-1; arw[0].y = gw->g.height/2;
-		arw[1].x = gw->g.width-1-gw->g.width/ARROWHEAD_DIVIDER; arw[1].y = 0;
-		arw[2].x = gw->g.width-1-gw->g.width/ARROWHEAD_DIVIDER; arw[2].y = (gw->g.height - gw->g.height/ARROWBODY_DIVIDER)/2;
-		arw[3].x = 0; arw[3].y = (gw->g.height - gw->g.height/ARROWBODY_DIVIDER)/2;
-		arw[4].x = 0; arw[4].y = (gw->g.height + gw->g.height/ARROWBODY_DIVIDER)/2;
-		arw[5].x = gw->g.width-1-gw->g.width/ARROWHEAD_DIVIDER; arw[5].y = (gw->g.height + gw->g.height/ARROWBODY_DIVIDER)/2;
-		arw[6].x = gw->g.width-1-gw->g.width/ARROWHEAD_DIVIDER; arw[6].y = gw->g.height-1;
+		// Create the arrow polygon
+		arw[0].y = (gw->g.height-1)/2;				// Point center
+		arw[0].x = gw->g.width-1;					// Arrow start
+		arw[3].x = 0;								// Arrow end
+		#if ARROWHEAD_DIVIDER == 0
+			if (gw->g.width <= arw[0].y) {
+				arw[1].x = arw[3].x;				// End of head
+				arw[1].y = arw[0].y+arw[0].x;		// Width of head  (side 1)
+				arw[2].y = arw[1].y;				// Width of shaft (side 1)
+				arw[4].y = arw[0].y-arw[0].x;		// Width of head  (side 2)
+				arw[6].y = arw[4].y;				// Width of shaft (side 2)
+			} else {
+				arw[1].x = arw[0].x - arw[0].y;
+				arw[1].y = arw[0].y << 1;
+				arw[2].y = arw[0].y + arw[0].y/ARROWBODY_DIVIDER;
+				arw[4].y = arw[0].y - arw[0].y/ARROWBODY_DIVIDER;
+				arw[6].y = 0;
+			}
+		#else
+			arw[1].x = arw[0].x - gw->g.width/ARROWHEAD_DIVIDER;
+			arw[1].y = arw[0].y << 1;
+			arw[2].y = arw[0].y + arw[0].y/ARROWBODY_DIVIDER;
+			arw[4].y = arw[0].y - arw[0].y/ARROWBODY_DIVIDER;
+			arw[6].y = 0;
+		#endif
 
+		// Fill in the rest from the special points
+		/* arw[0].x set */											/* arw[0].y set */
+		/* arw[1].x set */											/* arw[1].y set */
+		arw[2].x = arw[1].x;										/* arw[2].y set */
+		/* arw[3].y set */											arw[3].y = arw[2].y;
+		arw[4].x = arw[3].x;										/* arw[4].y set */
+		arw[5].x = arw[1].x;										arw[5].y = arw[4].y;
+		arw[6].x = arw[1].x;										/* arw[6].y set */
+
+		// Draw
 		gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->pstyle->background);
 		gdispGFillConvexPoly(gw->g.display, gw->g.x, gw->g.y, arw, 7, pcol->fill);
 		gdispGDrawPoly(gw->g.display, gw->g.x, gw->g.y, arw, 7, pcol->edge);
