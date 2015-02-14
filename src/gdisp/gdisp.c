@@ -2829,6 +2829,11 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 		lk = (FIXED(lpnt->x) - lx) / (lpnt->y - y);
 		rk = (FIXED(rpnt->x) - rx) / (rpnt->y - y);
 
+		// Add error correction for rounding
+		lx += FIXED0_5;
+		rx += FIXED0_5;
+
+		// Do all the line segments
 		MUTEX_ENTER(g);
 		g->p.color = color;
 		while(1) {
@@ -2873,6 +2878,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 					lpnt = lpnt <= pntarray ? epnts : lpnt-1;
 				}
 				lk = (FIXED(lpnt->x) - lx) / (lpnt->y - y);
+				lx += FIXED0_5;
 			} else {
 				for (rpnt = rpnt >= epnts ? pntarray : rpnt+1; rpnt->y == y; cnt--) {
 					if (!cnt) {
@@ -2884,6 +2890,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 					rpnt = rpnt >= epnts ? pntarray : rpnt+1;
 				}
 				rk = (FIXED(rpnt->x) - rx) / (rpnt->y - y);
+				rx += FIXED0_5;
 			}
 		}
 	}
