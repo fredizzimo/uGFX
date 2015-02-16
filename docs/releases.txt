@@ -20,6 +20,11 @@ FEATURE:	Add HY-MiniSTM32V board support
 FEATURE:	Add GWIN feature to flash any window/widget
 FIX:		Lots of GDISP monochrome drivers fixed
 FEATURE:	Added TLS8204 GDISP driver
+FIX:		Fixes for the board files for Olimex SAM7EX256
+FEATURE:	Add a number of UEXT connector board files for Olimex SAM7EX256
+FIX:		Fix for error rounding in gdispFillConvexPoly()
+FEATURE:	Vastly improved gwin arrow button drawing
+FIX:		GINPUT toggle fixes
 
 
 *** Release 2.2 ***
