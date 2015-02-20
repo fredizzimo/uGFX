@@ -59,7 +59,7 @@ int vfnprintg(GFILE *f, int maxlen, const char *fmt, va_list arg) {
 	bool_t	is_long, left_align;
 	long	l;
 	#if GFILE_ALLOW_FLOATS
-		float	f;
+		float	fpv;
 		char	tmpbuf[2*MAX_FILLER + 1];
 	#else
 		char	tmpbuf[MAX_FILLER + 1];
@@ -156,15 +156,15 @@ int vfnprintg(GFILE *f, int maxlen, const char *fmt, va_list arg) {
 			break;
 		#if GFILE_ALLOW_FLOATS
 			case 'f':
-				f = (float) va_arg(arg, double);
-				if (f < 0) {
+				fpv = (float) va_arg(arg, double);
+				if (fpv < 0) {
 					*p++ = '-';
-					f = -f;
+					fpv = -fpv;
 				}
-				l = f;
+				l = fpv;
 				p = ltoa_wd(p, l, 10, 0);
 				*p++ = '.';
-				l = (f - l) * FLOAT_PRECISION;
+				l = (fpv - l) * FLOAT_PRECISION;
 				p = ltoa_wd(p, l, 10, FLOAT_PRECISION / 10);
 				break;
 		#endif
