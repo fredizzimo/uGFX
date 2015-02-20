@@ -11,17 +11,19 @@
 
 #include "gfx.h"
 
-#if GFX_USE_GFILE && GFILE_NEED_STDIO
+#if GFX_USE_GFILE && GFILE_NEED_STDIO && !defined(GFILE_NEED_STDIO_MUST_BE_OFF)
 
-size_t gstdioRead(void * ptr, size_t size, size_t count, FILE *f) {
+#include "gfile_fs.h"
+
+size_t gstdioRead(void * ptr, size_t size, size_t count, GFILE *f) {
 	return gfileRead(f, ptr, size*count)/size;
 }
 
-size_t gstdioWrite(const void * ptr, size_t size, size_t count, FILE *f) {
+size_t gstdioWrite(const void * ptr, size_t size, size_t count, GFILE *f) {
 	return gfileWrite(f, ptr, size*count)/size;
 }
 
-int gstdioSeek(FILE *f, size_t offset, int origin) {
+int gstdioSeek(GFILE *f, size_t offset, int origin) {
 	switch(origin) {
 	case SEEK_SET:
 		break;
@@ -37,7 +39,7 @@ int gstdioSeek(FILE *f, size_t offset, int origin) {
 	return gfileSetPos(f, offset) ? 0 : -1;
 }
 
-int gstdioGetpos(FILE *f, long int *pos) {
+int gstdioGetpos(GFILE *f, long int *pos) {
 	if (!(f->flags & GFILEFLG_OPEN))
 		return -1;
 	*pos = f->pos;

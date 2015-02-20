@@ -398,38 +398,40 @@ extern "C" {
 		#endif
 	#endif
 
-	#if GFILE_NEED_STDIO && !defined(GFILE_IMPLEMENTATION)
+	#if GFILE_NEED_STDIO && !defined(GFILE_NEED_STDIO_MUST_BE_OFF)
+		// Needed routines and definitions
+		size_t gstdioRead(void * ptr, size_t size, size_t count, GFILE *f);
+		size_t gstdioWrite(const void * ptr, size_t size, size_t count, GFILE *f);
+		int gstdioGetpos(GFILE *f, long int *pos);
+		int gstdioSeek(GFILE *f, size_t offset, int origin);
+		#define SEEK_SET	0
+		#define SEEK_CUR	1
+		#define SEEK_END	2
+
+		// Stdio emulation
 		#define stdin					gfileStdIn
 		#define stdout					gfileStdOut
 		#define stderr					gfileStdErr
-		#define FILENAME_MAX			256						// Use a relatively small number for an embedded platform
-		#define L_tmpnam				FILENAME_MAX
 		#define FOPEN_MAX				GFILE_MAX_GFILES
 		#define TMP_MAX					GFILE_MAX_GFILES
+		#define FILENAME_MAX			256						// Use a relatively small number for an embedded platform
+		#define L_tmpnam				FILENAME_MAX
 		#define P_tmpdir				"/tmp/"
 		#define FILE					GFILE
 		#define fopen(n,m)				gfileOpen(n,m)
 		#define fclose(f)				gfileClose(f)
-		size_t gstdioRead(void * ptr, size_t size, size_t count, FILE *f);
-		size_t gstdioWrite(const void * ptr, size_t size, size_t count, FILE *f);
 		#define fread(p,sz,cnt,f)		gstdioRead(p,sz,cnt,f)
 		#define fwrite(p,sz,cnt,f)		gstdioWrite(p,sz,cnt,f)
-		int gstdioSeek(FILE *f, size_t offset, int origin);
 		#define fseek(f,ofs,org)		gstdioSeek(f,ofs,org)
-			#define SEEK_SET	0
-			#define SEEK_CUR	1
-			#define SEEK_END	2
 		#define remove(n)				(!gfileDelete(n))
 		#define rename(o,n)				(!gfileRename(o,n))
 		#define fflush(f)				(0)
 		#define ftell(f)				gfileGetPos(f)
 		#define fpos_t					long int
-		int gstdioGetpos(FILE *f, long int *pos);
 		#define fgetpos(f,pos)			gstdioGetpos(f,pos)
 		#define fsetpos(f, pos)			(!gfileSetPos(f, *pos))
 		#define rewind(f)				gfileSetPos(f, 0);
 		#define feof(f)					gfileEOF(f)
-
 		#define vfprintf(f,m,a)			vfnprintg(f,0,m,a)
 		#define fprintf(f,m,...)		fnprintg(f,0,m,__VA_ARGS__)
 		#define vprintf(m,a)			vfnprintg(gfileStdOut,0,m,a)
@@ -438,6 +440,7 @@ extern "C" {
 		#define snprintf(s,n,m,...)		snprintg(s,n,m,__VA_ARGS__)
 		#define vsprintf(s,m,a)			vsnprintg(s,0,m,a)
 		#define sprintf(s,m,...)		snprintg(s,0,m,__VA_ARGS__)
+
 		//TODO
 		//void clearerr ( FILE * stream );
 		//int ferror ( FILE * stream );

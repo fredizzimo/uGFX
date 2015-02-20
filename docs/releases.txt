@@ -25,6 +25,8 @@ FEATURE:	Add a number of UEXT connector board files for Olimex SAM7EX256
 FIX:		Fix for error rounding in gdispFillConvexPoly()
 FEATURE:	Vastly improved gwin arrow button drawing
 FIX:		GINPUT toggle fixes
+FIX:		GFILE_ALLOW_FLOAT compile error fixed
+FIX:		GFILE_NEED_STDIO compile and emulation errors fixed
 
 
 *** Release 2.2 ***
