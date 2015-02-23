@@ -208,8 +208,21 @@ static bool_t read_xyz(GMouse* m, GMouseReading* pdr)
 
 	// Rescale X,Y if we are using self-calibration
 	#if GMOUSE_STMPE811_SELF_CALIBRATE
-		pdr->x = gdispGGetWidth(m->display) - pdr->x / (4096/gdispGGetWidth(m->display));
-		pdr->y = pdr->y / (4096/gdispGGetHeight(m->display));
+		#if GDISP_NEED_CONTROL
+			switch(gdispGGetOrientation(m->display)) {
+			case GDISP_ROTATE_0:
+			case GDISP_ROTATE_180:
+				pdr->x = gdispGGetWidth(m->display) - pdr->x / (4096/gdispGGetWidth(m->display));
+				pdr->y = pdr->y / (4096/gdispGGetHeight(m->display));
+			case GDISP_ROTATE_90:
+			case GDISP_ROTATE_270:
+				pdr->x = gdispGGetHeight(m->display) - pdr->x / (4096/gdispGGetHeight(m->display));
+				pdr->y = pdr->y / (4096/gdispGGetWidth(m->display));
+			}
+		#else
+			pdr->x = gdispGGetWidth(m->display) - pdr->x / (4096/gdispGGetWidth(m->display));
+			pdr->y = pdr->y / (4096/gdispGGetHeight(m->display));
+		#endif
 	#endif
 
 	return TRUE;
