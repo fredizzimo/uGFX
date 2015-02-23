@@ -90,23 +90,23 @@ static inline void set_viewport(GDisplay* g) {
 			write_data16(g, g->p.y);
 			write_data16(g, g->p.y+g->p.cy-1);
 			write_index(g, SSD1963_SET_PAGE_ADDRESS);
-			write_data16(g, GDISP_SCREEN_HEIGHT-1 - (g->p.x+g->p.cx-1) );
-			write_data16(g, GDISP_SCREEN_HEIGHT-1 - (g->p.x));
+			write_data16(g, g->g.Width - g->p.x - g->p.cx);
+			write_data16(g, g->g.Width-1 - g->p.x);
 			write_index(g, SSD1963_WRITE_MEMORY_START);
 			break;
 		case GDISP_ROTATE_180:
 			write_index(g, SSD1963_SET_COLUMN_ADDRESS);
-			write_data16(g, GDISP_SCREEN_WIDTH-1 - (g->p.x+g->p.cx-1));
-			write_data16(g, GDISP_SCREEN_WIDTH-1 - (g->p.x));
+			write_data16(g, g->g.Width - g->p.x - g->p.cx);
+			write_data16(g, g->g.Width-1 - g->p.x);
 			write_index(g, SSD1963_SET_PAGE_ADDRESS);
-			write_data16(g, GDISP_SCREEN_HEIGHT-1 - (g->p.y+g->p.cy-1));
-			write_data16(g, GDISP_SCREEN_HEIGHT-1 - (g->p.y));
+			write_data16(g, g->g.Height - g->p.y - g->p.cy);
+			write_data16(g, g->g.Height-1 - g->p.y);
 			write_index(g, SSD1963_WRITE_MEMORY_START);
 			break;
 		case GDISP_ROTATE_270:
 			write_index(g, SSD1963_SET_COLUMN_ADDRESS);
-			write_data16(g, GDISP_SCREEN_WIDTH-1 - (g->p.y+g->p.cy-1));
-			write_data16(g, GDISP_SCREEN_WIDTH-1 - (g->p.y));
+			write_data16(g, g->g.Height - g->p.y - g->p.cy);
+			write_data16(g, g->g.Height-1 - g->p.y);
 			write_index(g, SSD1963_SET_PAGE_ADDRESS);
 			write_data16(g, g->p.x);
 			write_data16(g, g->p.x+g->p.cx-1);
@@ -128,18 +128,29 @@ static inline void set_backlight(GDisplay *g, uint8_t percent) {
 	// connected to a LED connection on the breakout board
 	
 	write_index(g, SSD1963_SET_PWM_CONF);		//set PWM for BackLight
+#if SSD1963_INIT_METHOD_2
+	write_data(g, 0x05);
+	//	write_data(g, 0x0E);					// PWMF[7:0] = 2, PWM base freq = PLL/(256*(1+5))/256 = 300Hz for a PLL freq = 120MHz (source: Displaytech)
+	write_data(g, 0xFF);                        // Dummy data (not needed DBC is in control)
+#else
 	write_data(g, 0x01);
 	//	write_data(g, 0x0E);					// PWMF[7:0] = 2, PWM base freq = PLL/(256*(1+5))/256 = 300Hz for a PLL freq = 120MHz (source: Displaytech)
+#endif
 	if (percent == 0xFF)						// use percent==0xFF to turn off SSD1963 pwm in power SLEEP or DEEP SLEEP mode
 		write_data(g, 0x00);
 	else if (percent >= 100)
 		write_data(g, 0x00FF);					// Fully on for any percentage >= 100
 	else
 		write_data(g, (percent*255)/100 & 0x00FF);
+#if SSD1963_INIT_METHOD_2
+	write_data(g, 0x00);						// DBC minimum brightness
+	write_data(g, 0x00);						// Brightness prescaler - active when Transition Effect enable A5 = 1
+#else
 	write_data(g, 0x01);						// Controlled by host (not DBC), enabled
 	write_data(g, 0xFF);						// DBC manual brightness (not used - zero would work)
 	write_data(g, 0x60);						// DBC minimum brightness (not used - zero would work)
 	write_data(g, 0x0F);						// Brightness prescaler - active when Transition Effect enable A5 = 1
+#endif
 }
 
 /*===========================================================================*/
@@ -166,9 +177,9 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	#if !GDISP_SSD1963_NO_INIT
 		// Hardware reset
 		setpin_reset(g, TRUE);
-		gfxSleepMilliseconds(20);
+		gfxSleepMilliseconds(100);
 		setpin_reset(g, FALSE);
-		gfxSleepMilliseconds(20);
+		gfxSleepMilliseconds(200);
 	#endif
 
 	// Get the bus for the following initialisation commands
@@ -176,19 +187,22 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 	#if !GDISP_SSD1963_NO_INIT
 		write_index(g, SSD1963_SOFT_RESET);             // Software reset - clears almost everything (apart from PLL)
-		gfxSleepMilliseconds(5);
+		write_index(g, SSD1963_SOFT_RESET);             // Software reset - clears almost everything (apart from PLL)
+		write_index(g, SSD1963_SOFT_RESET);             // Software reset - clears almost everything (apart from PLL)
+		gfxSleepMilliseconds(50);
 
 		/* Driver PLL config */
 		write_index(g, SSD1963_SET_PLL_MN);
 		write_data(g, 35);								// PLLclk = REFclk (10Mhz) * 36 (360Mhz)
 		write_data(g, 2);								// SYSclk = PLLclk / 3  (120MHz)
-		write_data(g, 4);								// Apply calculation bit, else it is ignored
+//#if SSD1963_INIT_METHOD_2
+		write_data(g, 54);								// Apply calculation bit, else it is ignored
+//#else
+//		write_data(g, 4);								// Apply calculation bit, else it is ignored
+//#endif
 		write_reg(g, SSD1963_SET_PLL, 0x01);			// Enable PLL
-		gfxSleepMilliseconds(5);
+		gfxSleepMilliseconds(100);
 		write_reg(g, SSD1963_SET_PLL, 0x03);			// Use PLL
-		gfxSleepMilliseconds(5);
-		write_index(g, SSD1963_SOFT_RESET);             // Software reset - clears almost everything (apart from PLL)
-		gfxSleepMilliseconds(5);
 
 		/* LCD panel parameters */
 		write_index(g, SSD1963_SET_GDISP_MODE);
@@ -228,10 +242,14 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		write_data(g, lcdp->vpulse);
 		write_data(g, 0x00);
 		write_data(g, 0x00);
+
+		/* Enable DBC to control Backlight */
+		write_index(g, SSD1963_SET_DBC_CONF);
+		write_data(g, 0x2F);
 	#endif
 
 	/* Tear effect indicator ON. This is used to tell the host MCU when the driver is not refreshing the panel (during front/back porch) */
-	write_reg(g, SSD1963_SET_TEAR_ON, 0x00);
+	//write_reg(g, SSD1963_SET_TEAR_ON, 0x00);
 
 	/* Turn on */
 	write_index(g, SSD1963_SET_DISPLAY_ON);
@@ -285,8 +303,10 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 					break;
 				case powerOn:
 					acquire_bus(g);
+					setreadmode(g);
 					dummy_read(g);
 					dummy_read(g);
+					setwritemode(g);
 
 					gfxSleepMilliseconds(100);					// Wait for 1msec to let the PLL stable if was stopped by deep sleep mode
                     write_index(g, SSD1963_EXIT_SLEEP_MODE);	// need this in case we were in 'normal' sleep mode
@@ -359,7 +379,9 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		case GDISP_CONTROL_BACKLIGHT:
 			if ((unsigned)g->p.ptr > 100)
 				g->p.ptr = (void *)100;
+			acquire_bus(g);
 			set_backlight(g, (unsigned)g->p.ptr);
+			release_bus(g);
 			g->g.Backlight = (unsigned)g->p.ptr;
 			return;
 
