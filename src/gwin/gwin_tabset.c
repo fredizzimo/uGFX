@@ -16,6 +16,8 @@
 
 #include "gwin_class.h"
 
+#include <string.h>
+
 // Some position values
 #define BORDER_WIDTH			2
 #define TEXT_PADDING			5
