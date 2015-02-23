@@ -27,7 +27,10 @@ FEATURE:	Vastly improved gwin arrow button drawing
 FIX:		GINPUT toggle fixes
 FIX:		GFILE_ALLOW_FLOAT compile error fixed
 FIX:		GFILE_NEED_STDIO compile and emulation errors fixed
-
+FEATURE:	Added STMPE610 driver by lliypuk
+FIX:		Corrected self calibration code for driver STMPE811
+FEATURE:	Added Mikromedia Plus STM32-M4 board based on work by lliypuk & inmarket
+FIX:		Work to improve the gdisp SSD1963 driver
 
 *** Release 2.2 ***
 FEATURE:	Added nested containers demo
