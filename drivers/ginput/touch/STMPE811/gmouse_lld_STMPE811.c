@@ -214,10 +214,12 @@ static bool_t read_xyz(GMouse* m, GMouseReading* pdr)
 			case GDISP_ROTATE_180:
 				pdr->x = gdispGGetWidth(m->display) - pdr->x / (4096/gdispGGetWidth(m->display));
 				pdr->y = pdr->y / (4096/gdispGGetHeight(m->display));
+				break;
 			case GDISP_ROTATE_90:
 			case GDISP_ROTATE_270:
 				pdr->x = gdispGGetHeight(m->display) - pdr->x / (4096/gdispGGetHeight(m->display));
 				pdr->y = pdr->y / (4096/gdispGGetWidth(m->display));
+				break;
 			}
 		#else
 			pdr->x = gdispGGetWidth(m->display) - pdr->x / (4096/gdispGGetWidth(m->display));
