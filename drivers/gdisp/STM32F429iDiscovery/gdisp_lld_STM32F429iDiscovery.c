@@ -200,7 +200,7 @@ static void LTDC_Init(void) {
 	RCC->APB2RSTR = 0;
 
 	/* Enable the LTDC clock.*/
-	RCC->DCKCFGR = (RCC->DCKCFGR & ~RCC_DCKCFGR_PLLSAIDIVR) | (2 << 16); /* /8 */
+	RCC->DCKCFGR = (RCC->DCKCFGR & ~RCC_DCKCFGR_PLLSAIDIVR) | (1 << 16); /* /4 */
 
 	// Enable the module
 	RCC->APB2ENR |= RCC_APB2ENR_LTDCEN;
