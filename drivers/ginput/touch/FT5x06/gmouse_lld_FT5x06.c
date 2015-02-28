@@ -72,10 +72,25 @@ static bool_t MouseXYZ(GMouse* m, GMouseReading* pdr)
 		pdr->y = (coord_t)read_word(m, FT5x06_TOUCH1_YH);
 		pdr->z = 1;
 
+		// Rescale X,Y if we are using self-calibration
 		#if GMOUSE_FT5x06_SELF_CALIBRATE
-			// Rescale X,Y,Z - If we are using self-calibration
-			pdr->x = gdispGGetWidth(m->display) - pdr->x / (4096/gdispGGetWidth(m->display));
-			pdr->y = pdr->y / (4096/gdispGGetHeight(m->display));
+			#if GDISP_NEED_CONTROL
+				switch(gdispGGetOrientation(m->display)) {
+				case GDISP_ROTATE_0:
+				case GDISP_ROTATE_180:
+					pdr->x = gdispGGetWidth(m->display) - pdr->x / (4096/gdispGGetWidth(m->display));
+					pdr->y = pdr->y / (4096/gdispGGetHeight(m->display));
+					break;
+				case GDISP_ROTATE_90:
+				case GDISP_ROTATE_270:
+					pdr->x = gdispGGetHeight(m->display) - pdr->x / (4096/gdispGGetHeight(m->display));
+					pdr->y = pdr->y / (4096/gdispGGetWidth(m->display));
+					break;
+				}
+			#else
+				pdr->x = gdispGGetWidth(m->display) - pdr->x / (4096/gdispGGetWidth(m->display));
+				pdr->y = pdr->y / (4096/gdispGGetHeight(m->display));
+			#endif
 		#endif
 	}
 
