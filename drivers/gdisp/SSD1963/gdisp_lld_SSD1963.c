@@ -128,29 +128,18 @@ static inline void set_backlight(GDisplay *g, uint8_t percent) {
 	// connected to a LED connection on the breakout board
 	
 	write_index(g, SSD1963_SET_PWM_CONF);		//set PWM for BackLight
-#if SSD1963_INIT_METHOD_2
-	write_data(g, 0x05);
+	write_data(g, 0x06);
 	//	write_data(g, 0x0E);					// PWMF[7:0] = 2, PWM base freq = PLL/(256*(1+5))/256 = 300Hz for a PLL freq = 120MHz (source: Displaytech)
-	write_data(g, 0xFF);                        // Dummy data (not needed DBC is in control)
-#else
-	write_data(g, 0x01);
-	//	write_data(g, 0x0E);					// PWMF[7:0] = 2, PWM base freq = PLL/(256*(1+5))/256 = 300Hz for a PLL freq = 120MHz (source: Displaytech)
-#endif
 	if (percent == 0xFF)						// use percent==0xFF to turn off SSD1963 pwm in power SLEEP or DEEP SLEEP mode
 		write_data(g, 0x00);
 	else if (percent >= 100)
-		write_data(g, 0x00FF);					// Fully on for any percentage >= 100
+		write_data(g, 0xFF);					// Fully on for any percentage >= 100
 	else
 		write_data(g, (percent*255)/100 & 0x00FF);
-#if SSD1963_INIT_METHOD_2
-	write_data(g, 0x00);						// DBC minimum brightness
-	write_data(g, 0x00);						// Brightness prescaler - active when Transition Effect enable A5 = 1
-#else
 	write_data(g, 0x01);						// Controlled by host (not DBC), enabled
 	write_data(g, 0xFF);						// DBC manual brightness (not used - zero would work)
-	write_data(g, 0x60);						// DBC minimum brightness (not used - zero would work)
-	write_data(g, 0x0F);						// Brightness prescaler - active when Transition Effect enable A5 = 1
-#endif
+	write_data(g, 0x00);						// DBC minimum brightness
+	write_data(g, 0x01);						// Brightness prescaler - active when Transition Effect enable A5 = 1
 }
 
 /*===========================================================================*/
@@ -177,7 +166,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	#if !GDISP_SSD1963_NO_INIT
 		// Hardware reset
 		setpin_reset(g, TRUE);
-		gfxSleepMilliseconds(100);
+		gfxSleepMilliseconds(200);
 		setpin_reset(g, FALSE);
 		gfxSleepMilliseconds(200);
 	#endif
@@ -195,11 +184,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		write_index(g, SSD1963_SET_PLL_MN);
 		write_data(g, 35);								// PLLclk = REFclk (10Mhz) * 36 (360Mhz)
 		write_data(g, 2);								// SYSclk = PLLclk / 3  (120MHz)
-//#if SSD1963_INIT_METHOD_2
 		write_data(g, 54);								// Apply calculation bit, else it is ignored
-//#else
-//		write_data(g, 4);								// Apply calculation bit, else it is ignored
-//#endif
 		write_reg(g, SSD1963_SET_PLL, 0x01);			// Enable PLL
 		gfxSleepMilliseconds(100);
 		write_reg(g, SSD1963_SET_PLL, 0x03);			// Use PLL
@@ -220,6 +205,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		write_reg(g, SSD1963_SET_ADDRESS_MODE, 2);		// Flip horizontal direction
 
 	write_reg(g, SSD1963_SET_PIXEL_DATA_INTERFACE, SSD1963_PDI_16BIT565);
+	write_reg(g, SSD1963_SET_PIXEL_FORMAT, 0x50);
 
 	#if !GDISP_SSD1963_NO_INIT
 		/* LCD Clock specs */
@@ -231,7 +217,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		write_index(g, SSD1963_SET_HORI_PERIOD);
 		write_data16(g, lcdp->hperiod);
 		write_data16(g, lcdp->hpulse + lcdp->hbporch);
-		write_data(g, lcdp->hpulse);
+		write_data(g, lcdp->hpulse - 1);
 		write_data(g, 0x00);
 		write_data(g, 0x00);
 		write_data(g, 0x00);
@@ -239,17 +225,21 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		write_index(g, SSD1963_SET_VERT_PERIOD);
 		write_data16(g, lcdp->vperiod);
 		write_data16(g, lcdp->vpulse + lcdp->vbporch);
-		write_data(g, lcdp->vpulse);
+		write_data(g, lcdp->vpulse - 1);
 		write_data(g, 0x00);
 		write_data(g, 0x00);
 
-		/* Enable DBC to control Backlight */
-		write_index(g, SSD1963_SET_DBC_CONF);
-		write_data(g, 0x2F);
+		#if 0
+			/* Enable DBC to control Backlight */
+			write_index(g, SSD1963_SET_DBC_CONF);
+			write_data(g, 0x2F);
+		#endif
 	#endif
 
-	/* Tear effect indicator ON. This is used to tell the host MCU when the driver is not refreshing the panel (during front/back porch) */
-	//write_reg(g, SSD1963_SET_TEAR_ON, 0x00);
+	#if 0
+		/* Tear effect indicator ON. This is used to tell the host MCU when the driver is not refreshing the panel (during front/back porch) */
+		write_reg(g, SSD1963_SET_TEAR_ON, 0x00);
+	#endif
 
 	/* Turn on */
 	write_index(g, SSD1963_SET_DISPLAY_ON);

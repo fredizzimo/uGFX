@@ -8,8 +8,6 @@
 #ifndef _GDISP_LLD_BOARD_H
 #define _GDISP_LLD_BOARD_H
 
-//#define SSD1963_INIT_METHOD_2	TRUE
-
 static const LCD_Parameters	DisplayTimings[] = {
 	// You need one of these array elements per display
 	{
@@ -45,7 +43,7 @@ static const LCD_Parameters	DisplayTimings[] = {
 #define SET_DC                  palSetPad(GDISP_CMD_PORT, GDISP_DC);
 #define CLR_DC                  palClearPad(GDISP_CMD_PORT, GDISP_DC);
 
-#define writeStrobe             { CLR_WR; asm volatile ("nop;"); SET_WR; }
+#define writeStrobe             { CLR_WR; /*asm volatile ("nop;");*/ SET_WR; }
 
 IOBus busCMD    = { GDISP_CMD_PORT, (1 << GDISP_CS) | (1 << GDISP_RST) | (1 << GDISP_WR) | (1 << GDISP_RD) | (1 << GDISP_DC), 11 };
 IOBus busDataLo = { GDISP_DATA_LO_PORT, 0xFF, 0 };
@@ -53,82 +51,80 @@ IOBus busDataHi = { GDISP_DATA_HI_PORT, 0xFF, 8 };
 
 
 static inline void init_board(GDisplay *g) {
-  g->board = 0;
-  switch(g->controllerdisplay) {
-    case 0:
-	  {
-	    palSetBusMode(&busCMD, PAL_MODE_OUTPUT_PUSHPULL);
-	    palSetBusMode(&busDataLo, PAL_MODE_OUTPUT_PUSHPULL);
-	    palSetBusMode(&busDataHi, PAL_MODE_OUTPUT_PUSHPULL);
-	    SET_CS; SET_WR; SET_RD; SET_DC; SET_RST;
-	    break;
-	  }
-    default:
-      break;
-  }
+	g->board = 0;
+	switch(g->controllerdisplay) {
+	case 0:
+		palSetBusMode(&busCMD, PAL_MODE_OUTPUT_PUSHPULL);
+		palSetBusMode(&busDataLo, PAL_MODE_OUTPUT_PUSHPULL);
+		palSetBusMode(&busDataHi, PAL_MODE_OUTPUT_PUSHPULL);
+		SET_CS; SET_WR; SET_RD; SET_DC; SET_RST;
+		break;
+	default:
+		break;
+	}
 }
 
 static inline void post_init_board(GDisplay *g) {
-  (void) g;
+	(void) g;
 }
 
 static inline void setpin_reset(GDisplay *g, bool_t state) {
-  (void) g;
-  if (state) {
-    CLR_RST;
-    } else {
-      SET_RST;
-    }
+	(void) g;
+	if (state) {
+		CLR_RST;
+	} else {
+		SET_RST;
+	}
 }
 
 static inline void acquire_bus(GDisplay *g) {
-  (void) g;
-  CLR_CS;
+	(void) g;
+	CLR_CS;
 }
 
 static inline void release_bus(GDisplay *g) {
-  (void) g;
-  SET_CS;
+	(void) g;
+	SET_CS;
 }
 
 static inline void write_index(GDisplay *g, uint16_t index) {
-  (void) g;
+	(void) g;
 
-  CLR_DC;
-  palWriteBus(&busDataLo, (index & 0xFF));
-  palWriteBus(&busDataHi, (index >> 8));
-  writeStrobe;
-  SET_DC;
+	CLR_DC;
+	palWriteBus(&busDataLo, (index & 0xFF));
+	palWriteBus(&busDataHi, (index >> 8));
+	writeStrobe;
+	SET_DC;
 }
 
 static inline void write_data(GDisplay *g, uint16_t data) {
-  (void) g;
+	(void) g;
 
-  palWriteBus(&busDataLo, (data & 0xFF));
-  palWriteBus(&busDataHi, (data >> 8));
-  writeStrobe;
+	palWriteBus(&busDataLo, (data & 0xFF));
+	palWriteBus(&busDataHi, (data >> 8));
+	writeStrobe;
 }
 
 static inline void setreadmode(GDisplay *g) {
-  (void) g;
-  palSetBusMode(&busDataLo, PAL_MODE_INPUT_PULLUP);
-  palSetBusMode(&busDataHi, PAL_MODE_INPUT_PULLUP);
+	(void) g;
+	palSetBusMode(&busDataLo, PAL_MODE_INPUT_PULLUP);
+	palSetBusMode(&busDataHi, PAL_MODE_INPUT_PULLUP);
 }
 
 static inline void setwritemode(GDisplay *g) {
-  (void) g;
-  palSetBusMode(&busDataLo, PAL_MODE_OUTPUT_PUSHPULL);
-  palSetBusMode(&busDataHi, PAL_MODE_OUTPUT_PUSHPULL);
+	(void) g;
+	palSetBusMode(&busDataLo, PAL_MODE_OUTPUT_PUSHPULL);
+	palSetBusMode(&busDataHi, PAL_MODE_OUTPUT_PUSHPULL);
 }
 
 static inline uint16_t read_data(GDisplay *g) {
-  (void) g;
+	uint16_t data;
+	(void) g;
 
-  uint16_t data;
-  CLR_RD;
-  data = (palReadBus(&busDataHi) << 8) | palReadBus(&busDataLo);
-  SET_RD;
-  return data;
+	CLR_RD;
+	data = (palReadBus(&busDataHi) << 8) | palReadBus(&busDataLo);
+	SET_RD;
+	return data;
 }
 
 #endif /* _GDISP_LLD_BOARD_H */
