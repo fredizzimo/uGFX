@@ -210,6 +210,7 @@ static bool_t read_xyz(GMouse* m, GMouseReading* pdr)
 	#if GMOUSE_STMPE610_SELF_CALIBRATE
 		#if GDISP_NEED_CONTROL
 			switch(gdispGGetOrientation(m->display)) {
+			default:
 			case GDISP_ROTATE_0:
 			case GDISP_ROTATE_180:
 			default:

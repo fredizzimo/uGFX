@@ -76,6 +76,7 @@ static bool_t MouseXYZ(GMouse* m, GMouseReading* pdr)
 		#if GMOUSE_FT5x06_SELF_CALIBRATE
 			#if GDISP_NEED_CONTROL
 				switch(gdispGGetOrientation(m->display)) {
+				default:
 				case GDISP_ROTATE_0:
 				case GDISP_ROTATE_180:
 					pdr->x = gdispGGetWidth(m->display) - pdr->x / (4096/gdispGGetWidth(m->display));
