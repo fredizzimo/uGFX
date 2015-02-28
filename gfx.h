@@ -221,6 +221,14 @@ extern "C" {
 	 * @note	This will initialise each sub-system that has been turned on.
 	 * 			For example, if GFX_USE_GDISP is defined then display will be initialised
 	 * 			and cleared to black.
+	 * @note	If you define GFX_NO_OS_INIT as TRUE in your gfxconf.h file then ugfx doesn't try to
+	 * 			initialise the operating system for you when you call @p gfxInit().
+	 * @note	If you define GFX_OS_EXTRA_INIT_FUNCTION in your gfxconf.h file the macro is the
+	 * 			name of a void function with no parameters that is called immediately after
+	 * 			operating system initialisation (whether or not GFX_NO_OS_INIT is set).
+	 * @note	If you define GFX_OS_EXTRA_DEINIT_FUNCTION in your gfxconf.h file the macro is the
+	 * 			name of a void function with no parameters that is called immediately before
+	 * 			operating system de-initialisation (as ugfx is exiting).
 	 *
 	 * @api
 	 */

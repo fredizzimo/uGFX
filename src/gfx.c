@@ -20,9 +20,19 @@ static bool_t initDone = FALSE;
 /* These init functions are defined by each module but not published */
 extern void _gosInit(void);
 extern void _gosDeinit(void);
+#ifdef GFX_OS_EXTRA_INIT_FUNCTION
+		extern void GFX_OS_EXTRA_INIT_FUNCTION(void);
+#endif
+#ifdef GFX_OS_EXTRA_DEINIT_FUNCTION
+		extern void GFX_OS_EXTRA_DEINIT_FUNCTION(void);
+#endif
 #if GFX_USE_GDRIVER
 	extern void _gdriverInit(void);
 	extern void _gdriverDeinit(void);
+#endif
+#if GFX_USE_GFILE
+	extern void _gfileInit(void);
+	extern void _gfileDeinit(void);
 #endif
 #if GFX_USE_GDISP
 	extern void _gdispInit(void);
@@ -71,6 +81,9 @@ void gfxInit(void)
 	// These must be initialised in the order of their dependancies
 
 	_gosInit();
+	#ifdef GFX_OS_EXTRA_INIT_FUNCTION
+		GFX_OS_EXTRA_INIT_FUNCTION();
+	#endif
 	#if GFX_USE_GQUEUE
 		_gqueueInit();
 	#endif
@@ -85,6 +98,9 @@ void gfxInit(void)
 	#endif
 	#if GFX_USE_GDRIVER
 		_gdriverInit();
+	#endif
+	#if GFX_USE_GFILE
+		_gfileInit();
 	#endif
 	#if GFX_USE_GDISP
 		_gdispInit();
@@ -125,6 +141,9 @@ void gfxDeinit(void)
 	#if GFX_USE_GDISP
 		_gdispDeinit();
 	#endif
+	#if GFX_USE_GFILE
+		_gfileDeinit();
+	#endif
 	#if GFX_USE_GDRIVER
 		_gdriverDeinit();
 	#endif
@@ -139,6 +158,9 @@ void gfxDeinit(void)
 	#endif
 	#if GFX_USE_GQUEUE
 		_gqueueDeinit();
+	#endif
+	#ifdef GFX_OS_EXTRA_DEINIT_FUNCTION
+		GFX_OS_EXTRA_DEINIT_FUNCTION();
 	#endif
 	_gosDeinit();
 }
