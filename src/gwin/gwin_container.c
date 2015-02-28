@@ -190,7 +190,7 @@ void gwinContainerDraw_Std(GWidgetObject *gw, void *param) {
 			for(iw=gi->width; x < mx; x += iw) {
 				if (iw > mx - x)
 					iw = mx - x;
-				gdispGImageDraw(gw->g.display, gi, x, y, ih, iw, 0, 0);
+				gdispGImageDraw(gw->g.display, gi, x, y, iw, ih, 0, 0);
 			}
 		}
 
