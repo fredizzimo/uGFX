@@ -6,7 +6,7 @@
  */
 
 /********************************************************
- * The ChibiOS BaseFileStream file-system
+ * The ChibiOS FileStream file-system
  ********************************************************/
 
 #include "gfx.h"
@@ -34,23 +34,32 @@ static const GFILEVMT FsCHIBIOSVMT = {
 	#endif
 };
 
+#if CH_KERNEL_MAJOR == 2
+	#define FileStream			BaseFileStream
+	#define fileStreamClose		chFileStreamClose
+	#define fileStreamRead		chSequentialStreamRead
+	#define fileStreamWrite		chSequentialStreamWrite
+	#define fileStreamSeek		chFileStreamSeek
+	#define fileStreamGetSize	chFileStreamGetSize
+#endif
+
 static void ChibiOSBFSClose(GFILE *f) {
-	chFileStreamClose(((BaseFileStream *)f->obj));
+	fileStreamClose(((FileStream *)f->obj));
 }
 static int ChibiOSBFSRead(GFILE *f, void *buf, int size) {
-	return chSequentialStreamRead(((BaseFileStream *)f->obj), (uint8_t *)buf, size);
+	return fileStreamRead(((FileStream *)f->obj), (uint8_t *)buf, size);
 }
 static int ChibiOSBFSWrite(GFILE *f, const void *buf, int size) {
-	return chSequentialStreamWrite(((BaseFileStream *)f->obj), (uint8_t *)buf, size);
+	return fileStreamWrite(((FileStream *)f->obj), (uint8_t *)buf, size);
 }
 static bool_t ChibiOSBFSSetpos(GFILE *f, long int pos) {
-	chFileStreamSeek(((BaseFileStream *)f->obj), pos);
+	fileStreamSeek(((FileStream *)f->obj), pos);
 	return TRUE;
 }
-static long int ChibiOSBFSGetsize(GFILE *f) { return chFileStreamGetSize(((BaseFileStream *)f->obj)); }
-static bool_t ChibiOSBFSEof(GFILE *f) { return f->pos >= chFileStreamGetSize(((BaseFileStream *)f->obj)); }
+static long int ChibiOSBFSGetsize(GFILE *f) { return fileStreamGetSize(((FileStream *)f->obj)); }
+static bool_t ChibiOSBFSEof(GFILE *f) { return f->pos >= fileStreamGetSize(((FileStream *)f->obj)); }
 
-GFILE *		gfileOpenBaseFileStream(void *BaseFileStreamPtr, const char *mode) {
+GFILE *		gfileOpenChibiOSFileStream(void *FileStreamPtr, const char *mode) {
 	GFILE *			f;
 
 	// Get an empty file and set the flags
@@ -59,7 +68,7 @@ GFILE *		gfileOpenBaseFileStream(void *BaseFileStreamPtr, const char *mode) {
 
 	// File is open - fill in all the details
 	f->vmt = &FsCHIBIOSVMT;
-	f->obj = BaseFileStreamPtr;
+	f->obj = FileStreamPtr;
 	f->pos = 0;
 	f->flags |= GFILEFLG_OPEN|GFILEFLG_CANSEEK;
 	return f;

@@ -28,7 +28,9 @@
 	#if !CH_CFG_USE_SEMAPHORES
 		#error "GOS: CH_CFG_USE_SEMAPHORES must be defined in chconf.h"
 	#endif
-	
+
+#else
+	#error "GOS: Unsupported version of ChibiOS"
 #endif
 
 void _gosInit(void)

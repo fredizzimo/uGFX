@@ -307,20 +307,21 @@ extern "C" {
 
 	#if (GFILE_NEED_CHIBIOSFS && GFX_USE_OS_CHIBIOS) || defined(__DOXYGEN__)
 		/**
-		 * @brief					Open file from a ChibiOS BaseFileStream
+		 * @brief					Open file from a ChibiOS FileStream
 		 *
-		 * @param[in] BaseFileStreamPtr	The BaseFileStream to open as a GFILE
+		 * @param[in] FileStreamPtr	The BaseFileStream (ChibiOS V2) or FileStream (ChibiOS V3) to open as a GFILE
 		 * @param[in] mode			The mode.
 		 *
 		 * @return					Valid GFILE on success, 0 otherwise
 		 *
 		 * @note					The modes are the same modes as in @p gfileOpen(). The
-		 * 							open mode is NOT compared against the BaseFileStream capabilities.
+		 * 							open mode is NOT compared against the FileStream capabilities.
 		 * @note					Supported operations are: read, write, getpos, setpos, eof and getsize
 		 *
 		 * @api
 		 */
-		GFILE *		gfileOpenBaseFileStream(void *BaseFileStreamPtr, const char *mode);
+		GFILE *		gfileOpenChibiOSFileStream(void *FileStreamPtr, const char *mode);
+		#define gfileOpenBaseFileStream(f,m)	gfileOpenChibiOSFileStream(f,m)
 	#endif
 
 	#if GFILE_NEED_MEMFS || defined(__DOXYGEN__)
