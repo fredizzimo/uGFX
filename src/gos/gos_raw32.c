@@ -460,14 +460,16 @@ void gfxSleepMicroseconds(delaytime_t ms) {
  * If they don't exist compile them to be the standard setjmp() function.
  * Similarly for longjmp().
  */
-#ifndef setjmp
-	#ifndef _setjmp
-		#define _setjmp setjmp
+#if !defined(__KEIL__) && !defined(__C51__)
+	#ifndef setjmp
+		#ifndef _setjmp
+			#define _setjmp setjmp
+		#endif
 	#endif
-#endif
-#ifndef longjmp
-	#ifndef _longjmp
-		#define _longjmp longjmp
+	#ifndef longjmp
+		#ifndef _longjmp
+			#define _longjmp longjmp
+		#endif
 	#endif
 #endif
 
