@@ -43,16 +43,16 @@
 
 typedef unsigned char	bool_t;
 
-#ifndef _STDINT_H
-	typedef char			int8_t;
+#if !defined(_STDINT_H) && !defined(__stdint_h)
+	typedef signed char		int8_t;
 	typedef unsigned char	uint8_t;
-	typedef short			int16_t;
+	typedef signed short	int16_t;
 	typedef unsigned short	uint16_t;
-	typedef int				int32_t;
+	typedef signed int		int32_t;
 	typedef unsigned int	uint32_t;
 #endif
 
-#if !defined (__need_size_t) && !defined (_STDDEF_H_)
+#if !defined (__need_size_t) && !defined (_STDDEF_H_) && !defined(__stddef_h)
 	typedef uint32_t		size_t;
 #endif
 
