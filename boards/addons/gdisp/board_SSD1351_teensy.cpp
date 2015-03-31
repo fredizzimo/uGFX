@@ -29,7 +29,7 @@ void ssd1351_init_board(void) {
 	pinMode(SSD1351_DC, OUTPUT);
 	digitalWriteFast(SSD1351_R, 1);
 	digitalWriteFast(SSD1351_CS, 1);
-	digitalWriteFast(SSD1351_D, 1);
+	digitalWriteFast(SSD1351_DC, 1);
 }
 
 void ssd1351_setpin_reset(int state) {
