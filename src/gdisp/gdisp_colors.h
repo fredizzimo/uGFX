@@ -306,25 +306,25 @@ typedef uint16_t	colorformat;
 
 	// Calculate HTML2COLOR
 	#if COLOR_BITS_R + COLOR_SHIFT_R == 24
-		#define HTML2COLOR_R(h)		((h) & ((0xFF & ~((1<<(8-COLOR_BITS_R))-1))<<16))
+		#define HTML2COLOR_R(h)		((h) & ((0xFFL & ~((1<<(8-COLOR_BITS_R))-1))<<16))
 	#elif COLOR_BITS_R + COLOR_SHIFT_R > 24
-		#define HTML2COLOR_R(h)		(((h) & ((0xFF & ~((1<<(8-COLOR_BITS_R))-1))<<16)) << (COLOR_BITS_R+COLOR_SHIFT_R-24))
+		#define HTML2COLOR_R(h)		(((h) & ((0xFFL & ~((1<<(8-COLOR_BITS_R))-1))<<16)) << (COLOR_BITS_R+COLOR_SHIFT_R-24))
 	#else // COLOR_BITS_R + COLOR_SHIFT_R < 24
-		#define HTML2COLOR_R(h)		(((h) & ((0xFF & ~((1<<(8-COLOR_BITS_R))-1))<<16)) >> (24-(COLOR_BITS_R+COLOR_SHIFT_R)))
+		#define HTML2COLOR_R(h)		(((h) & ((0xFFL & ~((1<<(8-COLOR_BITS_R))-1))<<16)) >> (24-(COLOR_BITS_R+COLOR_SHIFT_R)))
 	#endif
 	#if COLOR_BITS_G + COLOR_SHIFT_G == 16
-		#define HTML2COLOR_G(h)		((h) & ((0xFF & ~((1<<(8-COLOR_BITS_G))-1))<<8))
+		#define HTML2COLOR_G(h)		((h) & ((0xFFL & ~((1<<(8-COLOR_BITS_G))-1))<<8))
 	#elif COLOR_BITS_G + COLOR_SHIFT_G > 16
-		#define HTML2COLOR_G(h)		(((h) & ((0xFF & ~((1<<(8-COLOR_BITS_G))-1))<<8)) << (COLOR_BITS_G+COLOR_SHIFT_G-16))
+		#define HTML2COLOR_G(h)		(((h) & ((0xFFL & ~((1<<(8-COLOR_BITS_G))-1))<<8)) << (COLOR_BITS_G+COLOR_SHIFT_G-16))
 	#else // COLOR_BITS_G + COLOR_SHIFT_G < 16
-		#define HTML2COLOR_G(h)		(((h) & ((0xFF & ~((1<<(8-COLOR_BITS_G))-1))<<8)) >> (16-(COLOR_BITS_G+COLOR_SHIFT_G)))
+		#define HTML2COLOR_G(h)		(((h) & ((0xFFL & ~((1<<(8-COLOR_BITS_G))-1))<<8)) >> (16-(COLOR_BITS_G+COLOR_SHIFT_G)))
 	#endif
 	#if COLOR_BITS_B + COLOR_SHIFT_B == 8
-		#define HTML2COLOR_B(h)		((h) & (0xFF & ~((1<<(8-COLOR_BITS_B))-1)))
+		#define HTML2COLOR_B(h)		((h) & (0xFFL & ~((1<<(8-COLOR_BITS_B))-1)))
 	#elif COLOR_BITS_B + COLOR_SHIFT_B > 8
-		#define HTML2COLOR_B(h)		(((h) & (0xFF & ~((1<<(8-COLOR_BITS_B))-1))) << (COLOR_BITS_B+COLOR_SHIFT_B-8))
+		#define HTML2COLOR_B(h)		(((h) & (0xFFL & ~((1<<(8-COLOR_BITS_B))-1))) << (COLOR_BITS_B+COLOR_SHIFT_B-8))
 	#else // COLOR_BITS_B + COLOR_SHIFT_B < 8
-		#define HTML2COLOR_B(h)		(((h) & (0xFF & ~((1<<(8-COLOR_BITS_B))-1))) >> (8-(COLOR_BITS_B+COLOR_SHIFT_B)))
+		#define HTML2COLOR_B(h)		(((h) & (0xFFL & ~((1<<(8-COLOR_BITS_B))-1))) >> (8-(COLOR_BITS_B+COLOR_SHIFT_B)))
 	#endif
 	#define HTML2COLOR(h)		((COLOR_TYPE)(HTML2COLOR_R(h) | HTML2COLOR_G(h) | HTML2COLOR_B(h)))
 
