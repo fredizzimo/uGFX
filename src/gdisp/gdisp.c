@@ -2438,6 +2438,8 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 			coord_t 	fy, dy, ix, fx, i, j;
 		#endif
 
+		if (!lines) return;
+
 		MUTEX_ENTER(g);
 		#if NEED_CLIPPING
 			#if GDISP_HARDWARE_CLIP == HARDWARE_AUTODETECT
@@ -2446,7 +2448,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 			{
 				if (x < g->clipx0) { cx -= g->clipx0 - x; x = g->clipx0; }
 				if (y < g->clipy0) { cy -= g->clipy0 - y; y = g->clipy0; }
-				if (!lines || cx <= 0 || cy <= 0 || x >= g->clipx1 || y >= g->clipy1) { MUTEX_EXIT(g); return; }
+				if (cx <= 0 || cy <= 0 || x >= g->clipx1 || y >= g->clipy1) { MUTEX_EXIT(g); return; }
 				if (x+cx > g->clipx1)	cx = g->clipx1 - x;
 				if (y+cy > g->clipy1)	cy = g->clipy1 - y;
 			}
