@@ -69,6 +69,13 @@
 	#ifndef GFX_USE_OS_ECOS
 		#define GFX_USE_OS_ECOS			FALSE
 	#endif
+	/**
+	 * @brief   Use Arduino
+	 * @details	Defaults to FALSE
+	 */
+	#ifndef GFX_USE_OS_ARDUINO
+		#define GFX_USE_OS_ARDUINO			FALSE
+	#endif
 /**
  * @}
  *
