@@ -31,6 +31,11 @@ FEATURE:	Added STMPE610 driver by lliypuk
 FIX:		Corrected self calibration code for driver STMPE811
 FEATURE:	Added Mikromedia Plus STM32-M4 board based on work by lliypuk & inmarket
 FIX:		Work to improve the gdisp SSD1963 driver
+FEATURE:	Added SSD1351 gdisp driver
+FEATURE:	Added SSD1331 gdisp driver
+FEATURE:	Added arduino as a GOS supported operating system
+FEATURE:	Added additional pixel format's
+FIX:		Color components fixed for some strange compilers
 
 *** Release 2.2 ***
 FEATURE:	Added nested containers demo
