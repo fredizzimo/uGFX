@@ -180,6 +180,9 @@
 //        #define GWIN_NEED_LIST_IMAGES                FALSE
 //    #define GWIN_NEED_PROGRESSBAR                    FALSE
 //        #define GWIN_PROGRESSBAR_AUTO                FALSE
+//    #define GWIN_NEED_KEYBOARD                       FALSE
+//        #define GWIN_KEYBOARD_DEFAULT_LAYOUT         VirtualKeyboard_English1
+//        #define GWIN_NEED_KEYBOARD_ENGLISH1          TRUE
 //    #define GWIN_FLAT_STYLING                        FALSE
 //    #define GWIN_WIDGET_TAGS                         FALSE
 

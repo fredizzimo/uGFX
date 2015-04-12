@@ -377,5 +377,9 @@ bool_t gwinAttachListener(GListener *pl);
 	#include "gwin_progressbar.h"
 #endif
 
+#if GWIN_NEED_KEYBOARD || defined(__DOXYGEN__)
+	#include "gwin_keyboard.h"
+#endif
+
 #endif /* _GWIDGET_H */
 /** @} */

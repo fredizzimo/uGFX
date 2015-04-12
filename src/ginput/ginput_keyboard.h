@@ -17,7 +17,7 @@
 #ifndef _GINPUT_KEYBOARD_H
 #define _GINPUT_KEYBOARD_H
 
-#if GINPUT_NEED_KEYBOARD || defined(__DOXYGEN__)
+#if GINPUT_NEED_KEYBOARD || GWIN_NEED_KEYBOARD || defined(__DOXYGEN__)
 
 /*===========================================================================*/
 /* Type definitions                                                          */
@@ -163,6 +163,10 @@ typedef struct GEventKeyboard_t {
 #define GLISTEN_KEYUP			0x0004			// Return keyup's as well as key down events
 #define GLISTEN_KEYTRANSITIONS	0x0008			// Return transitions to the key state
 #define GLISTEN_KEYRAW			0x0010			// Return raw scan-codes. This turns off normal character processing.
+
+#endif
+
+#if GINPUT_NEED_KEYBOARD || defined(__DOXYGEN__)
 
 // All keyboards
 #define GKEYBOARD_ALL_INSTANCES		((unsigned)-1)

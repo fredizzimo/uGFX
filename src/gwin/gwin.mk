@@ -15,5 +15,7 @@ GFXSRC +=   $(GFXLIB)/src/gwin/gwin.c \
 			$(GFXLIB)/src/gwin/gwin_frame.c \
 			$(GFXLIB)/src/gwin/gwin_tabset.c \
 			$(GFXLIB)/src/gwin/gwin_gl3d.c \
+			$(GFXLIB)/src/gwin/gwin_keyboard.c \
+			$(GFXLIB)/src/gwin/gwin_keyboard_layout.c
 
 GFXINC +=	$(GFXLIB)/3rdparty/tinygl-0.4-ugfx/include	

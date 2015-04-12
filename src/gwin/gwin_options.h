@@ -135,6 +135,13 @@
 	#ifndef GWIN_NEED_TABSET
 		#define GWIN_NEED_TABSET	FALSE
 	#endif
+	/**
+	 * @brief   Should the virtual keyboard be included.
+	 * @details	Defaults to FALSE
+	 */
+	#ifndef GWIN_NEED_KEYBOARD
+		#define GWIN_NEED_KEYBOARD	FALSE
+	#endif
 /**
  * @}
  *
@@ -342,6 +349,27 @@
 	 */
 	#ifndef GWIN_FLASHING_PERIOD
 		#define GWIN_FLASHING_PERIOD			250
+	#endif
+	/**
+	 * @brief	The default keyboard layout for the virtual gwin keyboard
+	 * @details	Defaults to VirtualKeyboardLayout_English1
+	 */
+	#ifndef GWIN_KEYBOARD_DEFAULT_LAYOUT
+		#define GWIN_KEYBOARD_DEFAULT_LAYOUT	VirtualKeyboard_English1
+	#endif
+/**
+ * @}
+ *
+ * @name    GWIN Virtual Keyboard Layouts
+ * @brief	One or more of these may be defined. They will only be created if GWIN_NEED_KEYBOARD is TRUE.
+ * @{
+ */
+	/**
+	 * @brief	The default keyboard layout for the virtual gwin keyboard
+	 * @details	Defaults to VirtualKeyboardLayout_English1
+	 */
+	#ifndef GWIN_NEED_KEYBOARD_ENGLISH1
+		#define GWIN_NEED_KEYBOARD_ENGLISH1		TRUE
 	#endif
 /** @} */
 
