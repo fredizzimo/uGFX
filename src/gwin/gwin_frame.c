@@ -58,7 +58,7 @@ static void forceFrameRedraw(GWidgetObject *gw) {
 		coord_t		pos;
 
 		// We must be clicking on the frame button area to be of interest
-		if (y < BUTTON_T && y >= BUTTON_T+BUTTON_Y)
+		if (y < BUTTON_T || y >= BUTTON_T+BUTTON_Y)
 			return;
 
 		pos = gw->g.width - (BORDER_R+BUTTON_X);
