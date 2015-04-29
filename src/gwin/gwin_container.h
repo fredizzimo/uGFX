@@ -23,9 +23,6 @@
 
 /* This file is included within "src/gwin/gwin.h" */
 
-// Forward definition
-struct GContainerObject;
-
 /**
  * @brief	The GWIN Container structure
  * @note	A container is a GWIN widget that can have children.
