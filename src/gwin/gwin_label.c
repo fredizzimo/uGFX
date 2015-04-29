@@ -145,9 +145,17 @@ static void gwinLabelDefaultDraw(GWidgetObject *gw, void *param) {
 	c = (gw->g.flags & GWIN_FLG_SYSENABLED) ? gw->pstyle->enabled.text : gw->pstyle->disabled.text;
 
 	if (gw->g.width != w || gw->g.height != h) {
-		gwinResize(&gw->g, w, h);
-
-		return;
+		/* Only allow the widget to be resize if it will grow larger.
+		 * Growing smaller is problematic because it requires a temporary change in visibility.
+		 * This is a work-around for a crashing bug caused by calling gwinResize() in the draw function
+		 * (dubious) as it may try to reclaim the drawing lock.
+		 */
+		if (gw->g.width < w || gw->g.height < h) {
+			gwinResize(&gw->g, (w > gw->g.width ? w : gw->g.width), (h > gw->g.height ? h : gw->g.height));
+			return;
+		}
+		w = gw->g.width;
+		h = gw->g.height;
 	}
 
 	#if GWIN_LABEL_ATTRIBUTE
