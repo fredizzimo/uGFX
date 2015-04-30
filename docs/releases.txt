@@ -36,7 +36,10 @@ FEATURE:	Added SSD1331 gdisp driver
 FEATURE:	Added arduino as a GOS supported operating system
 FEATURE:	Added additional pixel format's
 FIX:		Color components fixed for some strange compilers
-FEATURE:	Add GWIN virtual keyboard widget
+FEATURE:	Added GWIN virtual keyboard widget
+FEATURE:	Added gwinListSetSelected()
+FEATURE:	Added gwinListViewItem()
+
 
 *** Release 2.2 ***
 FEATURE:	Added nested containers demo
