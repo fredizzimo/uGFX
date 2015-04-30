@@ -264,6 +264,37 @@ int gwinListGetSelected(GHandle gh);
  */
 const char* gwinListGetSelectedText(GHandle gh);
 
+/**
+ * @brief				Set whether a specific item is selected or not
+ *
+ * @param[in] gh		The widget handle (must be a list handle)
+ * @param[in] item		The item ID
+ * @param[in] doSelect	TRUE to select the item or FALSE to deselect the item
+ *
+ * @note				Changing the selection using this api call will NOT send the list selection
+ * 						change event.
+ * @note				With a single select list selecting an item with this call will deselect
+ * 						any existing selected item. De-selecting an item with this call will not
+ * 						cause a new item to be automatically selected.
+ * @note				De-selecting an item that is not selected will not effect any items that
+ * 						are selected, even in single-select mode.
+ * @api
+ */
+void gwinListSetSelected(GHandle gh, int item, bool_t doSelect);
+
+/**
+ * @brief				Scroll the list so the specified item is in view
+ *
+ * @param[in] gh		The widget handle (must be a list handle)
+ * @param[in] item		The item ID
+ *
+ * @note				This will typically scroll the selected item to the top of the list
+ * 						unless the item is in the last page of list items.
+ *
+ * @api
+ */
+void gwinListViewItem(GHandle gh, int item);
+
 #if GWIN_NEED_LIST_IMAGES || defined(__DOXYGEN__)
 	/**
 	 * @brief				Set the image for a list item

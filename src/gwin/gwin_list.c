@@ -569,6 +569,65 @@ const char* gwinListGetSelectedText(GHandle gh) {
 	return gwinListItemGetText(gh, gwinListGetSelected(gh));
 }
 
+void gwinListSetSelected(GHandle gh, int item, bool_t doSelect) {
+	const gfxQueueASyncItem   *   qi;
+	int                     i;
+
+	// is it a valid handle?
+	if (gh->vmt != (gwinVMT *)&listVMT)
+		return;
+
+	// watch out for an invalid item
+	if (item < 0 || item >= gh2obj->cnt)
+		return;
+
+	// If not a multiselect mode - clear previous selected item
+	if (doSelect && !(gh->flags & GLIST_FLG_MULTISELECT)) {
+		for(qi = gfxQueueASyncPeek(&gh2obj->list_head); qi; qi = gfxQueueASyncNext(qi)) {
+			if (qi2li->flags & GLIST_FLG_SELECTED) {
+				qi2li->flags &= ~GLIST_FLG_SELECTED;
+				break;
+			}
+		}
+	}
+
+	// Find item and set selected or not
+	for(qi = gfxQueueASyncPeek(&gh2obj->list_head), i = 0; qi; qi = gfxQueueASyncNext(qi), i++) {
+		if (i == item) {
+			if (doSelect)
+				qi2li->flags |= GLIST_FLG_SELECTED;
+			else
+				qi2li->flags &= ~GLIST_FLG_SELECTED;
+			break;
+		}
+	}
+	_gwinUpdate(gh);
+}
+
+void gwinListViewItem(GHandle gh, int item) {
+	coord_t iheight;
+
+	// is it a valid handle?
+	if (gh->vmt != (gwinVMT *)&listVMT)
+		return;
+
+	// watch out for an invalid item
+	if (item < 0 || item >= gh2obj->cnt)
+		return;
+
+	// Work out a possible new top for the list
+	iheight = gdispGetFontMetric(gh->font, fontHeight) + VERTICAL_PADDING;
+	gh2obj->top = iheight * item;
+
+	// Adjust the list
+	if (gh2obj->top > gh2obj->cnt * iheight - gh->height-2)
+		gh2obj->top = gh2obj->cnt * iheight - gh->height-2;
+	if (gh2obj->top < 0)
+		gh2obj->top = 0;
+
+	_gwinUpdate(gh);
+}
+
 #if GWIN_NEED_LIST_IMAGES
 	void gwinListItemSetImage(GHandle gh, int item, gdispImage *pimg) {
 		const gfxQueueASyncItem	*	qi;
