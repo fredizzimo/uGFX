@@ -10,6 +10,10 @@
 
 #include "board_uext.h"
 
+/*
+ * NOTE: This board file is for an SSD1306 running in SPI mode
+ * 		 You will need to use a different board file for an SSD1306 running in I2C mode
+ */
 // The various methods of driving the SPI interface
 #define SPI_METHOD_PIO		1
 #define SPI_METHOD_AT91		2
@@ -28,6 +32,16 @@
 
 //---------------------------------------------------------------------
 
+/*
+ * Pin connection for the display to the UEXT connector:
+ *
+ * DISPLAY VCC					UEXT PIN 1 (3.3V)
+ * DISPLAY GND					UEXT PIN 2 (GND)
+ * DISPLAY SCL					UEXT PIN 9 (SCK)
+ * DISPLAY SDA					UEXT PIN 8 (MOSI)
+ * DISPLAY RST					UEXT PIN 5 (SCL)
+ * DISPLAY D/C					UEXT PIN 6 (SDA)
+ */
 #define PORT_RESET		UEXT_PORT_PIN5
 #define PIN_RESET		UEXT_PORTPIN_PIN5
 #define PORT_DC			UEXT_PORT_PIN6
@@ -42,7 +56,7 @@
 	#define PinSet(port,pin)			palSetPad((port), (pin))
 	#define PinClear(port,pin)			palClearPad((port), (pin))
 #else
-	#error "TLS8204 board file: Unsupported PIO method"
+	#error "SSD1306 board file: Unsupported PIO method"
 #endif
 
 #if SPI_METHOD == SPI_METHOD_PIO
@@ -144,7 +158,7 @@
 	#define SPI_WRITEBYTES(pdata, len)		spiSend(UEXT_SPI, len, pdata)
 
 #else
-	#error "TLS8204 board file: Unsupported SPI method"
+	#error "SSD1306 board file: Unsupported SPI method"
 #endif
 
 static inline void init_board(GDisplay *g) {
