@@ -39,6 +39,7 @@ FIX:		Color components fixed for some strange compilers
 FEATURE:	Added GWIN virtual keyboard widget
 FEATURE:	Added gwinListSetSelected()
 FEATURE:	Added gwinListViewItem()
+FIX:		GDISP driver color conversion when GDISP_PIXEL_FORMAT != GDISP_LLD_PIXEL_FORMAT
 
 
 *** Release 2.2 ***
