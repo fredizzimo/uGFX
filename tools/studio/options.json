@@ -53,78 +53,97 @@
     			"Colors" : [
 		            {
 		                "User": "White",
+		                "Library" : "White",
 		                "RGB": "0xFFFFFF"
 		            },
 		            {
 		                "User": "Black",
+		                "Library": "Black",
 		                "RGB": "0x000000"
 		            },
 		            {
 		                "User": "Gray",
+		                "Library": "Gray",
 		                "RGB": "0x808080"
 		            },
 		            {
 		                "User": "Blue",
+		                "Library": "Blue",
 		                "RGB": "0x0000FF"
 		            },
 		            {
 		                "User": "Red",
+		                "Library": "Red",
 		                "RGB": "0xFF0000"
 		            },
 		            {
 		                "User": "Magenta",
+		                "Library": "Magenta",
 		                "RGB": "0xFF00FF"
 		            },
 		            {
 		                "User": "Green",
+		                "Library": "Green",
 		                "RGB": "0x008000"
 		            },
 		            {
 		                "User": "Yellow",
+		                "Library": "Yellow",
 		                "RGB": "0xFFFF00"
 		            },
 		            {
 		                "User": "Cyan",
+		                "Library": "Cyan",
 		                "RGB": "0x00FFFF"
 		            },
 		            {
 		                "User": "Lime",
+		                "Library": "Lime",
 		                "RGB": "0x00FF00"
 		            },
 		            {
 		                "User": "Maroon",
+		                "Library": "Maroon",
 		                "RGB": "0x800000"
 		            },
 		            {
 		                "User": "Navy",
+		                "Library": "Navy",
 		                "RGB": "0x000080"
 		            },
 		            {
 		                "User": "Olive",
+		                "Library": "Olive",
 		                "RGB": "0x808000"
 		            },
 		            {
 		                "User": "Purple",
+		                "Library": "Purple",
 		                "RGB": "0x800080"
 		            },
 		            {
 		                "User": "Silver",
+		                "Library": "Silver",
 		                "RGB": "0xC0C0C0"
 		            },
 		            {
 		                "User": "Teal",
+		                "Library": "Teal",
 		                "RGB": "0x008080"
 		            },
 		            {
 		                "User": "Orange",
+		                "Library": "Orange",
 		                "RGB": "0xFFA500"
 		            },
 		            {
 		                "User": "Pink",
+		                "Library": "Pink",
 		                "RGB": "0xFFC0CB"
 		            },
 		            {
 		                "User": "SkyBlue",
+		                "Library": "SkyBlue",
 		                "RGB": "0x87CEEB"
 		            }
 	        	]
