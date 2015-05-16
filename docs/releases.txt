@@ -2,7 +2,11 @@
 *** Releases                                                              ***
 *****************************************************************************
 
-*** Changes after 2.2 ***
+*** Changes after 2.3 ***
+
+
+
+*** Release 2.3 ***
 FEATURE:	Added more events to the slider widget
 FIX:		Clean up visibility issues
 FIX:		Correct moving of containers
