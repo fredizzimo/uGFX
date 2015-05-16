@@ -6,10 +6,10 @@
  */
 
 /**
- * @file    src/gwin/gwin_button.h
+ * @file    src/gwin/gwin_keyboard.h
  * @brief   GWIN Graphic window subsystem header file.
  *
- * @defgroup Button Button
+ * @defgroup Keyboard Keyboard
  * @ingroup Widgets
  *
  * @details		GWIN allows it to easily create buttons with different styles
