@@ -6,8 +6,8 @@
  */
 
 /**
- * @file    src/gwin/gwin_frame.c
- * @brief   GWIN sub-system frame code.
+ * @file    src/gwin/gwin_tabset.c
+ * @brief   GWIN sub-system tabset code.
  */
 
 #include "gfx.h"
