@@ -33,6 +33,8 @@ extern "C" {
 	 * @param[in] width  	The width of the pixmap to be created
 	 * @param[in] height  	The height of the pixmap to be created
 	 *
+	 * @return 	The created GDisplay representing the pixmap
+	 *
 	 * @note	Once created, an off-screen pixmap can be drawn on using the standard gdispGxxxx calls.
 	 * @note	It must be destroyed using @p gdispDeleteOffscreenPixmap
 	 * @note	Because the RAM for the display area is allocated, on small micros only very small pixmaps should be considered.
@@ -70,7 +72,9 @@ extern "C" {
 		 *
 		 * @param[in] g  	The pixmap virtual display
 		 *
-		 * @note	The pointer returned can be passed to @p gdispImageOpenMemory() or to @gfileOpenMemory().
+		 * @return 	The pointer to the native gdispImage
+		 *
+		 * @note	The pointer returned can be passed to @p gdispImageOpenMemory() or to @p gfileOpenMemory().
 		 * @note	If you are just wanting to copy to a real display it is more efficient to use @p gdispGetPixmapBits() and @p gdispGBlitArea().
 		 * @note	Like @p gdispGetPixmapBits(), the pointer returned is valid for the life of the pixmap.
 		 */
