@@ -28,7 +28,7 @@
 #define GMOUSE_ADS7843_FINGER_MOVE_ERROR		14
 
 // How much extra data to allocate at the end of the GMouse structure for the board's use
-#define BOARD_DATA_SIZE			0
+#define GMOUSE_ADS7843_BOARD_DATA_SIZE   0
 
 static const SPIConfig spicfg = {
   0,
