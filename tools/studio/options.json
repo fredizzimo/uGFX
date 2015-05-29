@@ -281,27 +281,92 @@
 		                "Library": "WhiteWidgetStyle",
 		                "Colors":
 		                {
-		               		"Background": "0xFFFFFF",
+		               		"Background":
+		               		{
+		                		"User": "",
+		                		"Library": "",
+		                		"RGB": "0xFFFFFF"
+		            		},
 		               		"Enabled":
 		               		{
-		               			"Text": "0x000000",
-		               			"Edge": "0x404040",
-		               			"Fill": "0xE0E0E0",
-		               			"Progress": "0xE0E0E0"
+		               			"Text":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0x000000"
+		            			},
+		               			"Edge":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0x404040"
+		            			},
+		               			"Fill":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0xE0E0E0"
+		            			},
+		               			"Progress":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0xE0E0E0"
+		            			}
 		               		},
 		               		"Disabled":
 		               		{
-		               			"Text": "0xC0C0C0",
-		               			"Edge": "0x808080",
-		               			"Fill": "0xE0E0E0",
-		               			"Progress": "0xC0E0C0"
+		               			"Text":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0xC0C0C0"
+		            			},
+		               			"Edge":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0x808080"
+		            			},
+		               			"Fill":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0xE0E0E0"
+		            			},
+		               			"Progress":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0xC0E0C0"
+		            			}
 		               		},
 		               		"Pressed":
 		               		{
-		               			"Text": "0x404040",
-		               			"Edge": "0x404040",
-		               			"Fill": "0x808080",
-		               			"Progress": "0x00E000"
+		               			"Text":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0x404040"
+		            			},
+		               			"Edge":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0x404040"
+		            			},
+		               			"Fill":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0x808080"
+		            			},
+		               			"Progress":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0x00E000"
+		            			}
 		               		}
 		                }
 		            },
@@ -310,27 +375,92 @@
 		                "Library": "BlackWidgetStyle",
 		                "Colors":
 		                {
-		               		"Background": "0x000000",
+		               		"Background":
+		               		{
+		                		"User": "",
+		                		"Library": "",
+		                		"RGB": "0x000000"
+		            		},
 		               		"Enabled":
 		               		{
-		               			"Text": "0xC0C0C0",
-		               			"Edge": "0xC0C0C0",
-		               			"Fill": "0x606060",
-		               			"Progress": "0x404040"
+		               			"Text":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0xC0C0C0"
+		            			},
+		               			"Edge":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0xC0C0C0"
+		            			},
+		               			"Fill":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0x606060"
+		            			},
+		               			"Progress":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0x404040"
+		            			}
 		               		},
 		               		"Disabled":
 		               		{
-		               			"Text": "0x808080",
-		               			"Edge": "0x404040",
-		               			"Fill": "0x404040",
-		               			"Progress": "0x004000"
+		               			"Text":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0x808080"
+		            			},
+		               			"Edge":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0x404040"
+		            			},
+		               			"Fill":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0x404040"
+		            			},
+		               			"Progress":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0x004000"
+		            			}
 		               		},
 		               		"Pressed":
 		               		{
-		               			"Text": "0xFFFFFF",
-		               			"Edge": "0xC0C0C0",
-		               			"Fill": "0xE0E0E0",
-		               			"Progress": "0x008000"
+		               			"Text":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0xFFFFFF"
+		            			},
+		               			"Edge":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0xC0C0C0"
+		            			},
+		               			"Fill":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0xE0E0E0"
+		            			},
+		               			"Progress":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0x008000"
+		            			}
 		               		}
 		                }
 	            	}
