@@ -278,7 +278,7 @@
 				"Styles" : [
 		            {
 		                "User": "White",
-		                "Library": "WhiteWidgetStyle",
+		                "Handle": "WhiteWidgetStyle",
 		                "Colors":
 		                {
 		               		"Background":
@@ -372,7 +372,7 @@
 		            },
 		            {
 		                "User": "Black",
-		                "Library": "BlackWidgetStyle",
+		                "Handle": "BlackWidgetStyle",
 		                "Colors":
 		                {
 		               		"Background":
