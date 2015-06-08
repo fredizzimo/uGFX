@@ -14,7 +14,7 @@
 # NONE
 #
 
-SRCFLAGS += -mcpu=cortex-m1 -falign-functions=16
-LDFLAGS  += -mcpu=cortex-m1
+SRCFLAGS += -mcpu=cortex-m3 -falign-functions=16
+LDFLAGS  += -mcpu=cortex-m3
 DEFS     += CORTEX_USE_FPU=FALSE
 
