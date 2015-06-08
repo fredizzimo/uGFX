@@ -3,7 +3,7 @@
 *****************************************************************************
 
 *** Changes after 2.3 ***
-
+FIX:        Add missing stm32m3 cpu makefile option. Update doc to match.
 
 
 *** Release 2.3 ***
