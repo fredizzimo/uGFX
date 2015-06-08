@@ -31,6 +31,9 @@ ifneq ($(GFXDEMO),)
 endif
 
 # Include the operating system define
+ifeq ($(OPT_OS),arduino)
+	GFXDEFS += GFX_USE_OS_ARDUINO=TRUE
+endif
 ifeq ($(OPT_OS),win32)
 	GFXDEFS += GFX_USE_OS_WIN32=TRUE
 endif
