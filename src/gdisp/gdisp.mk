@@ -15,5 +15,5 @@ GFXSRC +=   $(GFXLIB)/src/gdisp/gdisp.c \
 			
 MFDIR = $(GFXLIB)/src/gdisp/mcufont
 include $(GFXLIB)/src/gdisp/mcufont/mcufont.mk
-GFXINC += $(MFDIR)
+#GFXINC += $(MFDIR)
 GFXSRC += $(MFSRC)

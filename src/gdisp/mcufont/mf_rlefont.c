@@ -267,7 +267,7 @@ uint8_t mf_rlefont_render_character(const struct mf_font_s *font,
     rstate.callback = callback;
     rstate.state = state;
     
-    p = find_glyph((struct mf_rlefont_s*)font, character);
+   	p = find_glyph((struct mf_rlefont_s*)font, character);
     if (!p)
         return 0;
     

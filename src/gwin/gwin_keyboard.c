@@ -21,7 +21,7 @@
 #define GKEYBOARD_FLG_REVERTSET		(GWIN_FIRST_CONTROL_FLAG<<0)
 #define GKEYBOARD_FLG_QUICKUPDATE	(GWIN_FIRST_CONTROL_FLAG<<1)
 
-#define BAD_ROWCOL		255
+#define GKEY_BAD_ROWCOL		255
 
 typedef uint8_t		utf8;
 typedef uint16_t	utf16;
@@ -173,13 +173,13 @@ static void SendKeyboardEvent(GKeyboardObject *gk) {
 
 #if GINPUT_NEED_MOUSE
 	// Find the key from the keyset and the x, y position
-	static void FindKey(GKeyboardObject *gk, coord_t x, coord_t y) {
+	static void KeyFindKey(GKeyboardObject *gk, coord_t x, coord_t y) {
 		const utf8		*krow;
 		fixed			f;
 		int				idx;
 
 		if (x < 0 || y < 0 || x >= gk->w.g.width || y >= gk->w.g.height) {
-			gk->keyrow = gk->keycol = BAD_ROWCOL;
+			gk->keyrow = gk->keycol = GKEY_BAD_ROWCOL;
 			return;
 		}
 
@@ -209,14 +209,14 @@ static void SendKeyboardEvent(GKeyboardObject *gk) {
 	}
 
 	// A mouse up has occurred (it may or may not be over the button)
-	static void MouseUp(GWidgetObject *gw, coord_t x, coord_t y) {
+	static void KeyMouseUp(GWidgetObject *gw, coord_t x, coord_t y) {
 		#define gk		((GKeyboardObject *)gw)
 
-		FindKey(gk, x, y);
+		KeyFindKey(gk, x, y);
 
 		// Do we have a valid key?
-		if (gk->keyrow == BAD_ROWCOL) {
-			if (gk->lastkeyrow != BAD_ROWCOL) {
+		if (gk->keyrow == GKEY_BAD_ROWCOL) {
+			if (gk->lastkeyrow != GKEY_BAD_ROWCOL) {
 				gw->g.flags |= GKEYBOARD_FLG_QUICKUPDATE;
 				_gwinUpdate((GHandle)gw);
 			}
@@ -224,7 +224,7 @@ static void SendKeyboardEvent(GKeyboardObject *gk) {
 		}
 
 		// We are turning off the display of the key
-		gk->keyrow = gk->keycol = BAD_ROWCOL;
+		gk->keyrow = gk->keycol = GKEY_BAD_ROWCOL;
 
 		// Is this one of the special keys
 		if (gk->key < 0x20) {
@@ -280,10 +280,10 @@ static void SendKeyboardEvent(GKeyboardObject *gk) {
 	}
 
 	// A mouse move has occurred (it may or may not be over the button)
-	static void MouseMove(GWidgetObject *gw, coord_t x, coord_t y) {
+	static void KeyMouseMove(GWidgetObject *gw, coord_t x, coord_t y) {
 		#define gk		((GKeyboardObject *)gw)
 
-		FindKey(gk, x, y);
+		KeyFindKey(gk, x, y);
 
 		if (gk->keyrow != gk->lastkeyrow || gk->keycol != gk->lastkeycol) {
 			gk->w.g.flags |= GKEYBOARD_FLG_QUICKUPDATE;
@@ -308,9 +308,9 @@ static const gwidgetVMT keyboardVMT = {
 	gwinKeyboardDraw_Normal,		// The default drawing routine
 	#if GINPUT_NEED_MOUSE
 		{
-			MouseMove,				// Process mouse down events
-			MouseUp,				// Process mouse up events
-			MouseMove,				// Process mouse move events
+			KeyMouseMove,			// Process mouse down events
+			KeyMouseUp,				// Process mouse up events
+			KeyMouseMove,			// Process mouse move events
 		},
 	#endif
 	#if GINPUT_NEED_TOGGLE
@@ -338,7 +338,7 @@ GHandle gwinGKeyboardCreate(GDisplay *g, GKeyboardObject *gk, const GWidgetInit 
 
 	gk->keytable = &GWIN_KEYBOARD_DEFAULT_LAYOUT;
 	gk->keyset = gk->keytable->ksets[0];
-	gk->lastkeyrow = gk->lastkeycol = gk->keyrow = gk->keycol = BAD_ROWCOL;
+	gk->lastkeyrow = gk->lastkeycol = gk->keyrow = gk->keycol = GKEY_BAD_ROWCOL;
 	gwinSetVisible((GHandle)gk, pInit->g.show);
 	return (GHandle)gk;
 }
@@ -359,7 +359,7 @@ void gwinKeyboardSetLayout(GHandle gh, struct GVKeyTable *layout) {
 		layout = &GWIN_KEYBOARD_DEFAULT_LAYOUT;
 	gk->keytable = layout;
 	gk->keyset = gk->keytable->ksets[0];
-	gk->lastkeyrow = gk->lastkeycol = gk->keyrow = gk->keycol = BAD_ROWCOL;
+	gk->lastkeyrow = gk->lastkeycol = gk->keyrow = gk->keycol = GKEY_BAD_ROWCOL;
 	gk->w.g.flags &= ~(GKEYBOARD_FLG_QUICKUPDATE|GKEYBOARD_FLG_REVERTSET);
 	gwinRedraw(gh);
 	#undef gk

@@ -611,7 +611,7 @@ void gwinPutCharArray(GHandle gh, const char *str, size_t n) {
 #define MAX_FILLER 11
 #define FLOAT_PRECISION 100000
 
-static char *ltoa_wd(char *p, long num, unsigned radix, long divisor) {
+static char *consltoa_wd(char *p, long num, unsigned radix, long divisor) {
 	int i;
 	char *q;
 
@@ -641,10 +641,10 @@ static char *ltoa_wd(char *p, long num, unsigned radix, long divisor) {
 		unsigned long precision = FLOAT_PRECISION;
 
 		l = num;
-		p = ltoa_wd(p, l, 10, 0);
+		p = consltoa_wd(p, l, 10, 0);
 		*p++ = '.';
 		l = (num - l) * precision;
-		return ltoa_wd(p, l, 10, precision / 10);
+		return consltoa_wd(p, l, 10, precision / 10);
 	}
 #endif
 
@@ -746,7 +746,7 @@ void gwinPrintf(GHandle gh, const char *fmt, ...) {
 				*p++ = '-';
 				l = -l;
 			}
-			p = ltoa_wd(p, l, 10, 0);
+			p = consltoa_wd(p, l, 10, 0);
 			break;
 		#if GWIN_CONSOLE_USE_FLOAT
 			case 'f':
@@ -774,7 +774,7 @@ void gwinPrintf(GHandle gh, const char *fmt, ...) {
 				l = va_arg(ap, long);
 			else
 				l = va_arg(ap, int);
-			p = ltoa_wd(p, l, c, 0);
+			p = consltoa_wd(p, l, c, 0);
 			break;
 		default:
 			*p++ = c;

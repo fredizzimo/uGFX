@@ -19,8 +19,8 @@
 #include <string.h>
 
 // Some position values
-#define BORDER_WIDTH			2
-#define TEXT_PADDING			5
+#define GTABSET_BORDER			2
+#define GTABSET_TXT_PAD			5
 
 // Some color blending
 #define GTABSET_TAB_CNR			8		// Diagonal corner on active tab
@@ -124,7 +124,7 @@ static coord_t	CalcTabHeight(GHandle gh) {
 	y = GWIN_TABSET_TABHEIGHT;
 	for(ph = gwinGetFirstChild(gh); ph; ph = gwinGetSibling(ph)) {
 		if (ph->vmt == (gwinVMT *)&tabpageVMT) {
-			w = gdispGetStringWidth(((GWidgetObject *)ph)->text, gh->font) + TEXT_PADDING*2;
+			w = gdispGetStringWidth(((GWidgetObject *)ph)->text, gh->font) + GTABSET_TXT_PAD*2;
 			x += w;
 			if (x > gh->width) {
 				y += GWIN_TABSET_TABHEIGHT;
@@ -155,7 +155,7 @@ static void FixTabSizePos(GHandle gh) {
 			gwinMove(ph, 0, 0);
 			gwinResize(ph, w, h);
 		} else {
-			gwinMove(ph, ph->x-gh->x-((gh->flags & GWIN_TABSET_BORDER) ? BORDER_WIDTH : 0) , ph->y-oldth-gh->y);
+			gwinMove(ph, ph->x-gh->x-((gh->flags & GWIN_TABSET_BORDER) ? GTABSET_BORDER : 0) , ph->y-oldth-gh->y);
 		}
 	}
 	if (vis && !(vis->flags & GWIN_FLG_VISIBLE)) {
@@ -164,7 +164,7 @@ static void FixTabSizePos(GHandle gh) {
 	}
 }
 
-static coord_t TabSetBorderSize(GHandle gh)		{ return (gh->flags & GWIN_TABSET_BORDER) ? BORDER_WIDTH : 0; }
+static coord_t TabSetBorderSize(GHandle gh)		{ return (gh->flags & GWIN_TABSET_BORDER) ? GTABSET_BORDER : 0; }
 static coord_t TabSetBorderTop(GHandle gh)		{ return ((GTabsetObject *)gh)->border_top; }
 
 #if GINPUT_NEED_MOUSE
@@ -185,7 +185,7 @@ static coord_t TabSetBorderTop(GHandle gh)		{ return ((GTabsetObject *)gh)->bord
 			gh = 0;
 			for(ph = gwinGetFirstChild(&gw->g); ph; ph = gwinGetSibling(ph)) {
 				if (ph->vmt == (gwinVMT *)&tabpageVMT) {
-					w = gdispGetStringWidth(((GWidgetObject *)ph)->text, gw->g.font) + TEXT_PADDING*2;
+					w = gdispGetStringWidth(((GWidgetObject *)ph)->text, gw->g.font) + GTABSET_TXT_PAD*2;
 					x += w;
 					if (x > gw->g.width) {
 						y += GWIN_TABSET_TABHEIGHT;
@@ -464,7 +464,7 @@ static coord_t drawtabs(GWidgetObject *gw) {
 	y = 0;
 	for(ph = gwinGetFirstChild(&gw->g); ph; ph = gwinGetSibling(ph)) {
 		if (ph->vmt == (gwinVMT *)&tabpageVMT) {
-			w = gdispGetStringWidth(((GWidgetObject *)ph)->text, gw->g.font) + TEXT_PADDING*2;
+			w = gdispGetStringWidth(((GWidgetObject *)ph)->text, gw->g.font) + GTABSET_TXT_PAD*2;
 			if (x+w > gw->g.width) {
 				ntarea(gw, y, x, gw->g.width - x);
 				y += GWIN_TABSET_TABHEIGHT;

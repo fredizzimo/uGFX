@@ -515,5 +515,7 @@ bool_t gwinAttachListener(GListener *pl) {
 	}
 #endif
 
+#undef gw
+#undef wvmt
 #endif /* GFX_USE_GWIN && GWIN_NEED_WIDGET */
 /** @} */

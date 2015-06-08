@@ -159,7 +159,7 @@
 #ifdef __cplusplus
 #define MF_EXTERN extern "C"
 #else
-#define MF_EXTERN extern
+#define MF_EXTERN
 #endif
 
 #endif

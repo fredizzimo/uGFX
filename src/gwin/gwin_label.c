@@ -173,4 +173,6 @@ static void gwinLabelDefaultDraw(GWidgetObject *gw, void *param) {
 		gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, w, h, (gw->g.flags & GWIN_FLG_SYSENABLED) ? gw->pstyle->enabled.edge : gw->pstyle->disabled.edge);
 }
 
+#undef gh2obj
+#undef gw2obj
 #endif // GFX_USE_GWIN && GFX_NEED_LABEL

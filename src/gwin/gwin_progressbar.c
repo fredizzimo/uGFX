@@ -17,7 +17,7 @@
 #include "gwin_class.h"
 
 // Reset the display position back to the value predicted by the saved progressbar position
-static void ResetDisplayPos(GProgressbarObject *gsw) {
+static void PBResetDisplayPos(GProgressbarObject *gsw) {
 	if (gsw->w.g.width < gsw->w.g.height)
 		gsw->dpos = gsw->w.g.height-1-((gsw->w.g.height-1)*(gsw->pos-gsw->min))/(gsw->max-gsw->min);
 	else
@@ -25,7 +25,7 @@ static void ResetDisplayPos(GProgressbarObject *gsw) {
 }
 
 // We have to deinitialize the timer which auto updates the progressbar if any
-static void _destroy(GHandle gh) {
+static void PBDestroy(GHandle gh) {
 	#if GWIN_PROGRESSBAR_AUTO
 		gtimerStop(&((GProgressbarObject *)gh)->gt);
 		gtimerDeinit(&((GProgressbarObject *)gh)->gt);
@@ -39,7 +39,7 @@ static const gwidgetVMT progressbarVMT = {
 	{
 		"Progressbar",				// The classname
 		sizeof(GProgressbarObject),	// The object size
-		_destroy,				// The destroy routine
+		PBDestroy,				// The destroy routine
 		_gwidgetRedraw,			// The redraw routine
 		0,						// The after-clear routine
 	},
@@ -83,7 +83,7 @@ GHandle gwinGProgressbarCreate(GDisplay *g, GProgressbarObject *gs, const GWidge
 		gtimerInit(&gs->gt);
 	#endif
 
-	ResetDisplayPos(gs);
+	PBResetDisplayPos(gs);
 	gwinSetVisible((GHandle)gs, pInit->g.show);
 
 	return (GHandle)gs;
@@ -101,7 +101,7 @@ void gwinProgressbarSetRange(GHandle gh, int min, int max) {
 	gsw->max = max;
 	gsw->pos = min;
 
-	ResetDisplayPos(gsw);
+	PBResetDisplayPos(gsw);
 
 	#undef gsw
 }
@@ -122,7 +122,7 @@ void gwinProgressbarSetPosition(GHandle gh, int pos) {
 		else gsw->pos = pos;
 	}
 
-	ResetDisplayPos(gsw);
+	PBResetDisplayPos(gsw);
 	_gwinUpdate(gh);
 
 	#undef gsw
@@ -153,7 +153,7 @@ void gwinProgressbarIncrement(GHandle gh) {
 	else
 		gsw->pos = gsw->max;
 
-	ResetDisplayPos(gsw);
+	PBResetDisplayPos(gsw);
 	_gwinUpdate(gh);
 
 	#undef gsw
@@ -172,7 +172,7 @@ void gwinProgressbarDecrement(GHandle gh) {
 
 	gsw->pos -= gsw->res;
 
-	ResetDisplayPos(gsw);
+	PBResetDisplayPos(gsw);
 	_gwinUpdate(gh);
 
 	#undef gsw

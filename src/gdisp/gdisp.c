@@ -501,7 +501,7 @@ static void line_clip(GDisplay *g) {
 }
 
 #if GDISP_STARTUP_LOGO_TIMEOUT > 0
-	static bool_t	initDone;
+	static bool_t	gdispInitDone;
 	static void StartupLogoDisplay(GDisplay *g) {
 		coord_t			x, y, w;
 		const coord_t *	p;
@@ -604,7 +604,7 @@ void _gdispInit(void)
 				#endif
 			}
 
-			initDone = TRUE;
+			gdispInitDone = TRUE;
 		}
 	#endif
 
@@ -660,7 +660,7 @@ void _gdispPostInitDriver(GDriver *g) {
 
 	// Display the startup logo if this is a static initialised display
 	#if GDISP_STARTUP_LOGO_TIMEOUT > 0
-		if (!initDone)
+		if (!gdispInitDone)
 			StartupLogoDisplay(gd);
 	#endif
 

@@ -49,7 +49,7 @@ static void SendRadioEvent(GWidgetObject *gw) {
 
 #if GINPUT_NEED_MOUSE
 	// A mouse down has occurred over the button
-	static void MouseDown(GWidgetObject *gw, coord_t x, coord_t y) {
+	static void RadioMouseDown(GWidgetObject *gw, coord_t x, coord_t y) {
 		(void) x; (void) y;
 
 		gwinRadioPress((GHandle)gw);
@@ -58,18 +58,18 @@ static void SendRadioEvent(GWidgetObject *gw) {
 
 #if GINPUT_NEED_TOGGLE
 	// A toggle on has occurred
-	static void ToggleOn(GWidgetObject *gw, uint16_t role) {
+	static void RadioToggleOn(GWidgetObject *gw, uint16_t role) {
 		(void) role;
 
 		gwinRadioPress((GHandle)gw);
 	}
 
-	static void ToggleAssign(GWidgetObject *gw, uint16_t role, uint16_t instance) {
+	static void RadioToggleAssign(GWidgetObject *gw, uint16_t role, uint16_t instance) {
 		(void) role;
 		((GRadioObject *)gw)->toggle = instance;
 	}
 
-	static uint16_t ToggleGet(GWidgetObject *gw, uint16_t role) {
+	static uint16_t RadioToggleGet(GWidgetObject *gw, uint16_t role) {
 		(void) role;
 		return ((GRadioObject *)gw)->toggle;
 	}
@@ -87,7 +87,7 @@ static const gwidgetVMT radioVMT = {
 	gwinRadioDraw_Radio,		// The default drawing routine
 	#if GINPUT_NEED_MOUSE
 		{
-			MouseDown,				// Process mouse down events
+			RadioMouseDown,			// Process mouse down events
 			0,						// Process mouse up events (NOT USED)
 			0,						// Process mouse move events (NOT USED)
 		},
@@ -95,10 +95,10 @@ static const gwidgetVMT radioVMT = {
 	#if GINPUT_NEED_TOGGLE
 		{
 			1,						// 1 toggle role
-			ToggleAssign,			// Assign Toggles
-			ToggleGet,				// Get Toggles
+			RadioToggleAssign,		// Assign Toggles
+			RadioToggleGet,			// Get Toggles
 			0,						// Process toggle off events (NOT USED)
-			ToggleOn,				// Process toggle on events
+			RadioToggleOn,				// Process toggle on events
 		},
 	#endif
 	#if GINPUT_NEED_DIAL

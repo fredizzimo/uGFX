@@ -17,8 +17,8 @@
 #include "gwin_class.h"
 
 // Parameters for button custom draw
-#define TOP_FADE				50		// (TOP_FADE/255)% fade to white for top of button
-#define BOTTOM_FADE				25		// (BOTTOM_FADE/255)% fade to black for bottom of button
+#define CHK_TOP_FADE			50		// (CHK_TOP_FADE/255)% fade to white for top of button
+#define CHK_BOTTOM_FADE			25		// (CHK_BOTTOM_FADE/255)% fade to black for bottom of button
 
 // Our checked state
 #define GCHECKBOX_FLG_CHECKED		(GWIN_FIRST_CONTROL_FLAG<<0)
@@ -47,7 +47,7 @@ static void SendCheckboxEvent(GWidgetObject *gw) {
 }
 
 #if GINPUT_NEED_MOUSE
-	static void MouseDown(GWidgetObject *gw, coord_t x, coord_t y) {
+	static void CheckboxMouseDown(GWidgetObject *gw, coord_t x, coord_t y) {
 		(void) x; (void) y;
 		gw->g.flags ^= GCHECKBOX_FLG_CHECKED;
 		_gwinUpdate((GHandle)gw);
@@ -56,19 +56,19 @@ static void SendCheckboxEvent(GWidgetObject *gw) {
 #endif
 
 #if GINPUT_NEED_TOGGLE
-	static void ToggleOn(GWidgetObject *gw, uint16_t role) {
+	static void CheckboxToggleOn(GWidgetObject *gw, uint16_t role) {
 		(void) role;
 		gw->g.flags ^= GCHECKBOX_FLG_CHECKED;
 		_gwinUpdate((GHandle)gw);
 		SendCheckboxEvent(gw);
 	}
 
-	static void ToggleAssign(GWidgetObject *gw, uint16_t role, uint16_t instance) {
+	static void CheckboxToggleAssign(GWidgetObject *gw, uint16_t role, uint16_t instance) {
 		(void) role;
 		((GCheckboxObject *)gw)->toggle = instance;
 	}
 
-	static uint16_t ToggleGet(GWidgetObject *gw, uint16_t role) {
+	static uint16_t CheckboxToggleGet(GWidgetObject *gw, uint16_t role) {
 		(void) role;
 		return ((GCheckboxObject *)gw)->toggle;
 	}
@@ -86,7 +86,7 @@ static const gwidgetVMT checkboxVMT = {
 	gwinCheckboxDraw_CheckOnLeft,	// The default drawing routine
 	#if GINPUT_NEED_MOUSE
 		{
-			MouseDown,				// Process mouse down events
+			CheckboxMouseDown,		// Process mouse down events
 			0,						// Process mouse up events (NOT USED)
 			0,						// Process mouse move events (NOT USED)
 		},
@@ -94,10 +94,10 @@ static const gwidgetVMT checkboxVMT = {
 	#if GINPUT_NEED_TOGGLE
 		{
 			1,						// 1 toggle role
-			ToggleAssign,			// Assign Toggles
-			ToggleGet,				// Get Toggles
+			CheckboxToggleAssign,	// Assign Toggles
+			CheckboxToggleGet,		// Get Toggles
 			0,						// Process toggle off events (NOT USED)
-			ToggleOn,				// Process toggle on events
+			CheckboxToggleOn,		// Process toggle on events
 		},
 	#endif
 	#if GINPUT_NEED_DIAL
@@ -147,7 +147,7 @@ bool_t gwinCheckboxIsChecked(GHandle gh) {
  * Custom Draw Routines
  *----------------------------------------------------------*/
 
-static const GColorSet *getDrawColors(GWidgetObject *gw) {
+static const GColorSet *getCheckboxColors(GWidgetObject *gw) {
 	if (!(gw->g.flags & GWIN_FLG_SYSENABLED))	return &gw->pstyle->disabled;
 	if ((gw->g.flags & GCHECKBOX_FLG_CHECKED))	return &gw->pstyle->pressed;
 	return &gw->pstyle->enabled;
@@ -160,7 +160,7 @@ void gwinCheckboxDraw_CheckOnLeft(GWidgetObject *gw, void *param) {
 	(void)				param;
 
 	if (gw->g.vmt != (gwinVMT *)&checkboxVMT) return;
-	pcol = getDrawColors(gw);
+	pcol = getCheckboxColors(gw);
 
 	// Get the dimension of the check box (sans text)
 	ld = gw->g.width < gw->g.height ? gw->g.width : gw->g.height;
@@ -186,7 +186,7 @@ void gwinCheckboxDraw_CheckOnRight(GWidgetObject *gw, void *param) {
 	(void)				param;
 
 	if (gw->g.vmt != (gwinVMT *)&checkboxVMT) return;
-	pcol = getDrawColors(gw);
+	pcol = getCheckboxColors(gw);
 
 	// Get the dimension of the check box (sans text)
 	ld = gw->g.width < gw->g.height ? gw->g.width : gw->g.height;
@@ -214,7 +214,7 @@ void gwinCheckboxDraw_CheckOnRight(GWidgetObject *gw, void *param) {
 		(void)				param;
 
 		if (gw->g.vmt != (gwinVMT *)&checkboxVMT)	return;
-		pcol = getDrawColors(gw);
+		pcol = getCheckboxColors(gw);
 
 		#if GWIN_NEED_FLASHING
 			// Flash the on and off state.
@@ -235,7 +235,7 @@ void gwinCheckboxDraw_CheckOnRight(GWidgetObject *gw, void *param) {
 		(void)				param;
 
 		if (gw->g.vmt != (gwinVMT *)&checkboxVMT)	return;
-		pcol = getDrawColors(gw);
+		pcol = getCheckboxColors(gw);
 
 		#if GWIN_NEED_FLASHING
 			// Flash the on and off state.
@@ -243,8 +243,8 @@ void gwinCheckboxDraw_CheckOnRight(GWidgetObject *gw, void *param) {
 		#endif
 
 		/* Fill the box blended from variants of the fill color */
-		tcol = gdispBlendColor(White, pcol->fill, TOP_FADE);
-		bcol = gdispBlendColor(Black, pcol->fill, BOTTOM_FADE);
+		tcol = gdispBlendColor(White, pcol->fill, CHK_TOP_FADE);
+		bcol = gdispBlendColor(Black, pcol->fill, CHK_BOTTOM_FADE);
 		dalpha = FIXED(255)/gw->g.height;
 		for(alpha = 0, i = 0; i < gw->g.height; i++, alpha += dalpha)
 			gdispGDrawLine(gw->g.display, gw->g.x, gw->g.y+i, gw->g.x+gw->g.width-2, gw->g.y+i, gdispBlendColor(bcol, tcol, NONFIXED(alpha)));
