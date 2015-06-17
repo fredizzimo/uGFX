@@ -15,6 +15,11 @@
  * @details		GWIN allos it to create an label widget. The widget
  *				takes no user input.
  *
+ * @details		Setting the dimensions of the widget to 0 will automatically
+ *				set the labels dimensions to fit the entire text. Note that the
+ *				dimensions of the label will change every time the text is changed
+ *				through gwinSetText().
+ *
  * @pre			GFX_USE_GDISP must be set to TRUE in your gfxconf.h
  * @pre			GFX_USE_GWIN must be set to TRUE in your gfxconf.h
  * @pre			GDISP_NEED_TEXT must be set to TRUE in your gfxconf.h
@@ -46,7 +51,7 @@ extern "C" {
 /**
  * @brief				Create a label widget.
  * @details				A label widget is a simple window which has a static text.
- * 
+ *
  * @param[in] g			The GDisplay to display this window on
  * @param[in] widget	The label structure to initialise. If this is NULL, the structure is dynamically allocated.
  * @param[in] pInit		The initialisation parameters to use.
@@ -93,7 +98,7 @@ void gwinLabelSetBorder(GHandle gh, bool_t border);
 	 * @api
 	 */
 	void gwinLabelSetAttribute(GHandle gh, coord_t tab, const char* attr);
-#endif 
+#endif
 
 #ifdef __cplusplus
 }
@@ -101,4 +106,3 @@ void gwinLabelSetBorder(GHandle gh, bool_t border);
 
 #endif // _GWIN_LABEL_H
 /** @} */
-
