@@ -47,29 +47,64 @@ typedef int16_t	coord_t;
 /**
  * @brief   Type for a 2D point on the screen.
  */
-typedef struct point { coord_t x, y; } point, point_t;
+typedef struct point {
+	coord_t x;		/**< The x coordinate of the point. */
+	coord_t y;		/**< The y coordinate of the point. */
+} point, point_t;
+
 /**
+ * @enum justify
  * @brief   Type for the text justification.
  */
-typedef enum justify { justifyLeft=0, justifyCenter=1, justifyRight=2 } justify_t;
+typedef enum justify {
+	justifyLeft = 0,		/**< Justify Left */
+	justifyCenter = 1,		/**< Justify Center */
+	justifyRight = 2		/**< Justify Right */
+} justify_t;
+
 /**
+ * @enum fontmetric
  * @brief   Type for the font metric.
  */
-typedef enum fontmetric { fontHeight, fontDescendersHeight, fontLineSpacing, fontCharPadding, fontMinWidth, fontMaxWidth } fontmetric_t;
+typedef enum fontmetric {
+	fontHeight,				/**< The height of the font */
+	fontDescendersHeight,	/**< The descenders height */
+	fontLineSpacing,		/**< The line spacing */
+	fontCharPadding,		/**< The char padding */
+	fontMinWidth,			/**< The minimum width */
+	fontMaxWidth			/**< The maximum width */
+} fontmetric_t;
+
 /**
  * @brief   The type of a font.
  */
 typedef const struct mf_font_s* font_t;
+
 /**
+ * @enum 	orientation
  * @brief   Type for the screen orientation.
  * @note	GDISP_ROTATE_LANDSCAPE and GDISP_ROTATE_PORTRAIT are internally converted to the
  * 			most appropriate other orientation.
  */
-typedef enum orientation { GDISP_ROTATE_0=0, GDISP_ROTATE_90=90, GDISP_ROTATE_180=180, GDISP_ROTATE_270=270, GDISP_ROTATE_PORTRAIT=1000,  GDISP_ROTATE_LANDSCAPE=1001 } orientation_t;
+typedef enum orientation {
+	GDISP_ROTATE_0 = 0,				/**< Don't rotate. This is the displays native orientation. */
+	GDISP_ROTATE_90 = 90,			/**< Rotate by 90 degrees absolute to the native rotation. */
+	GDISP_ROTATE_180 = 180,			/**< Rotate by 180 degrees absolute to the native rotation. */
+	GDISP_ROTATE_270 = 270,			/**< Rotate by 270 degrees absolute to the native rotation. */
+	GDISP_ROTATE_PORTRAIT = 1000,	/**< Put the display into portrait mode. */
+	GDISP_ROTATE_LANDSCAPE = 1001	/**< Put the display into landscape mode. */
+} orientation_t;
+
 /**
+ * @enum 	powermode
  * @brief   Type for the available power modes for the screen.
  */
-typedef enum powermode { powerOff, powerSleep, powerDeepSleep, powerOn } powermode_t;
+typedef enum powermode {
+	powerOff,						/**< Turn the display off. */
+	powerSleep,						/**< Put the display into sleep mode. */
+	powerDeepSleep,					/**< Put the display into deep-sleep mode. */
+	powerOn							/**< Turn the display on. */
+} powermode_t;
 
 /*
  * Our black box display structure.
