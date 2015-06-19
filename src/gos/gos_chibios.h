@@ -93,14 +93,15 @@ extern "C" {
 	#define gfxMutexInit(pmutex)		chMtxInit(pmutex)
 	#define gfxMutexExit(pmutex)		chMtxUnlock()
 	#define gfxExit()					chSysHalt()
+	#define gfxHalt(msg)				{ chDbgPanic(msg); chSysHalt(); }
 #elif CH_KERNEL_MAJOR == 3
 	#define gfxSystemTicks()			chVTGetSystemTimeX()
 	#define gfxMutexInit(pmutex)		chMtxObjectInit(pmutex)
 	#define gfxMutexExit(pmutex)		chMtxUnlock(pmutex)
 	#define gfxExit()					osalSysHalt("gfx_exit")
+#define gfxHalt(msg)					{ chSysHalt(msg); }
 #endif
 
-#define gfxHalt(msg)				{ chDbgPanic(msg); chSysHalt(); }
 #define gfxAlloc(sz)				chHeapAlloc(0, sz)
 #define gfxFree(ptr)				chHeapFree(ptr)
 #define gfxYield()					chThdYield()
