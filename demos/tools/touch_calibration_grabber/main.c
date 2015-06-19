@@ -38,6 +38,10 @@ static coord_t					bHeight;
 static GHandle					ghc;
 static coord_t					swidth, sheight;
 
+#if !GWIN_CONSOLE_USE_FLOAT
+	#error "You need to enable float support for the console widget. (GWIN_CONSOLE_USE_FLOAT)"
+#endif
+
 int main(void) {
 	GMouse*					m;
 
