@@ -27,7 +27,7 @@ typedef struct LCD_Parameters {
 	uint16_t	vpulse;							// Vertical Pulse
 	uint16_t	vperiod;						// Vertical Period (Total)
 	uint32_t	fpr;							// Calculated FPR
-	uint16_t	flags;							// For command "SSD1963_SET_GDISP_MODE"
+	uint16_t	mode;							// For command "SSD1963_SET_LCD_MODE"
 		/* Set the pannel data width */
 		#define LCD_PANEL_DATA_WIDTH_24BIT 				(1<<5)						// 18bit default
 		/* Set the color deeph enhancement */
@@ -44,6 +44,9 @@ typedef struct LCD_Parameters {
 		/* Set the lcd panel interface type */										// default TFT mode
 		#define LCD_PANEL_TYPE_SERIAL_RGB_MODE			((1<<6) << 8)				// Serial RGB mode
 		#define LCD_PANEL_TYPE_SERIAL_RGB_DUMMY_MODE	(((1<<5) | (1<<6)) << 8)	// Serial RGB+dummy mode
+
+	bool_t		flipHorz;						// Flipping the display horizontally
+	bool_t		flipVert;						// Flipping the display vertically
 } LCD_Parameters;
 
 #include "board_SSD1963.h"
@@ -190,9 +193,9 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		write_reg(g, SSD1963_SET_PLL, 0x03);			// Use PLL
 
 		/* LCD panel parameters */
-		write_index(g, SSD1963_SET_GDISP_MODE);
-		write_data(g, lcdp->flags & 0xFF);
-		write_data(g, (lcdp->flags >> 8) & 0xFF);
+		write_index(g, SSD1963_SET_LCD_MODE);
+		write_data(g, lcdp->mode & 0xFF);
+		write_data(g, (lcdp->mode >> 8) & 0xFF);
 		//**	write_data(g, 0x18);					//Enabled dithering
 		//**	write_data(g, 0x00);
 		write_data16(g, lcdp->width-1);
@@ -200,9 +203,17 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		write_data(g, 0x00);							// RGB - line sequences for serial TFT
 	#endif
 
-	// From Displaytech example - for larger horizontal resolutions - not sure if display-specific
-	if (lcdp->width >= 640)
-		write_reg(g, SSD1963_SET_ADDRESS_MODE, 2);		// Flip horizontal direction
+	
+	// Display flipping
+	if (lcdp->flipHorz)	{
+		write_reg(g, SSD1963_SET_ADDRESS_MODE, SSD1963_ADDR_MODE_FLIP_HORZ);
+	} else if (lcdp->flipVert) {
+		write_reg(g, SSD1963_SET_ADDRESS_MODE, SSD1963_ADDR_MODE_FLIP_VERT);
+	} else if (lcdp->flipHorz && lcdp->flipVert) {
+		write_reg(g, SSD1963_SET_ADDRESS_MODE, SSD1963_ADDR_MODE_FLIP_VERT | SSD1963_ADDR_MODE_FLIP_HORZ);
+	} else {
+		write_reg(g, SSD1963_SET_ADDRESS_MODE, 0x00);
+	}
 
 	write_reg(g, SSD1963_SET_PIXEL_DATA_INTERFACE, SSD1963_PDI_16BIT565);
 	write_reg(g, SSD1963_SET_PIXEL_FORMAT, 0x50);
