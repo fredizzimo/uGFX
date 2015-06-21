@@ -124,6 +124,7 @@ int xlatekey(void)
 void I_GetEvent(void)
 {
     event_t event;
+    static uint16_t last_buttons = 0;
 
     #if GFX_USE_GINPUT && GINPUT_NEED_MOUSE
 		GEventMouse		mev;
@@ -132,8 +133,8 @@ void I_GetEvent(void)
 	#if GFX_USE_GINPUT && GINPUT_NEED_MOUSE
 		ginputGetMouseStatus(0, &mev);
 		event.type = ev_mouse;
-		event.data1 = mev.current_buttons & (GINPUT_MOUSE_BTN_LEFT|GINPUT_MOUSE_BTN_RIGHT|GINPUT_MOUSE_BTN_MIDDLE);
-		if ((mev.current_buttons ^ mev.last_buttons) & (GINPUT_MOUSE_BTN_LEFT|GINPUT_MOUSE_BTN_RIGHT|GINPUT_MOUSE_BTN_MIDDLE)) {
+		event.data1 = mev.buttons & (GINPUT_MOUSE_BTN_LEFT|GINPUT_MOUSE_BTN_RIGHT|GINPUT_MOUSE_BTN_MIDDLE);
+		if ((mev.buttons ^ last_buttons) & (GINPUT_MOUSE_BTN_LEFT|GINPUT_MOUSE_BTN_RIGHT|GINPUT_MOUSE_BTN_MIDDLE)) {
 			event.data2 = event.data3 = 0;
 		} else {
 			event.data2 = (mev.x - lastmousex) << 2;
@@ -148,6 +149,8 @@ void I_GetEvent(void)
 					mousemoved = true;
 			}
 		}
+
+		last_buttons = mev.buttons;
 
 	#endif
 #if 0
