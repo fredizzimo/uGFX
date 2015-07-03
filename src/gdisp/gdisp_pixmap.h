@@ -40,7 +40,7 @@ extern "C" {
 	 * @note	Because the RAM for the display area is allocated, on small micros only very small pixmaps should be considered.
 	 * 			For example a 100x100 at 16 bits per pixel would be 20K of RAM (plus some overheads).
 	 */
-	GDisplay *gdispCreatePixmap(coord_t width, coord_t height);
+	GDisplay *gdispPixmapCreate(coord_t width, coord_t height);
 
 	/**
 	 * @brief	Destroy an off-screen pixmap
@@ -49,7 +49,7 @@ extern "C" {
 	 *
 	 * @note	If a normal display is passed to this routine, it will be ignored.
 	 */
-	void gdispDeletePixmap(GDisplay *g);
+	void gdispPixmapDelete(GDisplay *g);
 
 	/**
 	 * @brief	Get a pointer to the pixels of the display surface.
@@ -62,7 +62,7 @@ extern "C" {
 	 * 			(although different pixmaps will have different pixel pointers). Once a pixmap is deleted, the pixel pointer
 	 * 			should not be used by the application.
 	 */
-	pixel_t	*gdispGetPixmapBits(GDisplay *g);
+	pixel_t	*gdispPixmapGetBits(GDisplay *g);
 
 	#if GDISP_NEED_PIXMAP_IMAGE || defined(__DOXYGEN__)
 		/**
@@ -78,7 +78,7 @@ extern "C" {
 		 * @note	If you are just wanting to copy to a real display it is more efficient to use @p gdispGetPixmapBits() and @p gdispGBlitArea().
 		 * @note	Like @p gdispGetPixmapBits(), the pointer returned is valid for the life of the pixmap.
 		 */
-		void *gdispGetPixmapMemoryImage(GDisplay *g);
+		void *gdispPixmapGetMemoryImage(GDisplay *g);
 	#endif
 	
 #ifdef __cplusplus

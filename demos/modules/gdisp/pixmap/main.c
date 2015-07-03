@@ -32,8 +32,8 @@
 #define PIXMAP_WIDTH	40
 #define PIXMAP_HEIGHT	10
 
-static GDisplay	*pix;
-static pixel_t	*surface;
+static GDisplay* pixmap;
+static pixel_t* surface;
 
 int main(void) {
 	coord_t		width, height;
@@ -47,8 +47,8 @@ int main(void) {
     height = gdispGetHeight();
 
     // Create a pixmap and get a pointer to the bits
-    pix = gdispCreatePixmap(PIXMAP_WIDTH, PIXMAP_HEIGHT);
-    surface = gdispGetPixmapBits(pix);
+    pixmap = gdispPixmapCreate(PIXMAP_WIDTH, PIXMAP_HEIGHT);
+    surface = gdispPixmapGetBits(pixmap);
 
     // A pixmap can be treated either as a virtual display or as a memory framebuffer surface.
     // We demonstrate writing to it using both methods.
@@ -59,7 +59,7 @@ int main(void) {
     		surface[j*PIXMAP_WIDTH + i] = RGB2COLOR(0, 255-i*(256/PIXMAP_WIDTH), j*(256/PIXMAP_HEIGHT));
 
     // Secondly, show drawing a line on it like a virtual display
-    gdispGDrawLine(pix, 0, 0, gdispGGetWidth(pix)-1, gdispGGetHeight(pix)-1, White);
+    gdispGDrawLine(pixmap, 0, 0, gdispGGetWidth(pixmap)-1, gdispGGetHeight(pixmap)-1, White);
     
     i = j = 0;
     while(TRUE) {
@@ -78,6 +78,9 @@ int main(void) {
 
     	// Wait
     	gfxSleepMilliseconds(100);
-    }   
+    }
+
+    // Clean up
+    gdispPixmapDelete(pixmap);
 }
 
