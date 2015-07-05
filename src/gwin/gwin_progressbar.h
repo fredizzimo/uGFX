@@ -147,7 +147,7 @@ void gwinProgressbarDecrement(GHandle gh);
   */
 #define gwinProgressbarReset(gh)			gwinProgressbarSetPosition(gh, ((GProgressbarObject *)(gh))->min)
 
-#if GWIN_PROGRESSBAR_AUTO
+#if GWIN_PROGRESSBAR_AUTO || defined(__DOXYGEN__)
 	/**
 	 * @brief	Automatically increments the progress bar
 	 *
