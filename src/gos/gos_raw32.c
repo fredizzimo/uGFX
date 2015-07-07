@@ -428,8 +428,8 @@ void gfxSleepMicroseconds(delaytime_t ms) {
  * For those it doesn't - read the compiler manuals and the library source code to
  * work out the correct macro values.
  * You can use the debugger to work out the values for your compiler and put them here.
- * Defining these macros as constant values makes the system behaviour guaranteed but also
- * makes your code compiler and cpu architecture dependant.
+ * Defining these macros as constant values makes the system behavior guaranteed but also
+ * makes your code compiler and cpu architecture dependent.
  */
 #if 0
 	// Define your compiler constant values here.
