@@ -51,12 +51,21 @@ void _gosDeinit(void)
  *********************************************************/
 
 #if defined(WIN32)
+	// Win32 nasty stuff - we have conflicting definitions for Red, Green & Blue
+	#ifndef _WIN32_WINNT
+		#define _WIN32_WINNT 0x0501			// Windows XP and up
+	#endif
 	#undef Red
 	#undef Green
 	#undef Blue
 	#define WIN32_LEAN_AND_MEAN
-	#include <stdio.h>
 	#include <windows.h>
+	#undef WIN32_LEAN_AND_MEAN
+	#define Blue			HTML2COLOR(0x0000FF)
+	#define Red				HTML2COLOR(0xFF0000)
+	#define Green			HTML2COLOR(0x008000)
+
+	#include <stdio.h>
 	systemticks_t gfxSystemTicks(void)						{ return GetTickCount(); }
 	systemticks_t gfxMillisecondsToTicks(delaytime_t ms)	{ return ms; }
 #endif
