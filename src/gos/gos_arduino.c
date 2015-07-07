@@ -327,7 +327,7 @@ static thread *Qpop(threadQ * q) {
 	/* These functions are not static to prevent the compiler removing them as functions */
 
 	void get_stack_state(void) {
-		char c;
+		char* c;
 		pframeinfo->localptr = (char *)&c;
 		_setjmp(pframeinfo->cxt);
 	}

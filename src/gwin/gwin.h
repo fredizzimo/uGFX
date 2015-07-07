@@ -469,7 +469,7 @@ extern "C" {
 
 	#if GWIN_NEED_WINDOWMANAGER || defined (__DOXYGEN__)
 		/**
-		 * @brief	Redraw a window
+		 * @brief	Redraw a display
 		 *
 		 * @param[in] g				The display to redraw. Passing NULL will redraw all displays.
 		 * @param[in] preserve		Should the redraw try to preserve existing screen data for those
