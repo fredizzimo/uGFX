@@ -37,6 +37,25 @@
 	#define GOS_RAW_HEAP_SIZE	0
 #endif
 
+/**
+ * @brief	Scheduler cpu support
+ */
+#define SCHED_USE_SETJMP		0
+#define SCHED_USE_CORTEX_M0		1
+#define SCHED_USE_CORTEX_M1		2
+#define SCHED_USE_CORTEX_M2		3
+#define SCHED_USE_CORTEX_M3		4
+#define SCHED_USE_CORTEX_M4		5
+
+/**
+ * @brief	Set the preferred scheduler method
+ * @note	If not defined the SCHED_USE_SETJMP is used which should work for most platforms.
+ */
+#ifndef GOS_RAW_SCHEDULER
+	#define GOS_RAW_SCHEDULER	SCHED_USE_SETJMP
+#endif
+
+
 /*===========================================================================*/
 /* Type definitions                                                          */
 /*===========================================================================*/

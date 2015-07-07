@@ -430,50 +430,62 @@ void gfxSleepMicroseconds(delaytime_t ms) {
  * Threading functions
  *********************************************************/
 
-/**
- * There are some compilers we know how they store the jmpbuf. For those
- * we can use the constant macro definitions. For others we have to "auto-detect".
- * Auto-detection is hairy and there is no guarantee it will work on all architectures.
- * For those it doesn't - read the compiler manuals and the library source code to
- * work out the correct macro values.
- * You can use the debugger to work out the values for your compiler and put them here.
- * Defining these macros as constant values makes the system behavior guaranteed but also
- * makes your code compiler and cpu architecture dependent.
- */
-#if 0
-	// Define your compiler constant values here.
-	//	These example values are for mingw32 compiler (x86).
-	#define AUTO_DETECT_MASK	FALSE
-	#define STACK_DIR_UP		FALSE
-	#define MASK1				0x00000011
-	#define MASK2				0x00000000
-	#define STACK_BASE			9
+#if GOS_RAW_SCHEDULER == SCHED_USE_SETJMP
+
+	/**
+	 * There are some compilers we know how they store the jmpbuf. For those
+	 * we can use the constant macro definitions. For others we have to "auto-detect".
+	 * Auto-detection is hairy and there is no guarantee it will work on all architectures.
+	 * For those it doesn't - read the compiler manuals and the library source code to
+	 * work out the correct macro values.
+	 * You can use the debugger to work out the values for your compiler and put them here.
+	 * Defining these macros as constant values makes the system behavior guaranteed but also
+	 * makes your code compiler and cpu architecture dependent.
+	 */
+	#if 0
+		// Define your compiler constant values here.
+		//	These example values are for mingw32 compiler (x86).
+		#define AUTO_DETECT_MASK	FALSE
+		#define STACK_DIR_UP		FALSE
+		#define MASK1				0x00000011
+		#define MASK2				0x00000000
+		#define STACK_BASE			9
+	#else
+		#define AUTO_DETECT_MASK	TRUE
+		#define STACK_DIR_UP		stackdirup			// TRUE if the stack grow up instead of down
+		#define MASK1				jmpmask1			// The 1st mask of jmp_buf elements that need relocation
+		#define MASK2				jmpmask2			// The 2nd mask of jmp_buf elements that need relocation
+		#define STACK_BASE			stackbase			// The base of the stack frame relative to the local variables
+		static bool_t		stackdirup;
+		static uint32_t		jmpmask1;
+		static uint32_t		jmpmask2;
+		static size_t		stackbase;
+	#endif
+
+	#include <setjmp.h> /* jmp_buf, setjmp(), longjmp() */
+
+	/**
+	 * Some compilers define a _setjmp() and a setjmp().
+	 * The difference between them is that setjmp() saves the signal masks.
+	 * That is of no use to us so prefer to use the _setjmp() methods.
+	 * If they don't exist compile them to be the standard setjmp() function.
+	 * Similarly for longjmp().
+	 */
+	#if (!defined(setjmp) && !defined(_setjmp)) || defined(__KEIL__) || defined(__C51__)
+		#define _setjmp setjmp
+	#endif
+	#if (!defined(longjmp) && !defined(_longjmp)) || defined(__KEIL__) || defined(__C51__)
+		#define _longjmp longjmp
+	#endif
+
+	typedef jmp_buf		threadcxt;
+
+#elif GOS_RAW_SCHEDULER == SCHED_USE_CORTEX_M0 || GOS_RAW_SCHEDULER == SCHED_USE_CORTEX_M1
+	typedef void *	threadcxt;
+#elif GOS_RAW_SCHEDULER == SCHED_USE_CORTEX_M3 || GOS_RAW_SCHEDULER == SCHED_USE_CORTEX_M4
+	typedef void *	threadcxt;
 #else
-	#define AUTO_DETECT_MASK	TRUE
-	#define STACK_DIR_UP		stackdirup			// TRUE if the stack grow up instead of down
-	#define MASK1				jmpmask1			// The 1st mask of jmp_buf elements that need relocation
-	#define MASK2				jmpmask2			// The 2nd mask of jmp_buf elements that need relocation
-	#define STACK_BASE			stackbase			// The base of the stack frame relative to the local variables
-	static bool_t		stackdirup;
-	static uint32_t		jmpmask1;
-	static uint32_t		jmpmask2;
-	static size_t		stackbase;
-#endif
-
-#include <setjmp.h> /* jmp_buf, setjmp(), longjmp() */
-
-/**
- * Some compilers define a _setjmp() and a setjmp().
- * The difference between them is that setjmp() saves the signal masks.
- * That is of no use to us so prefer to use the _setjmp() methods.
- * If they don't exist compile them to be the standard setjmp() function.
- * Similarly for longjmp().
- */
-#if (!defined(setjmp) && !defined(_setjmp)) || defined(__KEIL__) || defined(__C51__)
-	#define _setjmp setjmp
-#endif
-#if (!defined(longjmp) && !defined(_longjmp)) || defined(__KEIL__) || defined(__C51__)
-	#define _longjmp longjmp
+	#error "GOS RAW32: Unsupported Scheduler. Try setting GOS_RAW_SCHEDULER = SCHED_USE_SETJMP"
 #endif
 
 typedef struct thread {
@@ -486,7 +498,7 @@ typedef struct thread {
 	size_t			size;					// Size of the thread stack (including this structure)
 	threadreturn_t	(*fn)(void *param);		// Thread function
 	void *			param;					// Parameter for the thread function
-	jmp_buf			cxt;					// The current thread context.
+	threadcxt		cxt;					// The current thread context.
 } thread;
 
 typedef struct threadQ {
@@ -522,7 +534,8 @@ static thread *Qpop(threadQ * q) {
 	return t;
 }
 
-#if AUTO_DETECT_MASK
+#if GOS_RAW_SCHEDULER == SCHED_USE_SETJMP && AUTO_DETECT_MASK
+
 	// The structure for the saved stack frame information
 	typedef struct saveloc {
 		char *		localptr;
@@ -535,7 +548,7 @@ static thread *Qpop(threadQ * q) {
 	/* These functions are not static to prevent the compiler removing them as functions */
 
 	void get_stack_state(void) {
-		char* c;
+		char *c;
 		pframeinfo->localptr = (char *)&c;
 		_setjmp(pframeinfo->cxt);
 	}
@@ -556,7 +569,7 @@ static void _gosThreadsInit(void) {
 	current->fn = 0;
 	current->param = 0;
 
-	#if AUTO_DETECT_MASK
+	#if GOS_RAW_SCHEDULER == SCHED_USE_SETJMP && AUTO_DETECT_MASK
 		{
 			uint32_t	i;
 			char **		pout;
@@ -608,24 +621,165 @@ gfxThreadHandle gfxThreadMe(void) {
 	return (gfxThreadHandle)current;
 }
 
-void gfxYield(void) {
-	if (!_setjmp(current->cxt)) {
-		// Add us back to the Queue
-		Qadd(&readyQ, current);
+// Check if there are dead processes to deallocate
+static void cleanUpDeadThreads(void) {
+	thread *p;
 
-		// Check if there are dead processes to deallocate
-		while ((current = Qpop(&deadQ)))
-			gfxFree(current);
+	while ((p = Qpop(&deadQ)))
+		gfxFree(p);
+}
 
-		// Run the next process
-		current = Qpop(&readyQ);
-		_longjmp(current->cxt, 1);
+#if GOS_RAW_SCHEDULER == SCHED_USE_SETJMP
+	// Move the stack frame and relocate the context data
+	void _gfxAdjustCxt(thread *t) {
+		char **	s;
+		char *	nf;
+		int		diff;
+		uint32_t	i;
+
+		// Copy the stack frame
+		#if AUTO_DETECT_MASK
+			if (STACK_DIR_UP) {					// Stack grows up
+				nf = (char *)(t) + sizeof(thread) + stackbase;
+				memcpy(t+1, (char *)&s - stackbase, stackbase+sizeof(char *));
+			} else {							// Stack grows down
+				nf = (char *)(t) + t->size - (stackbase + sizeof(char *));
+				memcpy(nf, &s, stackbase+sizeof(char *));
+			}
+		#elif STACK_DIR_UP
+			// Stack grows up
+			nf = (char *)(t) + sizeof(thread) + stackbase;
+			memcpy(t+1, (char *)&s - stackbase, stackbase+sizeof(char *));
+		#else
+			// Stack grows down
+			nf = (char *)(t) + t->size - (stackbase + sizeof(char *));
+			memcpy(nf, &s, stackbase+sizeof(char *));
+		#endif
+
+		// Relocate the context data
+		s = (char **)(t->cxt);
+		diff = nf - (char *)&s;
+
+		// Relocate the elements we know need to be relocated
+		for (i = 1; i && i < MASK1; i <<= 1, s++) {
+			if ((MASK1 & i))
+				*s += diff;
+		}
+		#ifdef MASK2
+			for (i = 1; i && i < MASK2; i <<= 1, s++) {
+				if ((MASK1 & i))
+					*s += diff;
+			}
+		#endif
 	}
+	#define CXT_SET(t) {                                                         \
+		if (!_setjmp(t->cxt)) {													\
+			_gfxAdjustCxt(t);													\
+			current = t;														\
+			_longjmp(current->cxt, 1);											\
+		}																		\
+	}
+	#define CXT_SAVE() 			if (_setjmp(current->cxt)) return
+	#define CXT_RESTORE() 		_longjmp(current->cxt, 1)
+
+#elif GOS_RAW_SCHEDULER == SCHED_USE_CORTEX_M0 || GOS_RAW_SCHEDULER == SCHED_USE_CORTEX_M1
+
+	// Use the EABI calling standard (ARM's AAPCS) - Save r4 - r11
+
+	#define CXT_SET(t) {														\
+		register void *r13 asm ("r13");											\
+		current = t;															\
+		r13 = (char *)current + current->size;									\
+	}
+
+	/**
+	 * Save the current thread context.
+	 *
+	 * Automatically returns the calling function when this thread gets restarted
+	 * with the thread handle as the return value
+	 */
+	//
+	#define CXT_SAVE() {															\
+		register void *r13 asm ("r13");												\
+		asm volatile (	"push    {r4, r5, r6, r7, lr}                   \n\t"		\
+						"mov     r4, r8                                 \n\t"		\
+						"mov     r5, r9                                 \n\t"		\
+						"mov     r6, r10                                \n\t"		\
+						"mov     r7, r11                                \n\t"		\
+						"push    {r4, r5, r6, r7}" : : : "memory");					\
+		current->ctx = r13;															\
+	}
+	#define CXT_RESTORE() {															\
+		register void *		r13	asm ("r13");										\
+		r13 = current->ctx;															\
+		asm volatile (	"pop     {r4, r5, r6, r7}                       \n\t"		\
+						"mov     r8, r4                                 \n\t"		\
+						"mov     r9, r5                                 \n\t"		\
+						"mov     r10, r6                                \n\t"		\
+						"mov     r11, r7                                \n\t"		\
+						"pop     {r4, r5, r6, r7, pc}" : : "r" (r13) : "memory");	\
+	}
+
+#elif GOS_RAW_SCHEDULER == SCHED_USE_CORTEX_M3 || GOS_RAW_SCHEDULER == SCHED_USE_CORTEX_M4
+
+		// Use the EABI calling standard (ARM's AAPCS) - Save r4 - r11 and floating point if needed
+
+		#define CXT_SET(t) {														\
+			register void *r13 asm ("r13");											\
+			current = t;															\
+			r13 = (char *)current + current->size;									\
+		}
+
+		#if CORTEX_USE_FPU
+			#define CXT_SAVE() {															\
+				register void *r13 asm ("r13");												\
+				asm volatile ("push {r4, r5, r6, r7, r8, r9, r10, r11, lr}" : : : "memory");\
+				asm volatile ("vpush {s16-s31}" : : : "memory");							\
+				current->ctx = r13;															\
+			}
+			#define CXT_RESTORE() {															\
+				register void *		r13	asm ("r13");										\
+				r13 = current->ctx;															\
+				asm volatile ("vpop {s16-s31}" : : : "memory");							\
+				asm volatile ("pop {r4, r5, r6, r7, r8, r9, r10, r11, pc}" : : : "memory");	\
+			}
+		#else
+			#define CXT_SAVE() {															\
+				register void *r13 asm ("r13");												\
+				asm volatile ("push {r4, r5, r6, r7, r8, r9, r10, r11, lr}" : : : "memory");\
+				current->ctx = r13;															\
+			}
+			#define CXT_RESTORE() {															\
+				register void *		r13	asm ("r13");										\
+				r13 = current->ctx;															\
+				asm volatile ("pop {r4, r5, r6, r7, r8, r9, r10, r11, pc}" : : : "memory");	\
+			}
+		#endif
+#endif
+
+void gfxYield(void) {
+
+	// Clean up zombies
+	cleanUpDeadThreads();
+
+	// Is there another thread to run?
+	if (!readyQ.head)
+		return;
+
+	// Save the current thread (automatically returns when this thread gets re-executed)
+	CXT_SAVE();
+
+	// Add us back to the Queue
+	Qadd(&readyQ, current);
+
+	// Run the next process
+	current = Qpop(&readyQ);
+	CXT_RESTORE();
 }
 
 // This routine is not currently public - but it could be.
 void gfxThreadExit(threadreturn_t ret) {
-	// Save the results
+	// Save the results in case someone is waiting
 	current->param = (void *)ret;
 	current->flags |= FLG_THD_DEAD;
 
@@ -634,11 +788,32 @@ void gfxThreadExit(threadreturn_t ret) {
 	if ((current->flags & (FLG_THD_ALLOC|FLG_THD_WAIT)) == FLG_THD_ALLOC)
 		Qadd(&deadQ, current);
 
-	// Switch to the next task
+	// Set the next thread
 	current = Qpop(&readyQ);
+
+	// Was that the last thread? If so exit
 	if (!current)
-		gfxExit();		// Oops - this should never happen!
-	_longjmp(current->cxt, 1);
+		gfxExit();
+
+	// Switch to the new thread
+	CXT_RESTORE();
+}
+
+void _gfxStartThread(thread *t) {
+
+	// Save the current thread (automatically returns when this thread gets re-executed)
+	CXT_SAVE();
+
+	// Add the current thread to the queue because we are starting a new thread.
+	Qadd(&readyQ, current);
+
+	// Change to the new thread and the new stack
+	CXT_SET(t);
+
+	// Run the users function
+	gfxThreadExit(current->fn(current->param));
+
+	// We never get here!
 }
 
 gfxThreadHandle gfxThreadCreate(void *stackarea, size_t stacksz, threadpriority_t prio, DECLARE_THREAD_FUNCTION((*fn),p), void *param) {
@@ -663,59 +838,10 @@ gfxThreadHandle gfxThreadCreate(void *stackarea, size_t stacksz, threadpriority_
 	t->size = stacksz;
 	t->fn = fn;
 	t->param = param;
-	if (_setjmp(t->cxt)) {
-		// This is the new thread - call the function!
-		gfxThreadExit(current->fn(current->param));
 
-		// We never get here
-		return 0;
-	}
+	_gfxStartThread(t);
 
-	// Move the stack frame and relocate the context data
-	{
-		char **	s;
-		char *	nf;
-		int		diff;
-		uint32_t	i;
-
-		// Copy the stack frame
-		#if AUTO_DETECT_MASK
-			if (STACK_DIR_UP) {					// Stack grows up
-				nf = (char *)(t) + sizeof(thread) + stackbase;
-				memcpy(t+1, (char *)&t - stackbase, stackbase+sizeof(char *));
-			} else {							// Stack grows down
-				nf = (char *)(t) + stacksz - (stackbase + sizeof(char *));
-				memcpy(nf, &t, stackbase+sizeof(char *));
-			}
-		#elif STACK_DIR_UP
-			// Stack grows up
-			nf = (char *)(t) + sizeof(thread) + stackbase;
-			memcpy(t+1, (char *)&t - stackbase, stackbase+sizeof(char *));
-		#else
-			// Stack grows down
-			nf = (char *)(t) + size - (stackbase + sizeof(char *));
-			memcpy(nf, &t, stackbase+sizeof(char *));
-		#endif
-
-		// Relocate the context data
-		s = (char **)(t->cxt);
-		diff = nf - (char *)&t;
-
-		// Relocate the elements we know need to be relocated
-		for (i = 1; i && i < MASK1; i <<= 1, s++) {
-			if ((MASK1 & i))
-				*s += diff;
-		}
-		#ifdef MASK2
-			for (i = 1; i && i < MASK2; i <<= 1, s++) {
-				if ((MASK1 & i))
-					*s += diff;
-			}
-		#endif
-	}
-
-	// Add this thread to the ready queue
-	Qadd(&readyQ, t);
+	// Return the new thread handle
 	return t;
 }
 
