@@ -41,6 +41,12 @@ endif
 ifeq ($(OPT_OS),win32)
 	GFXDEFS += GFX_USE_OS_WIN32=TRUE
 endif
+ifeq ($(OPT_OS),win32.chibios)
+	GFXDEFS += GFX_USE_OS_CHIBIOS=TRUE
+endif
+ifeq ($(OPT_OS),win32.raw32)
+	GFXDEFS += GFX_USE_OS_RAW32=TRUE
+endif
 ifeq ($(OPT_OS),linux)
 	GFXDEFS += GFX_USE_OS_LINUX=TRUE
 endif
