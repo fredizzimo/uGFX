@@ -94,13 +94,17 @@ typedef struct ltdcConfig {
 /* Driver exported functions.                                                */
 /*===========================================================================*/
 
-static void LTDC_Reload(void) {
+static void LTDC_Reload(void)
+{
 	LTDC->SRCR |= LTDC_SRCR_IMR;
-	while (LTDC->SRCR & (LTDC_SRCR_IMR | LTDC_SRCR_VBR))
+	
+	while (LTDC->SRCR & (LTDC_SRCR_IMR | LTDC_SRCR_VBR)) {
 		gfxYield();
+	}
 }
 
-static void LTDC_LayerInit(LTDC_Layer_TypeDef *pLayReg, const ltdcLayerConfig * pCfg) {
+static void LTDC_LayerInit(LTDC_Layer_TypeDef* pLayReg, const ltdcLayerConfig* pCfg)
+{
 	static const uint8_t fmt2Bpp[] = {
 		4, /* LTDC_FMT_ARGB8888 */
 		3, /* LTDC_FMT_RGB888 */
@@ -139,7 +143,8 @@ static void LTDC_LayerInit(LTDC_Layer_TypeDef *pLayReg, const ltdcLayerConfig * 
 	pLayReg->CR = (pLayReg->CR & ~LTDC_LEF_MASK) | ((uint32_t)pCfg->layerflags & LTDC_LEF_MASK);
 }
 
-static void LTDC_Init(void) {
+static void LTDC_Init(void)
+{
 	// Set up the display scanning
 	uint32_t hacc, vacc;
 
@@ -202,8 +207,8 @@ static void LTDC_Init(void) {
 	LTDC_Reload();
 }
 
-LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
-
+LLDSPEC bool_t gdisp_lld_init(GDisplay* g)
+{
 	// Initialize the private structure
 	g->priv = 0;
 	g->board = 0;
@@ -238,7 +243,8 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	return TRUE;
 }
 
-LLDSPEC void gdisp_lld_draw_pixel(GDisplay *g) {
+LLDSPEC void gdisp_lld_draw_pixel(GDisplay* g)
+{
 	unsigned	pos;
 
 	#if GDISP_NEED_CONTROL
@@ -264,7 +270,8 @@ LLDSPEC void gdisp_lld_draw_pixel(GDisplay *g) {
 		PIXEL_ADDR(g, pos)[0] = gdispColor2Native(g->p.color);
 }
 
-LLDSPEC	color_t gdisp_lld_get_pixel_color(GDisplay *g) {
+LLDSPEC	color_t gdisp_lld_get_pixel_color(GDisplay* g)
+{
 	unsigned		pos;
 	LLDCOLOR_TYPE	color;
 
@@ -293,7 +300,8 @@ LLDSPEC	color_t gdisp_lld_get_pixel_color(GDisplay *g) {
 }
 
 #if GDISP_NEED_CONTROL
-	LLDSPEC void gdisp_lld_control(GDisplay *g) {
+	LLDSPEC void gdisp_lld_control(GDisplay* g)
+	{
 		switch(g->p.x) {
 		case GDISP_CONTROL_POWER:
 			if (g->g.Powermode == (powermode_t)g->p.ptr)
