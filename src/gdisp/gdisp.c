@@ -1259,7 +1259,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 			{
 				if (x < 0) { cx += x; x = 0; }
 				if (y < 0) { cy += y; y = 0; }
-				if (cx <= 0 || cy <= 0 || x >= g->g.Width || y >= g->g.Height) { MUTEX_EXIT(g); return; }
+				if (cx <= 0 || cy <= 0 || x >= g->g.Width || y >= g->g.Height) { x = y = cx = cy = 0; }
 				g->clipx0 = x;
 				g->clipy0 = y;
 				g->clipx1 = x+cx;	if (g->clipx1 > g->g.Width) g->clipx1 = g->g.Width;
