@@ -447,7 +447,7 @@ void gfxSleepMicroseconds(delaytime_t ms) {
 	#define STACK_DIR_UP		FALSE
 	#define MASK1				0x00000011
 	#define MASK2				0x00000000
-	#define STACK_BASE			9
+	#define STACK_BASE			12
 #else
 	#define AUTO_DETECT_MASK	TRUE
 	#define STACK_DIR_UP		stackdirup			// TRUE if the stack grow up instead of down
