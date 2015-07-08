@@ -8,4 +8,4 @@ To use this driver:
 	include $(GFXLIB)/drivers/gdisp/STM32F746Discovery/driver.mk
 
 3. Add a board_STM32F746Discovery.h to you project directory (or board directory)
-	base on one of the templates.
+	based on one of the templates.

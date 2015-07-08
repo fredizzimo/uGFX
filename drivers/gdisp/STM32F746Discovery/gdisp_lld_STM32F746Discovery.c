@@ -296,6 +296,7 @@ LLDSPEC	color_t gdisp_lld_get_pixel_color(GDisplay* g)
 	#endif
 
 	color = PIXEL_ADDR(g, pos)[0];
+	
 	return gdispNative2Color(color);
 }
 
