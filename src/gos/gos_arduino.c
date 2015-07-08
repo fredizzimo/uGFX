@@ -229,18 +229,19 @@ void gfxSleepMicroseconds(delaytime_t ms) {
  * For those it doesn't - read the compiler manuals and the library source code to
  * work out the correct macro values.
  * You can use the debugger to work out the values for your compiler and put them here.
- * Defining these macros as constant values makes the system behaviour guaranteed but also
- * makes your code compiler and cpu architecture dependant.
+ * Defining these macros as constant values makes the system behavior guaranteed but also
+ * makes your code compiler and cpu architecture dependent. It also saves a heap of code
+ * and a few bytes of RAM.
  */
-#if 0
-	// Define your compiler constant values here.
-	//	These example values are for mingw32 compiler (x86).
+#if GFX_COMPILER == GFX_COMPILER_MINGW32
 	#define AUTO_DETECT_MASK	FALSE
 	#define STACK_DIR_UP		FALSE
 	#define MASK1				0x00000011
 	#define MASK2				0x00000000
 	#define STACK_BASE			12
 #else
+	// Use auto-detection of the stack frame format
+	// Assumes all the relevant stuff to be relocated is in the first 256 bytes of the jmpbuf.
 	#define AUTO_DETECT_MASK	TRUE
 	#define STACK_DIR_UP		stackdirup			// TRUE if the stack grow up instead of down
 	#define MASK1				jmpmask1			// The 1st mask of jmp_buf elements that need relocation
