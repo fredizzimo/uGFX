@@ -14,9 +14,9 @@
 
 static const ltdcConfig driverCfg = {
 	480, 270,								// Width, Height (pixels)
-	10, 2,									// Horizontal, Vertical sync (pixels)
-	20, 2,									// Horizontal, Vertical back porch (pixels)
-	10, 4,									// Horizontal, Vertical front porch (pixels)
+	41, 10,									// Horizontal, Vertical sync (pixels)
+	13, 2,									// Horizontal, Vertical back porch (pixels)
+	32, 2,									// Horizontal, Vertical front porch (pixels)
 	0,										// Sync flags
 	0x000000,								// Clear color (RGB888)
 
@@ -35,7 +35,7 @@ static const ltdcConfig driverCfg = {
 		0xFF,								// Constant alpha factor
 		LTDC_LEF_ENABLE						// Layer configuration flags
 	},
-	
+
 	LTDC_UNUSED_LAYER_CONFIG				// Foreground layer config
 };
 
