@@ -82,6 +82,18 @@
  * @name    GOS Optional Parameters
  * @{
  */
+	/**
+	 * @brief	Enable compiler specific code
+	 * @details	Defaults to GFX_COMPILER_UNKNOWN
+	 * @note	This is setting enables optimisations that are compiler specific. It does
+	 * 			not need to be specified as reasonable defaults and various auto-detection
+	 * 			will happen as required.
+	 */
+	#ifndef GFX_COMPILER
+		#define GFX_COMPILER			GFX_COMPILER_UNKNOWN
+	#endif
+	#define GFX_COMPILER_UNKNOWN		0		// Unknown compiler
+	#define GFX_COMPILER_MINGW32		1		// MingW32 (x86) compiler for windows
  	/**
  	 * @brief	Should uGFX avoid initializing the operating system
  	 * @details	Defaults to FALSE

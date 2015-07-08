@@ -40,6 +40,7 @@
 //    #define INTERRUPTS_ON()                          optional_code
 
 // Options that (should where relevant) apply to all operating systems
+//    #define GFX_COMPILER                             GFX_COMPILER_UNKNOWN
 //    #define GFX_NO_OS_INIT                           FALSE
 //    #define GFX_OS_EXTRA_INIT_FUNCTION               myOSInitRoutine
 //    #define GFX_OS_EXTRA_DEINIT_FUNCTION             myOSDeInitRoutine
