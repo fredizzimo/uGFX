@@ -18,8 +18,8 @@
 	#undef GDISP_SCREEN_WIDTH
 #endif
 
-#define GDISP_DRIVER_VMT			GDISPVMT_STM32F746Discovery
-#include "drivers/gdisp/STM32F746Discovery/gdisp_lld_config.h"
+#define GDISP_DRIVER_VMT			GDISPVMT_STM32LTDC
+#include "drivers/gdisp/STM32LTDC/gdisp_lld_config.h"
 #include "src/gdisp/gdisp_driver.h"
 
 #include "stm32_ltdc.h"
@@ -67,10 +67,10 @@ typedef struct ltdcConfig {
 	#define LTDC_PIXELBYTES		3
 	#define LTDC_PIXELBITS		24
 #else
-	#error "GDISP: STM32F746Discovery - unsupported pixel format"
+	#error "GDISP: STM32LTDC - unsupported pixel format"
 #endif
 
-#include "board_STM32F746Discovery.h"
+#include "board_STM32LTDC.h"
 
 /*===========================================================================*/
 /* Driver local definitions.                                                 */

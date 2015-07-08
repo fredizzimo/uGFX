@@ -5,7 +5,7 @@ To use this driver:
 
 2. To your makefile add the following lines:
 	include $(GFXLIB)/gfx.mk
-	include $(GFXLIB)/drivers/gdisp/STM32F746Discovery/driver.mk
+	include $(GFXLIB)/drivers/gdisp/STM32LTDC/driver.mk
 
-3. Add a board_STM32F746Discovery.h to you project directory (or board directory)
+3. Add a board_STM32LTDC.h to you project directory (or board directory)
 	based on one of the templates.
