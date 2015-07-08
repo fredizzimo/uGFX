@@ -67,12 +67,10 @@ typedef struct ltdcConfig {
 	#define LTDC_PIXELBYTES		3
 	#define LTDC_PIXELBITS		24
 #else
-	#error "GDISP: STM32F4iDiscovery - unsupported pixel format"
+	#error "GDISP: STM32F746Discovery - unsupported pixel format"
 #endif
 
-#include "board_STM32F429iDiscovery.h"
-
-#include "ili9341.h"
+#include "board_STM32F746Discovery.h"
 
 /*===========================================================================*/
 /* Driver local definitions.                                                 */
