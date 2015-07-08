@@ -694,7 +694,7 @@ gfxThreadHandle gfxThreadCreate(void *stackarea, size_t stacksz, threadpriority_
 			memcpy(t+1, (char *)&t - stackbase, stackbase+sizeof(char *));
 		#else
 			// Stack grows down
-			nf = (char *)(t) + size - (stackbase + sizeof(char *));
+			nf = (char *)(t) + t->size - (stackbase + sizeof(char *));
 			memcpy(nf, &t, stackbase+sizeof(char *));
 		#endif
 
