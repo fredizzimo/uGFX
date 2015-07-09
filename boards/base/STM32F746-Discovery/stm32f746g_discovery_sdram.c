@@ -76,7 +76,7 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32746g_discovery_sdram.h"
+#include "stm32f746g_discovery_sdram.h"
 
 /** @addtogroup BSP
   * @{

@@ -8,8 +8,8 @@
 #ifndef _GDISP_LLD_BOARD_H
 #define _GDISP_LLD_BOARD_H
 
-#include "stm32f4xx_fmc.h"
-#include "stm32f429i_discovery_sdram.h"
+#include "stm32f7xx_ll_fmc.h"
+#include "stm32f746g_discovery_sdram.h"
 #include <string.h>
 
 static const ltdcConfig driverCfg = {
