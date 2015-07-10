@@ -45,8 +45,11 @@
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f7xx_hal_sdram.h"
+#include "stm32f7xx_hal_rcc.h"
+#include "stm32f7xx_hal_rcc_ex.h"
 #include "stm32f7xx_hal_dma.h"
+#include "stm32f7xx_hal_gpio.h"
+#include "stm32f7xx_hal_sdram.h"
 #include "stm32f7xx_ll_fmc.h"
 
 /** @addtogroup BSP
