@@ -12,6 +12,8 @@
 #include "stm32f746g_discovery_sdram.h"
 #include <string.h>
 
+#include "RGB565_480x272.h"
+
 static const ltdcConfig driverCfg = {
 	480, 270,								// Width, Height (pixels)
 	41, 10,									// Horizontal, Vertical sync (pixels)
@@ -21,7 +23,7 @@ static const ltdcConfig driverCfg = {
 	0x000000,								// Clear color (RGB888)
 
 	{										// Background layer config
-		(LLDCOLOR_TYPE *)SDRAM_BANK_ADDR,	// Frame buffer address
+		(LLDCOLOR_TYPE *)RGB565_480x272,	// Frame buffer address
 		480, 270,							// Width, Height (pixels)
 		480 * LTDC_PIXELBYTES,				// Line pitch (bytes)
 		LTDC_PIXELFORMAT,					// Pixel format
@@ -60,14 +62,14 @@ static inline void init_board(GDisplay *g) {
 
 		/* PLLSAI activation.*/
 		RCC->PLLSAICFGR = (STM32_PLLSAIN_VALUE << 6) | (STM32_PLLSAIR_VALUE << 28) | (STM32_PLLSAIQ_VALUE << 24);
-		RCC->DCKCFGR = (RCC->DCKCFGR & ~RCC_DCKCFGR_PLLSAIDIVR) | STM32_PLLSAIR_POST;
+		RCC->DCKCFGR1 = (RCC->DCKCFGR1 & ~RCC_DCKCFGR1_PLLSAIDIVR) | STM32_PLLSAIR_POST;
 		RCC->CR |= RCC_CR_PLLSAION;
 
 		// Initialise the SDRAM
 		SDRAM_Init();
 
 		// Clear the SDRAM
-		memset((void *)SDRAM_BANK_ADDR, 0, 0x400000);
+		//memset((void *)SDRAM_BANK_ADDR, 0, 0x400000);
 
 		break;
 	}
