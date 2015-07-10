@@ -76,6 +76,7 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
+#include "gfx.h"
 #include "stm32f746g_discovery_sdram.h"
 
 /** @addtogroup BSP
