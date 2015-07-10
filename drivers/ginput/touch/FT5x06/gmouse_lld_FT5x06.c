@@ -128,7 +128,7 @@ const GMouseVMT const GMOUSE_DRIVER_VMT[1] = {{
 	},
 	MouseInit, 		// init
 	0,				// deinit
-	MouseXYZ,		// get
+	read_xyz,		// get
 	0,				// calsave
 	0				// calload
 }};
