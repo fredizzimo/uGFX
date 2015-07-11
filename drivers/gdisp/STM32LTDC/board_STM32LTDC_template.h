@@ -9,7 +9,7 @@
 #define _GDISP_LLD_BOARD_H
 
 static const ltdcConfig driverCfg = {
-	480, 270,								// Width, Height (pixels)
+	480, 272,								// Width, Height (pixels)
 	41, 10,									// Horizontal, Vertical sync (pixels)
 	13, 2,									// Horizontal, Vertical back porch (pixels)
 	32, 2,									// Horizontal, Vertical front porch (pixels)
@@ -17,12 +17,12 @@ static const ltdcConfig driverCfg = {
 	0x000000,								// Clear color (RGB888)
 
 	{										// Background layer config
-		(LLDCOLOR_TYPE *)SDRAM_BANK_ADDR,	// Frame buffer address
-		480, 270,							// Width, Height (pixels)
+		(LLDCOLOR_TYPE *)SDRAM_DEVICE_ADDR,	// Frame buffer address
+		480, 272,							// Width, Height (pixels)
 		480 * LTDC_PIXELBYTES,				// Line pitch (bytes)
 		LTDC_PIXELFORMAT,					// Pixel format
 		0, 0,								// Start pixel position (x, y)
-		480, 270,							// Size of virtual layer (cx, cy)
+		480, 272,							// Size of virtual layer (cx, cy)
 		LTDC_COLOR_FUCHSIA,					// Default color (ARGB8888)
 		0x980088,							// Color key (RGB888)
 		LTDC_BLEND_FIX1_FIX2,				// Blending factors
