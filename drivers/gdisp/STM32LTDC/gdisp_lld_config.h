@@ -14,10 +14,24 @@
 /* Driver hardware support.                                                  */
 /*===========================================================================*/
 
+#define	LTDC_USE_DMA2D					TRUE
 #define GDISP_HARDWARE_DRAWPIXEL		TRUE
 #define GDISP_HARDWARE_PIXELREAD		TRUE
 #define GDISP_HARDWARE_CONTROL			TRUE
 #define GDISP_LLD_PIXELFORMAT			GDISP_PIXELFORMAT_RGB565
+
+
+/*===========================================================================*/
+/* Don't change stuff below this line. Please.                               */
+/*===========================================================================*/
+
+#if LTDC_USE_DMA2D
+ 	#define GDISP_HARDWARE_FILLS		TRUE
+ 	#define GDISP_HARDWARE_BITFILLS		TRUE
+#else
+ 	#define GDISP_HARDWARE_FILLS		FALSE
+ 	#define GDISP_HARDWARE_BITFILLS		FALSE
+#endif /* GDISP_USE_DMA2D */
 
 #endif	/* GFX_USE_GDISP */
 

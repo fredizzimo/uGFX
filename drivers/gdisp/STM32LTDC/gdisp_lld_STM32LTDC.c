@@ -18,11 +18,19 @@
 	#undef GDISP_SCREEN_WIDTH
 #endif
 
+#ifndef LTDC_USE_DMA2D
+ 	#define LTDC_USE_DMA2D FALSE
+#endif
+
 #define GDISP_DRIVER_VMT			GDISPVMT_STM32LTDC
 #include "drivers/gdisp/STM32LTDC/gdisp_lld_config.h"
 #include "src/gdisp/gdisp_driver.h"
 
 #include "stm32_ltdc.h"
+
+#if LTDC_USE_DMA2D
+ 	#include "stm32_dma2d.h"
+#endif
 
 typedef struct ltdcLayerConfig {
 	// frame
@@ -223,8 +231,9 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay* g)
 	LTDC_Init();
 
 	// Initialise DMA2D
-	//dma2dStart(&DMA2DD1, &dma2d_cfg);
-	//dma2d_test();
+	#if LTDC_USE_DMA2D
+		dma2d_init();
+	#endif
 
     // Finish Init the board
     post_init_board(g);
@@ -361,5 +370,88 @@ LLDSPEC	color_t gdisp_lld_get_pixel_color(GDisplay* g)
 		}
 	}
 #endif
+
+#if LTDC_USE_DMA2D
+	static void dma2d_init(void)
+	{
+		// Enable DMA2D clock (DMA2DEN = 1)
+		RCC->AHB1ENR |= RCC_AHB1ENR_DMA2DEN;
+	
+		// Output color format
+		#if GDISP_LLD_PIXELFORMAT == GDISP_PIXELFORMAT_RGB565
+			DMA2D->OPFCCR = OPFCCR_RGB565;
+		#elif GDISP_LLD_PIXELFORMAT == GDISP_PIXELFORMAT_RGB888
+			DMA2D->OPFCCR = OPFCCR_OPFCCR_RGB888;
+		#endif
+	
+		// Foreground color format
+		#if GDISP_LLD_PIXELFORMAT == GDISP_PIXELFORMAT_RGB565
+			DMA2D->FGPFCCR = FGPFCCR_CM_RGB565;
+		#elif GDISP_LLD_PIXELFORMAT == GDISP_PIXELFORMAT_RGB888
+			DMA2D->FGPFCCR = FGPFCCR_CM_RGB888;
+		#endif
+	}
+
+	// Uses p.x,p.y  p.cx,p.cy  p.color
+	LLDSPEC void gdisp_lld_fill_area(GDisplay* g)
+	{
+		LLDCOLOR_TYPE c;
+	
+		// Wait until DMA2D is ready
+		while (1) {
+			if (!(DMA2D->CR & DMA2D_CR_START)) {
+				break;
+			}
+		}
+	
+		c = gdispColor2Native(g->p.color);
+	
+		// Output color register
+		DMA2D->OCOLR = (uint32_t)c;
+	
+		// Output memory address register
+		DMA2D->OMAR = g->p.y * g->g.Width * LTDC_PIXELBYTES + g->p.x * LTDC_PIXELBYTES + (uint32_t)driverCfg.bglayer.frame;
+
+		// Output offset register (in pixels)
+		DMA2D->OOR = g->g.Width - g->p.cx;
+	
+		// PL (pixel per lines to be transferred); NL (number of lines)
+		DMA2D->NLR = (g->p.cx << 16) | (g->p.cy);
+
+		// Set MODE to R2M and Start the process
+		DMA2D->CR = DMA2D_CR_MODE_R2M | DMA2D_CR_START;
+	}
+
+	// Uses p.x,p.y  p.cx,p.cy  p.x1,p.y1 (=srcx,srcy)  p.x2 (=srccx), p.ptr (=buffer)
+	LLDSPEC void gdisp_lld_blit_area(GDisplay* g)
+	{
+		// Wait until DMA2D is ready
+		while (1) {
+			if (!(DMA2D->CR & DMA2D_CR_START)) {
+				break;
+			}
+		}
+
+		// Foreground memory address register
+		DMA2D->FGMAR = g->p.y1 * g->p.x2 * LTDC_PIXELBYTES + g->p.x1 * LTDC_PIXELBYTES + (uint32_t)g->p.ptr;
+
+		// Foreground offset register (expressed in pixels)
+		DMA2D->FGOR = g->p.x2 - g->p.cx;
+	
+		// Output memory address register
+		DMA2D->OMAR = g->p.y * g->g.Width * LTDC_PIXELBYTES + g->p.x * LTDC_PIXELBYTES + (uint32_t)driverCfg.bglayer.frame;
+
+		// Output offset register (expressed in pixels)
+		DMA2D->OOR = g->g.Width - g->p.cx;
+	
+		// PL (pixel per lines to be transferred); NL (number of lines)
+		DMA2D->NLR = (g->p.cx << 16) | (g->p.cy);
+
+		// Set MODE to M2M and Start the process
+		DMA2D->CR = DMA2D_CR_MODE_M2M | DMA2D_CR_START;
+	}
+
+#endif /* LTDC_USE_DMA2D */
+
 
 #endif /* GFX_USE_GDISP */
