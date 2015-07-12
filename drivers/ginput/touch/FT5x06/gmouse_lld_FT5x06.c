@@ -56,7 +56,7 @@ static bool_t MouseInit(GMouse* m, unsigned driverinstance) {
 	return TRUE;
 }
 
-static bool_t MouseXYZ(GMouse* m, GMouseReading* pdr)
+static bool_t read_xyz(GMouse* m, GMouseReading* pdr)
 {
 	// Assume not touched.
 	pdr->buttons = 0;

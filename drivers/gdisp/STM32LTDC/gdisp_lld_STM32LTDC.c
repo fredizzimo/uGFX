@@ -22,8 +22,8 @@
  	#define LTDC_USE_DMA2D FALSE
 #endif
 
-#define GDISP_DRIVER_VMT			GDISPVMT_STM32F429iDiscovery
-#include "drivers/gdisp/STM32F429iDiscovery/gdisp_lld_config.h"
+#define GDISP_DRIVER_VMT			GDISPVMT_STM32LTDC
+#include "drivers/gdisp/STM32LTDC/gdisp_lld_config.h"
 #include "src/gdisp/gdisp_driver.h"
 
 #include "stm32_ltdc.h"
@@ -75,12 +75,10 @@ typedef struct ltdcConfig {
 	#define LTDC_PIXELBYTES		3
 	#define LTDC_PIXELBITS		24
 #else
-	#error "GDISP: STM32F4iDiscovery - unsupported pixel format"
+	#error "GDISP: STM32LTDC - unsupported pixel format"
 #endif
 
-#include "board_STM32F429iDiscovery.h"
-
-#include "ili9341.h"
+#include "board_STM32LTDC.h"
 
 /*===========================================================================*/
 /* Driver local definitions.                                                 */
@@ -104,78 +102,17 @@ typedef struct ltdcConfig {
 /* Driver exported functions.                                                */
 /*===========================================================================*/
 
-static void InitController(GDisplay *g) {
-	#define REG_TYPEMASK	0xFF00
-	#define REG_DATAMASK	0x00FF
-
-	#define REG_DATA		0x0000
-	#define REG_COMMAND		0x0100
-	#define REG_DELAY		0x0200
-
-	static const uint16_t initdata[] = {
-			REG_COMMAND | ILI9341_CMD_RESET,
-			REG_DELAY   | 5,
-			REG_COMMAND | ILI9341_CMD_DISPLAY_OFF,
-			REG_COMMAND | ILI9341_SET_FRAME_CTL_NORMAL, 0x00, 0x1B,
-			REG_COMMAND | ILI9341_SET_FUNCTION_CTL, 0x0A, 0xA2,
-			REG_COMMAND | ILI9341_SET_POWER_CTL_1, 0x10,
-			REG_COMMAND | ILI9341_SET_POWER_CTL_2, 0x10,
-			#if 1
-				REG_COMMAND | ILI9341_SET_VCOM_CTL_1, 0x45, 0x15,
-				REG_COMMAND | ILI9341_SET_VCOM_CTL_2, 0x90,
-			#else
-				REG_COMMAND | ILI9341_SET_VCOM_CTL_1, 0x35, 0x3E,
-				REG_COMMAND | ILI9341_SET_VCOM_CTL_2, 0xBE,
-			#endif
-			REG_COMMAND | ILI9341_SET_MEM_ACS_CTL, 0xC8,
-			REG_COMMAND | ILI9341_SET_RGB_IF_SIG_CTL, 0xC2,
-			REG_COMMAND | ILI9341_SET_FUNCTION_CTL, 0x0A, 0xA7, 0x27, 0x04,
-			REG_COMMAND | ILI9341_SET_COL_ADDR, 0x00, 0x00, 0x00, 0xEF,
-			REG_COMMAND | ILI9341_SET_PAGE_ADDR, 0x00, 0x00, 0x01, 0x3F,
-			REG_COMMAND | ILI9341_SET_IF_CTL, 0x01, 0x00, 0x06,
-			REG_COMMAND | ILI9341_SET_GAMMA, 0x01,
-			REG_COMMAND | ILI9341_SET_PGAMMA,
-				#if 1
-					0x0F, 0x29, 0x24, 0x0C, 0x0E, 0x09, 0x4E, 0x78,
-					0x3C, 0x09, 0x13, 0x05, 0x17, 0x11, 0x00,
-				#else
-					0x1F, 0x1a, 0x18, 0x0a, 0x0f, 0x06, 0x45, 0x87,
-					0x32, 0x0a, 0x07, 0x02, 0x07, 0x05, 0x00,
-				#endif
-			REG_COMMAND | ILI9341_SET_NGAMMA,
-				#if 1
-					0x00, 0x16, 0x1B, 0x04, 0x11, 0x07, 0x31, 0x33,
-					0x42, 0x05, 0x0C, 0x0A, 0x28, 0x2F, 0x0F,
-				#else
-					0x00, 0x25, 0x27, 0x05, 0x10, 0x09, 0x3a, 0x78,
-					0x4d, 0x05, 0x18, 0x0d, 0x38, 0x3a, 0x1f,
-				#endif
-			REG_COMMAND | ILI9341_CMD_SLEEP_OFF,
-			REG_DELAY   | 10,
-			REG_COMMAND | ILI9341_CMD_DISPLAY_ON,
-			REG_COMMAND | ILI9341_SET_MEM
-	};
-
-	const uint16_t	*p;
-
-	acquire_bus(g);
-	for(p = initdata; p < &initdata[sizeof(initdata)/sizeof(initdata[0])]; p++) {
-		switch(*p & REG_TYPEMASK) {
-		case REG_DATA:		write_data(g, *p);					break;
-		case REG_COMMAND:	write_index(g, *p);					break;
-		case REG_DELAY:		gfxSleepMilliseconds(*p & 0xFF);	break;
-		}
-	}
-	release_bus(g);
-}
-
-static void LTDC_Reload(void) {
+static void LTDC_Reload(void)
+{
 	LTDC->SRCR |= LTDC_SRCR_IMR;
-	while (LTDC->SRCR & (LTDC_SRCR_IMR | LTDC_SRCR_VBR))
+	
+	while (LTDC->SRCR & (LTDC_SRCR_IMR | LTDC_SRCR_VBR)) {
 		gfxYield();
+	}
 }
 
-static void LTDC_LayerInit(LTDC_Layer_TypeDef *pLayReg, const ltdcLayerConfig * pCfg) {
+static void LTDC_LayerInit(LTDC_Layer_TypeDef* pLayReg, const ltdcLayerConfig* pCfg)
+{
 	static const uint8_t fmt2Bpp[] = {
 		4, /* LTDC_FMT_ARGB8888 */
 		3, /* LTDC_FMT_RGB888 */
@@ -214,7 +151,8 @@ static void LTDC_LayerInit(LTDC_Layer_TypeDef *pLayReg, const ltdcLayerConfig * 
 	pLayReg->CR = (pLayReg->CR & ~LTDC_LEF_MASK) | ((uint32_t)pCfg->layerflags & LTDC_LEF_MASK);
 }
 
-static void LTDC_Init(void) {
+static void LTDC_Init(void)
+{
 	// Set up the display scanning
 	uint32_t hacc, vacc;
 
@@ -223,7 +161,7 @@ static void LTDC_Init(void) {
 	RCC->APB2RSTR = 0;
 
 	/* Enable the LTDC clock.*/
-	RCC->DCKCFGR = (RCC->DCKCFGR & ~RCC_DCKCFGR_PLLSAIDIVR) | (1 << 16); /* /4 */
+	RCC->DCKCFGR1 = (RCC->DCKCFGR1 & ~RCC_DCKCFGR1_PLLSAIDIVR) | (1 << 16); /* /4 */
 
 	// Enable the module
 	RCC->APB2ENR |= RCC_APB2ENR_LTDCEN;
@@ -277,8 +215,8 @@ static void LTDC_Init(void) {
 	LTDC_Reload();
 }
 
-LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
-
+LLDSPEC bool_t gdisp_lld_init(GDisplay* g)
+{
 	// Initialize the private structure
 	g->priv = 0;
 	g->board = 0;
@@ -289,9 +227,6 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	init_board(g);
 	//((fbPriv *)g->priv)->fbi.cfg = init_board(g);
 
-	// Initialise the ILI9341 controller
-	InitController(g);
-
 	// Initialise the LTDC controller
 	LTDC_Init();
 
@@ -300,27 +235,25 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		dma2d_init();
 	#endif
 
-	// Initialise DMA2D
-	//dma2dStart(&DMA2DD1, &dma2d_cfg);
-	//dma2d_test();
-
     // Finish Init the board
     post_init_board(g);
 
-	/* Turn on the back-light */
+	// Turn on the back-light
 	set_backlight(g, GDISP_INITIAL_BACKLIGHT);
 
-	/* Initialise the GDISP structure */
+	// Initialise the GDISP structure
 	g->g.Width = driverCfg.bglayer.width;
 	g->g.Height = driverCfg.bglayer.height;
 	g->g.Orientation = GDISP_ROTATE_0;
 	g->g.Powermode = powerOn;
 	g->g.Backlight = GDISP_INITIAL_BACKLIGHT;
 	g->g.Contrast = GDISP_INITIAL_CONTRAST;
+
 	return TRUE;
 }
 
-LLDSPEC void gdisp_lld_draw_pixel(GDisplay *g) {
+LLDSPEC void gdisp_lld_draw_pixel(GDisplay* g)
+{
 	unsigned	pos;
 
 	#if GDISP_NEED_CONTROL
@@ -346,7 +279,8 @@ LLDSPEC void gdisp_lld_draw_pixel(GDisplay *g) {
 		PIXEL_ADDR(g, pos)[0] = gdispColor2Native(g->p.color);
 }
 
-LLDSPEC	color_t gdisp_lld_get_pixel_color(GDisplay *g) {
+LLDSPEC	color_t gdisp_lld_get_pixel_color(GDisplay* g)
+{
 	unsigned		pos;
 	LLDCOLOR_TYPE	color;
 
@@ -371,11 +305,13 @@ LLDSPEC	color_t gdisp_lld_get_pixel_color(GDisplay *g) {
 	#endif
 
 	color = PIXEL_ADDR(g, pos)[0];
+	
 	return gdispNative2Color(color);
 }
 
 #if GDISP_NEED_CONTROL
-	LLDSPEC void gdisp_lld_control(GDisplay *g) {
+	LLDSPEC void gdisp_lld_control(GDisplay* g)
+	{
 		switch(g->p.x) {
 		case GDISP_CONTROL_POWER:
 			if (g->g.Powermode == (powermode_t)g->p.ptr)
@@ -516,5 +452,6 @@ LLDSPEC	color_t gdisp_lld_get_pixel_color(GDisplay *g) {
 	}
 
 #endif /* LTDC_USE_DMA2D */
+
 
 #endif /* GFX_USE_GDISP */

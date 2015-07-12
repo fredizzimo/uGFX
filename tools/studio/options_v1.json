@@ -1,0 +1,471 @@
+[
+	{
+	    "GOS" : [
+	    	{
+		        "Priorities" : [
+		            {
+		                "User": "Low",
+		                "Library": "LOW_PRIORITY"
+		            },
+		            {
+		                "User": "Normal",
+		                "Library": "NORMAL_PRIORITY"
+		            },
+		            {
+		                "User": "High",
+		                "Library": "HIGH_PRIORITY"
+		            }
+		        ]
+	    	}
+	    ]
+    },
+    {
+    	"GDISP" : [
+    		{
+		    	"Orientations" : [
+		    		{
+		    			"User": "Native",
+		    			"Library": "GDISP_ROTATE_0"
+		    		},
+		    		{
+		    			"User": "Portrait",
+		    			"Library": "GDISP_ROTATE_PORTRAIT"
+		    		},
+		    		{
+		    			"User": "Landscape",
+		    			"Library": "GDISP_ROTATE_LANDSCAPE"
+		    		},
+		    		{
+		    			"User": "Rotate 90 degree",
+		    			"Library": "GDISP_ROTATE_90"
+		    		},
+		    		{
+		    			"User": "Rotate 180 degree",
+		    			"Library": "GDISP_ROTATE_180"
+		    		},
+		    		{
+		    			"User": "Rotate 270 degree",
+		    			"Library": "GDISP_ROTATE_270"
+		    		}
+		    	]
+    		},
+    		{
+    			"Colors" : [
+		            {
+		                "User": "White",
+		                "Library" : "White",
+		                "RGB": "0xFFFFFF"
+		            },
+		            {
+		                "User": "Black",
+		                "Library": "Black",
+		                "RGB": "0x000000"
+		            },
+		            {
+		                "User": "Gray",
+		                "Library": "Gray",
+		                "RGB": "0x808080"
+		            },
+		            {
+		                "User": "Blue",
+		                "Library": "Blue",
+		                "RGB": "0x0000FF"
+		            },
+		            {
+		                "User": "Red",
+		                "Library": "Red",
+		                "RGB": "0xFF0000"
+		            },
+		            {
+		                "User": "Magenta",
+		                "Library": "Magenta",
+		                "RGB": "0xFF00FF"
+		            },
+		            {
+		                "User": "Green",
+		                "Library": "Green",
+		                "RGB": "0x008000"
+		            },
+		            {
+		                "User": "Yellow",
+		                "Library": "Yellow",
+		                "RGB": "0xFFFF00"
+		            },
+		            {
+		                "User": "Cyan",
+		                "Library": "Cyan",
+		                "RGB": "0x00FFFF"
+		            },
+		            {
+		                "User": "Lime",
+		                "Library": "Lime",
+		                "RGB": "0x00FF00"
+		            },
+		            {
+		                "User": "Maroon",
+		                "Library": "Maroon",
+		                "RGB": "0x800000"
+		            },
+		            {
+		                "User": "Navy",
+		                "Library": "Navy",
+		                "RGB": "0x000080"
+		            },
+		            {
+		                "User": "Olive",
+		                "Library": "Olive",
+		                "RGB": "0x808000"
+		            },
+		            {
+		                "User": "Purple",
+		                "Library": "Purple",
+		                "RGB": "0x800080"
+		            },
+		            {
+		                "User": "Silver",
+		                "Library": "Silver",
+		                "RGB": "0xC0C0C0"
+		            },
+		            {
+		                "User": "Teal",
+		                "Library": "Teal",
+		                "RGB": "0x008080"
+		            },
+		            {
+		                "User": "Orange",
+		                "Library": "Orange",
+		                "RGB": "0xFFA500"
+		            },
+		            {
+		                "User": "Pink",
+		                "Library": "Pink",
+		                "RGB": "0xFFC0CB"
+		            },
+		            {
+		                "User": "SkyBlue",
+		                "Library": "SkyBlue",
+		                "RGB": "0x87CEEB"
+		            }
+	        	]
+    		},
+    		{
+				"Justifications" : [
+		            {
+		                "User": "Left",
+		                "Library": "justifyLeft"
+		            },
+		            {
+		                "User": "Right",
+		                "Library": "justifyRight"
+		            },
+		            {
+		                "User": "Center",
+		                "Library": "justifyCenter"
+		            }
+        		]
+    		}
+    	]
+	},
+    {
+    	"GWIN" : [
+    		{
+		        "Fonts" : [
+		            {
+		                "User": "uGFX Font 1",
+		                "Library": "UI1",
+		                "Config": "GDISP_INCLUDE_FONT_UI1",
+		                "Size": 10
+		            },
+		            {
+		                "User": "uGFX Font 2",
+		                "Library": "UI2",
+		                "Config": "GDISP_INCLUDE_FONT_UI2",
+		                "Size": 10
+		            },
+		            {
+		                "User": "Fixed 5x8",
+		                "Library": "fixed_5x8",
+		                "Config": "GDISP_INCLUDE_FONT_FIXED_5X8",
+		                "Size": 8
+		            },
+		            {
+		                "User": "Fixed 7x14",
+		                "Library": "fixed_7x14",
+		                "Config": "GDISP_INCLUDE_FONT_FIXED_7X14",
+		                "Size": 14
+		            },
+		            {
+		                "User": "Fixed 10x20",
+		                "Library": "fixed_10x20",
+		                "Config": "GDISP_INCLUDE_FONT_FIXED_10X20",
+		                "Size": 20
+		            },
+		            {
+		                "User": "DejaVu Sans 10",
+		                "Library": "DejaVuSans10",
+		                "Config": "GDISP_INCLUDE_FONT_DEJAVUSANS10",
+		                "Size": 10
+		            },
+		            {
+		                "User": "DejaVu Sans 12",
+		                "Library": "DejaVuSans12",
+		                "Config": "GDISP_INCLUDE_FONT_DEJAVUSANS12",
+		                "Size": 12
+		            },
+		            {
+		                "User": "DejaVu Sans 16",
+		                "Library": "DejaVuSans16",
+		                "Config": "GDISP_INCLUDE_FONT_DEJAVUSANS16",
+		                "Size": 16
+		            },
+		            {
+		                "User": "DejaVu Sans 20",
+		                "Library": "DejaVuSans20",
+		                "Config": "GDISP_INCLUDE_FONT_DEJAVUSANS20",
+		                "Size": 20
+		            },
+		            {
+		                "User": "DejaVu Sans 24",
+		                "Library": "DejaVuSans24",
+		                "Config": "GDISP_INCLUDE_FONT_DEJAVUSANS24",
+		                "Size": 24
+		            },
+		            {
+		                "User": "DejaVu Sans 32",
+		                "Library": "DejaVuSans32",
+		                "Config": "GDISP_INCLUDE_FONT_DEJAVUSANS32",
+		                "Size": 32
+		            },
+		            {
+		                "User": "DejaVu Sans 12 Anti-Aliased",
+		                "Library": "DejaVuSans12_aa",
+		                "Config": "GDISP_INCLUDE_FONT_DEJAVUSANS12_AA",
+		                "Size": 12
+		            },
+		            {
+		                "User": "DejaVu Sans 16 Anti-Aliased",
+		                "Library": "DejaVuSans16_aa",
+		                "Config": "GDISP_INCLUDE_FONT_DEJAVUSANS16_AA",
+		                "Size": 16
+		            },
+		            {
+		                "User": "DejaVu Sans 20 Anti-Aliased",
+		                "Library": "DejaVuSans20_aa",
+		                "Config": "GDISP_INCLUDE_FONT_DEJAVUSANS20_AA",
+		                "Size": 20
+		            },
+		            {
+		                "User": "DejaVu Sans 24 Anti-Aliased",
+		                "Library": "DejaVuSans24_aa",
+		                "Config": "GDISP_INCLUDE_FONT_DEJAVUSANS24_AA",
+		                "Size": 24
+		            },
+		            {
+		                "User": "DejaVu Sans 32 Anti-Aliased",
+		                "Library": "DejaVuSans32_aa",
+		                "Config": "GDISP_INCLUDE_FONT_DEJAVUSANS32_AA",
+		                "Size": 32
+		            },
+		            {
+		                "User": "Large Numbers",
+		                "Library": "LargeNumbers",
+		                "Config": "GDISP_INCLUDE_FONT_LARGENUMBERS",
+		                "Size": 23
+		            }
+		        ]
+    		},
+    		{
+				"Styles" : [
+		            {
+		                "User": "White",
+		                "Handle": "WhiteWidgetStyle",
+		                "Colors":
+		                {
+		               		"Background":
+		               		{
+		                		"User": "",
+		                		"Library": "",
+		                		"RGB": "0xFFFFFF"
+		            		},
+		               		"Enabled":
+		               		{
+		               			"Text":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0x000000"
+		            			},
+		               			"Edge":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0x404040"
+		            			},
+		               			"Fill":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0xE0E0E0"
+		            			},
+		               			"Progress":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0xE0E0E0"
+		            			}
+		               		},
+		               		"Disabled":
+		               		{
+		               			"Text":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0xC0C0C0"
+		            			},
+		               			"Edge":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0x808080"
+		            			},
+		               			"Fill":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0xE0E0E0"
+		            			},
+		               			"Progress":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0xC0E0C0"
+		            			}
+		               		},
+		               		"Pressed":
+		               		{
+		               			"Text":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0x404040"
+		            			},
+		               			"Edge":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0x404040"
+		            			},
+		               			"Fill":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0x808080"
+		            			},
+		               			"Progress":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0x00E000"
+		            			}
+		               		}
+		                }
+		            },
+		            {
+		                "User": "Black",
+		                "Handle": "BlackWidgetStyle",
+		                "Colors":
+		                {
+		               		"Background":
+		               		{
+		                		"User": "",
+		                		"Library": "",
+		                		"RGB": "0x000000"
+		            		},
+		               		"Enabled":
+		               		{
+		               			"Text":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0xC0C0C0"
+		            			},
+		               			"Edge":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0xC0C0C0"
+		            			},
+		               			"Fill":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0x606060"
+		            			},
+		               			"Progress":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0x404040"
+		            			}
+		               		},
+		               		"Disabled":
+		               		{
+		               			"Text":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0x808080"
+		            			},
+		               			"Edge":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0x404040"
+		            			},
+		               			"Fill":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0x404040"
+		            			},
+		               			"Progress":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0x004000"
+		            			}
+		               		},
+		               		"Pressed":
+		               		{
+		               			"Text":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0xFFFFFF"
+		            			},
+		               			"Edge":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0xC0C0C0"
+		            			},
+		               			"Fill":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0xE0E0E0"
+		            			},
+		               			"Progress":
+		               			{
+		                			"User": "",
+		                			"Library": "",
+		                			"RGB": "0x008000"
+		            			}
+		               		}
+		                }
+	            	}
+	            ]
+    		}
+    	]
+    }
+]
