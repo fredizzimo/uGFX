@@ -33,26 +33,24 @@
 #endif
 
 typedef struct ltdcLayerConfig {
-	// frame
+	// Frame
 	LLDCOLOR_TYPE	*frame;			// Frame buffer address
 	coord_t			width, height;	// Frame size in pixels
 	coord_t			pitch;			// Line pitch, in bytes
 	uint16_t		fmt;			// Pixel format in LTDC format
 
-	// window
+	// Window
 	coord_t			x, y;			// Start pixel position of the virtual layer
 	coord_t			cx, cy;			// Size of the virtual layer
 
 	uint32_t		defcolor;		// Default color, ARGB8888
 	uint32_t		keycolor;		// Color key, RGB888
 	uint32_t		blending;		// Blending factors
-	const uint32_t *palette;		// The palette, RGB888 (can be NULL)
+	const uint32_t* palette;		// The palette, RGB888 (can be NULL)
 	uint16_t		palettelen;		// Palette length
 	uint8_t			alpha;			// Constant alpha factor
 	uint8_t			layerflags;		// Layer configuration
 } ltdcLayerConfig;
-
-#define LTDC_UNUSED_LAYER_CONFIG	{ 0, 1, 1, 1, LTDC_FMT_L8, 0, 0, 1, 1, 0x000000, 0x000000, LTDC_BLEND_FIX1_FIX2, 0, 0, 0, 0 }
 
 typedef struct ltdcConfig {
 	coord_t		width, height;				// Screen size
@@ -65,6 +63,22 @@ typedef struct ltdcConfig {
 	ltdcLayerConfig	bglayer;				// Background layer config
 	ltdcLayerConfig	fglayer;				// Foreground layer config
 } ltdcConfig;
+
+#define LTDC_UNUSED_LAYER_CONFIG {
+	0,						// Frame buffer address
+	1, 1,					// Width, Height (pixels)
+	1,						// Line pitch (bytes)
+	LTDC_FMT_L8,			// Pixel format
+	0, 0,					// Start pixel position (x, y)
+	1, 1,					// Size of virtual layer (cx, cy)
+	0x000000,				// Default color (ARGB8888)
+	0x000000,				// Color key (RGB888)
+	LTDC_BLEND_FIX1_FIX2,	// Blending factors
+	0,						// Palette (RGB888, can be NULL)
+	0,						// Palette length
+	0,						// Constant alpha factor
+	0						// Layer configuration flags
+}
 
 #if GDISP_LLD_PIXELFORMAT == GDISP_PIXELFORMAT_RGB565
 	#define LTDC_PIXELFORMAT	LTDC_FMT_RGB565
@@ -92,7 +106,7 @@ typedef struct ltdcConfig {
 #endif
 
 /*===========================================================================*/
-/* Driver local routines    .                                                */
+/* Driver local routines.                                                    */
 /*===========================================================================*/
 
 #define PIXIL_POS(g, x, y)		((y) * driverCfg.bglayer.pitch + (x) * LTDC_PIXELBYTES)
@@ -144,8 +158,9 @@ static void LTDC_LayerInit(LTDC_Layer_TypeDef* pLayReg, const ltdcLayerConfig* p
 	pLayReg->CKCR = (pLayReg->CKCR & ~0x00FFFFFF) | (pCfg->keycolor & 0x00FFFFFF);
 	pLayReg->CACR = (pLayReg->CACR & ~LTDC_LxCACR_CONSTA) | ((uint32_t)pCfg->alpha & LTDC_LxCACR_CONSTA);
 	pLayReg->BFCR = (pLayReg->BFCR & ~(LTDC_LxBFCR_BF1 | LTDC_LxBFCR_BF2)) | ((uint32_t)pCfg->blending & (LTDC_LxBFCR_BF1 | LTDC_LxBFCR_BF2));
-	for (start = 0; start < pCfg->palettelen; start++)
+	for (start = 0; start < pCfg->palettelen; start++) {
 		pLayReg->CLUTWR = ((uint32_t)start << 24) | (pCfg->palette[start] & 0x00FFFFFF);
+	}
 
 	// Final flags
 	pLayReg->CR = (pLayReg->CR & ~LTDC_LEF_MASK) | ((uint32_t)pCfg->layerflags & LTDC_LEF_MASK);
@@ -156,17 +171,17 @@ static void LTDC_Init(void)
 	// Set up the display scanning
 	uint32_t hacc, vacc;
 
-	/* Reset the LTDC hardware module.*/
+	// Reset the LTDC hardware module
 	RCC->APB2RSTR |= RCC_APB2RSTR_LTDCRST;
 	RCC->APB2RSTR = 0;
 
-	/* Enable the LTDC clock.*/
+	// Enable the LTDC clock
 	RCC->DCKCFGR1 = (RCC->DCKCFGR1 & ~RCC_DCKCFGR1_PLLSAIDIVR) | (1 << 16); /* /4 */
 
 	// Enable the module
 	RCC->APB2ENR |= RCC_APB2ENR_LTDCEN;
 
-	// Turn off the controller and its interrupts.
+	// Turn off the controller and its interrupts
 	LTDC->GCR = 0;
 	LTDC->IER = 0;
 	LTDC_Reload();
@@ -220,12 +235,9 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay* g)
 	// Initialize the private structure
 	g->priv = 0;
 	g->board = 0;
-	//if (!(g->priv = gfxAlloc(sizeof(fbPriv))))
-	//	gfxHalt("GDISP Framebuffer: Failed to allocate private memory");
 
 	// Init the board
 	init_board(g);
-	//((fbPriv *)g->priv)->fbi.cfg = init_board(g);
 
 	// Initialise the LTDC controller
 	LTDC_Init();
@@ -374,7 +386,7 @@ LLDSPEC	color_t gdisp_lld_get_pixel_color(GDisplay* g)
 #if LTDC_USE_DMA2D
 	static void dma2d_init(void)
 	{
-		// Enable DMA2D clock (DMA2DEN = 1)
+		// Enable DMA2D clock
 		RCC->AHB1ENR |= RCC_AHB1ENR_DMA2DEN;
 	
 		// Output color format
