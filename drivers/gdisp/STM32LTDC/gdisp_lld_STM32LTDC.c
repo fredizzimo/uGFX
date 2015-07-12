@@ -64,21 +64,7 @@ typedef struct ltdcConfig {
 	ltdcLayerConfig	fglayer;				// Foreground layer config
 } ltdcConfig;
 
-#define LTDC_UNUSED_LAYER_CONFIG {
-	0,						// Frame buffer address
-	1, 1,					// Width, Height (pixels)
-	1,						// Line pitch (bytes)
-	LTDC_FMT_L8,			// Pixel format
-	0, 0,					// Start pixel position (x, y)
-	1, 1,					// Size of virtual layer (cx, cy)
-	0x000000,				// Default color (ARGB8888)
-	0x000000,				// Color key (RGB888)
-	LTDC_BLEND_FIX1_FIX2,	// Blending factors
-	0,						// Palette (RGB888, can be NULL)
-	0,						// Palette length
-	0,						// Constant alpha factor
-	0						// Layer configuration flags
-}
+#define LTDC_UNUSED_LAYER_CONFIG	{ 0, 1, 1, 1, LTDC_FMT_L8, 0, 0, 1, 1, 0x000000, 0x000000, LTDC_BLEND_FIX1_FIX2, 0, 0, 0, 0 }
 
 #if GDISP_LLD_PIXELFORMAT == GDISP_PIXELFORMAT_RGB565
 	#define LTDC_PIXELFORMAT	LTDC_FMT_RGB565
