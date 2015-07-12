@@ -687,10 +687,10 @@ static void cleanUpDeadThreads(void) {
 
 	// Use the EABI calling standard (ARM's AAPCS) - Save r4 - r11
 
-	#define CXT_SET(t) {														\
-		register void *r13 asm ("r13");											\
-		current = t;															\
-		r13 = (char *)current + current->size;									\
+	#define CXT_SET(t) {																		\
+		register void* r13 __asm__("r13");														\
+		current = t;																			\
+		r13 = (char*)current + current->size;													\
 	}
 
 	/**
@@ -700,60 +700,60 @@ static void cleanUpDeadThreads(void) {
 	 * with the thread handle as the return value
 	 */
 	//
-	#define CXT_SAVE() {															\
-		register void *r13 asm ("r13");												\
-		asm volatile (	"push    {r4, r5, r6, r7, lr}                   \n\t"		\
-						"mov     r4, r8                                 \n\t"		\
-						"mov     r5, r9                                 \n\t"		\
-						"mov     r6, r10                                \n\t"		\
-						"mov     r7, r11                                \n\t"		\
-						"push    {r4, r5, r6, r7}" : : : "memory");					\
-		current->cxt = r13;															\
-	}
-	#define CXT_RESTORE() {															\
-		register void *		r13	asm ("r13");										\
-		r13 = current->cxt;															\
-		asm volatile (	"pop     {r4, r5, r6, r7}                       \n\t"		\
-						"mov     r8, r4                                 \n\t"		\
-						"mov     r9, r5                                 \n\t"		\
-						"mov     r10, r6                                \n\t"		\
-						"mov     r11, r7                                \n\t"		\
-						"pop     {r4, r5, r6, r7, pc}" : : "r" (r13) : "memory");	\
+	#define CXT_SAVE() {																		\
+		register void* r13 __asm__("r13");														\
+		__asm__ volatile (	"push    {r4, r5, r6, r7, lr}                   \n\t"				\
+							"mov     r4, r8                                 \n\t"				\
+							"mov     r5, r9                                 \n\t"				\
+							"mov     r6, r10                                \n\t"				\
+							"mov     r7, r11                                \n\t"				\
+							"push    {r4, r5, r6, r7}" : : : "memory");							\
+		current->cxt = r13;																		\
+	}		
+	#define CXT_RESTORE() {																		\
+		register void* r13 __asm__ ("r13");														\
+		r13 = current->cxt;																		\
+		__asm__ volatile (	"pop     {r4, r5, r6, r7}                   	\n\t"				\
+							"mov     r8, r4                                 \n\t"				\
+							"mov     r9, r5                                 \n\t"				\
+							"mov     r10, r6                                \n\t"				\
+							"mov     r11, r7                                \n\t"				\
+							"pop     {r4, r5, r6, r7, pc}" : : "r" (r13) : "memory");			\
 	}
 
 #elif GOS_RAW_SCHEDULER == SCHED_USE_CORTEX_M3 || GOS_RAW_SCHEDULER == SCHED_USE_CORTEX_M4
 
 		// Use the EABI calling standard (ARM's AAPCS) - Save r4 - r11 and floating point if needed
 
-		#define CXT_SET(t) {														\
-			register void* r13 asm("r13");											\
-			current = t;															\
-			r13 = (char *)current + current->size;									\
+		#define CXT_SET(t) {																	\
+			register void* r13 __asm__("r13");													\
+			current = t;																		\
+			r13 = (char *)current + current->size;												\
 		}
 
 		#if CORTEX_USE_FPU
-			#define CXT_SAVE() {															\
-				register void* r13 asm("r13");												\
-				asm volatile ("push {r4, r5, r6, r7, r8, r9, r10, r11, lr}" : : : "memory");\
-				asm volatile ("vpush {s16-s31}" : : : "memory");							\
-				current->cxt = r13;															\
+			#define CXT_SAVE() {																\
+				register void* r13 __asm__("r13");												\
+				__asm__ volatile ("push {r4, r5, r6, r7, r8, r9, r10, r11, lr}" : : : "memory");\
+				__asm__ volatile ("vpush {s16-s31}" : : : "memory");							\
+				current->cxt = r13;																\
 			}
-			#define CXT_RESTORE() {															\
-				register void* r13 asm("r13");										\
-				r13 = current->cxt;															\
-				asm volatile ("vpop {s16-s31}" : : : "memory");							\
-				asm volatile ("pop {r4, r5, r6, r7, r8, r9, r10, r11, pc}" : : : "memory");	\
+			#define CXT_RESTORE() {																\
+				register void* r13 __asm__("r13");												\
+				r13 = current->cxt;																\
+				__asm__ volatile ("vpop {s16-s31}" : : : "memory");								\
+				__asm__ volatile ("pop {r4, r5, r6, r7, r8, r9, r10, r11, pc}" : : : "memory");	\
 			}
 		#else
-			#define CXT_SAVE() {															\
-				register void* r13 asm("r13");												\
-				asm volatile ("push {r4, r5, r6, r7, r8, r9, r10, r11, lr}" : : : "memory");\
-				current->cxt = r13;															\
+			#define CXT_SAVE() {																\
+				register void* r13 __asm__("r13");												\
+				__asm__ volatile ("push {r4, r5, r6, r7, r8, r9, r10, r11, lr}" : : : "memory");\
+				current->cxt = r13;																\
 			}
-			#define CXT_RESTORE() {															\
-				register void* r13 asm("r13");										\
-				r13 = current->cxt;															\
-				asm volatile ("pop {r4, r5, r6, r7, r8, r9, r10, r11, pc}" : : : "memory");	\
+			#define CXT_RESTORE() {																\
+				register void* r13 __asm__("r13");												\
+				r13 = current->cxt;																\
+				__asm__ volatile ("pop {r4, r5, r6, r7, r8, r9, r10, r11, pc}" : : : "memory");	\
 			}
 		#endif
 #endif
