@@ -39,94 +39,225 @@ static const ltdcConfig driverCfg = {
 	LTDC_UNUSED_LAYER_CONFIG				// Foreground layer config
 };
 
-/**
-  * @brief LCD special pins
-  */
-/* Display enable pin */
-#define LCD_DISP_PIN                    GPIO_PIN_12
-#define LCD_DISP_GPIO_PORT              GPIOI
-
-/* Backlight control pin */
-#define LCD_BL_CTRL_PIN                  GPIO_PIN_3
-#define LCD_BL_CTRL_GPIO_PORT            GPIOK
-
 /* Display timing */
 #define RK043FN48H_FREQUENCY_DIVIDER	5
 
-static void SetBoardPinDirectionsForLCD(void)
+static void configureLcdPins(void)
 {
-  GPIO_InitTypeDef gpio_init_structure;
+	GPIO_InitTypeDef gpio_init_structure;
 
-  // Enable GPIOs clock */
-  __HAL_RCC_GPIOE_CLK_ENABLE();
-  __HAL_RCC_GPIOG_CLK_ENABLE();
-  __HAL_RCC_GPIOI_CLK_ENABLE();		// Display pin
-  __HAL_RCC_GPIOJ_CLK_ENABLE();
-  __HAL_RCC_GPIOK_CLK_ENABLE();		// BL pin
+	// Enable GPIOs clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN;	// GPIOE
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOGEN;	// GPIOG
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOIEN;	// GPIOI
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOJEN;	// GPIOJ
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOKEN;	// GPIOK
 
-  //*** LTDC Pins configuration
-  // GPIOE configuration
-  gpio_init_structure.Pin       = GPIO_PIN_4;
-  gpio_init_structure.Mode      = GPIO_MODE_AF_PP;
-  gpio_init_structure.Pull      = GPIO_NOPULL;
-  gpio_init_structure.Speed     = GPIO_SPEED_FAST;
-  gpio_init_structure.Alternate = GPIO_AF14_LTDC;
-  HAL_GPIO_Init(GPIOE, &gpio_init_structure);
+	// PI15: LCD_R0
+	GPIOI->MODER |= GPIO_MODER_MODER15_1;
+	GPIOI->OTYPER &=~ GPIO_OTYPER_OT_15;
+	GPIOI->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR15_0 | GPIO_OSPEEDER_OSPEEDR15_1;
+	GPIOI->AFR[1] |= (0b1110 << 4*7);
 
-  // GPIOG configuration
-  gpio_init_structure.Pin       = GPIO_PIN_12;
-  gpio_init_structure.Mode      = GPIO_MODE_AF_PP;
-  gpio_init_structure.Alternate = GPIO_AF9_LTDC;
-  HAL_GPIO_Init(GPIOG, &gpio_init_structure);
+	// PJ0: LCD_R1
+	GPIOJ->MODER |= GPIO_MODER_MODER0_1;
+	GPIOJ->OTYPER &=~ GPIO_OTYPER_OT_0;
+	GPIOJ->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR0_0 | GPIO_OSPEEDER_OSPEEDR0_1;
+	GPIOJ->AFR[0] |= (0b1110 << 4*0);
 
-  // GPIOI LTDC alternate configuration
-  gpio_init_structure.Pin       = GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | \
-                                  GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15;
-  gpio_init_structure.Mode      = GPIO_MODE_AF_PP;
-  gpio_init_structure.Alternate = GPIO_AF14_LTDC;
-  HAL_GPIO_Init(GPIOI, &gpio_init_structure);
+	// PJ1: LCD_R2
+	GPIOJ->MODER |= GPIO_MODER_MODER1_1;
+	GPIOJ->OTYPER &=~ GPIO_OTYPER_OT_1;
+	GPIOJ->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR1_0 | GPIO_OSPEEDER_OSPEEDR1_1;
+	GPIOJ->AFR[0] |= (0b1110 << 4*1);
 
-  // GPIOJ configuration
-  gpio_init_structure.Pin       = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3 | \
-                                  GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7 | \
-                                  GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11 | \
-                                  GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15;
-  gpio_init_structure.Mode      = GPIO_MODE_AF_PP;
-  gpio_init_structure.Alternate = GPIO_AF14_LTDC;
-  HAL_GPIO_Init(GPIOJ, &gpio_init_structure);
+	// PJ2: LCD_R3
+	GPIOJ->MODER |= GPIO_MODER_MODER2_1;
+	GPIOJ->OTYPER &=~ GPIO_OTYPER_OT_2;
+	GPIOJ->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR2_0 | GPIO_OSPEEDER_OSPEEDR2_1;
+	GPIOJ->AFR[0] |= (0b1110 << 4*2);
 
-  // GPIOK configuration
-  gpio_init_structure.Pin       = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_4 | \
-                                  GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7;
-  gpio_init_structure.Mode      = GPIO_MODE_AF_PP;
-  gpio_init_structure.Alternate = GPIO_AF14_LTDC;
-  HAL_GPIO_Init(GPIOK, &gpio_init_structure);
+	// PJ3: LCD_R4
+	GPIOJ->MODER |= GPIO_MODER_MODER3_1;
+	GPIOJ->OTYPER &=~ GPIO_OTYPER_OT_3;
+	GPIOJ->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR3_0 | GPIO_OSPEEDER_OSPEEDR3_1;
+	GPIOJ->AFR[0] |= (0b1110 << 4*3);
 
-  // LCD_DISP GPIO configuration
-  gpio_init_structure.Pin       = LCD_DISP_PIN;     /* LCD_DISP pin has to be manually controlled */
-  gpio_init_structure.Mode      = GPIO_MODE_OUTPUT_PP;
-  HAL_GPIO_Init(LCD_DISP_GPIO_PORT, &gpio_init_structure);
+	// PJ4: LCD_R5
+	GPIOJ->MODER |= GPIO_MODER_MODER4_1;
+	GPIOJ->OTYPER &=~ GPIO_OTYPER_OT_4;
+	GPIOJ->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR4_0 | GPIO_OSPEEDER_OSPEEDR4_1;
+	GPIOJ->AFR[0] |= (0b1110 << 4*4);
 
-  // LCD_BL_CTRL GPIO configuration
-  gpio_init_structure.Pin       = LCD_BL_CTRL_PIN;  /* LCD_BL_CTRL pin has to be manually controlled */
-  gpio_init_structure.Mode      = GPIO_MODE_OUTPUT_PP;
-  HAL_GPIO_Init(LCD_BL_CTRL_GPIO_PORT, &gpio_init_structure);
+	// PJ5: LCD_R6
+	GPIOJ->MODER |= GPIO_MODER_MODER5_1;
+	GPIOJ->OTYPER &=~ GPIO_OTYPER_OT_5;
+	GPIOJ->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR5_0 | GPIO_OSPEEDER_OSPEEDR5_1;
+	GPIOJ->AFR[0] |= (0b1110 << 4*5);
+
+	// PJ6: LCD_R7
+	GPIOJ->MODER |= GPIO_MODER_MODER6_1;
+	GPIOJ->OTYPER &=~ GPIO_OTYPER_OT_6;
+	GPIOJ->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR6_0 | GPIO_OSPEEDER_OSPEEDR6_1;
+	GPIOJ->AFR[0] |= (0b1110 << 4*6);
+
+	// PJ7: LCD_G0
+	GPIOJ->MODER |= GPIO_MODER_MODER7_1;
+	GPIOJ->OTYPER &=~ GPIO_OTYPER_OT_7;
+	GPIOJ->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR7_0 | GPIO_OSPEEDER_OSPEEDR7_1;
+	GPIOJ->AFR[0] |= (0b1110 << 4*7);
+
+	// PJ8: LCD_G1
+	GPIOJ->MODER |= GPIO_MODER_MODER8_1;
+	GPIOJ->OTYPER &=~ GPIO_OTYPER_OT_8;
+	GPIOJ->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR8_0 | GPIO_OSPEEDER_OSPEEDR8_1;
+	GPIOJ->AFR[1] |= (0b1110 << 4*0);
+
+	// PJ9: LCD_G2
+	GPIOJ->MODER |= GPIO_MODER_MODER9_1;
+	GPIOJ->OTYPER &=~ GPIO_OTYPER_OT_9;
+	GPIOJ->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR9_0 | GPIO_OSPEEDER_OSPEEDR9_1;
+	GPIOJ->AFR[1] |= (0b1110 << 4*1);
+
+	// PJ10: LCD_G3
+	GPIOJ->MODER |= GPIO_MODER_MODER10_1;
+	GPIOJ->OTYPER &=~ GPIO_OTYPER_OT_10;
+	GPIOJ->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR10_0 | GPIO_OSPEEDER_OSPEEDR10_1;
+	GPIOJ->AFR[1] |= (0b1110 << 4*2);
+
+	// PJ11: LCD_G4
+	GPIOJ->MODER |= GPIO_MODER_MODER11_1;
+	GPIOJ->OTYPER &=~ GPIO_OTYPER_OT_11;
+	GPIOJ->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR11_0 | GPIO_OSPEEDER_OSPEEDR11_1;
+	GPIOJ->AFR[1] |= (0b1110 << 4*3);
+
+	// PK0: LCD_G5
+	GPIOK->MODER |= GPIO_MODER_MODER0_0;
+	GPIOK->OTYPER &=~ GPIO_OTYPER_OT_0;
+	GPIOK->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR0_0 | GPIO_OSPEEDER_OSPEEDR0_1;
+	GPIOK->AFR[0] |= (0b1110 << 4*0);
+
+	// PK1: LCD_G6
+	GPIOK->MODER |= GPIO_MODER_MODER1_1;
+	GPIOK->OTYPER &=~ GPIO_OTYPER_OT_1;
+	GPIOK->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR1_0 | GPIO_OSPEEDER_OSPEEDR1_1;
+	GPIOK->AFR[0] |= (0b1110 << 4*1);
+
+	// PK2: LCD_G7
+	GPIOK->MODER |= GPIO_MODER_MODER2_1;
+	GPIOK->OTYPER &=~ GPIO_OTYPER_OT_2;
+	GPIOK->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR2_0 | GPIO_OSPEEDER_OSPEEDR2_1;
+	GPIOK->AFR[0] |= (0b1110 << 4*2);
+
+	// PE4: LCD_B0
+	GPIOE->MODER |= GPIO_MODER_MODER4_1;
+	GPIOE->OTYPER &=~ GPIO_OTYPER_OT_4;
+	GPIOE->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR4_0 | GPIO_OSPEEDER_OSPEEDR4_1;
+	GPIOE->AFR[0] |= (0b1110 << 4*4);
+
+	// PJ13: LCD_B1
+	GPIOJ->MODER |= GPIO_MODER_MODER13_1;
+	GPIOJ->OTYPER &=~ GPIO_OTYPER_OT_13;
+	GPIOJ->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR13_0 | GPIO_OSPEEDER_OSPEEDR13_1;
+	GPIOJ->AFR[1] |= (0b1110 << 4*5);
+
+	// PJ14: LCD_B2
+	GPIOJ->MODER |= GPIO_MODER_MODER14_1;
+	GPIOJ->OTYPER &=~ GPIO_OTYPER_OT_14;
+	GPIOJ->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR14_0 | GPIO_OSPEEDER_OSPEEDR14_1;
+	GPIOJ->AFR[1] |= (0b1110 << 4*6);
+
+	// PJ15: LCD_B3
+	GPIOJ->MODER |= GPIO_MODER_MODER15_1;
+	GPIOJ->OTYPER &=~ GPIO_OTYPER_OT_15;
+	GPIOJ->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR15_0 | GPIO_OSPEEDER_OSPEEDR15_1;
+	GPIOJ->AFR[1] |= (0b1110 << 4*7);
+
+	// PG12: LCD_B4
+	GPIOG->MODER |= GPIO_MODER_MODER12_1;
+	GPIOG->OTYPER &=~ GPIO_OTYPER_OT_12;
+	GPIOG->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR12_0 | GPIO_OSPEEDER_OSPEEDR12_1;
+	GPIOG->AFR[1] |= (0b1110 << 4*4);
+
+	// PK4: LCD_B5
+	GPIOK->MODER |= GPIO_MODER_MODER4_1;
+	GPIOK->OTYPER &=~ GPIO_OTYPER_OT_4;
+	GPIOK->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR4_0 | GPIO_OSPEEDER_OSPEEDR4_1;
+	GPIOK->AFR[0] |= (0b1110 << 4*4);
+
+	// PK5: LCD_B6
+	GPIOK->MODER |= GPIO_MODER_MODER5_1;
+	GPIOK->OTYPER &=~ GPIO_OTYPER_OT_5;
+	GPIOK->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR5_0 | GPIO_OSPEEDER_OSPEEDR5_1;
+	GPIOK->AFR[0] |= (0b1110 << 4*5);
+
+	// PK6: LCD_B7
+	GPIOK->MODER |= GPIO_MODER_MODER6_1;
+	GPIOK->OTYPER &=~ GPIO_OTYPER_OT_6;
+	GPIOK->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR6_0 | GPIO_OSPEEDER_OSPEEDR6_1;
+	GPIOK->AFR[0] |= (0b1110 << 4*6);
+
+	// PK7: LCD_DE
+	GPIOK->MODER |= GPIO_MODER_MODER7_1;
+	GPIOK->OTYPER &=~ GPIO_OTYPER_OT_7;
+	GPIOK->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR7_0 | GPIO_OSPEEDER_OSPEEDR7_1;
+	GPIOK->AFR[0] |= (0b1110 << 4*7);
+
+	// PI9: LCD_VSYNC
+	GPIOI->MODER |= GPIO_MODER_MODER9_1;
+	GPIOI->OTYPER &=~ GPIO_OTYPER_OT_9;
+	GPIOI->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR9_0 | GPIO_OSPEEDER_OSPEEDR9_1;
+	GPIOI->AFR[1] |= (0b1110 << 4*1);
+
+	// PI10: LCD_VSYNC
+	GPIOI->MODER |= GPIO_MODER_MODER10_1;
+	GPIOI->OTYPER &=~ GPIO_OTYPER_OT_10;
+	GPIOI->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR10_0 | GPIO_OSPEEDER_OSPEEDR10_1;
+	GPIOI->AFR[1] |= (0b1110 << 4*2);
+
+	// PI13: LCD_INT
+	GPIOI->MODER |= GPIO_MODER_MODER13_1;
+	GPIOI->OTYPER &=~ GPIO_OTYPER_OT_13;
+	GPIOI->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR13_0 | GPIO_OSPEEDER_OSPEEDR13_1;
+	GPIOI->AFR[1] |= (0b1110 << 4*5);
+
+	// PI14: LCD_CLK
+	GPIOI->MODER |= GPIO_MODER_MODER14_1;
+	GPIOI->OTYPER &=~ GPIO_OTYPER_OT_14;
+	GPIOI->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR14_0 | GPIO_OSPEEDER_OSPEEDR14_1;
+	GPIOI->AFR[1] |= (0b1110 << 4*6);
+
+	// PI8: ???
+	GPIOI->MODER |= GPIO_MODER_MODER8_1;
+	GPIOI->OTYPER &=~ GPIO_OTYPER_OT_8;
+	GPIOI->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR8_0 | GPIO_OSPEEDER_OSPEEDR8_1;
+	GPIOI->AFR[1] |= (0b1110 << 4*0);
+
+	// PI12: LCD_DISP_PIN
+	GPIOI->MODER |= GPIO_MODER_MODER12_0;
+	GPIOI->OTYPER &=~ GPIO_OTYPER_OT_12;
+	GPIOI->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR12_0 | GPIO_OSPEEDER_OSPEEDR12_1;
+
+	// PK3: LCD_BL_CTRL
+	GPIOK->MODER |= GPIO_MODER_MODER3_0;
+	GPIOK->OTYPER &=~ GPIO_OTYPER_OT_3;
+	GPIOK->OSPEEDR |= GPIO_OSPEEDER_OSPEEDR3_0 | GPIO_OSPEEDER_OSPEEDR3_1;
 }
 
 static inline void init_board(GDisplay *g) {
 
-	// As we are not using multiple displays we set g->board to NULL as we don't use it.
+	// As we are not using multiple displays we set g->board to NULL as we don't use it
 	g->board = 0;
 
 	switch(g->controllerdisplay) {
 	case 0:
 
 		// Set pin directions
-		SetBoardPinDirectionsForLCD();
+		configureLcdPins();
 
 		// Enable the display and turn on the backlight
-		HAL_GPIO_WritePin(LCD_DISP_GPIO_PORT, LCD_DISP_PIN, GPIO_PIN_SET);
-		HAL_GPIO_WritePin(LCD_BL_CTRL_GPIO_PORT, LCD_BL_CTRL_PIN, GPIO_PIN_SET);
+		GPIOI->ODR |= (1 << 12);	// PowerOn
+		GPIOK->ODR |= (1 << 3);		// Backlight on
 
 		#define STM32_SAISRC_NOCLOCK    (0 << 23)   /**< No clock.                  */
 		#define STM32_SAISRC_PLL        (1 << 23)   /**< SAI_CKIN is PLL.           */
@@ -158,13 +289,20 @@ static inline void init_board(GDisplay *g) {
 	}
 }
 
-static inline void post_init_board(GDisplay *g) {
+static inline void post_init_board(GDisplay* g) {
 	(void) g;
 }
 
-static inline void set_backlight(GDisplay *g, uint8_t percent) {
+static inline void set_backlight(GDisplay* g, uint8_t percent) {
 	(void) g;
-	(void) percent;
+
+	// ST was stupid enought not to hook this up to a pin that
+	// is able to act as PWM output...
+	if (percent <= 0) {
+		GPIOK->ODR &=~ (1 << 3);	// Backlight off
+	} else {
+		GPIOK->ODR |= (1 << 3);		// Backlight on
+	}
 }
 
 #endif /* _GDISP_LLD_BOARD_H */
