@@ -144,9 +144,8 @@ static void LTDC_LayerInit(LTDC_Layer_TypeDef* pLayReg, const ltdcLayerConfig* p
 	pLayReg->CKCR = (pLayReg->CKCR & ~0x00FFFFFF) | (pCfg->keycolor & 0x00FFFFFF);
 	pLayReg->CACR = (pLayReg->CACR & ~LTDC_LxCACR_CONSTA) | ((uint32_t)pCfg->alpha & LTDC_LxCACR_CONSTA);
 	pLayReg->BFCR = (pLayReg->BFCR & ~(LTDC_LxBFCR_BF1 | LTDC_LxBFCR_BF2)) | ((uint32_t)pCfg->blending & (LTDC_LxBFCR_BF1 | LTDC_LxBFCR_BF2));
-	for (start = 0; start < pCfg->palettelen; start++) {
+	for (start = 0; start < pCfg->palettelen; start++)
 		pLayReg->CLUTWR = ((uint32_t)start << 24) | (pCfg->palette[start] & 0x00FFFFFF);
-	}
 
 	// Final flags
 	pLayReg->CR = (pLayReg->CR & ~LTDC_LEF_MASK) | ((uint32_t)pCfg->layerflags & LTDC_LEF_MASK);

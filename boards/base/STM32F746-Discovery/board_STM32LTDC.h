@@ -44,8 +44,6 @@ static const ltdcConfig driverCfg = {
 
 static void configureLcdPins(void)
 {
-	GPIO_InitTypeDef gpio_init_structure;
-
 	// Enable GPIOs clock
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN;	// GPIOE
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOGEN;	// GPIOG
