@@ -19,7 +19,7 @@ ifeq ($(OPT_OS),raw32)
 				$(GFXLIB)/boards/base/STM32F746-Discovery/stm32f746g_raw32_ugfx.c \
 				$(GFXLIB)/boards/base/STM32F746-Discovery/stm32f746g_raw32_system.c \
 				$(GFXLIB)/boards/base/STM32F746-Discovery/stm32f746g_raw32_interrupts.c
-	GFXDEFS	+=	GFX_OS_EXTRA_INIT_FUNCTION=Raw32OSInit
+	GFXDEFS	+=	GFX_OS_EXTRA_INIT_FUNCTION=Raw32OSInit GFX_OS_INIT_NO_WARNING=TRUE
 	SRCFLAGS+=	-std=c99
 	GFXINC	+=	$(CMSIS)/Device/ST/STM32F7xx/Include \
 				$(CMSIS)/Include \

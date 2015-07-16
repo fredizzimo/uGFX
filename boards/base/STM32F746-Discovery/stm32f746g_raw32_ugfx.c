@@ -13,7 +13,6 @@ systemticks_t gfxMillisecondsToTicks(delaytime_t ms)
 
 static void SystemClock_Config(void);
 static void CPU_CACHE_Enable(void);
-static void LCD_Config(void);
 
 void Raw32OSInit(void) {
     RCC_PeriphCLKInitTypeDef  PeriphClkInitStruct;

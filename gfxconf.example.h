@@ -35,13 +35,15 @@
 //#define GFX_USE_OS_ECOS                              FALSE
 //#define GFX_USE_OS_RAWRTOS                           FALSE
 //#define GFX_USE_OS_RAW32                             FALSE
-//    #define GOS_RAW_HEAP_SIZE                        0
 //    #define INTERRUPTS_OFF()                         optional_code
 //    #define INTERRUPTS_ON()                          optional_code
 
 // Options that (should where relevant) apply to all operating systems
 //    #define GFX_COMPILER                             GFX_COMPILER_UNKNOWN
+//    #define GFX_CPU                                  GFX_CPU_UNKNOWN
+//    #define GFX_OS_HEAP_SIZE                         0
 //    #define GFX_NO_OS_INIT                           FALSE
+//    #define GFX_OS_INIT_NO_WARNING                   FALSE
 //    #define GFX_OS_EXTRA_INIT_FUNCTION               myOSInitRoutine
 //    #define GFX_OS_EXTRA_DEINIT_FUNCTION             myOSDeInitRoutine
 

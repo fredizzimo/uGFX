@@ -14,60 +14,49 @@
  * 		enough startup to initialise the stack, interrupts, static data etc and call main().
  * 		setjmp() and longjmp()			- for threading
  * 		memcpy()						- for heap and threading
- * 		malloc(), realloc and free()	- if GOS_RAW_HEAP_SIZE == 0
+ * 		malloc(), realloc and free()	- if GFX_OS_HEAP_SIZE == 0
  *
  * 	You must also define the following routines in your own code so that timing functions will work...
  * 		systemticks_t gfxSystemTicks(void);
  *		systemticks_t gfxMillisecondsToTicks(delaytime_t ms);
  */
-#ifndef _GOS_RAW32_H
-#define _GOS_RAW32_H
+#ifndef _GOS_X_HEAP_H
+#define _GOS_X_HEAP_H
 
-#if GFX_USE_OS_RAW32
+#if GOS_NEED_X_HEAP
+
+
+/*===========================================================================*/
+/* Special Macros								                             */
+/*===========================================================================*/
+
+/**
+ * @brief	Set the maximum size of the heap.
+ * @note	If set to 0 then the C runtime library malloc() and free() are used.
+ */
+#ifndef GFX_OS_HEAP_SIZE
+	#define GFX_OS_HEAP_SIZE	0
+#endif
 
 /*===========================================================================*/
 /* Type definitions                                                          */
 /*===========================================================================*/
 
-typedef unsigned char	bool_t;
-
-#if __STDC_VERSION__ >= 199901L
-	#include <stdint.h>
-#else
-	typedef signed char		int8_t;
-	typedef unsigned char	uint8_t;
-	typedef signed short	int16_t;
-	typedef unsigned short	uint16_t;
-	typedef signed int		int32_t;
-	typedef unsigned int	uint32_t;
-#endif
-
-#if defined(__STDC__)
-	#include <stddef.h>
-#else
-	typedef uint32_t		size_t;
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-	void gfxHalt(const char *msg);
-	void gfxExit(void);
+	#if GFX_OS_HEAP_SIZE != 0
+		void gfxAddHeapBlock(void *ptr, size_t sz);
+	#endif
+
+	void *gfxAlloc(size_t sz);
+	void *gfxRealloc(void *ptr, size_t oldsz, size_t newsz);
+	void gfxFree(void *ptr);
 
 #ifdef __cplusplus
 }
 #endif
 
-/*===========================================================================*/
-/* Use the generic thread handling and heap handling                         */
-/*===========================================================================*/
-
-#define GOS_NEED_X_THREADS	TRUE
-#define GOS_NEED_X_HEAP		TRUE
-
-#include "gos_x_threads.h"
-#include "gos_x_heap.h"
-
-#endif /* GFX_USE_OS_RAW32 */
-#endif /* _GOS_RAW32_H */
+#endif /* GOS_NEED_X_HEAP */
+#endif /* _GOS_X_HEAP_H */

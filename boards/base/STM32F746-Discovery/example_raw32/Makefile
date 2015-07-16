@@ -55,7 +55,7 @@ LDFLAGS  =
 SRC      = 
 
 OBJS     =
-DEFS     =	GOS_RAW_HEAP_SIZE=40960
+DEFS     =	GFX_OS_HEAP_SIZE=40960
 LIBS     =
 INCPATH  = 
 

@@ -48,7 +48,7 @@ void _gosInit(void)
 				chSysInit();
 			}
 		#endif
-	#else
+	#elif !GFX_OS_INIT_NO_WARNING
 		#warning "GOS: Operating System initialization has been turned off. Make sure you call halInit() and chSysInit() before gfxInit() in your application!"
 	#endif
 }

@@ -74,7 +74,7 @@
 	 * @details	Defaults to FALSE
 	 */
 	#ifndef GFX_USE_OS_ARDUINO
-		#define GFX_USE_OS_ARDUINO			FALSE
+		#define GFX_USE_OS_ARDUINO		FALSE
 	#endif
 /**
  * @}
@@ -88,12 +88,35 @@
 	 * @note	This is setting enables optimisations that are compiler specific. It does
 	 * 			not need to be specified as reasonable defaults and various auto-detection
 	 * 			will happen as required.
+	 * @note	Currently only used by ugfx generic thread handling (GOS_USE_OS_RAW32 and GOS_USE_OS_ARDUINO)
 	 */
 	#ifndef GFX_COMPILER
 		#define GFX_COMPILER			GFX_COMPILER_UNKNOWN
 	#endif
 	#define GFX_COMPILER_UNKNOWN		0		// Unknown compiler
 	#define GFX_COMPILER_MINGW32		1		// MingW32 (x86) compiler for windows
+	/**
+	 * @brief	Enable cpu specific code
+	 * @details	Defaults to GFX_CPU_UNKNOWN
+	 * @note	This is setting enables optimisations that are cpu specific. It does
+	 * 			not need to be specified as reasonable defaults and various auto-detection
+	 * 			will happen as required.
+	 * @note	Currently only used by ugfx generic thread handling (GOS_USE_OS_RAW32 and GOS_USE_OS_ARDUINO)
+	 * @{
+	 */
+	#ifndef GFX_CPU
+		#define GFX_CPU					GFX_CPU_UNKNOWN
+	#endif
+	#define GFX_CPU_UNKNOWN				0		//**< Unknown cpu
+	#define GFX_CPU_CORTEX_M0			1		//**< Cortex M0
+	#define GFX_CPU_CORTEX_M1			2		//**< Cortex M1
+	#define GFX_CPU_CORTEX_M2			3		//**< Cortex M2
+	#define GFX_CPU_CORTEX_M3			4		//**< Cortex M3
+	#define GFX_CPU_CORTEX_M4			5		//**< Cortex M4
+	#define GFX_CPU_CORTEX_M4_FP		6		//**< Cortex M4 with hardware floating point
+	#define GFX_CPU_CORTEX_M7			7		//**< Cortex M7
+	#define GFX_CPU_CORTEX_M7_FP		8		//**< Cortex M7 with hardware floating point
+	/** @} */
  	/**
  	 * @brief	Should uGFX avoid initializing the operating system
  	 * @details	Defaults to FALSE
@@ -109,6 +132,16 @@
  		#define GFX_NO_OS_INIT			FALSE
  	#endif
  	/**
+ 	 * @brief	Turn off warnings about initializing the operating system
+ 	 * @details	Defaults to FALSE
+ 	 * @note	This is only relevant where GOS cannot initialise the operating
+ 	 * 			system automatically or the operating system initialisation has been
+ 	 * 			explicitly turned off.
+ 	 */
+	#ifndef GFX_OS_INIT_NO_WARNING
+		#define GFX_OS_INIT_NO_WARNING	FALSE
+	#endif
+ 	/**
  	 * @brief	Should uGFX stuff be added to the FreeRTOS+Tracer
  	 * @details	Defaults to FALSE
  	 */
@@ -117,7 +150,8 @@
  	#endif
  	/**
  	 * @brief	How much RAM should uGFX use for the heap
- 	 * @details	Defaults to 0. Only valid with GFX_USE_OS_RAW32
+ 	 * @details	Defaults to 0.
+ 	 * @note	Only used when the generic ugfx heap code is used (GFX_USE_OS_RAW32 and GFX_USE_OS_ARDUINO)
  	 * @note	If 0 then the standard C runtime malloc(), free() and realloc()
  	 * 			are used.
  	 * @note	If it is non-zero then this is the number of bytes of RAM
@@ -125,8 +159,8 @@
  	 * 			runtime routines will be used and a new routine @p gfxAddHeapBlock()
  	 * 			is added allowing the user to add extra memory blocks to the heap.
  	 */
-	#ifndef GOS_RAW_HEAP_SIZE
-		#define GOS_RAW_HEAP_SIZE		0
+	#ifndef GFX_OS_HEAP_SIZE
+		#define GFX_OS_HEAP_SIZE		0
 	#endif
 /** @} */
 
