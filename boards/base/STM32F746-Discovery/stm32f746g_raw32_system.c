@@ -176,7 +176,9 @@ void SystemInit(void)
   RCC->CR &= (uint32_t)0xFEF6FFFF;
 
   /* Reset PLLCFGR register */
-  RCC->PLLCFGR = 0x24003010;
+  //RCC->PLLCFGR = 0x24003010;   // From discovery example
+  // M = 12 = 0b1100, N = 192 = 0b11000000, P = 2 = 0b10, Q = 2 = 0b10
+  RCC->PLLCFGR = 0x00C0980C;
 
   /* Reset HSEBYP bit */
   RCC->CR &= (uint32_t)0xFFFBFFFF;

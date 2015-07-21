@@ -28,3 +28,4 @@ ifeq ($(OPT_OS),raw32)
 endif
 
 include $(GFXLIB)/drivers/gdisp/STM32LTDC/driver.mk
+include $(GFXLIB)/drivers/ginput/touch/FT5336/driver.mk
