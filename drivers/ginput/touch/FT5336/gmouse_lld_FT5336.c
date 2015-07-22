@@ -20,10 +20,23 @@
 
 static bool_t ft5336Init(GMouse* m, unsigned driverinstance)
 {
+	// Initialize the board stuff
 	if (!init_board(m, driverinstance)) {
 		return FALSE;
 	}
 
+	// We need at least 200 ms worth of delay here...
+	gfxSleepMilliseconds(200);
+
+	// Check Chip ID
+	if (read_byte(m, FT5336_CHIP_ID_REG) != FT5336_ID_VALUE) {
+		return FALSE;
+	}
+
+	// Disable interrupts. We use this chip in polling mode
+	write_reg(m, FT5336_GMODE_REG, (FT5336_G_MODE_INTERRUPT_POLLING & (FT5336_G_MODE_INTERRUPT_MASK >> FT5336_G_MODE_INTERRUPT_SHIFT)) << FT5336_G_MODE_INTERRUPT_SHIFT);
+
+/*
 	// Init default values. (From NHD-3.5-320240MF-ATXL-CTP-1 datasheet)
 	// Valid touching detect threshold
 	write_reg(m, FT5336_TH_GROUP_REG, 0x16);
@@ -39,7 +52,7 @@ static bool_t ft5336Init(GMouse* m, unsigned driverinstance)
 
 	// Timer to enter 'idle' when in 'Monitor' (ms)
 	write_reg(m, FT5336_PERIODMONITOR_REG, 0x28);
-
+*/
 	return TRUE;
 }
 
@@ -47,37 +60,14 @@ static bool_t ft5336ReadXYZ(GMouse* m, GMouseReading* pdr)
 {
 	// Assume not touched.
 	pdr->buttons = 0;
-	pdr->z = 0; 
+	pdr->z = 0;
 
-	// Only take a reading if we are touched.
-	if ((read_byte(m, FT5336_TD_STAT_REG) & 0x07)) {
-
-		/* Get the X, Y, Z values */
-		pdr->x = (coord_t)(read_word(m, FT5336_P1_XH_REG) & 0x0FFF);
-		pdr->y = (coord_t)(read_word(m, FT5336_P1_YH_REG) & 0xFFFF);
+	// Only take a reading if exactly one touch contact point
+	if (read_byte(m, FT5336_TD_STAT_REG) == 1) {
+		// Get and return X, Y an Z values
+		pdr->y = (coord_t)(read_word(m, FT5336_P1_XH_REG) & 0x0FFF);
+		pdr->x = (coord_t)(read_word(m, FT5336_P1_YH_REG) & 0x0FFF);
 		pdr->z = 1;
-
-		// Rescale X,Y if we are using self-calibration
-		#if GMOUSE_FT5336_SELF_CALIBRATE
-			#if GDISP_NEED_CONTROL
-				switch(gdispGGetOrientation(m->display)) {
-				default:
-				case GDISP_ROTATE_0:
-				case GDISP_ROTATE_180:
-					pdr->x = gdispGGetWidth(m->display) - pdr->x / (4096/gdispGGetWidth(m->display));
-					pdr->y = pdr->y / (4096/gdispGGetHeight(m->display));
-					break;
-				case GDISP_ROTATE_90:
-				case GDISP_ROTATE_270:
-					pdr->x = gdispGGetHeight(m->display) - pdr->x / (4096/gdispGGetHeight(m->display));
-					pdr->y = pdr->y / (4096/gdispGGetWidth(m->display));
-					break;
-				}
-			#else
-				pdr->x = gdispGGetWidth(m->display) - pdr->x / (4096/gdispGGetWidth(m->display));
-				pdr->y = pdr->y / (4096/gdispGGetHeight(m->display));
-			#endif
-		#endif
 	}
 
 	return TRUE;
@@ -86,11 +76,7 @@ static bool_t ft5336ReadXYZ(GMouse* m, GMouseReading* pdr)
 const GMouseVMT const GMOUSE_DRIVER_VMT[1] = {{
 	{
 		GDRIVER_TYPE_TOUCH,
-		#if GMOUSE_FT5336_SELF_CALIBRATE
-			GMOUSE_VFLG_TOUCH | GMOUSE_VFLG_ONLY_DOWN | GMOUSE_VFLG_POORUPDOWN,
-		#else
-			GMOUSE_VFLG_TOUCH | GMOUSE_VFLG_ONLY_DOWN | GMOUSE_VFLG_POORUPDOWN | GMOUSE_VFLG_CALIBRATE | GMOUSE_VFLG_CAL_TEST,
-		#endif
+		GMOUSE_VFLG_TOUCH | GMOUSE_VFLG_ONLY_DOWN | GMOUSE_VFLG_POORUPDOWN,
 		sizeof(GMouse) + GMOUSE_FT5336_BOARD_DATA_SIZE,
 		_gmouseInitDriver,
 		_gmousePostInitDriver,
