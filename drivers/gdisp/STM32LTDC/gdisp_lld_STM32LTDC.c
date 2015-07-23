@@ -34,7 +34,7 @@
 
 typedef struct ltdcLayerConfig {
 	// Frame
-	LLDCOLOR_TYPE	*frame;			// Frame buffer address
+	LLDCOLOR_TYPE*	frame;			// Frame buffer address
 	coord_t			width, height;	// Frame size in pixels
 	coord_t			pitch;			// Line pitch, in bytes
 	uint16_t		fmt;			// Pixel format in LTDC format
@@ -102,7 +102,7 @@ typedef struct ltdcConfig {
 /* Driver exported functions.                                                */
 /*===========================================================================*/
 
-static void LTDC_Reload(void)
+static void _ltdc_reload(void)
 {
 	LTDC->SRCR |= LTDC_SRCR_IMR;
 	
@@ -111,7 +111,7 @@ static void LTDC_Reload(void)
 	}
 }
 
-static void LTDC_LayerInit(LTDC_Layer_TypeDef* pLayReg, const ltdcLayerConfig* pCfg)
+static void _ltdc_layer_init(LTDC_Layer_TypeDef* pLayReg, const ltdcLayerConfig* pCfg)
 {
 	static const uint8_t fmt2Bpp[] = {
 		4, /* LTDC_FMT_ARGB8888 */
@@ -151,7 +151,7 @@ static void LTDC_LayerInit(LTDC_Layer_TypeDef* pLayReg, const ltdcLayerConfig* p
 	pLayReg->CR = (pLayReg->CR & ~LTDC_LEF_MASK) | ((uint32_t)pCfg->layerflags & LTDC_LEF_MASK);
 }
 
-static void LTDC_Init(void)
+static void _ltdc_init(void)
 {
 	// Set up the display scanning
 	uint32_t hacc, vacc;
@@ -169,7 +169,7 @@ static void LTDC_Init(void)
 	// Turn off the controller and its interrupts
 	LTDC->GCR = 0;
 	LTDC->IER = 0;
-	LTDC_Reload();
+	_ltdc_reload();
 
 	// Set synchronization params
 	hacc = driverCfg.hsync - 1;
@@ -198,21 +198,19 @@ static void LTDC_Init(void)
 	LTDC->BCCR = (LTDC->BCCR & ~0x00FFFFFF) | (driverCfg.bgcolor & 0x00FFFFFF);
 
 	// Load the background layer
-	LTDC_LayerInit(LTDC_Layer1, &driverCfg.bglayer);
+	_ltdc_layer_init(LTDC_Layer1, &driverCfg.bglayer);
 
 	// Load the foreground layer
-	LTDC_LayerInit(LTDC_Layer2, &driverCfg.fglayer);
+	_ltdc_layer_init(LTDC_Layer2, &driverCfg.fglayer);
 
 	// Interrupt handling
-	//nvicEnableVector(STM32_LTDC_EV_NUMBER, CORTEX_PRIORITY_MASK(STM32_LTDC_EV_IRQ_PRIORITY));
-	//nvicEnableVector(STM32_LTDC_ER_NUMBER, CORTEX_PRIORITY_MASK(STM32_LTDC_ER_IRQ_PRIORITY));
 	// Possible flags - LTDC_IER_RRIE, LTDC_IER_LIE, LTDC_IER_FUIE, LTDC_IER_TERRIE etc
 	LTDC->IER = 0;
 
 	// Set everything going
-	LTDC_Reload();
+	_ltdc_reload();
 	LTDC->GCR |= LTDC_GCR_LTDCEN;
-	LTDC_Reload();
+	_ltdc_reload();
 }
 
 LLDSPEC bool_t gdisp_lld_init(GDisplay* g)
@@ -225,7 +223,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay* g)
 	init_board(g);
 
 	// Initialise the LTDC controller
-	LTDC_Init();
+	_ltdc_init();
 
 	// Initialise DMA2D
 	#if LTDC_USE_DMA2D
@@ -311,21 +309,25 @@ LLDSPEC	color_t gdisp_lld_get_pixel_color(GDisplay* g)
 	{
 		switch(g->p.x) {
 		case GDISP_CONTROL_POWER:
-			if (g->g.Powermode == (powermode_t)g->p.ptr)
+			// Don't do anything if it is the same power mode
+			if (g->g.Powermode == (powermode_t)g->p.ptr) {
 				return;
+			}
+
 			switch((powermode_t)g->p.ptr) {
-			case powerOff: case powerOn: case powerSleep: case powerDeepSleep:
-				// TODO
-				break;
 			default:
 				return;
 			}
+
 			g->g.Powermode = (powermode_t)g->p.ptr;
 			return;
 
 		case GDISP_CONTROL_ORIENTATION:
-			if (g->g.Orientation == (orientation_t)g->p.ptr)
+			// Don't do anything if it is the same power mode
+			if (g->g.Orientation == (orientation_t)g->p.ptr) {
 				return;
+			}
+
 			switch((orientation_t)g->p.ptr) {
 				case GDISP_ROTATE_0:
 				case GDISP_ROTATE_180:
@@ -350,6 +352,7 @@ LLDSPEC	color_t gdisp_lld_get_pixel_color(GDisplay* g)
 				default:
 					return;
 			}
+
 			g->g.Orientation = (orientation_t)g->p.ptr;
 			return;
 
@@ -391,32 +394,60 @@ LLDSPEC	color_t gdisp_lld_get_pixel_color(GDisplay* g)
 
 	// Uses p.x,p.y  p.cx,p.cy  p.color
 	LLDSPEC void gdisp_lld_fill_area(GDisplay* g)
-	{
-		LLDCOLOR_TYPE c;
-	
+	{	
+		uint32_t reg_omar = 0;
+		uint32_t reg_oor = 0;
+		uint32_t reg_nlr = 0;
+
 		// Wait until DMA2D is ready
 		while (1) {
 			if (!(DMA2D->CR & DMA2D_CR_START)) {
 				break;
 			}
 		}
-	
-		c = gdispColor2Native(g->p.color);
-	
-		// Output color register
-		DMA2D->OCOLR = (uint32_t)c;
-	
+
+		// Calculate pixel positions and stuff like that
+		#if GDISP_NEED_CONTROL
+			switch(g->g.Orientation) {
+			case GDISP_ROTATE_0:
+			default:
+				reg_omar = g->p.y * g->g.Width * LTDC_PIXELBYTES + g->p.x * LTDC_PIXELBYTES + (uint32_t)driverCfg.bglayer.frame;
+				reg_oor = g->g.Width - g->p.cx;
+				reg_nlr = (g->p.cx << 16) | (g->p.cy);
+				break;
+
+			case GDISP_ROTATE_90:
+				break;
+
+			case GDISP_ROTATE_180:
+				reg_omar = g->g.Width * (g->g.Height - g->p.y - g->p.cy) * LTDC_PIXELBYTES + (g->g.Width - g->p.x - g->p.cx) * LTDC_PIXELBYTES + (uint32_t)driverCfg.bglayer.frame;
+				reg_oor = g->g.Width - g->p.cx;
+				reg_nlr = (g->p.cy << 16) | (g->p.cx);
+				break;
+
+			case GDISP_ROTATE_270:
+				break;
+			}
+		#else
+			reg_omar = g->p.y * g->g.Width * LTDC_PIXELBYTES + g->p.x * LTDC_PIXELBYTES + (uint32_t)driverCfg.bglayer.frame;
+			reg_oor = g->g.Width - g->p.cx;
+			reg_nlr = (g->p.cx << 16) | (g->p.cy);
+		#endif
+
 		// Output memory address register
-		DMA2D->OMAR = g->p.y * g->g.Width * LTDC_PIXELBYTES + g->p.x * LTDC_PIXELBYTES + (uint32_t)driverCfg.bglayer.frame;
+		DMA2D->OMAR = reg_omar;
 
 		// Output offset register (in pixels)
-		DMA2D->OOR = g->g.Width - g->p.cx;
-	
+		DMA2D->OOR = reg_oor;
+
 		// PL (pixel per lines to be transferred); NL (number of lines)
-		DMA2D->NLR = (g->p.cx << 16) | (g->p.cy);
+		DMA2D->NLR = reg_nlr;
+
+		// Output color register
+		DMA2D->OCOLR = (uint32_t)(gdispColor2Native(g->p.color));
 
 		// Set MODE to R2M and Start the process
-		DMA2D->CR = DMA2D_CR_MODE_R2M | DMA2D_CR_START;
+		DMA2D->CR = DMA2D_CR_MODE_R2M | DMA2D_CR_START;	
 	}
 
 	// Uses p.x,p.y  p.cx,p.cy  p.x1,p.y1 (=srcx,srcy)  p.x2 (=srccx), p.ptr (=buffer)
