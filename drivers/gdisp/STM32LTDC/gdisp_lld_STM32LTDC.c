@@ -157,14 +157,20 @@ static void LTDC_Init(void)
 	// Set up the display scanning
 	uint32_t hacc, vacc;
 
-	// Reset the LTDC hardware module
+	// Reset the LTDC peripheral
 	RCC->APB2RSTR |= RCC_APB2RSTR_LTDCRST;
 	RCC->APB2RSTR = 0;
 
 	// Enable the LTDC clock
-	RCC->DCKCFGR1 = (RCC->DCKCFGR1 & ~RCC_DCKCFGR1_PLLSAIDIVR) | (1 << 16); /* /4 */
+	#if defined(STM32F4)
+		RCC->DCKCFGR = (RCC->DCKCFGR & ~RCC_DCKCFGR_PLLSAIDIVR) | (1 << 16);
+	#elif defined(STM32F7)
+		RCC->DCKCFGR1 = (RCC->DCKCFGR1 & ~RCC_DCKCFGR1_PLLSAIDIVR) | (1 << 16);
+	#else
+		#error STM32LTDC driver not implemented for your platform
+	#endif
 
-	// Enable the module
+	// Enable the peripheral
 	RCC->APB2ENR |= RCC_APB2ENR_LTDCEN;
 
 	// Turn off the controller and its interrupts
