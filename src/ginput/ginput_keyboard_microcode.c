@@ -14,7 +14,7 @@
 
 #if GFX_USE_GINPUT && GINPUT_NEED_KEYBOARD && !GKEYBOARD_LAYOUT_OFF
 
-#include "keyboard_microcode.h"
+#include "ginput_keyboard_microcode.h"
 
 #if GKEYBOARD_LAYOUT_SCANCODE2_US
 
