@@ -88,6 +88,7 @@ static const GWidgetStyle *	defaultStyle = &BlackWidgetStyle;
 /* Process an event */
 static void gwidgetEvent(void *param, GEvent *pe) {
 	#define pme		((GEventMouse *)pe)
+	#define pke		((GEventKeyboard *)pe)
 	#define pte		((GEventToggle *)pe)
 	#define pde		((GEventDial *)pe)
 
@@ -138,6 +139,22 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 				if (wvmt->MouseDown)
 					wvmt->MouseDown(gw, pme->x - gh->x, pme->y - gh->y);
 			}
+		}
+		break;
+	#endif
+
+	#if GFX_USE_GINPUT && GINPUT_NEED_KEYBOARD
+	case GEVENT_KEYBOARD:
+		// Cycle through all windows
+		for (gh = gwinGetNextWindow(0); gh; gh = gwinGetNextWindow(gh)) {
+
+			// Check whether the widget is enabled and visible
+			if ((gh->flags & (GWIN_FLG_WIDGET|GWIN_FLG_SYSENABLED|GWIN_FLG_SYSVISIBLE)) != (GWIN_FLG_WIDGET|GWIN_FLG_SYSENABLED|GWIN_FLG_SYSVISIBLE)) {
+				continue;
+			}
+
+			// Pass the information
+			wvmt->KeyboardEvent(gw, pke);
 		}
 		break;
 	#endif
@@ -235,6 +252,10 @@ void _gwidgetInit(void)
 	geventListenerInit(&gl);
 	geventRegisterCallback(&gl, gwidgetEvent, 0);
 	geventAttachSource(&gl, ginputGetMouse(GMOUSE_ALL_INSTANCES), GLISTEN_MOUSEMETA|GLISTEN_MOUSEDOWNMOVES);
+
+	#if GINPUT_NEED_KEYBOARD
+		geventAttachSource(&gl, ginputGetKeyboard(GKEYBOARD_ALL_INSTANCES), 0);
+	#endif
 }
 
 void _gwidgetDeinit(void)

@@ -313,6 +313,11 @@ static const gwidgetVMT keyboardVMT = {
 			KeyMouseMove,			// Process mouse move events
 		},
 	#endif
+	#if GINPUT_NEED_KEYBOARD
+		{
+			0						// Process keyboard events
+		},
+	#endif
 	#if GINPUT_NEED_TOGGLE
 		{
 			0,						// No toggle roles
