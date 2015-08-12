@@ -548,6 +548,31 @@ extern "C" {
 		GHandle gwinGetNextWindow(GHandle gh);
 
 		/**
+		 * @brief	Set the focus to a specific widget
+		 *
+		 * @details	The widget that is currently in focus is the widget that
+		 *			receives mouse and keyboard events.
+		 *			Passing NULL will remove the focus from any widget.
+		 *
+		 * @param[in] gh	The widget handle. Non-widget handles will be ignored.
+		 *
+		 * @api
+		 */
+		void gwinSetFocus(GHandle gh);
+
+		/**
+		 * @brief	Get the widget that is currently in focus
+		 *
+		 * @details	The widget that is currently in focus is the widget that
+		 *			receives mouse and keyboard events.
+		 *
+		 * @return	The handle of the widget that is currently in focus. May be NULL.
+		 *
+		 * @api
+		 */
+		GHandle gwinGetFocus(void);
+
+		/**
 		 * @brief	Set a window or widget to flash
 		 *
 		 * @param[in] gh		The window handle

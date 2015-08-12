@@ -162,7 +162,7 @@
 extern const GWindowManager	GNullWindowManager;
 GWindowManager *			_GWINwm;
 bool_t						_gwinFlashState;
-
+static GHandle				_widgetInFocus;
 static gfxSem				gwinsem;
 static gfxQueueASync		_GWINList;
 #if GWIN_NEED_FLASHING
@@ -184,6 +184,8 @@ static volatile uint8_t		RedrawPending;
 
 void _gwmInit(void)
 {
+	_widgetInFocus = 0;
+
 	gfxSemInit(&gwinsem, 1, 1);
 	gfxQueueASyncInit(&_GWINList);
 	#if GWIN_NEED_FLASHING
@@ -569,6 +571,25 @@ void gwinRedrawDisplay(GDisplay *g, bool_t preserve) {
 
 GHandle gwinGetNextWindow(GHandle gh) {
 	return gh ? (GHandle)gfxQueueASyncNext(&gh->wmq) : (GHandle)gfxQueueASyncPeek(&_GWINList);
+}
+
+void gwinSetFocus(GHandle gh) {
+	// Passing NULL removes the focus from any widget
+	if (gh == 0) {
+		_widgetInFocus = 0;
+		return;
+	}
+
+	// Only accept widgets
+	if (!gwinIsWidget(gh)) {
+		return;
+	}
+
+	_widgetInFocus = gh;
+}
+
+GHandle gwinGetFocus(void) {
+	return _widgetInFocus;
 }
 
 #if GWIN_NEED_FLASHING

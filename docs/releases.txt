@@ -9,6 +9,8 @@ FEATURE:	Added GFXSINGLEMAKE=yes|no to the ugfx makefile to compile ugfx as a si
 FEATURE:	New board STM32F746G-Discovery
 FEATURE:	New gdisp driver STM32LTDC
 FEATURE:	Better support for Raw32 platforms
+FEATURE:	Implementing widget focusing. See gwinSetFocus() and gwinGetFocus()
+
 
 *** Release 2.3 ***
 FEATURE:	Added more events to the slider widget
