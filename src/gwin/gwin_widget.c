@@ -382,10 +382,10 @@ const GWidgetStyle *gwinGetDefaultStyle(void) {
 	return defaultStyle;
 }
 
-
 void gwinSetText(GHandle gh, const char *text, bool_t useAlloc) {
-	if (!(gh->flags & GWIN_FLG_WIDGET))
+	if (!(gh->flags & GWIN_FLG_WIDGET)) {
 		return;
+	}
 
 	// Dispose of the old string
 	if ((gh->flags & GWIN_FLG_ALLOCTXT)) {
@@ -397,9 +397,9 @@ void gwinSetText(GHandle gh, const char *text, bool_t useAlloc) {
 	}
 
 	// Alloc the new text if required
-	if (!text || !*text)
+	if (!text || !*text) {
 		gw->text = "";
-	else if (useAlloc) {
+	} else if (useAlloc) {
 		char *str;
 
 		if ((str = gfxAlloc(strlen(text)+1))) {
@@ -407,8 +407,10 @@ void gwinSetText(GHandle gh, const char *text, bool_t useAlloc) {
 			strcpy(str, text);
 		}
 		gw->text = (const char *)str;
-	} else
+	} else {
 		gw->text = text;
+	}
+
 	_gwinUpdate(gh);
 }
 
