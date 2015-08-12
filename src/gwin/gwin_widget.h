@@ -381,5 +381,9 @@ bool_t gwinAttachListener(GListener *pl);
 	#include "gwin_keyboard.h"
 #endif
 
+#if GWIN_NEED_TEXTEDIT || defined(__DOXYGEN__)
+	#include "gwin_textedit.h"
+#endif
+
 #endif /* _GWIDGET_H */
 /** @} */

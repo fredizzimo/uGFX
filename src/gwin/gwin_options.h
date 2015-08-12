@@ -142,6 +142,13 @@
 	#ifndef GWIN_NEED_KEYBOARD
 		#define GWIN_NEED_KEYBOARD	FALSE
 	#endif
+	/**
+	 * @brief   Should the textedit widget be included.
+	 * @details	Defaults to FALSE
+	 */
+	#ifndef GWIN_NEED_TEXTEDIT
+		#define GWIN_NEED_TEXTEDIT	FALSE
+	#endif
 /**
  * @}
  *
