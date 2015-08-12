@@ -18,10 +18,13 @@
 
 #include "gwin_class.h"
 
-/* Our listener for events for widgets */
-static GListener			gl;
+// Our listener for events for widgets
+static GListener gl;
 
-/* Our default style - a white background theme */
+// The widget that is currently in focus. May be NULL.
+static GHandle widgetInFocus;
+
+// Our default style - a white background theme
 const GWidgetStyle WhiteWidgetStyle = {
 	HTML2COLOR(0xFFFFFF),			// window background
 
@@ -81,11 +84,11 @@ const GWidgetStyle BlackWidgetStyle = {
 
 static const GWidgetStyle *	defaultStyle = &BlackWidgetStyle;
 
-/* We use these everywhere in this file */
+// We use these everywhere in this file
 #define gw		((GWidgetObject *)gh)
 #define wvmt	((gwidgetVMT *)gh->vmt)
 
-/* Process an event */
+// Process an event
 static void gwidgetEvent(void *param, GEvent *pe) {
 	#define pme		((GEventMouse *)pe)
 	#define pke		((GEventKeyboard *)pe)
@@ -106,7 +109,7 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 	case GEVENT_MOUSE:
 	case GEVENT_TOUCH:
 		// Cycle through all windows
-		for(gh = 0, h = gwinGetNextWindow(0); h; h = gwinGetNextWindow(h)) {
+		for (gh = 0, h = gwinGetNextWindow(0); h; h = gwinGetNextWindow(h)) {
 
 			// The window must be on this display and visible to be relevant
 			if (h->display != pme->display || !(h->flags & GWIN_FLG_SYSVISIBLE))
@@ -145,18 +148,36 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 
 	#if GFX_USE_GINPUT && GINPUT_NEED_KEYBOARD
 	case GEVENT_KEYBOARD:
-		// Cycle through all windows
-		for (gh = gwinGetNextWindow(0); gh; gh = gwinGetNextWindow(gh)) {
+		// If Tab key pressed then set focus to next widget
+		if (pke->bytecount == 1 && pke->c[0] == GKEY_TAB) {
+			widgetInFocus = gwinGetNextWindow(widgetInFocus);
+			// If it was the last widget begin with the first one again
+			if (widgetInFocus == 0) {
+				widgetInFocus = gwinGetNextWindow(0);
+			}
+			break;
+		}
 
-			// Check whether the widget is enabled and visible
-			if ((gh->flags & (GWIN_FLG_WIDGET|GWIN_FLG_SYSENABLED|GWIN_FLG_SYSVISIBLE)) != (GWIN_FLG_WIDGET|GWIN_FLG_SYSENABLED|GWIN_FLG_SYSVISIBLE)) {
-				continue;
+		// Otherise, send keyboard events only to widget in focus
+		if (widgetInFocus != 0) {
+			// Make sure that it is a widget
+			if (!(widgetInFocus->flags & GWIN_FLG_WIDGET)) {
+				break;
 			}
 
-			// Pass the information
-			wvmt->KeyboardEvent(gw, pke);
+			// Make sure that the widget is enabled and visible
+			if (!(widgetInFocus->flags & GWIN_FLG_SYSVISIBLE) || !(widgetInFocus->flags & GWIN_FLG_ENABLED)) {
+				break;
+			}
+
+			// Check whether this widget provides a method for handling keyboard events
+			if (((gwidgetVMT*)widgetInFocus->vmt)->KeyboardEvent == 0) {
+				break;
+			}
+
+			// If we got this far we can finally pass the event
+			((gwidgetVMT*)widgetInFocus->vmt)->KeyboardEvent((GWidgetObject*)widgetInFocus, pke);
 		}
-		break;
 	#endif
 
 	#if GFX_USE_GINPUT && GINPUT_NEED_TOGGLE
@@ -249,6 +270,8 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 
 void _gwidgetInit(void)
 {
+	widgetInFocus = 0;
+
 	geventListenerInit(&gl);
 	geventRegisterCallback(&gl, gwidgetEvent, 0);
 	geventAttachSource(&gl, ginputGetMouse(GMOUSE_ALL_INSTANCES), GLISTEN_MOUSEMETA|GLISTEN_MOUSEDOWNMOVES);
