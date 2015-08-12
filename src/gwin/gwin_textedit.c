@@ -26,9 +26,25 @@ const int TEXT_PADDING			= 3;
 #if GINPUT_NEED_KEYBOARD
 	static void _keyboardEvent(GWidgetObject* gw, GEventKeyboard* pke)
 	{
-		if (pke->bytecount = 1) {
-			//gw->text = pke->c[0];
-			gwinSetText((GHandle)gw, &(pke->c[0]), TRUE);
+		// Create a temporary buffer containing the current size
+		unsigned bufSize = strlen(gwinGetText((GHandle)gw))+1;
+		char buf[bufSize];
+		strncpy(buf, gwinGetText((GHandle)gw), bufSize);
+
+		// Parse the key press
+		if (pke->bytecount == 1) {
+			// Check backspace
+			if (pke->c[0] == GKEY_BACKSPACE) {
+				buf[strlen(buf)-1] = '\0';
+			}
+
+			// Append new character
+			else {
+				strncat(buf, &(pke->c[0]), 1);
+			}
+
+			// Set the new text
+			gwinSetText((GHandle)gw, buf, TRUE);
 		}
 
 		_gwinUpdate(&gw);
@@ -102,7 +118,6 @@ static void gwinTexteditDefaultDraw(GWidgetObject* gw, void* param)
 	}
 
 	textColor = (gw->g.flags & GWIN_FLG_SYSENABLED) ? gw->pstyle->enabled.text : gw->pstyle->disabled.text;
-
 
 	gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->text, gw->g.font, textColor, gw->pstyle->background, justifyLeft);
 }
