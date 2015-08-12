@@ -47,7 +47,7 @@ const int TEXT_PADDING			= 3;
 			gwinSetText((GHandle)gw, buf, TRUE);
 		}
 
-		_gwinUpdate(&gw);
+		_gwinUpdate((GHandle)gw);
 	}
 #endif
 
