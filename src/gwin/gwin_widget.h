@@ -228,6 +228,17 @@ void gwinSetText(GHandle gh, const char *text, bool_t useAlloc);
  */
 const char *gwinGetText(GHandle gh);
 
+/**
+ * @brief	Check whether a handles is a widget handle or not
+ *
+ * @param[in] gh		The handle to check.
+ *
+ * @return	TRUE if the passed handle is a widget handle. FALSE otherwise.
+ *
+ * @api
+ */
+bool_t gwinIsWidget(GHandle gh);
+
 #if GWIN_WIDGET_TAGS || defined(__DOXYGEN__)
 	/**
 	 * @brief   Set the tag of a widget.

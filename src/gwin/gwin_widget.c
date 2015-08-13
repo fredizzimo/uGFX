@@ -21,9 +21,6 @@
 // Our listener for events for widgets
 static GListener gl;
 
-// The widget that is currently in focus. May be NULL.
-static GHandle widgetInFocus;
-
 // Our default style - a white background theme
 const GWidgetStyle WhiteWidgetStyle = {
 	HTML2COLOR(0xFFFFFF),			// window background
@@ -101,7 +98,7 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 		uint16_t		role;
 	#endif
 	(void)				param;
-
+//static GHandle widgetInFocus = 0;
 	// Process various events
 	switch (pe->type) {
 
@@ -127,6 +124,7 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 
 				// There is only ever one captured mouse. Prevent normal mouse processing if there is a captured mouse
 				gh = 0;
+			
 				break;
 			}
 
@@ -150,14 +148,35 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 	case GEVENT_KEYBOARD:
 		// If Tab key pressed then set focus to next widget
 		if (pke->bytecount == 1 && pke->c[0] == GKEY_TAB) {
-			widgetInFocus = gwinGetNextWindow(widgetInFocus);
+			GHandle nextWidgetInFocus = 0;
+			bool_t loopCompleted = FALSE;
+			do {
+				nextWidgetInFocus = gwinGetNextWindow(gwinGetFocus());
+				printf("0x%X\r\n", nextWidgetInFocus);
+				// We only look out for widgets
+				if (!gwinIsWidget(nextWidgetInFocus)) {
+					continue;
+				}
+				
+				if (nextWidgetInFocus == 0) {
+					loopCompleted = TRUE;
+					// Restart with the first widget
+					nextWidgetInFocus = gwinGetNextWindow(gwinGetFocus());
+				}
+			} while (nextWidgetInFocus == 0 && loopCompleted == FALSE);
+			printf("0x%X\r\n", nextWidgetInFocus);
+			gwinSetFocus(nextWidgetInFocus);
+
+		/*
 			// If it was the last widget begin with the first one again
 			if (widgetInFocus == 0) {
 				widgetInFocus = gwinGetNextWindow(0);
 			}
+		*/
+			//printf("Got now: %s\n", gwinGetClassName(gwinGetFocus()));
 			break;
 		}
-
+/*
 		// Otherise, send keyboard events only to widget in focus
 		if (widgetInFocus != 0) {
 			// Make sure that it is a widget
@@ -178,6 +197,7 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 			// If we got this far we can finally pass the event
 			((gwidgetVMT*)widgetInFocus->vmt)->KeyboardEvent((GWidgetObject*)widgetInFocus, pke);
 		}
+*/
 	#endif
 
 	#if GFX_USE_GINPUT && GINPUT_NEED_TOGGLE
@@ -270,8 +290,6 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 
 void _gwidgetInit(void)
 {
-	widgetInFocus = 0;
-
 	geventListenerInit(&gl);
 	geventRegisterCallback(&gl, gwidgetEvent, 0);
 	geventAttachSource(&gl, ginputGetMouse(GMOUSE_ALL_INSTANCES), GLISTEN_MOUSEMETA|GLISTEN_MOUSEDOWNMOVES);
@@ -444,12 +462,22 @@ const char *gwinGetText(GHandle gh) {
 	return gw->text;
 }
 
+bool_t gwinIsWidget(GHandle gh) {
+	if (gh->flags & GWIN_FLG_WIDGET) {
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
 void gwinSetStyle(GHandle gh, const GWidgetStyle *pstyle) {
 	if (!(gh->flags & GWIN_FLG_WIDGET))
 		return;
+
 	gw->pstyle = pstyle ? pstyle : defaultStyle;
 	gh->bgcolor = pstyle->background;
 	gh->color = pstyle->enabled.text;
+
 	_gwinUpdate(gh);
 }
 
