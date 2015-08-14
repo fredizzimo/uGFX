@@ -223,7 +223,7 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 			// If we got this far we can finally pass the event
 			((gwidgetVMT*)widgetInFocus->vmt)->KeyboardEvent((GWidgetObject*)widgetInFocus, pke);
 		}
-
+		break;
 	#endif
 
 	#if GFX_USE_GINPUT && GINPUT_NEED_TOGGLE
