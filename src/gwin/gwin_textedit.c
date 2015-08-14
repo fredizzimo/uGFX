@@ -18,9 +18,10 @@
 #include <string.h>
 
 // Some settings
-const int TEXT_PADDING_LEFT		= 4;
-const int CURSOR_PADDING_LEFT	= 0;
-const int CURSOR_EXTRA_HEIGHT	= 1;
+const int TEXT_PADDING_LEFT			= 4;
+const int FOCUS_BORDER_THICKNESS	= 3;
+const int CURSOR_PADDING_LEFT		= 0;
+const int CURSOR_EXTRA_HEIGHT		= 1;
 
 // Some flags
 #define GTEXTEDIT_FLG_BORDER	(GWIN_FIRST_CONTROL_FLAG << 0)
@@ -235,6 +236,14 @@ static void gwinTexteditDefaultDraw(GWidgetObject* gw, void* param)
 	// Render border (if supposed to)
 	if (gw2obj->w.g.flags & GTEXTEDIT_FLG_BORDER) {
 		gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, (gw->g.flags & GWIN_FLG_SYSENABLED) ? gw->pstyle->enabled.edge : gw->pstyle->disabled.edge);
+	}
+
+	// Render highlighted border of focused
+	if (gwinGetFocus() == (GHandle)gw) {
+		int i = 0;
+		for (i = 0; i < FOCUS_BORDER_THICKNESS; i++) {
+			gdispGDrawBox(gw->g.display, gw->g.x+i, gw->g.y+i, gw->g.width-2*i, gw->g.height-2*i, gw->pstyle->focus);
+		}
 	}
 
 	// Render cursor (if focused)

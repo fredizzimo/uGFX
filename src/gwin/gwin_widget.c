@@ -24,13 +24,14 @@ static GListener gl;
 // Our default style - a white background theme
 const GWidgetStyle WhiteWidgetStyle = {
 	HTML2COLOR(0xFFFFFF),			// window background
+	HTML2COLOR(0x2A8FCD),			// focused
 
 	// enabled color set
 	{
 		HTML2COLOR(0x000000),		// text
 		HTML2COLOR(0x404040),		// edge
 		HTML2COLOR(0xE0E0E0),		// fill
-		HTML2COLOR(0xE0E0E0),		// progress - inactive area
+		HTML2COLOR(0xE0E0E0)		// progress - inactive area
 	},
 
 	// disabled color set
@@ -38,7 +39,7 @@ const GWidgetStyle WhiteWidgetStyle = {
 		HTML2COLOR(0xC0C0C0),		// text
 		HTML2COLOR(0x808080),		// edge
 		HTML2COLOR(0xE0E0E0),		// fill
-		HTML2COLOR(0xC0E0C0),		// progress - active area
+		HTML2COLOR(0xC0E0C0)		// progress - active area
 	},
 
 	// pressed color set
@@ -46,20 +47,21 @@ const GWidgetStyle WhiteWidgetStyle = {
 		HTML2COLOR(0x404040),		// text
 		HTML2COLOR(0x404040),		// edge
 		HTML2COLOR(0x808080),		// fill
-		HTML2COLOR(0x00E000),		// progress - active area
-	},
+		HTML2COLOR(0x00E000)		// progress - active area
+	}
 };
 
 /* Our black style */
 const GWidgetStyle BlackWidgetStyle = {
 	HTML2COLOR(0x000000),			// window background
+	HTML2COLOR(0x2A8FCD),			// focused
 
 	// enabled color set
 	{
 		HTML2COLOR(0xC0C0C0),		// text
 		HTML2COLOR(0xC0C0C0),		// edge
 		HTML2COLOR(0x606060),		// fill
-		HTML2COLOR(0x404040),		// progress - inactive area
+		HTML2COLOR(0x404040)		// progress - inactive area
 	},
 
 	// disabled color set
@@ -67,7 +69,7 @@ const GWidgetStyle BlackWidgetStyle = {
 		HTML2COLOR(0x808080),		// text
 		HTML2COLOR(0x404040),		// edge
 		HTML2COLOR(0x404040),		// fill
-		HTML2COLOR(0x004000),		// progress - active area
+		HTML2COLOR(0x004000)		// progress - active area
 	},
 
 	// pressed color set
@@ -75,8 +77,8 @@ const GWidgetStyle BlackWidgetStyle = {
 		HTML2COLOR(0xFFFFFF),		// text
 		HTML2COLOR(0xC0C0C0),		// edge
 		HTML2COLOR(0xE0E0E0),		// fill
-		HTML2COLOR(0x008000),		// progress - active area
-	},
+		HTML2COLOR(0x008000)		// progress - active area
+	}
 };
 
 static const GWidgetStyle *	defaultStyle = &BlackWidgetStyle;

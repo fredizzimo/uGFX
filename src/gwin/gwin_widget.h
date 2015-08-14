@@ -49,6 +49,7 @@ typedef struct GColorSet {
  */
 typedef struct GWidgetStyle {
 	color_t			background;			// @< The window background color
+	color_t			focus;				// @< The color when a widget is focused
 	GColorSet		enabled;			// @< The colors when enabled
 	GColorSet		disabled;			// @< The colors when disabled
 	GColorSet		pressed;			// @< The colors when pressed
