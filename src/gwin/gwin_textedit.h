@@ -31,6 +31,10 @@
 // A TextEdit widget
 typedef struct GTexteditObject {
 	GWidgetObject	w;
+
+	char*			textBuffer;
+	size_t			bufferSize;
+	uint16_t		cursorPos;
 } GTexteditObject;
 
 #ifdef __cplusplus
@@ -46,13 +50,14 @@ extern "C" {
  * @param[in] g			The GDisplay on which the textedit should be displayed
  * @param[in] widget	The TextEdit structure to initialise. If this is NULL, the structure is dynamically allocated.
  * @param[in] pInit		The initialisation parameters to use.
+ * @param[in] bufSize	The maximum number of characters the TextEdit widget can hold.
  *
  * @return				NULL if there is no resultat drawing area, otherwise the widget handle.
  *
  * @api
  */
-GHandle gwinGTexteditCreate(GDisplay* g, GTexteditObject* widget, GWidgetInit* pInit);
-#define gwinTexteditCreate(w, pInit)			gwinGTexteditCreate(GDISP, w, pInit)
+GHandle gwinGTexteditCreate(GDisplay* g, GTexteditObject* widget, GWidgetInit* pInit, size_t bufSize);
+#define gwinTexteditCreate(w, pInit, bufSize)			gwinGTexteditCreate(GDISP, w, pInit, bufSize)
 
 #ifdef __cplusplus
 }
