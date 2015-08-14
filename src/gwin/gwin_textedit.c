@@ -16,7 +16,6 @@
 
 #include "gwin_class.h"
 #include <string.h>
-#include <stdio.h>
 
 // Some settings
  const int CURSOR_EXTRA_HEIGHT = 1;
@@ -28,7 +27,7 @@
 // cursorPos is the position of the next character
 // textBuffer[cursorPos++] = readKey();
 
-// ToDo: Optimize by using strncpy() instead
+// ToDo: Optimize by using memncpy() instead
 static void _shiftTextLeft(char* buffer, size_t bufferSize, size_t index)
 {
 	// Find the end of the string
@@ -38,14 +37,12 @@ static void _shiftTextLeft(char* buffer, size_t bufferSize, size_t index)
 	}
 
 	// Shift
-	size_t i = 0;
-	for (i = index; i < indexTerminator+1; i++) {
-		buffer[i-1] = buffer[i];
-	}
-	buffer[indexTerminator] = '\0';
+	memcpy(&buffer[index-1], &buffer[index], indexTerminator-index);
+
+	// Terminate the string
+	buffer[indexTerminator-1] = '\0';
 }
 
-// ToDo: Optimize by using strncpy() instead
 static void _shiftTextRight(char* buffer, size_t bufferSize, size_t index, char fillChar)
 {
 	// Find the end of the string
@@ -55,14 +52,7 @@ static void _shiftTextRight(char* buffer, size_t bufferSize, size_t index, char 
 	}
 
 	// Shift
-	size_t i = 0;
-	for (i = indexTerminator+1; i > index; i--) {
-		if (i > bufferSize-1) {
-			break;
-		}
-
-		buffer[i] = buffer[i-1];
-	}
+	memcpy(&buffer[index+1], &buffer[index], indexTerminator-index);
 
 	// Fill the gap
 	buffer[index] = fillChar;
