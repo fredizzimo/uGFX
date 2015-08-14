@@ -42,7 +42,7 @@ extern "C" {
 #endif
 
 /**
- * @brief				Create a TextEdit widget.
+ * @brief				Create a TextEdit widget
  * @details				A TextEdit widget is a rectangular box which allows the user to input data through a keyboard.
  *						The keyboard can either be a physical one or a virtual on-screen keyboard as the keyboard driver
  *						is abstracted through the GINPUT module.
@@ -58,6 +58,18 @@ extern "C" {
  */
 GHandle gwinGTexteditCreate(GDisplay* g, GTexteditObject* widget, GWidgetInit* pInit, size_t bufSize);
 #define gwinTexteditCreate(w, pInit, bufSize)			gwinGTexteditCreate(GDISP, w, pInit, bufSize)
+
+/**
+ * @brief				Border settings for the default rendering routine
+ *
+ * @note				Border is enabled by default.
+ *
+ * @param[in] gh		The widget handle (must be a TextEdit handle)
+ * @param[in] border	Shall a border be rendered?
+ *
+ * @api
+ */
+void gwinTexteditSetBorder(GHandle gh, bool_t border);
 
 #ifdef __cplusplus
 }

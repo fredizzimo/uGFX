@@ -22,6 +22,9 @@ const int TEXT_PADDING_LEFT		= 4;
 const int CURSOR_PADDING_LEFT	= 0;
 const int CURSOR_EXTRA_HEIGHT	= 1;
 
+// Some flags
+#define GTEXTEDIT_FLG_BORDER	(GWIN_FIRST_CONTROL_FLAG << 0)
+
 // Macros to assist in data type conversions
 #define gh2obj ((GTexteditObject *)gh)
 #define gw2obj ((GTexteditObject *)gw)
@@ -191,14 +194,29 @@ GHandle gwinGTexteditCreate(GDisplay* g, GTexteditObject* widget, GWidgetInit* p
 	strncpy(widget->textBuffer, gwinGetText((GHandle)widget), widget->bufferSize);	// FixMe: pInit->text leads to a segfault
 	widget->cursorPos = strlen(widget->textBuffer);
 
-	widget->w.g.flags |= flags;
+	widget->w.g.flags |= flags  | GTEXTEDIT_FLG_BORDER;;
 	gwinSetVisible(&widget->w.g, pInit->g.show);
 
 	return (GHandle)widget;
 }
 
+void gwinTexteditSetBorder(GHandle gh, bool_t border)
+{
+	// Is it a valid handle?
+	if (gh->vmt != (gwinVMT*)&texteditVMT) {
+		return;
+	}
+
+	if (border) {
+		gh2obj->w.g.flags |= GTEXTEDIT_FLG_BORDER;
+	} else {
+		gh2obj->w.g.flags &=~ GTEXTEDIT_FLG_BORDER;
+	}
+}
+
 static void gwinTexteditDefaultDraw(GWidgetObject* gw, void* param)
 {
+
 	(void)param;
 
 	// Is it a valid handle?
@@ -211,8 +229,13 @@ static void gwinTexteditDefaultDraw(GWidgetObject* gw, void* param)
 	color_t cursorColor = (gw->g.flags & GWIN_FLG_SYSENABLED) ? gw->pstyle->enabled.edge : gw->pstyle->disabled.edge;
 
 	// Render background and string
-	//gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->pstyle->background);
-	gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->text, gw->g.font, textColor, gw->pstyle->background, justifyLeft);
+	gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->pstyle->background);
+	gdispGFillStringBox(gw->g.display, gw->g.x + TEXT_PADDING_LEFT, gw->g.y, gw->g.width, gw->g.height, gw->text, gw->g.font, textColor, gw->pstyle->background, justifyLeft);
+
+	// Render border (if supposed to)
+	if (gw2obj->w.g.flags & GTEXTEDIT_FLG_BORDER) {
+		gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, (gw->g.flags & GWIN_FLG_SYSENABLED) ? gw->pstyle->enabled.edge : gw->pstyle->disabled.edge);
+	}
 
 	// Render cursor (if focused)
 	if (gwinGetFocus() == (GHandle)gw) {
@@ -223,7 +246,7 @@ static void gwinTexteditDefaultDraw(GWidgetObject* gw, void* param)
 		coord_t cursorSpacingBottom = (gw->g.height - cursorHeight)/2 - CURSOR_EXTRA_HEIGHT;
 
 		// Draw cursor
-		coord_t lineX0 = gw->g.x + textWidth + CURSOR_PADDING_LEFT + gdispGetFontMetric(gw->g.font, fontBaselineX)/2;
+		coord_t lineX0 = gw->g.x + textWidth + CURSOR_PADDING_LEFT + TEXT_PADDING_LEFT + gdispGetFontMetric(gw->g.font, fontBaselineX)/2;
 		coord_t lineX1 = lineX0;
 		coord_t lineY0 = gw->g.y + cursorSpacingTop;
 		coord_t lineY1 = gw->g.y + gw->g.height - cursorSpacingBottom;
