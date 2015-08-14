@@ -86,12 +86,21 @@ static void _shiftTextRight(char* buffer, size_t bufferSize, size_t index, char 
 
 		// Parse the key press
 		else if (pke->bytecount >= 1) {
-			// Check backspace
+			// Is it backspace?
 			if (pke->c[0] == GKEY_BACKSPACE) {
 				if (gw2obj->cursorPos == 0) {
 					return;
 				}
 				_shiftTextLeft(gw2obj->textBuffer, gw2obj->bufferSize, gw2obj->cursorPos--);
+			}
+
+			// Is it delete?
+			else if (pke->c[0] == GKEY_DEL) {
+				// Check whether there is a character on the right side of the cursor
+				if (gw2obj->textBuffer[gw2obj->cursorPos] == '\0') {
+					return;
+				}
+				_shiftTextLeft(gw2obj->textBuffer, gw2obj->bufferSize, gw2obj->cursorPos+1);
 			}
 
 			// Add a new character
