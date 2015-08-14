@@ -10,6 +10,9 @@ FEATURE:	New board STM32F746G-Discovery
 FEATURE:	New gdisp driver STM32LTDC
 FEATURE:	Better support for Raw32 platforms
 FEATURE:	Implementing widget focusing. See gwinSetFocus() and gwinGetFocus()
+FEATURE:	Adding more font metrics (BaselineX and BaselineY)
+FEATURE:	Adding gdispGetStringWidthCount()
+FEATURE:	Adding TextEdit widget
 
 
 *** Release 2.3 ***

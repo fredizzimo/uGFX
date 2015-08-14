@@ -153,6 +153,7 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 			bool_t foundWidget = FALSE;
 			bool_t endOfListDetected = FALSE;
 			GHandle nextWidget = gwinGetFocus();
+			GHandle prevWidget = gwinGetFocus();
 			do {
 				nextWidget = gwinGetNextWindow(nextWidget);
 				foundWidget = TRUE;
@@ -188,6 +189,15 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 
 			} while (foundWidget == FALSE);
 			gwinSetFocus(nextWidget);
+
+			// Redraw the new and the previous focused widget because they usually render differently when
+			// they are not focused anymore (eg. no blinking cursor)
+			if (prevWidget != 0) {
+				gwinRedraw(prevWidget);
+			}
+			if (nextWidget != 0) {
+				gwinRedraw(nextWidget);
+			}
 
 			break;
 		}

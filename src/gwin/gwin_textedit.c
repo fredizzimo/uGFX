@@ -18,7 +18,9 @@
 #include <string.h>
 
 // Some settings
- const int CURSOR_EXTRA_HEIGHT = 1;
+const int TEXT_PADDING_LEFT		= 4;
+const int CURSOR_PADDING_LEFT	= 0;
+const int CURSOR_EXTRA_HEIGHT	= 1;
 
 // Macros to assist in data type conversions
 #define gh2obj ((GTexteditObject *)gh)
@@ -185,7 +187,10 @@ GHandle gwinGTexteditCreate(GDisplay* g, GTexteditObject* widget, GWidgetInit* p
 		widget->textBuffer[i] = '\0';
 	}
 
-	widget->cursorPos = 0;
+	// Set text and cursor position
+	strncpy(widget->textBuffer, gwinGetText((GHandle)widget), widget->bufferSize);	// FixMe: pInit->text leads to a segfault
+	widget->cursorPos = strlen(widget->textBuffer);
+
 	widget->w.g.flags |= flags;
 	gwinSetVisible(&widget->w.g, pInit->g.show);
 
@@ -206,22 +211,20 @@ static void gwinTexteditDefaultDraw(GWidgetObject* gw, void* param)
 	color_t cursorColor = (gw->g.flags & GWIN_FLG_SYSENABLED) ? gw->pstyle->enabled.edge : gw->pstyle->disabled.edge;
 
 	// Render background and string
+	//gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->pstyle->background);
 	gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->text, gw->g.font, textColor, gw->pstyle->background, justifyLeft);
 
 	// Render cursor (if focused)
-	if (gwinGetFocus() == (GHandle)gw || TRUE) {
+	if (gwinGetFocus() == (GHandle)gw) {
 		// Calculate cursor stuff
-		char textBeforeCursor[gw2obj->bufferSize];
-		strncpy(textBeforeCursor, gw->text, gw2obj->cursorPos+1);
-		textBeforeCursor[gw2obj->cursorPos] = '\0';
-		coord_t textWidth = gdispGetStringWidth(textBeforeCursor, gw->g.font);
+		coord_t textWidth = gdispGetStringWidthCount(gw2obj->textBuffer, gw->g.font, gw2obj->cursorPos);
 		coord_t cursorHeight = gdispGetFontMetric(gw->g.font, fontHeight);
 		coord_t cursorSpacingTop = (gw->g.height - cursorHeight)/2 - CURSOR_EXTRA_HEIGHT;
 		coord_t cursorSpacingBottom = (gw->g.height - cursorHeight)/2 - CURSOR_EXTRA_HEIGHT;
 
 		// Draw cursor
-		coord_t lineX0 = gw->g.x + textWidth - 2;
-		coord_t lineX1 = gw->g.x + textWidth - 2;
+		coord_t lineX0 = gw->g.x + textWidth + CURSOR_PADDING_LEFT + gdispGetFontMetric(gw->g.font, fontBaselineX)/2;
+		coord_t lineX1 = lineX0;
 		coord_t lineY0 = gw->g.y + cursorSpacingTop;
 		coord_t lineY1 = gw->g.y + gw->g.height - cursorSpacingBottom;
 		gdispGDrawLine(gw->g.display, lineX0, lineY0, lineX1, lineY1, cursorColor);
