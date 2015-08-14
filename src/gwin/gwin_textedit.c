@@ -104,6 +104,11 @@ static void _shiftTextRight(char* buffer, size_t bufferSize, size_t index, char 
 
 			// Add a new character
 			else {
+				// Prevent buffer overflow
+				if (gw2obj->cursorPos >= gw2obj->bufferSize) {
+					return;
+				}
+
 				// Shift everything right from the cursor by one character. This includes the '\0'. Then inser the new character.
 				_shiftTextRight(gw2obj->textBuffer, gw2obj->bufferSize, gw2obj->cursorPos++, pke->c[0]);
 			}
