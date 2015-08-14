@@ -3313,6 +3313,8 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 		case fontCharPadding:		return 0;
 		case fontMinWidth:			return font->min_x_advance;
 		case fontMaxWidth:			return font->max_x_advance;
+		case fontBaselineX:			return font->baseline_x;
+		case fontBaselineY:			return font->baseline_y;
 		}
 		return 0;
 	}

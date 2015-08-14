@@ -72,7 +72,9 @@ typedef enum fontmetric {
 	fontLineSpacing,		/**< The line spacing */
 	fontCharPadding,		/**< The char padding */
 	fontMinWidth,			/**< The minimum width */
-	fontMaxWidth			/**< The maximum width */
+	fontMaxWidth,			/**< The maximum width */
+	fontBaselineX,			/**< The base line in x direction */
+	fontBaselineY			/**< The base line in y direction */
 } fontmetric_t;
 
 /**
