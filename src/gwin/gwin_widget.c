@@ -148,39 +148,55 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 	case GEVENT_KEYBOARD:
 		// If Tab key pressed then set focus to next widget
 		if (pke->bytecount == 1 && pke->c[0] == GKEY_TAB) {
-			GHandle nextWidgetInFocus = 0;
-			bool_t loopCompleted = FALSE;
+
+			// Get the next widget
+			bool_t foundWidget = FALSE;
+			bool_t endOfListDetected = FALSE;
+			GHandle nextWidget = gwinGetFocus();
 			do {
-				nextWidgetInFocus = gwinGetNextWindow(gwinGetFocus());
-				printf("0x%X\r\n", nextWidgetInFocus);
-				// We only look out for widgets
-				if (!gwinIsWidget(nextWidgetInFocus)) {
+				nextWidget = gwinGetNextWindow(nextWidget);
+				foundWidget = TRUE;
+
+				// Begin with the first one if this is the last one
+				if (nextWidget == 0) {
+					foundWidget = FALSE;
+					// We go through the list twice - just to be sure
+					if (endOfListDetected) {
+						break;
+					}
+					endOfListDetected = TRUE;
 					continue;
 				}
-				
-				if (nextWidgetInFocus == 0) {
-					loopCompleted = TRUE;
-					// Restart with the first widget
-					nextWidgetInFocus = gwinGetNextWindow(gwinGetFocus());
-				}
-			} while (nextWidgetInFocus == 0 && loopCompleted == FALSE);
-			printf("0x%X\r\n", nextWidgetInFocus);
-			gwinSetFocus(nextWidgetInFocus);
 
-		/*
-			// If it was the last widget begin with the first one again
-			if (widgetInFocus == 0) {
-				widgetInFocus = gwinGetNextWindow(0);
-			}
-		*/
-			//printf("Got now: %s\n", gwinGetClassName(gwinGetFocus()));
+				// Check whether this is a window or a widget
+				if (!gwinIsWidget(nextWidget)) {
+					foundWidget = FALSE;
+					continue;
+				}
+
+				// Only focus on a widget that is visible and enabled
+				if (!(nextWidget->flags & GWIN_FLG_SYSVISIBLE) || !(nextWidget->flags & GWIN_FLG_ENABLED)) {
+					foundWidget = FALSE;
+					continue;
+				}
+
+				// When using the TAB key we only focus on widgets that process keyboard events
+				if (((gwidgetVMT*)nextWidget->vmt)->KeyboardEvent == 0) {
+					foundWidget = FALSE;
+					continue;
+				}
+
+			} while (foundWidget == FALSE);
+			gwinSetFocus(nextWidget);
+
 			break;
 		}
-/*
+
 		// Otherise, send keyboard events only to widget in focus
+		GHandle widgetInFocus = gwinGetFocus();
 		if (widgetInFocus != 0) {
 			// Make sure that it is a widget
-			if (!(widgetInFocus->flags & GWIN_FLG_WIDGET)) {
+			if (!gwinIsWidget(widgetInFocus)) {
 				break;
 			}
 
@@ -197,7 +213,7 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 			// If we got this far we can finally pass the event
 			((gwidgetVMT*)widgetInFocus->vmt)->KeyboardEvent((GWidgetObject*)widgetInFocus, pke);
 		}
-*/
+
 	#endif
 
 	#if GFX_USE_GINPUT && GINPUT_NEED_TOGGLE
