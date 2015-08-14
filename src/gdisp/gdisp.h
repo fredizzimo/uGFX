@@ -53,7 +53,7 @@ typedef struct point {
 } point, point_t;
 
 /**
- * @enum justify
+ * @enum justify_t
  * @brief   Type for the text justification.
  */
 typedef enum justify {
@@ -63,7 +63,7 @@ typedef enum justify {
 } justify_t;
 
 /**
- * @enum fontmetric
+ * @enum fontmetric_t
  * @brief   Type for the font metric.
  */
 typedef enum fontmetric {
