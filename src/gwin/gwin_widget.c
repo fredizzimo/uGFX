@@ -98,7 +98,7 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 		uint16_t		role;
 	#endif
 	(void)				param;
-//static GHandle widgetInFocus = 0;
+
 	// Process various events
 	switch (pe->type) {
 
