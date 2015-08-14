@@ -27,7 +27,6 @@
 // cursorPos is the position of the next character
 // textBuffer[cursorPos++] = readKey();
 
-// ToDo: Optimize by using memncpy() instead
 static void _shiftTextLeft(char* buffer, size_t bufferSize, size_t index)
 {
 	// Find the end of the string
