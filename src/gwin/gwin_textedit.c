@@ -147,7 +147,7 @@ static const gwidgetVMT texteditVMT = {
 	#endif
 	#if GINPUT_NEED_KEYBOARD
 		{
-			_keyboardEvent,			// Process keyboard key down events
+			_keyboardEvent			// Process keyboard key down events
 		},
 	#endif
 	#if GINPUT_NEED_TOGGLE
