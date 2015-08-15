@@ -55,6 +55,23 @@ static void SendCheckboxEvent(GWidgetObject *gw) {
 	}
 #endif
 
+#if GINPUT_NEED_KEYBOARD
+	static void _keyboardEvent(GWidgetObject* gw, GEventKeyboard* pke)
+	{
+		// Only react on KEYDOWN events. Ignore KEYUP events.
+		if (pke->keystate & GKEYSTATE_KEYUP) {
+			break;
+		}
+
+		// ENTER and SPACE keys to check/uncheck the checkbox
+		if (pke->c[0] == GKEY_ENTER || pke->c[0] == GKEY_SPACE) {
+			gw->g.flags ^= GCHECKBOX_FLG_CHECKED;
+		}
+
+		_gwinUpdate((GHandle)gw);
+	}
+#endif
+
 #if GINPUT_NEED_TOGGLE
 	static void CheckboxToggleOn(GWidgetObject *gw, uint16_t role) {
 		(void) role;
@@ -93,7 +110,7 @@ static const gwidgetVMT checkboxVMT = {
 	#endif
 	#if GINPUT_NEED_KEYBOARD
 		{
-			0						// Process keyboard events
+			_keyboardEvent			// Process keyboard events
 		},
 	#endif
 	#if GINPUT_NEED_TOGGLE
