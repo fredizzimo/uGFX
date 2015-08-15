@@ -67,6 +67,11 @@ static void _shiftTextRight(char* buffer, size_t bufferSize, size_t index, char 
 #if GINPUT_NEED_KEYBOARD
 	static void _keyboardEvent(GWidgetObject* gw, GEventKeyboard* pke)
 	{
+		// Only react on KEYDOWN events. Ignore KEYUP events.
+		if (pke->keystate & GKEYSTATE_KEYUP) {
+			return;
+		}
+
 		// Is it a special key?
 		if (pke->keystate & GKEYSTATE_SPECIAL) {
 			// Arrow keys to move the cursor

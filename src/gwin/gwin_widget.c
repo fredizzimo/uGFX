@@ -151,6 +151,11 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 		// If Tab key pressed then set focus to next widget
 		if (pke->bytecount == 1 && pke->c[0] == GKEY_TAB) {
 
+			// Only react on KEYDOWN events. Ignore KEYUP events.
+			if (pke->keystate & GKEYSTATE_KEYUP) {
+				break;
+			}
+
 			// Get the next widget
 			bool_t foundWidget = FALSE;
 			bool_t endOfListDetected = FALSE;
@@ -323,7 +328,7 @@ void _gwidgetInit(void)
 	geventAttachSource(&gl, ginputGetMouse(GMOUSE_ALL_INSTANCES), GLISTEN_MOUSEMETA|GLISTEN_MOUSEDOWNMOVES);
 
 	#if GINPUT_NEED_KEYBOARD
-		geventAttachSource(&gl, ginputGetKeyboard(GKEYBOARD_ALL_INSTANCES), 0);
+		geventAttachSource(&gl, ginputGetKeyboard(GKEYBOARD_ALL_INSTANCES), GLISTEN_KEYUP);
 	#endif
 }
 
