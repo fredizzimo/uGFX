@@ -53,7 +53,7 @@ typedef struct point {
 } point, point_t;
 
 /**
- * @enum justify_t
+ * @enum justify
  * @brief   Type for the text justification.
  */
 typedef enum justify {
@@ -63,7 +63,7 @@ typedef enum justify {
 } justify_t;
 
 /**
- * @enum fontmetric_t
+ * @enum fontmetric
  * @brief   Type for the font metric.
  */
 typedef enum fontmetric {
@@ -111,7 +111,7 @@ typedef enum powermode {
 /*
  * Our black box display structure.
  */
-typedef struct GDisplay		GDisplay;
+typedef struct GDisplay GDisplay;
 
 /**
  * @brief   The default screen to use for the gdispXXXX calls.

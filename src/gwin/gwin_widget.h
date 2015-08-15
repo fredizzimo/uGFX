@@ -33,10 +33,10 @@ struct GWidgetObject;
  * @{
  */
 typedef struct GColorSet {
-	color_t			text;				// @< The text color
-	color_t			edge;				// @< The edge color
-	color_t			fill;				// @< The fill color
-	color_t			progress;			// @< The color of progress bars
+	color_t			text;				/**< The text color */
+	color_t			edge;				/**< The edge color */
+	color_t			fill;				/**< The fill color */
+	color_t			progress;			/**< The color of progress bars */
 } GColorSet;
 /** @} */
 
@@ -48,11 +48,11 @@ typedef struct GColorSet {
  * @{
  */
 typedef struct GWidgetStyle {
-	color_t			background;			// @< The window background color
-	color_t			focus;				// @< The color when a widget is focused
-	GColorSet		enabled;			// @< The colors when enabled
-	GColorSet		disabled;			// @< The colors when disabled
-	GColorSet		pressed;			// @< The colors when pressed
+	color_t			background;			/**< The window background color */
+	color_t			focus;				/**< The color when a widget is focused */
+	GColorSet		enabled;			/**< The colors when enabled */
+	GColorSet		disabled;			/**< The colors when disabled */
+	GColorSet		pressed;			/**< The colors when pressed */
 } GWidgetStyle;
 /** @} */
 
@@ -93,13 +93,13 @@ typedef uint16_t	WidgetTag;
  * @{
  */
 typedef struct GWidgetInit {
-	GWindowInit					g;						// @< The GWIN initializer
-	const char *				text;					// @< The initial text
-	CustomWidgetDrawFunction	customDraw;				// @< A custom draw function - use NULL for the standard
-	void *						customParam;			// @< A parameter for the custom draw function (default = NULL)
-	const GWidgetStyle *		customStyle;			// @< A custom style to use - use NULL for the default style
+	GWindowInit					g;						/**< The GWIN initializer */
+	const char *				text;					/**< The initial text */
+	CustomWidgetDrawFunction	customDraw;				/**< A custom draw function - use NULL for the standard */
+	void *						customParam;			/**< A parameter for the custom draw function (default = NULL) */
+	const GWidgetStyle *		customStyle;			/**< A custom style to use - use NULL for the default style */
 	#if GWIN_WIDGET_TAGS || defined(__DOXYGEN__)
-		WidgetTag				tag;					// @< The tag to associate with the widget
+		WidgetTag				tag;					/**< The tag to associate with the widget */
 	#endif
 } GWidgetInit;
 /** @} */
@@ -114,13 +114,13 @@ typedef struct GWidgetInit {
  * @{
  */
 typedef struct GWidgetObject {
-	GWindowObject				g;					// @< This is still a GWIN
-	const char *				text;				// @< The widget text
-	CustomWidgetDrawFunction	fnDraw;				// @< The current draw function
-	void *						fnParam;			// @< A parameter for the current draw function
-	const GWidgetStyle *		pstyle;				// @< The current widget style colors
+	GWindowObject				g;					/**< This is still a GWIN */
+	const char *				text;				/**< The widget text */
+	CustomWidgetDrawFunction	fnDraw;				/**< The current draw function */
+	void *						fnParam;			/**< A parameter for the current draw function */
+	const GWidgetStyle *		pstyle;				/**< The current widget style colors */
 	#if GWIN_WIDGET_TAGS || defined(__DOXYGEN__)
-		WidgetTag				tag;				// @< The widget tag
+		WidgetTag				tag;				/**< The widget tag */
 	#endif
 } GWidgetObject;
 /** @} */
@@ -145,10 +145,10 @@ typedef struct GWidgetObject {
  * @{
  */
 typedef struct GEventGWin {
-	GEventType		type;				// The type of this event
-	GHandle			gwin;				// The gwin window handle
+	GEventType		type;						/**< The type of this event */
+	GHandle			gwin;						/**< The gwin window handle */
 	#if GWIN_NEED_WIDGET && GWIN_WIDGET_TAGS
-		WidgetTag	tag;				// The tag (if applicable)
+		WidgetTag	tag;						/**< The tag (if applicable) */
 	#endif
 } GEventGWin;
 /** @} */
