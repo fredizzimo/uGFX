@@ -35,7 +35,7 @@
 
 void _gosInit(void)
 {
-	#if !GFX_NO_OS_INIT
+	#if !GFX_OS_NO_INIT
 		/* Don't Initialize if the user already has */
 		#if CH_KERNEL_MAJOR == 2
 			if (!chThdSelf()) {

@@ -128,8 +128,8 @@
  	 * 			system in your application code. Note that on these operating systems the
  	 * 			demo applications will not work without modification.
  	 */
- 	#ifndef GFX_NO_OS_INIT
- 		#define GFX_NO_OS_INIT			FALSE
+ 	#ifndef GFX_OS_NO_INIT
+ 		#define GFX_OS_NO_INIT			FALSE
  	#endif
  	/**
  	 * @brief	Turn off warnings about initializing the operating system
