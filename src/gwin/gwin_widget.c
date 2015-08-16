@@ -311,8 +311,11 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 		if (&gx->g != _widgetInFocus)
 			return;
 
-		// Use the very simplest possible focus rectangle for now.
-		gdispGDrawBox(gx->g.display, gx->g.x+x, gx->g.y+y, cx, cy, gx->pstyle->focus);
+		// Use the very simplest possible focus rectangle for now
+		uint16_t i = 0;
+		for (i = 0; i < GWIN_FOCUS_HIGHLIGHT_WIDTH; i++) {
+			gdispGDrawBox(gx->g.display, gx->g.x+x+i, gx->g.y+y+i, cx-2*i, cy-2*i, gx->pstyle->focus);
+		}
 	}
 
 #endif

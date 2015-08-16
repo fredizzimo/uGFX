@@ -14,6 +14,7 @@ FEATURE:	Adding more font metrics (BaselineX and BaselineY)
 FEATURE:	Adding gdispGetStringWidthCount()
 FEATURE:	Adding TextEdit widget
 FEATURE:	Added color to widget style for focused widgets
+FEATURE:	Added GWIN_FOCUS_HIGHLIGHT_WIDTH as an option in the configuration file
 
 
 *** Release 2.3 ***

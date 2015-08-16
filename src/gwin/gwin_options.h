@@ -45,6 +45,13 @@
 		#define GWIN_NEED_WIDGET	FALSE
 	#endif
 	/**
+	 * @brief   The width of the rectangle that highlights a widget that is focused
+	 * @details	Defaults to 1
+	 */
+	#ifndef GWIN_FOCUS_HIGHLIGHT_WIDTH
+		#define GWIN_FOCUS_HIGHLIGHT_WIDTH 1
+	#endif
+	/**
 	 * @brief	Should the simple container be included.
 	 * @details	Defaults to FALSE
 	 */
