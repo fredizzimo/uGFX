@@ -183,8 +183,6 @@ static volatile uint8_t		RedrawPending;
 
 void _gwmInit(void)
 {
-	_widgetInFocus = 0;
-
 	gfxSemInit(&gwinsem, 1, 1);
 	gfxQueueASyncInit(&_GWINList);
 	#if GWIN_NEED_FLASHING
