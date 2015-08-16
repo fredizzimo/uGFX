@@ -219,7 +219,7 @@ static void gwinTexteditDefaultDraw(GWidgetObject* gw, void* param)
 	gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, (gw->g.flags & GWIN_FLG_SYSENABLED) ? gw->pstyle->enabled.edge : gw->pstyle->disabled.edge);
 
 	// Render highlighted border of focused
-	_gwidgetDrawFocusRect(gw, 0, 0, gw->g.width-1, gw->g.height-1);
+	_gwidgetDrawFocusRect(gw, 1, 1, gw->g.width-2, gw->g.height-2);
 
 	// Render cursor (if focused)
 	if (gwinGetFocus() == (GHandle)gw) {
