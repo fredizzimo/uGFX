@@ -279,7 +279,7 @@ static const gwidgetVMT listVMT = {
 			ListMouseMove,
 		},
 	#endif
-	#if GINPUT_NEED_KEYBOARD
+	#if GINPUT_NEED_KEYBOARD || GWIN_NEED_KEYBOARD
 		{
 			0						// Process keyboard events
 		},

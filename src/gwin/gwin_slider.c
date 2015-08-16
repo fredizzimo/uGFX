@@ -250,7 +250,7 @@ static const gwidgetVMT sliderVMT = {
 			SliderMouseMove,		// Process mouse move events
 		},
 	#endif
-	#if GINPUT_NEED_KEYBOARD
+	#if GINPUT_NEED_KEYBOARD || GWIN_NEED_KEYBOARD
 		{
 			0						// Process keyboard events
 		},

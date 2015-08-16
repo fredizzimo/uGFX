@@ -50,7 +50,7 @@
 	}
 #endif
 
-#if GINPUT_NEED_KEYBOARD
+#if GINPUT_NEED_KEYBOARD || GWIN_NEED_KEYBOARD
 	static void ButtonKeyboard(GWidgetObject* gw, GEventKeyboard* pke)
 	{
 		// ENTER and SPACE keys to press the button
@@ -113,7 +113,7 @@ static const gwidgetVMT buttonVMT = {
 			0,						// Process mouse move events (NOT USED)
 		},
 	#endif
-	#if GINPUT_NEED_KEYBOARD
+	#if GINPUT_NEED_KEYBOARD || GWIN_NEED_KEYBOARD
 		{
 			ButtonKeyboard			// Process keyboard events
 		},

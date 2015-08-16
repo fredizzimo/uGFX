@@ -63,7 +63,10 @@
 
 /* Features for the GINPUT subsystem. */
 #define GINPUT_NEED_MOUSE		TRUE
+
+/* One or both of these */
 #define GINPUT_NEED_KEYBOARD	TRUE
+#define GWIN_NEED_KEYBOARD       TRUE
 
 /* Features for the GQUEUE subsystem. */
 #define GFX_USE_GQUEUE                               TRUE

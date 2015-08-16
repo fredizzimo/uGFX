@@ -96,7 +96,7 @@ typedef struct gwinVMT {
 				void (*MouseMove)		(GWidgetObject *gw, coord_t x, coord_t y);				/**< Process mouse move events (optional) */
 			};
 		#endif
-		#if GINPUT_NEED_KEYBOARD
+		#if GINPUT_NEED_KEYBOARD || GWIN_NEED_KEYBOARD
 			struct {
 				void (*KeyboardEvent)	(GWidgetObject *gw, GEventKeyboard *pke);				/**< Process keyboard events (optional) */
 			};

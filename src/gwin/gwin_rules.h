@@ -127,8 +127,8 @@
 		#if !GDISP_NEED_TEXT
 			#error "GWIN: GDISP_NEED_TEXT is required if GWIN_NEED_TEXTEDIT is TRUE."
 		#endif
-		#if !GINPUT_NEED_KEYBOARD
-			#error "GWIN: GINPUT_NEED_KEYBOARD is required if GWIN_NEED_TEXTEDIT is TRUE."
+		#if !(GINPUT_NEED_KEYBOARD || GWIN_NEED_KEYBOARD)
+			#error "GWIN: GINPUT_NEED_KEYBOARD or GWIN_NEED_KEYBOARD is required if GWIN_NEED_TEXTEDIT is TRUE."
 		#endif
 	#endif
 #endif

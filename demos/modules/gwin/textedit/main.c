@@ -34,6 +34,9 @@ static GHandle		ghTextedit1;
 static GHandle		ghTextedit2;
 static GHandle		ghTextedit3;
 static GListener	gl;
+#if GWIN_NEED_KEYBOARD
+	static GHandle		ghKeyboard;
+#endif
 
 static void guiCreate(void)
 {
@@ -80,6 +83,17 @@ static void guiCreate(void)
 	wi.text = "the different widgets";
 	ghTextedit3 = gwinTexteditCreate(0, &wi, 100);
 	//gwinTexteditSetBorder(ghTextedit3, TRUE);
+
+	// Virtual keyboard
+#if GWIN_NEED_KEYBOARD
+	wi.g.show = TRUE;
+	wi.g.x = 0;
+	wi.g.y = gdispGetHeight()*3/4;
+	wi.g.width = gdispGetWidth();
+	wi.g.height = gdispGetHeight()/4;
+	ghKeyboard = gwinKeyboardCreate(0, &wi);
+#endif
+
 }
 
 int main(void) {

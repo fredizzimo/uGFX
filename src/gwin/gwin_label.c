@@ -58,7 +58,7 @@ static const gwidgetVMT labelVMT = {
 			0,						// Process mouse move events (NOT USED)
 		},
 	#endif
-	#if GINPUT_NEED_KEYBOARD
+	#if GINPUT_NEED_KEYBOARD || GWIN_NEED_KEYBOARD
 		{
 			0						// Process keyboard key down events
 		},

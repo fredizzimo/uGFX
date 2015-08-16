@@ -61,7 +61,7 @@ static void _shiftTextRight(char* buffer, size_t maxSize, size_t index, char fil
 }
 
 
-#if GINPUT_NEED_KEYBOARD
+#if GINPUT_NEED_KEYBOARD || GWIN_NEED_KEYBOARD
 	static void TextEditKeyboard(GWidgetObject* gw, GEventKeyboard* pke)
 	{
 		// Only react on KEYDOWN events. Ignore KEYUP events.
@@ -146,7 +146,7 @@ static const gwidgetVMT texteditVMT = {
 			0,						// Process mouse move events (NOT USED)
 		},
 	#endif
-	#if GINPUT_NEED_KEYBOARD
+	#if GINPUT_NEED_KEYBOARD || GWIN_NEED_KEYBOARD
 		{
 			TextEditKeyboard		// Process keyboard key down events
 		},
