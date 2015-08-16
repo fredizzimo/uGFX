@@ -11,8 +11,8 @@
 
 void _gosInit(void)
 {
-	#if !GFX_NO_OS_INIT
-		#error "GOS: Operating System initialization for eCos is not yet implemented in uGFX. Please set GFX_NO_OS_INIT to TRUE in your gfxconf.h"
+	#if !GFX_OS_NO_INIT
+		#error "GOS: Operating System initialization for eCos is not yet implemented in uGFX. Please set GFX_OS_NO_INIT to TRUE in your gfxconf.h"
 	#endif
 	#if !GFX_OS_INIT_NO_WARNING
 		#warning "GOS: Operating System initialization has been turned off. Make sure you call cyg_scheduler_start() before gfxInit() in your application!"
