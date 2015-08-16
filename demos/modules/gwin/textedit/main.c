@@ -35,7 +35,7 @@ static GHandle		ghTextedit2;
 static GHandle		ghTextedit3;
 static GListener	gl;
 
-static void guiCreate()
+static void guiCreate(void)
 {
 	GWidgetInit	wi;
 	gwinWidgetClearInit(&wi);
@@ -69,7 +69,7 @@ static void guiCreate()
 	wi.g.height = 35;
 	wi.text = "to switch between";
 	ghTextedit2 = gwinTexteditCreate(0, &wi, 20);
-	gwinTexteditSetBorder(ghTextedit2, FALSE);
+	//gwinTexteditSetBorder(ghTextedit2, FALSE);
 
 	// TextEdit3
 	wi.g.show = TRUE;
@@ -79,7 +79,7 @@ static void guiCreate()
 	wi.g.height = 35;
 	wi.text = "the different widgets";
 	ghTextedit3 = gwinTexteditCreate(0, &wi, 100);
-	gwinTexteditSetBorder(ghTextedit3, TRUE);
+	//gwinTexteditSetBorder(ghTextedit3, TRUE);
 }
 
 int main(void) {

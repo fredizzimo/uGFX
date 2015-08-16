@@ -223,6 +223,7 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 
 	#undef pme
 	#undef pte
+	#undef pke
 	#undef pde
 }
 
@@ -296,7 +297,7 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 
 				// This new window still needs to be marked for redraw (but don't actually do it yet).
 				gh->flags |= GWIN_FLG_NEEDREDRAW;
-				RedrawPending |= DOREDRAW_VISIBLES;
+				// RedrawPending |= DOREDRAW_VISIBLES;			- FIX LATER
 				return;
 			}
 		}
@@ -305,13 +306,13 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 		_widgetInFocus = 0;
 	}
 
-	void _gwidgetDrawFocusRect(GWidgetObject *gw, coord_t x, coord_t y, coord_t cx, coord_t cy) {
+	void _gwidgetDrawFocusRect(GWidgetObject *gx, coord_t x, coord_t y, coord_t cx, coord_t cy) {
 		// Don't do anything if we don't have the focus
-		if (&gw->g != _widgetInFocus)
+		if (&gx->g != _widgetInFocus)
 			return;
 
 		// Use the very simplest possible focus rectangle for now.
-		gdispGDrawBox(gw->g.display, gw->g.x+x, gw->g.y+y, cx, cy, gw->pstyle.focus);
+		gdispGDrawBox(gx->g.display, gx->g.x+x, gx->g.y+y, cx, cy, gx->pstyle->focus);
 	}
 
 #endif

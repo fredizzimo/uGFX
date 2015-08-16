@@ -30,11 +30,11 @@ const int CURSOR_EXTRA_HEIGHT		= 1;
 // cursorPos is the position of the next character
 // textBuffer[cursorPos++] = readKey();
 
-static void _shiftTextLeft(char* buffer, size_t bufferSize, size_t index)
+static void _shiftTextLeft(char* buffer, size_t maxSize, size_t index)
 {
 	// Find the end of the string
 	size_t indexTerminator = index;
-	while (buffer[indexTerminator] != '\0' && indexTerminator < bufferSize-1) {
+	while (buffer[indexTerminator] != '\0' && indexTerminator < maxSize-1) {
 		indexTerminator++;
 	}
 
@@ -45,11 +45,11 @@ static void _shiftTextLeft(char* buffer, size_t bufferSize, size_t index)
 	buffer[indexTerminator-1] = '\0';
 }
 
-static void _shiftTextRight(char* buffer, size_t bufferSize, size_t index, char fillChar)
+static void _shiftTextRight(char* buffer, size_t maxSize, size_t index, char fillChar)
 {
 	// Find the end of the string
 	size_t indexTerminator = index;
-	while (buffer[indexTerminator] != '\0' && indexTerminator < bufferSize-1) {
+	while (buffer[indexTerminator] != '\0' && indexTerminator < maxSize-1) {
 		indexTerminator++;
 	}
 
@@ -98,7 +98,7 @@ static void _shiftTextRight(char* buffer, size_t bufferSize, size_t index, char 
 				if (gw2obj->cursorPos == 0) {
 					return;
 				}
-				_shiftTextLeft(gw2obj->textBuffer, gw2obj->bufferSize, gw2obj->cursorPos--);
+				_shiftTextLeft(gw2obj->textBuffer, gw2obj->maxSize, gw2obj->cursorPos--);
 			}
 
 			// Is it delete?
@@ -107,7 +107,7 @@ static void _shiftTextRight(char* buffer, size_t bufferSize, size_t index, char 
 				if (gw2obj->textBuffer[gw2obj->cursorPos] == '\0') {
 					return;
 				}
-				_shiftTextLeft(gw2obj->textBuffer, gw2obj->bufferSize, gw2obj->cursorPos+1);
+				_shiftTextLeft(gw2obj->textBuffer, gw2obj->maxSize, gw2obj->cursorPos+1);
 			}
 
 			// Add a new character
@@ -117,7 +117,7 @@ static void _shiftTextRight(char* buffer, size_t bufferSize, size_t index, char 
 					return;
 
 				// Shift everything right from the cursor by one character. This includes the '\0'. Then inser the new character.
-				_shiftTextRight(gw2obj->textBuffer, gw2obj->bufferSize, gw2obj->cursorPos++, pke->c[0]);
+				_shiftTextRight(gw2obj->textBuffer, gw2obj->maxSize, gw2obj->cursorPos++, pke->c[0]);
 			}
 
 			// Set the new text
@@ -172,21 +172,19 @@ static const gwidgetVMT texteditVMT = {
 
 GHandle gwinGTexteditCreate(GDisplay* g, GTexteditObject* wt, GWidgetInit* pInit, size_t maxSize)
 {
-	uint16_t flags = 0;
-
 	// Create the underlying widget
 	if (!(wt = (GTexteditObject*)_gwidgetCreate(g, &wt->w, pInit, &texteditVMT)))
 		return 0;
 
 	// Allocate the text buffer
 	wt->maxSize = maxSize;
-	wt->textBuffer = gfxAlloc(widget->maxSize);
+	wt->textBuffer = gfxAlloc(wt->maxSize);
 	if (wt->textBuffer == 0)
 		return 0;
 
 	// Initialize the text buffer
 	size_t i = 0;
-	for (i = 0; i < bufSize; i++) {
+	for (i = 0; i < wt->maxSize; i++) {
 		wt->textBuffer[i] = '\0';
 	}
 
