@@ -256,9 +256,8 @@ void _gwinDrawEnd(GHandle gh);
  * @param[in]	gh		The window
  * @param[in]	how		Do we wait for the lock?
  *
- * @note	This call will delete the window. If called without the
- * 			drawing lock 'how' must be REDRAW_WAIT. If called with the drawing
- * 			lock 'how' must be REDRAW_INSESSION.
+ * @note	If called without the drawing lock 'how' must be REDRAW_WAIT.
+ * 			If called with the drawing lock 'how' must be REDRAW_INSESSION.
  *
  * @notapi
  */
@@ -322,6 +321,50 @@ bool_t _gwinWMAdd(GHandle gh, const GWindowInit *pInit);
 	 */
 	void _gwinSendEvent(GHandle gh, GEventType type);
 
+	#if (GFX_USE_GINPUT && GINPUT_NEED_KEYBOARD) || defined(__DOXYGEN__)
+		/**
+		 * @brief	Move the focus off the current focus window.
+		 *
+		 * @notapi
+		 */
+		void _gwinMoveFocus(void);
+
+		/**
+		 * @brief	Do focus fixup's after a change of state for a window.
+		 * @details	If a focus window has become invisible or disabled then
+		 * 			the focus must be taken away from it. If there is no focus
+		 * 			window and this window is eligible then this window becomes
+		 * 			the focus.
+		 *
+		 * @param[in]	gh		The window
+		 *
+		 * @note		This routine does not actually do a redraw. It assumes that surrounding code
+		 * 				will because of the change of state that lead to this being called.
+		 *
+		 * @notapi
+		 */
+		void _gwinFixFocus(GHandle gh);
+
+		/**
+		 * @brief	Draw a simple focus rectangle in the default style.
+		 *
+		 * @param[in]	gw		The widget
+		 * @param[in]	x, y	The start x, y position (relative to the window)
+		 * @param[in]	cx, cy	The width & height of the rectangle
+		 *
+		 * @note		Assumes the widget is in a state where it can draw.
+		 * @note		Nothing is drawn if the window doesn't have focus.
+		 * @note		The focus rectangle may be more than one pixel thick and may
+		 * 				not be a continuous line.
+		 *
+		 * @notapi
+		 */
+		void _gwidgetDrawFocusRect(GWidgetObject *gw, coord_t x, coord_t y, coord_t cx, coord_t cy);
+
+	#else
+		#define _gwinFixFocus(gh)
+		#define _gwidgetDrawFocusRect(gh,x,y,cx,cy)
+	#endif
 
 	#if GWIN_NEED_FLASHING || defined(__DOXYGEN__)
 		/**
@@ -335,6 +378,8 @@ bool_t _gwinWMAdd(GHandle gh, const GWindowInit *pInit);
 		 */
 		const GColorSet *_gwinGetFlashedColor(GWidgetObject *gw, const GColorSet *pcol, bool_t flashOffState);
 	#endif
+#else
+	#define _gwinFixFocus(gh)
 #endif
 
 #if GWIN_NEED_CONTAINERS || defined(__DOXYGEN__)

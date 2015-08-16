@@ -21,6 +21,11 @@
 // Our listener for events for widgets
 static GListener gl;
 
+#if GFX_USE_GINPUT && GINPUT_NEED_KEYBOARD
+	// Our current focus window
+	static GHandle				_widgetInFocus;
+#endif
+
 // Our default style - a white background theme
 const GWidgetStyle WhiteWidgetStyle = {
 	HTML2COLOR(0xFFFFFF),			// window background
@@ -139,6 +144,14 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 		if (gh && (gh->flags & (GWIN_FLG_WIDGET|GWIN_FLG_SYSENABLED)) == (GWIN_FLG_WIDGET|GWIN_FLG_SYSENABLED)) {
 			if ((pme->buttons & GMETA_MOUSE_DOWN)) {
 				gh->flags |= GWIN_FLG_MOUSECAPTURE;
+
+				#if GFX_USE_GINPUT && GINPUT_NEED_KEYBOARD
+					// We should try and capture the focus on this window.
+					// If we can't no window should have the focus
+					if (!gwinSetFocus(gh))
+						gwinSetFocus(0);
+				#endif
+
 				if (wvmt->MouseDown)
 					wvmt->MouseDown(gw, pme->x - gh->x, pme->y - gh->y);
 			}
@@ -150,79 +163,14 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 	case GEVENT_KEYBOARD:
 		// If Tab key pressed then set focus to next widget
 		if (pke->bytecount == 1 && pke->c[0] == GKEY_TAB) {
-
-			// Only react on KEYDOWN events. Ignore KEYUP events.
-			if (pke->keystate & GKEYSTATE_KEYUP)
-				break;
-
-			// Get the next widget
-			bool_t foundWidget = FALSE;
-			bool_t endOfListDetected = FALSE;
-			GHandle nextWidget = gwinGetFocus();
-			GHandle prevWidget = gwinGetFocus();
-			do {
-				nextWidget = gwinGetNextWindow(nextWidget);
-				foundWidget = TRUE;
-
-				// Begin with the first one if this is the last one
-				if (nextWidget == 0) {
-					foundWidget = FALSE;
-					// We go through the list twice - just to be sure
-					if (endOfListDetected)
-						break;
-					endOfListDetected = TRUE;
-					continue;
-				}
-
-				// Check whether this is a window or a widget
-				if (!gwinIsWidget(nextWidget)) {
-					foundWidget = FALSE;
-					continue;
-				}
-
-				// Only focus on a widget that is visible and enabled
-				if (!(nextWidget->flags & GWIN_FLG_SYSVISIBLE) || !(nextWidget->flags & GWIN_FLG_ENABLED)) {
-					foundWidget = FALSE;
-					continue;
-				}
-
-				// When using the TAB key we only focus on widgets that process keyboard events
-				if (((gwidgetVMT*)nextWidget->vmt)->KeyboardEvent == 0) {
-					foundWidget = FALSE;
-					continue;
-				}
-
-			} while (foundWidget == FALSE);
-			gwinSetFocus(nextWidget);
-
-			// Redraw the new and the previous focused widget because they usually render differently when
-			// they are not focused anymore (eg. no blinking cursor)
-			if (prevWidget != 0)
-				gwinRedraw(prevWidget);
-			if (nextWidget != 0)
-				gwinRedraw(nextWidget);
-
+			if (!(pke->keystate & GKEYSTATE_KEYUP))
+				_gwinMoveFocus();
 			break;
 		}
 
-		// Otherise, send keyboard events only to widget in focus
-		GHandle widgetInFocus = gwinGetFocus();
-		if (widgetInFocus != 0) {
-			// Make sure that it is a widget
-			if (!gwinIsWidget(widgetInFocus))
-				break;
-
-			// Make sure that the widget is enabled and visible
-			if (!(widgetInFocus->flags & GWIN_FLG_SYSVISIBLE) || !(widgetInFocus->flags & GWIN_FLG_ENABLED))
-				break;
-
-			// Check whether this widget provides a method for handling keyboard events
-			if (((gwidgetVMT*)widgetInFocus->vmt)->KeyboardEvent == 0)
-				break;
-
-			// If we got this far we can finally pass the event
-			((gwidgetVMT*)widgetInFocus->vmt)->KeyboardEvent((GWidgetObject*)widgetInFocus, pke);
-		}
+		// Otherwise, send keyboard events only to widget in focus
+		if (_widgetInFocus)
+			((gwidgetVMT*)_widgetInFocus->vmt)->KeyboardEvent((GWidgetObject*)_widgetInFocus, pke);
 		break;
 	#endif
 
@@ -277,6 +225,96 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 	#undef pte
 	#undef pde
 }
+
+#if GFX_USE_GINPUT && GINPUT_NEED_KEYBOARD
+	GHandle gwinGetFocus(void) {
+		return _widgetInFocus;
+	}
+
+	bool_t gwinSetFocus(GHandle gh) {
+		GHandle	oldFocus;
+
+		// Do we already have the focus?
+		if (gh == _widgetInFocus)
+			return TRUE;
+
+		// The new window must be NULLL or a visible enabled widget with a keyboard handler
+		if (!gh || ((gh->flags & (GWIN_FLG_WIDGET|GWIN_FLG_ENABLED|GWIN_FLG_SYSENABLED|GWIN_FLG_VISIBLE|GWIN_FLG_SYSVISIBLE)) == (GWIN_FLG_WIDGET|GWIN_FLG_ENABLED|GWIN_FLG_SYSENABLED|GWIN_FLG_VISIBLE|GWIN_FLG_SYSVISIBLE)
+						&& ((gwidgetVMT*)gh->vmt)->KeyboardEvent)) {
+			// Move the current focus
+			oldFocus = _widgetInFocus;
+			_widgetInFocus = gh;
+			if (oldFocus)	_gwinUpdate(oldFocus);
+			if (gh)			_gwinUpdate(gh);
+			return TRUE;
+		}
+		return FALSE;
+	}
+
+	void _gwinMoveFocus(void) {
+		GHandle	gh;
+
+		// Find a new focus window (one may or may not exist).
+		for(gh = gwinGetNextWindow(_widgetInFocus); gh && gh != _widgetInFocus; gh = gwinGetNextWindow(gh)) {
+			if (gwinSetFocus(gh))
+				return;
+		}
+		gwinSetFocus(0);
+	}
+
+	void _gwinFixFocus(GHandle gh) {
+		GHandle	oldFocus;
+
+		if ((gh->flags & (GWIN_FLG_WIDGET|GWIN_FLG_ENABLED|GWIN_FLG_SYSENABLED|GWIN_FLG_VISIBLE|GWIN_FLG_SYSVISIBLE)) == (GWIN_FLG_WIDGET|GWIN_FLG_ENABLED|GWIN_FLG_SYSENABLED|GWIN_FLG_VISIBLE|GWIN_FLG_SYSVISIBLE)
+				&& ((gwidgetVMT*)gh->vmt)->KeyboardEvent) {
+
+			// We are a candidate to be able to claim the focus
+
+			// Claim the focus if no-one else has
+			if (!_widgetInFocus)
+				_widgetInFocus = gh;
+
+			return;
+		}
+
+		// We have lost any right to the focus
+
+		// Did we have the focus
+		if (gh != _widgetInFocus)
+			return;
+
+		// We did - we need to find a new focus window
+		oldFocus = _widgetInFocus;
+		for(gh = gwinGetNextWindow(oldFocus); gh && gh != oldFocus; gh = gwinGetNextWindow(gh)) {
+
+			// Must be a visible enabled widget with a keyboard handler
+			if ((gh->flags & (GWIN_FLG_WIDGET|GWIN_FLG_ENABLED|GWIN_FLG_SYSENABLED|GWIN_FLG_VISIBLE|GWIN_FLG_SYSVISIBLE)) == (GWIN_FLG_WIDGET|GWIN_FLG_ENABLED|GWIN_FLG_SYSENABLED|GWIN_FLG_VISIBLE|GWIN_FLG_SYSVISIBLE)
+					&& ((gwidgetVMT*)gh->vmt)->KeyboardEvent) {
+
+				// Grab the focus for the new window
+				_widgetInFocus = gh;
+
+				// This new window still needs to be marked for redraw (but don't actually do it yet).
+				gh->flags |= GWIN_FLG_NEEDREDRAW;
+				RedrawPending |= DOREDRAW_VISIBLES;
+				return;
+			}
+		}
+
+		// No-one has the right to the focus
+		_widgetInFocus = 0;
+	}
+
+	void _gwidgetDrawFocusRect(GWidgetObject *gw, coord_t x, coord_t y, coord_t cx, coord_t cy) {
+		// Don't do anything if we don't have the focus
+		if (&gw->g != _widgetInFocus)
+			return;
+
+		// Use the very simplest possible focus rectangle for now.
+		gdispGDrawBox(gw->g.display, gw->g.x+x, gw->g.y+y, cx, cy, gw->pstyle.focus);
+	}
+
+#endif
 
 #if GFX_USE_GINPUT && GINPUT_NEED_TOGGLE
 	static GHandle FindToggleUser(uint16_t instance) {
@@ -354,6 +392,10 @@ void _gwidgetDestroy(GHandle gh) {
 	#if GFX_USE_GINPUT && (GINPUT_NEED_TOGGLE || GINPUT_NEED_DIAL)
 		uint16_t	role, instance;
 	#endif
+
+	// Make the window is invisible so it is not eligible for focus
+	gh->flags &= ~GWIN_FLG_VISIBLE;
+	_gwinFixFocus(gh);
 
 	// Deallocate the text (if necessary)
 	if ((gh->flags & GWIN_FLG_ALLOCTXT)) {

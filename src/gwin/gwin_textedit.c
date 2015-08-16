@@ -23,9 +23,6 @@ const int FOCUS_BORDER_THICKNESS	= 3;
 const int CURSOR_PADDING_LEFT		= 0;
 const int CURSOR_EXTRA_HEIGHT		= 1;
 
-// Some flags
-#define GTEXTEDIT_FLG_BORDER	(GWIN_FIRST_CONTROL_FLAG << 0)
-
 // Macros to assist in data type conversions
 #define gh2obj ((GTexteditObject *)gh)
 #define gw2obj ((GTexteditObject *)gw)
@@ -65,7 +62,7 @@ static void _shiftTextRight(char* buffer, size_t bufferSize, size_t index, char 
 
 
 #if GINPUT_NEED_KEYBOARD
-	static void _keyboardEvent(GWidgetObject* gw, GEventKeyboard* pke)
+	static void TextEditKeyboard(GWidgetObject* gw, GEventKeyboard* pke)
 	{
 		// Only react on KEYDOWN events. Ignore KEYUP events.
 		if (pke->keystate & GKEYSTATE_KEYUP) {
@@ -116,9 +113,8 @@ static void _shiftTextRight(char* buffer, size_t bufferSize, size_t index, char 
 			// Add a new character
 			else {
 				// Prevent buffer overflow
-				if (gw2obj->cursorPos >= gw2obj->bufferSize) {
+				if (gw2obj->cursorPos >= gw2obj->maxSize)
 					return;
-				}
 
 				// Shift everything right from the cursor by one character. This includes the '\0'. Then inser the new character.
 				_shiftTextRight(gw2obj->textBuffer, gw2obj->bufferSize, gw2obj->cursorPos++, pke->c[0]);
@@ -152,7 +148,7 @@ static const gwidgetVMT texteditVMT = {
 	#endif
 	#if GINPUT_NEED_KEYBOARD
 		{
-			_keyboardEvent			// Process keyboard key down events
+			TextEditKeyboard		// Process keyboard key down events
 		},
 	#endif
 	#if GINPUT_NEED_TOGGLE
@@ -174,50 +170,33 @@ static const gwidgetVMT texteditVMT = {
 	#endif
 };
 
-GHandle gwinGTexteditCreate(GDisplay* g, GTexteditObject* widget, GWidgetInit* pInit, size_t bufSize)
+GHandle gwinGTexteditCreate(GDisplay* g, GTexteditObject* wt, GWidgetInit* pInit, size_t maxSize)
 {
 	uint16_t flags = 0;
 
 	// Create the underlying widget
-	if (!(widget = (GTexteditObject*)_gwidgetCreate(g, &widget->w, pInit, &texteditVMT))) {
+	if (!(wt = (GTexteditObject*)_gwidgetCreate(g, &wt->w, pInit, &texteditVMT)))
 		return 0;
-	}
 
 	// Allocate the text buffer
-	widget->bufferSize = bufSize;
-	widget->textBuffer = gfxAlloc(widget->bufferSize);
-	if (widget->textBuffer == 0) {
+	wt->maxSize = maxSize;
+	wt->textBuffer = gfxAlloc(widget->maxSize);
+	if (wt->textBuffer == 0)
 		return 0;
-	}
 
 	// Initialize the text buffer
 	size_t i = 0;
 	for (i = 0; i < bufSize; i++) {
-		widget->textBuffer[i] = '\0';
+		wt->textBuffer[i] = '\0';
 	}
 
 	// Set text and cursor position
-	strncpy(widget->textBuffer, gwinGetText((GHandle)widget), widget->bufferSize);	// FixMe: pInit->text leads to a segfault
-	widget->cursorPos = strlen(widget->textBuffer);
+	strncpy(wt->textBuffer, gwinGetText((GHandle)wt), wt->maxSize);	// FixMe: pInit->text leads to a segfault
+	wt->cursorPos = strlen(wt->textBuffer);
 
-	widget->w.g.flags |= flags  | GTEXTEDIT_FLG_BORDER;;
-	gwinSetVisible(&widget->w.g, pInit->g.show);
+	gwinSetVisible(&wt->w.g, pInit->g.show);
 
-	return (GHandle)widget;
-}
-
-void gwinTexteditSetBorder(GHandle gh, bool_t border)
-{
-	// Is it a valid handle?
-	if (gh->vmt != (gwinVMT*)&texteditVMT) {
-		return;
-	}
-
-	if (border) {
-		gh2obj->w.g.flags |= GTEXTEDIT_FLG_BORDER;
-	} else {
-		gh2obj->w.g.flags &=~ GTEXTEDIT_FLG_BORDER;
-	}
+	return (GHandle)wt;
 }
 
 static void gwinTexteditDefaultDraw(GWidgetObject* gw, void* param)
@@ -238,18 +217,11 @@ static void gwinTexteditDefaultDraw(GWidgetObject* gw, void* param)
 	gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->pstyle->background);
 	gdispGFillStringBox(gw->g.display, gw->g.x + TEXT_PADDING_LEFT, gw->g.y, gw->g.width, gw->g.height, gw->text, gw->g.font, textColor, gw->pstyle->background, justifyLeft);
 
-	// Render border (if supposed to)
-	if (gw2obj->w.g.flags & GTEXTEDIT_FLG_BORDER) {
-		gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, (gw->g.flags & GWIN_FLG_SYSENABLED) ? gw->pstyle->enabled.edge : gw->pstyle->disabled.edge);
-	}
+	// Render border (always)
+	gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, (gw->g.flags & GWIN_FLG_SYSENABLED) ? gw->pstyle->enabled.edge : gw->pstyle->disabled.edge);
 
 	// Render highlighted border of focused
-	if (gwinGetFocus() == (GHandle)gw) {
-		int i = 0;
-		for (i = 0; i < FOCUS_BORDER_THICKNESS; i++) {
-			gdispGDrawBox(gw->g.display, gw->g.x+i, gw->g.y+i, gw->g.width-2*i, gw->g.height-2*i, gw->pstyle->focus);
-		}
-	}
+	_gwidgetDrawFocusRect(gw, 0, 0, gw->g.width-1, gw->g.height-1);
 
 	// Render cursor (if focused)
 	if (gwinGetFocus() == (GHandle)gw) {

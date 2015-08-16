@@ -48,13 +48,15 @@
 #define GDISP_NEED_CLIP			TRUE
 #define GDISP_NEED_TEXT			TRUE
 #define GDISP_NEED_TEXT_KERNING	TRUE
-#define GDISP_NEED_STARTUP_LOGO	TRUE
+#define GDISP_NEED_MULTITHREAD  TRUE
 
 /* GDISP fonts to include */
 #define GDISP_INCLUDE_FONT_UI2	TRUE
 #define GDISP_INCLUDE_FONT_DEJAVUSANS16	TRUE
 
 /* Features for the GWIN subsystem. */
+#define GWIN_NEED_WINDOWMANAGER TRUE
+#define GWIN_NEED_WIDGET        TRUE
 #define GWIN_NEED_CONSOLE		TRUE
 #define GWIN_NEED_TEXTEDIT		TRUE
 #define GWIN_NEED_BUTTON		TRUE
@@ -62,6 +64,10 @@
 /* Features for the GINPUT subsystem. */
 #define GINPUT_NEED_MOUSE		TRUE
 #define GINPUT_NEED_KEYBOARD	TRUE
+
+/* Features for the GQUEUE subsystem. */
+#define GFX_USE_GQUEUE                               TRUE
+#define GQUEUE_NEED_ASYNC                            TRUE
 
 #endif /* _GFXCONF_H */
 

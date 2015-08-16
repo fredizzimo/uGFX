@@ -356,6 +356,36 @@ bool_t gwinAttachListener(GListener *pl);
 	bool_t gwinAttachDial(GHandle gh, uint16_t role, uint16_t instance);
 #endif
 
+#if (GFX_USE_GINPUT && GINPUT_NEED_KEYBOARD) || defined(__DOXYGEN__)
+	/**
+	 * @brief	Set the keyboard focus to a specific window
+	 * @return	Returns TRUE if the focus could be set to that window
+	 *
+	 * @param[in] gh	The window
+	 *
+	 * @note	Passing NULL will remove the focus from any window.
+	 * @note	Only visible enabled widgets are capable of getting the focus.
+	 *
+	 * @api
+	 */
+	bool_t gwinSetFocus(GHandle gh);
+
+	/**
+	 * @brief	Get the widget that is currently in focus
+	 *
+	 * @details	The widget that is currently in focus is the widget that
+	 *			receives mouse and keyboard events.
+	 *
+	 * @return	The handle of the widget that is currently in focus. May be NULL.
+	 *
+	 * @api
+	 */
+	GHandle gwinGetFocus(void);
+#else
+	#define gwinGetFocus()		(0)
+	#define gwinSetFocus(gh)	(FALSE)
+#endif
+
 #ifdef __cplusplus
 }
 #endif

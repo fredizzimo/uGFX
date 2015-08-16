@@ -33,7 +33,7 @@ typedef struct GTexteditObject {
 	GWidgetObject	w;
 
 	char*			textBuffer;
-	size_t			bufferSize;
+	size_t			maxSize;
 	uint16_t		cursorPos;
 } GTexteditObject;
 
@@ -48,28 +48,17 @@ extern "C" {
  *						is abstracted through the GINPUT module.
  *
  * @param[in] g			The GDisplay on which the textedit should be displayed
- * @param[in] widget	The TextEdit structure to initialise. If this is NULL, the structure is dynamically allocated.
+ * @param[in] wt		The TextEdit structure to initialise. If this is NULL, the structure is dynamically allocated.
  * @param[in] pInit		The initialisation parameters to use.
- * @param[in] bufSize	The maximum number of characters the TextEdit widget can hold.
+ * @param[in] maxSize	The maximum number of characters the TextEdit widget can hold.
  *
- * @return				NULL if there is no resultat drawing area, otherwise the widget handle.
+ * @return				NULL if there is no resultant drawing area, otherwise the widget handle.
  *
+ * @note				If the initial text set is larger than maxSize then the text is truncated at maxSize characters.
  * @api
  */
-GHandle gwinGTexteditCreate(GDisplay* g, GTexteditObject* widget, GWidgetInit* pInit, size_t bufSize);
-#define gwinTexteditCreate(w, pInit, bufSize)			gwinGTexteditCreate(GDISP, w, pInit, bufSize)
-
-/**
- * @brief				Border settings for the default rendering routine
- *
- * @note				Border is enabled by default.
- *
- * @param[in] gh		The widget handle (must be a TextEdit handle)
- * @param[in] border	Shall a border be rendered?
- *
- * @api
- */
-void gwinTexteditSetBorder(GHandle gh, bool_t border);
+GHandle gwinGTexteditCreate(GDisplay* g, GTexteditObject* wt, GWidgetInit* pInit, size_t maxSize);
+#define gwinTexteditCreate(wt, pInit, maxSize)			gwinGTexteditCreate(GDISP, wt, pInit, maxSize)
 
 #ifdef __cplusplus
 }
