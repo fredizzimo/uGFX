@@ -152,9 +152,8 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 		if (pke->bytecount == 1 && pke->c[0] == GKEY_TAB) {
 
 			// Only react on KEYDOWN events. Ignore KEYUP events.
-			if (pke->keystate & GKEYSTATE_KEYUP) {
+			if (pke->keystate & GKEYSTATE_KEYUP)
 				break;
-			}
 
 			// Get the next widget
 			bool_t foundWidget = FALSE;
@@ -169,9 +168,8 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 				if (nextWidget == 0) {
 					foundWidget = FALSE;
 					// We go through the list twice - just to be sure
-					if (endOfListDetected) {
+					if (endOfListDetected)
 						break;
-					}
 					endOfListDetected = TRUE;
 					continue;
 				}
@@ -199,12 +197,10 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 
 			// Redraw the new and the previous focused widget because they usually render differently when
 			// they are not focused anymore (eg. no blinking cursor)
-			if (prevWidget != 0) {
+			if (prevWidget != 0)
 				gwinRedraw(prevWidget);
-			}
-			if (nextWidget != 0) {
+			if (nextWidget != 0)
 				gwinRedraw(nextWidget);
-			}
 
 			break;
 		}
@@ -213,19 +209,16 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 		GHandle widgetInFocus = gwinGetFocus();
 		if (widgetInFocus != 0) {
 			// Make sure that it is a widget
-			if (!gwinIsWidget(widgetInFocus)) {
+			if (!gwinIsWidget(widgetInFocus))
 				break;
-			}
 
 			// Make sure that the widget is enabled and visible
-			if (!(widgetInFocus->flags & GWIN_FLG_SYSVISIBLE) || !(widgetInFocus->flags & GWIN_FLG_ENABLED)) {
+			if (!(widgetInFocus->flags & GWIN_FLG_SYSVISIBLE) || !(widgetInFocus->flags & GWIN_FLG_ENABLED))
 				break;
-			}
 
 			// Check whether this widget provides a method for handling keyboard events
-			if (((gwidgetVMT*)widgetInFocus->vmt)->KeyboardEvent == 0) {
+			if (((gwidgetVMT*)widgetInFocus->vmt)->KeyboardEvent == 0)
 				break;
-			}
 
 			// If we got this far we can finally pass the event
 			((gwidgetVMT*)widgetInFocus->vmt)->KeyboardEvent((GWidgetObject*)widgetInFocus, pke);
@@ -457,9 +450,8 @@ const GWidgetStyle *gwinGetDefaultStyle(void) {
 }
 
 void gwinSetText(GHandle gh, const char *text, bool_t useAlloc) {
-	if (!(gh->flags & GWIN_FLG_WIDGET)) {
+	if (!(gh->flags & GWIN_FLG_WIDGET))
 		return;
-	}
 
 	// Dispose of the old string
 	if ((gh->flags & GWIN_FLG_ALLOCTXT)) {
@@ -471,9 +463,9 @@ void gwinSetText(GHandle gh, const char *text, bool_t useAlloc) {
 	}
 
 	// Alloc the new text if required
-	if (!text || !*text) {
+	if (!text || !*text)
 		gw->text = "";
-	} else if (useAlloc) {
+	else if (useAlloc) {
 		char *str;
 
 		if ((str = gfxAlloc(strlen(text)+1))) {
@@ -481,10 +473,8 @@ void gwinSetText(GHandle gh, const char *text, bool_t useAlloc) {
 			strcpy(str, text);
 		}
 		gw->text = (const char *)str;
-	} else {
+	} else
 		gw->text = text;
-	}
-
 	_gwinUpdate(gh);
 }
 

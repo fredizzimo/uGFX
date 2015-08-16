@@ -3325,9 +3325,8 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 	}
 
 	coord_t gdispGetStringWidthCount(const char* str, font_t font, uint16_t count) {
-		if (!str) {
+		if (!str)
 			return 0;
-		}
 
 		// No mutex required as we only read static data
 		#if GDISP_NEED_TEXT_KERNING
@@ -3338,11 +3337,6 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 	}
 
 	coord_t gdispGetStringWidth(const char* str, font_t font) {
-		if (!str) {
-			return 0;
-		}
-
-		// No mutex required as we only read static data
 		return gdispGetStringWidthCount(str, font, 0);
 	}
 #endif

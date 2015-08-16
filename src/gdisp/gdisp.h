@@ -978,7 +978,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 	coord_t gdispGetCharWidth(char c, font_t font);
 
 	/**
-	 * @brief   Get the pixel width of a string of a given length.
+	 * @brief   Get the pixel width of a string of a given character length.
 	 * @return  The width of the string in pixels.
 	 * @pre		GDISP_NEED_TEXT must be TRUE in your gfxconf.h
 	 *

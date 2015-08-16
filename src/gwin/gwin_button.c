@@ -51,7 +51,7 @@
 #endif
 
 #if GINPUT_NEED_KEYBOARD
-	static void _keyboardEvent(GWidgetObject* gw, GEventKeyboard* pke)
+	static void ButtonKeyboard(GWidgetObject* gw, GEventKeyboard* pke)
 	{
 		// ENTER and SPACE keys to press the button
 		if (pke->c[0] == GKEY_ENTER || pke->c[0] == GKEY_SPACE) {
@@ -115,7 +115,7 @@ static const gwidgetVMT buttonVMT = {
 	#endif
 	#if GINPUT_NEED_KEYBOARD
 		{
-			_keyboardEvent			// Process keyboard events
+			ButtonKeyboard			// Process keyboard events
 		},
 	#endif
 	#if GINPUT_NEED_TOGGLE

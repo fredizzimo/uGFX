@@ -316,10 +316,8 @@ LLDSPEC	color_t gdisp_lld_get_pixel_color(GDisplay* g)
 		switch(g->p.x) {
 		case GDISP_CONTROL_POWER:
 			// Don't do anything if it is the same power mode
-			if (g->g.Powermode == (powermode_t)g->p.ptr) {
+			if (g->g.Powermode == (powermode_t)g->p.ptr)
 				return;
-			}
-
 			switch((powermode_t)g->p.ptr) {
 			default:
 				return;
@@ -329,11 +327,8 @@ LLDSPEC	color_t gdisp_lld_get_pixel_color(GDisplay* g)
 			return;
 
 		case GDISP_CONTROL_ORIENTATION:
-			// Don't do anything if it is the same power mode
-			if (g->g.Orientation == (orientation_t)g->p.ptr) {
+			if (g->g.Orientation == (orientation_t)g->p.ptr)
 				return;
-			}
-
 			switch((orientation_t)g->p.ptr) {
 				case GDISP_ROTATE_0:
 				case GDISP_ROTATE_180:

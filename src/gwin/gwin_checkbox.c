@@ -56,7 +56,7 @@ static void SendCheckboxEvent(GWidgetObject *gw) {
 #endif
 
 #if GINPUT_NEED_KEYBOARD
-	static void _keyboardEvent(GWidgetObject* gw, GEventKeyboard* pke)
+	static void CheckboxKeyboard(GWidgetObject* gw, GEventKeyboard* pke)
 	{
 		// Only react on KEYDOWN events. Ignore KEYUP events.
 		if (pke->keystate & GKEYSTATE_KEYUP) {
@@ -110,7 +110,7 @@ static const gwidgetVMT checkboxVMT = {
 	#endif
 	#if GINPUT_NEED_KEYBOARD
 		{
-			_keyboardEvent			// Process keyboard events
+			CheckboxKeyboard		// Process keyboard events
 		},
 	#endif
 	#if GINPUT_NEED_TOGGLE

@@ -171,7 +171,7 @@ typedef struct gwinVMT {
 	/**
 	 * @brief	The current window manager
 	 */
-	extern	GWindowManager*	_GWINwm;
+	extern	GWindowManager	*_GWINwm;
 	extern	bool_t			_gwinFlashState;
 
 #endif
