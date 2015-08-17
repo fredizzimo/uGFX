@@ -52,13 +52,12 @@ GDriver *gdriverRegister(const GDriverVMT *vmt, void *param) {
 		return 0;
 	}
 
-	// Add it to the driver chain
-	if (dhead) {
+	// Add it to the driver chain (at the end)
+	if (dhead)
 		dtail->driverchain = pd;
-		dtail = pd;
-	} else {
-		dhead = dtail = pd;
-	}
+	else
+		dhead = pd;
+	dtail = pd;
 
 	// Do the post init
 	if (vmt->postinit)
@@ -81,6 +80,8 @@ void gdriverUnRegister(GDriver *driver) {
 		for(pd = dhead; pd->driverchain; pd = pd->driverchain) {
 			if (pd->driverchain == driver) {
 				pd->driverchain = driver->driverchain;
+				if (!pd->driverchain)
+					dtail = pd;
 				break;
 			}
 		}
