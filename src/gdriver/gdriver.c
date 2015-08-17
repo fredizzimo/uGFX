@@ -53,10 +53,12 @@ GDriver *gdriverRegister(const GDriverVMT *vmt, void *param) {
 	}
 
 	// Add it to the driver chain
-	if (dhead)
+	if (dhead) {
 		dtail->driverchain = pd;
-	else
+		dtail = pd;
+	} else {
 		dhead = dtail = pd;
+	}
 
 	// Do the post init
 	if (vmt->postinit)
