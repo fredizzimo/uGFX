@@ -8,19 +8,19 @@
 	# See $(GFXLIB)/tools/gmake_scripts/readme.txt for the list of variables
 	OPT_OS					= chibios
 	OPT_THUMB				= yes
-	OPT_LINK_OPTIMIZE		= yes
+	OPT_LINK_OPTIMIZE		= no
 	OPT_CPU					= stm32m4
 
 # uGFX settings
 	# See $(GFXLIB)/tools/gmake_scripts/library_ugfx.mk for the list of variables
-	GFXLIB					= ../../resources/ugfx
+	GFXLIB					= ../path/to/ugfx
 	GFXBOARD				= STM32F429i-Discovery
 	GFXDEMO					= modules/gdisp/basics
 
 # ChibiOS settings
 ifeq ($(OPT_OS),chibios)
 	# See $(GFXLIB)/tools/gmake_scripts/os_chibios_x.mk for the list of variables
-	CHIBIOS					= ../../resources/chibios_3.0.1
+	CHIBIOS					= ../path/to/chibios_3
 	CHIBIOS_VERSION			= 3
 	CHIBIOS_BOARD			= ST_STM32F429I_DISCOVERY
 	CHIBIOS_CPUCLASS    	= ARMCMx

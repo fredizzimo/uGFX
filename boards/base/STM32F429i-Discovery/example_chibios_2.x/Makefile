@@ -8,7 +8,7 @@
 	# See $(GFXLIB)/tools/gmake_scripts/readme.txt for the list of variables
 	OPT_OS					= chibios
 	OPT_THUMB				= yes
-	OPT_LINK_OPTIMIZE		= yes
+	OPT_LINK_OPTIMIZE		= no
 	OPT_CPU					= stm32m4
 
 # uGFX settings

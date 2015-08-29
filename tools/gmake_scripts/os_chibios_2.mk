@@ -60,13 +60,21 @@ ifeq ($(CHIBIOS_STM32LIB),yes)
   INCPATH += $(STM32INC)
 endif
 
-INCPATH += $(PORTINC) $(KERNINC) $(OSALINC) \
-           $(HALINC) $(PLATFORMINC) $(BOARDINC)
+# Add include files
+INCPATH  += $(PORTINC) \
+            $(KERNINC) \
+            $(OSALINC) \
+            $(HALINC) \
+            $(PLATFORMINC) \
+            $(BOARDINC)
 
-SRC  += $(PORTSRC) \
+# Add C files
+SRC   += $(PORTSRC) \
         $(KERNSRC) \
         $(HALSRC) \
         $(PLATFORMSRC) \
         $(BOARDSRC) \
-        $(OSALSRC) \
-        $(PORTASM)
+        $(OSALSRC)
+
+# Add ASM files
+SRC  += $(PORTASM)
