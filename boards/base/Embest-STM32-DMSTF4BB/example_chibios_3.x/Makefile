@@ -14,7 +14,7 @@
 # uGFX settings
 	# See $(GFXLIB)/tools/gmake_scripts/library_ugfx.mk for the list of variables
 	GFXLIB					= ../../resources/ugfx
-	GFXBOARD				= STM32F429i-Discovery
+	GFXBOARD				= Embest-STM32-DMSTF4BB
 	GFXDEMO					= modules/gdisp/basics
 
 # ChibiOS settings
@@ -22,7 +22,6 @@ ifeq ($(OPT_OS),chibios)
 	# See $(GFXLIB)/tools/gmake_scripts/os_chibios_x.mk for the list of variables
 	CHIBIOS					= ../../resources/chibios_3.0.1
 	CHIBIOS_VERSION			= 3
-	CHIBIOS_BOARD			= ST_STM32F429I_DISCOVERY
 	CHIBIOS_CPUCLASS    	= ARMCMx
 	CHIBIOS_PLATFORM		= STM32
 	CHIBIOS_DEVICE_FAMILY	= STM32F4xx
@@ -42,7 +41,7 @@ CXXFLAGS = -fno-rtti
 ASFLAGS  =
 LDFLAGS  =
 
-SRC      = 
+SRC      = board.c
 OBJS     =
 DEFS     =
 LIBS     =
