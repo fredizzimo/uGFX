@@ -150,6 +150,12 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 		write_cmd(g, SSD1306_SETSTARTLINE | 0);
 
 		while (pages--) {
+			#if SSD1306_SH1106
+				write_cmd(g, SSD1306_PAM_PAGE_START + (7 - pages));
+				write_cmd(g, SSD1306_SETLOWCOLUMN + 2);
+				write_cmd(g, SSD1306_SETHIGHCOLUMN);
+			#endif
+
 			write_data(g, ram, SSD1306_PAGE_WIDTH);
 			ram += SSD1306_PAGE_WIDTH;
 		}
