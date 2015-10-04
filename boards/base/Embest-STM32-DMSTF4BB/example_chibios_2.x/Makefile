@@ -39,7 +39,7 @@ CXXFLAGS = -fno-rtti
 ASFLAGS  =
 LDFLAGS  =
 
-SRC      = board.c
+SRC      =
 OBJS     =
 DEFS     =
 LIBS     =
