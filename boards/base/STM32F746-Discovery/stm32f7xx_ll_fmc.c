@@ -74,6 +74,7 @@
   */ 
 
 /* Includes ------------------------------------------------------------------*/
+#include "gfx.h"
 #include "stm32f7xx_hal.h"
 
 /** @addtogroup STM32F7xx_HAL_Driver
@@ -677,14 +678,14 @@ HAL_StatusTypeDef FMC_NAND_ECC_Disable(FMC_NAND_TypeDef *Device, uint32_t Bank)
   */
 HAL_StatusTypeDef FMC_NAND_GetECC(FMC_NAND_TypeDef *Device, uint32_t *ECCval, uint32_t Bank, uint32_t Timeout)
 {
-  uint32_t tickstart = 0;
+  systemticks_t tickstart = 0;
 
   /* Check the parameters */ 
   assert_param(IS_FMC_NAND_DEVICE(Device)); 
   assert_param(IS_FMC_NAND_BANK(Bank));
 
   /* Get tick */ 
-  tickstart = HAL_GetTick();
+  tickstart = gfxSystemTicks();
 
   /* Wait until FIFO is empty */
   while(__FMC_NAND_GET_FLAG(Device, Bank, FMC_FLAG_FEMPT) == RESET)
@@ -692,7 +693,7 @@ HAL_StatusTypeDef FMC_NAND_GetECC(FMC_NAND_TypeDef *Device, uint32_t *ECCval, ui
     /* Check for the Timeout */
     if(Timeout != HAL_MAX_DELAY)
     {
-      if((Timeout == 0)||((HAL_GetTick() - tickstart ) > Timeout))
+      if((Timeout == 0)||((gfxSystemTicks() - tickstart ) > Timeout))
       {
         return HAL_TIMEOUT;
       }
@@ -993,7 +994,7 @@ HAL_StatusTypeDef FMC_SDRAM_WriteProtection_Disable(FMC_SDRAM_TypeDef *Device, u
 HAL_StatusTypeDef FMC_SDRAM_SendCommand(FMC_SDRAM_TypeDef *Device, FMC_SDRAM_CommandTypeDef *Command, uint32_t Timeout)
 {
   __IO uint32_t tmpr = 0;
-  uint32_t tickstart = 0;
+  systemticks_t tickstart = 0;
   
   /* Check the parameters */
   assert_param(IS_FMC_SDRAM_DEVICE(Device));
@@ -1012,7 +1013,7 @@ HAL_StatusTypeDef FMC_SDRAM_SendCommand(FMC_SDRAM_TypeDef *Device, FMC_SDRAM_Com
   Device->SDCMR = tmpr;
 
   /* Get tick */ 
-  tickstart = HAL_GetTick();
+  tickstart = gfxSystemTicks();
 
   /* wait until command is send */
   while(HAL_IS_BIT_SET(Device->SDSR, FMC_SDSR_BUSY))
@@ -1020,7 +1021,7 @@ HAL_StatusTypeDef FMC_SDRAM_SendCommand(FMC_SDRAM_TypeDef *Device, FMC_SDRAM_Com
     /* Check for the Timeout */
     if(Timeout != HAL_MAX_DELAY)
     {
-      if((Timeout == 0)||((HAL_GetTick() - tickstart ) > Timeout))
+      if((Timeout == 0)||((gfxSystemTicks() - tickstart ) > Timeout))
       {
         return HAL_TIMEOUT;
       }

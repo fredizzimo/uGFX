@@ -80,6 +80,11 @@
 #include "stm32f746g_discovery_sdram.h"
 #include "stm32f7xx_hal_rcc.h"
 #include "stm32f7xx_hal_rcc_ex.h"
+#include "stm32f7xx_hal_cortex.h"
+
+#if GFX_USE_OS_CHIBIOS
+	#define HAL_GPIO_Init(port, ptr)	palSetGroupMode(port, (ptr)->Pin, 0, (ptr)->Mode|((ptr)->Speed<<3)|((ptr)->Pull<<5)|((ptr)->Alternate<<7))
+#endif
 
 /** @addtogroup BSP
   * @{
@@ -135,6 +140,49 @@ static FMC_SDRAM_CommandTypeDef Command;
   * @{
   */ 
 
+static HAL_StatusTypeDef _HAL_SDRAM_Init(SDRAM_HandleTypeDef *hsdram, FMC_SDRAM_TimingTypeDef *Timing)
+{
+  /* Check the SDRAM handle parameter */
+  if(hsdram == NULL)
+  {
+    return HAL_ERROR;
+  }
+
+  if(hsdram->State == HAL_SDRAM_STATE_RESET)
+  {
+    /* Allocate lock resource and initialize it */
+    hsdram->Lock = HAL_UNLOCKED;
+  }
+
+  /* Initialize the SDRAM controller state */
+  hsdram->State = HAL_SDRAM_STATE_BUSY;
+
+  /* Initialize SDRAM control Interface */
+  FMC_SDRAM_Init(hsdram->Instance, &(hsdram->Init));
+
+  /* Initialize SDRAM timing Interface */
+  FMC_SDRAM_Timing_Init(hsdram->Instance, Timing, hsdram->Init.SDBank);
+
+  /* Update the SDRAM controller state */
+  hsdram->State = HAL_SDRAM_STATE_READY;
+
+  return HAL_OK;
+}
+
+static HAL_StatusTypeDef _HAL_SDRAM_DeInit(SDRAM_HandleTypeDef *hsdram)
+{
+  /* Configure the SDRAM registers with their reset values */
+  FMC_SDRAM_DeInit(hsdram->Instance, hsdram->Init.SDBank);
+
+  /* Reset the SDRAM controller state */
+  hsdram->State = HAL_SDRAM_STATE_RESET;
+
+  /* Release Lock */
+  __HAL_UNLOCK(hsdram);
+
+  return HAL_OK;
+}
+
 /**
   * @brief  Initializes the SDRAM device.
   * @retval SDRAM status
@@ -169,7 +217,7 @@ uint8_t BSP_SDRAM_Init(void)
 
   BSP_SDRAM_MspInit(&sdramHandle, NULL); /* __weak function can be rewritten by the application */
 
-  if(HAL_SDRAM_Init(&sdramHandle, &Timing) != HAL_OK)
+  if(_HAL_SDRAM_Init(&sdramHandle, &Timing) != HAL_OK)
   {
     sdramstatus = SDRAM_ERROR;
   }
@@ -194,7 +242,7 @@ uint8_t BSP_SDRAM_DeInit(void)
   /* SDRAM device de-initialization */
   sdramHandle.Instance = FMC_SDRAM_DEVICE;
 
-  if(HAL_SDRAM_DeInit(&sdramHandle) != HAL_OK)
+  if(_HAL_SDRAM_DeInit(&sdramHandle) != HAL_OK)
   {
     sdramstatus = SDRAM_ERROR;
   }
@@ -207,6 +255,559 @@ uint8_t BSP_SDRAM_DeInit(void)
   BSP_SDRAM_MspDeInit(&sdramHandle, NULL);
   
   return sdramstatus;
+}
+
+static HAL_StatusTypeDef _HAL_SDRAM_SendCommand(SDRAM_HandleTypeDef *hsdram, FMC_SDRAM_CommandTypeDef *Command, uint32_t Timeout)
+{
+  /* Check the SDRAM controller state */
+  if(hsdram->State == HAL_SDRAM_STATE_BUSY)
+  {
+    return HAL_BUSY;
+  }
+
+  /* Update the SDRAM state */
+  hsdram->State = HAL_SDRAM_STATE_BUSY;
+
+  /* Send SDRAM command */
+  FMC_SDRAM_SendCommand(hsdram->Instance, Command, Timeout);
+
+  /* Update the SDRAM controller state state */
+  if(Command->CommandMode == FMC_SDRAM_CMD_PALL)
+  {
+    hsdram->State = HAL_SDRAM_STATE_PRECHARGED;
+  }
+  else
+  {
+    hsdram->State = HAL_SDRAM_STATE_READY;
+  }
+
+  return HAL_OK;
+}
+
+static HAL_StatusTypeDef _HAL_SDRAM_ProgramRefreshRate(SDRAM_HandleTypeDef *hsdram, uint32_t RefreshRate)
+{
+  /* Check the SDRAM controller state */
+  if(hsdram->State == HAL_SDRAM_STATE_BUSY)
+  {
+    return HAL_BUSY;
+  }
+
+  /* Update the SDRAM state */
+  hsdram->State = HAL_SDRAM_STATE_BUSY;
+
+  /* Program the refresh rate */
+  FMC_SDRAM_ProgramRefreshRate(hsdram->Instance ,RefreshRate);
+
+  /* Update the SDRAM state */
+  hsdram->State = HAL_SDRAM_STATE_READY;
+
+  return HAL_OK;
+}
+
+static HAL_StatusTypeDef _HAL_SDRAM_Read_32b(SDRAM_HandleTypeDef *hsdram, uint32_t *pAddress, uint32_t *pDstBuffer, uint32_t BufferSize)
+{
+  __IO uint32_t *pSdramAddress = (uint32_t *)pAddress;
+
+  /* Process Locked */
+  __HAL_LOCK(hsdram);
+
+  /* Check the SDRAM controller state */
+  if(hsdram->State == HAL_SDRAM_STATE_BUSY)
+  {
+    return HAL_BUSY;
+  }
+  else if(hsdram->State == HAL_SDRAM_STATE_PRECHARGED)
+  {
+    return  HAL_ERROR;
+  }
+
+  /* Read data from source */
+  for(; BufferSize != 0; BufferSize--)
+  {
+    *pDstBuffer = *(__IO uint32_t *)pSdramAddress;
+    pDstBuffer++;
+    pSdramAddress++;
+  }
+
+  /* Process Unlocked */
+  __HAL_UNLOCK(hsdram);
+
+  return HAL_OK;
+}
+
+static HAL_StatusTypeDef _HAL_DMA_Init(DMA_HandleTypeDef *hdma)
+{
+  uint32_t tmp = 0;
+
+  /* Check the DMA peripheral state */
+  if(hdma == NULL)
+  {
+    return HAL_ERROR;
+  }
+
+  /* Change DMA peripheral state */
+  hdma->State = HAL_DMA_STATE_BUSY;
+
+  /* Get the CR register value */
+  tmp = hdma->Instance->CR;
+
+  /* Clear CHSEL, MBURST, PBURST, PL, MSIZE, PSIZE, MINC, PINC, CIRC, DIR, CT and DBM bits */
+  tmp &= ((uint32_t)~(DMA_SxCR_CHSEL | DMA_SxCR_MBURST | DMA_SxCR_PBURST | \
+                      DMA_SxCR_PL    | DMA_SxCR_MSIZE  | DMA_SxCR_PSIZE  | \
+                      DMA_SxCR_MINC  | DMA_SxCR_PINC   | DMA_SxCR_CIRC   | \
+                      DMA_SxCR_DIR   | DMA_SxCR_CT     | DMA_SxCR_DBM));
+
+  /* Prepare the DMA Stream configuration */
+  tmp |=  hdma->Init.Channel             | hdma->Init.Direction        |
+          hdma->Init.PeriphInc           | hdma->Init.MemInc           |
+          hdma->Init.PeriphDataAlignment | hdma->Init.MemDataAlignment |
+          hdma->Init.Mode                | hdma->Init.Priority;
+
+  /* the Memory burst and peripheral burst are not used when the FIFO is disabled */
+  if(hdma->Init.FIFOMode == DMA_FIFOMODE_ENABLE)
+  {
+    /* Get memory burst and peripheral burst */
+    tmp |=  hdma->Init.MemBurst | hdma->Init.PeriphBurst;
+  }
+
+  /* Write to DMA Stream CR register */
+  hdma->Instance->CR = tmp;
+
+  /* Get the FCR register value */
+  tmp = hdma->Instance->FCR;
+
+  /* Clear Direct mode and FIFO threshold bits */
+  tmp &= (uint32_t)~(DMA_SxFCR_DMDIS | DMA_SxFCR_FTH);
+
+  /* Prepare the DMA Stream FIFO configuration */
+  tmp |= hdma->Init.FIFOMode;
+
+  /* the FIFO threshold is not used when the FIFO mode is disabled */
+  if(hdma->Init.FIFOMode == DMA_FIFOMODE_ENABLE)
+  {
+    /* Get the FIFO threshold */
+    tmp |= hdma->Init.FIFOThreshold;
+  }
+
+  /* Write to DMA Stream FCR */
+  hdma->Instance->FCR = tmp;
+
+  /* Initialize the error code */
+  hdma->ErrorCode = HAL_DMA_ERROR_NONE;
+
+  /* Initialize the DMA state */
+  hdma->State = HAL_DMA_STATE_READY;
+
+  return HAL_OK;
+}
+
+/**
+  * @brief  DeInitializes the DMA peripheral
+  * @param  hdma: pointer to a DMA_HandleTypeDef structure that contains
+  *               the configuration information for the specified DMA Stream.
+  * @retval HAL status
+  */
+static HAL_StatusTypeDef _HAL_DMA_DeInit(DMA_HandleTypeDef *hdma)
+{
+  /* Check the DMA peripheral state */
+  if(hdma == NULL)
+  {
+    return HAL_ERROR;
+  }
+
+  /* Check the DMA peripheral state */
+  if(hdma->State == HAL_DMA_STATE_BUSY)
+  {
+     return HAL_ERROR;
+  }
+
+  /* Disable the selected DMA Streamx */
+  __HAL_DMA_DISABLE(hdma);
+
+  /* Reset DMA Streamx control register */
+  hdma->Instance->CR   = 0;
+
+  /* Reset DMA Streamx number of data to transfer register */
+  hdma->Instance->NDTR = 0;
+
+  /* Reset DMA Streamx peripheral address register */
+  hdma->Instance->PAR  = 0;
+
+  /* Reset DMA Streamx memory 0 address register */
+  hdma->Instance->M0AR = 0;
+
+  /* Reset DMA Streamx memory 1 address register */
+  hdma->Instance->M1AR = 0;
+
+  /* Reset DMA Streamx FIFO control register */
+  hdma->Instance->FCR  = (uint32_t)0x00000021;
+
+  /* Clear all flags */
+  __HAL_DMA_CLEAR_FLAG(hdma, __HAL_DMA_GET_DME_FLAG_INDEX(hdma));
+  __HAL_DMA_CLEAR_FLAG(hdma, __HAL_DMA_GET_TC_FLAG_INDEX(hdma));
+  __HAL_DMA_CLEAR_FLAG(hdma, __HAL_DMA_GET_TE_FLAG_INDEX(hdma));
+  __HAL_DMA_CLEAR_FLAG(hdma, __HAL_DMA_GET_FE_FLAG_INDEX(hdma));
+  __HAL_DMA_CLEAR_FLAG(hdma, __HAL_DMA_GET_HT_FLAG_INDEX(hdma));
+
+  /* Initialize the error code */
+  hdma->ErrorCode = HAL_DMA_ERROR_NONE;
+
+  /* Initialize the DMA state */
+  hdma->State = HAL_DMA_STATE_RESET;
+
+  /* Release Lock */
+  __HAL_UNLOCK(hdma);
+
+  return HAL_OK;
+}
+
+static void _HAL_DMA_IRQHandler(DMA_HandleTypeDef *hdma)
+{
+  /* Transfer Error Interrupt management ***************************************/
+  if(__HAL_DMA_GET_FLAG(hdma, __HAL_DMA_GET_TE_FLAG_INDEX(hdma)) != RESET)
+  {
+    if(__HAL_DMA_GET_IT_SOURCE(hdma, DMA_IT_TE) != RESET)
+    {
+      /* Disable the transfer error interrupt */
+      __HAL_DMA_DISABLE_IT(hdma, DMA_IT_TE);
+
+      /* Clear the transfer error flag */
+      __HAL_DMA_CLEAR_FLAG(hdma, __HAL_DMA_GET_TE_FLAG_INDEX(hdma));
+
+      /* Update error code */
+      hdma->ErrorCode |= HAL_DMA_ERROR_TE;
+
+      /* Change the DMA state */
+      hdma->State = HAL_DMA_STATE_ERROR;
+
+      /* Process Unlocked */
+      __HAL_UNLOCK(hdma);
+
+      if(hdma->XferErrorCallback != NULL)
+      {
+        /* Transfer error callback */
+        hdma->XferErrorCallback(hdma);
+      }
+    }
+  }
+  /* FIFO Error Interrupt management ******************************************/
+  if(__HAL_DMA_GET_FLAG(hdma, __HAL_DMA_GET_FE_FLAG_INDEX(hdma)) != RESET)
+  {
+    if(__HAL_DMA_GET_IT_SOURCE(hdma, DMA_IT_FE) != RESET)
+    {
+      /* Disable the FIFO Error interrupt */
+      __HAL_DMA_DISABLE_IT(hdma, DMA_IT_FE);
+
+      /* Clear the FIFO error flag */
+      __HAL_DMA_CLEAR_FLAG(hdma, __HAL_DMA_GET_FE_FLAG_INDEX(hdma));
+
+      /* Update error code */
+      hdma->ErrorCode |= HAL_DMA_ERROR_FE;
+
+      /* Change the DMA state */
+      hdma->State = HAL_DMA_STATE_ERROR;
+
+      /* Process Unlocked */
+      __HAL_UNLOCK(hdma);
+
+      if(hdma->XferErrorCallback != NULL)
+      {
+        /* Transfer error callback */
+        hdma->XferErrorCallback(hdma);
+      }
+    }
+  }
+  /* Direct Mode Error Interrupt management ***********************************/
+  if(__HAL_DMA_GET_FLAG(hdma, __HAL_DMA_GET_DME_FLAG_INDEX(hdma)) != RESET)
+  {
+    if(__HAL_DMA_GET_IT_SOURCE(hdma, DMA_IT_DME) != RESET)
+    {
+      /* Disable the direct mode Error interrupt */
+      __HAL_DMA_DISABLE_IT(hdma, DMA_IT_DME);
+
+      /* Clear the direct mode error flag */
+      __HAL_DMA_CLEAR_FLAG(hdma, __HAL_DMA_GET_DME_FLAG_INDEX(hdma));
+
+      /* Update error code */
+      hdma->ErrorCode |= HAL_DMA_ERROR_DME;
+
+      /* Change the DMA state */
+      hdma->State = HAL_DMA_STATE_ERROR;
+
+      /* Process Unlocked */
+      __HAL_UNLOCK(hdma);
+
+      if(hdma->XferErrorCallback != NULL)
+      {
+        /* Transfer error callback */
+        hdma->XferErrorCallback(hdma);
+      }
+    }
+  }
+  /* Half Transfer Complete Interrupt management ******************************/
+  if(__HAL_DMA_GET_FLAG(hdma, __HAL_DMA_GET_HT_FLAG_INDEX(hdma)) != RESET)
+  {
+    if(__HAL_DMA_GET_IT_SOURCE(hdma, DMA_IT_HT) != RESET)
+    {
+      /* Multi_Buffering mode enabled */
+      if(((hdma->Instance->CR) & (uint32_t)(DMA_SxCR_DBM)) != 0)
+      {
+        /* Clear the half transfer complete flag */
+        __HAL_DMA_CLEAR_FLAG(hdma, __HAL_DMA_GET_HT_FLAG_INDEX(hdma));
+
+        /* Current memory buffer used is Memory 0 */
+        if((hdma->Instance->CR & DMA_SxCR_CT) == 0)
+        {
+          /* Change DMA peripheral state */
+          hdma->State = HAL_DMA_STATE_READY_HALF_MEM0;
+        }
+        /* Current memory buffer used is Memory 1 */
+        else if((hdma->Instance->CR & DMA_SxCR_CT) != 0)
+        {
+          /* Change DMA peripheral state */
+          hdma->State = HAL_DMA_STATE_READY_HALF_MEM1;
+        }
+      }
+      else
+      {
+        /* Disable the half transfer interrupt if the DMA mode is not CIRCULAR */
+        if((hdma->Instance->CR & DMA_SxCR_CIRC) == 0)
+        {
+          /* Disable the half transfer interrupt */
+          __HAL_DMA_DISABLE_IT(hdma, DMA_IT_HT);
+        }
+        /* Clear the half transfer complete flag */
+        __HAL_DMA_CLEAR_FLAG(hdma, __HAL_DMA_GET_HT_FLAG_INDEX(hdma));
+
+        /* Change DMA peripheral state */
+        hdma->State = HAL_DMA_STATE_READY_HALF_MEM0;
+      }
+
+      if(hdma->XferHalfCpltCallback != NULL)
+      {
+        /* Half transfer callback */
+        hdma->XferHalfCpltCallback(hdma);
+      }
+    }
+  }
+  /* Transfer Complete Interrupt management ***********************************/
+  if(__HAL_DMA_GET_FLAG(hdma, __HAL_DMA_GET_TC_FLAG_INDEX(hdma)) != RESET)
+  {
+    if(__HAL_DMA_GET_IT_SOURCE(hdma, DMA_IT_TC) != RESET)
+    {
+      if(((hdma->Instance->CR) & (uint32_t)(DMA_SxCR_DBM)) != 0)
+      {
+        /* Clear the transfer complete flag */
+        __HAL_DMA_CLEAR_FLAG(hdma, __HAL_DMA_GET_TC_FLAG_INDEX(hdma));
+
+        /* Current memory buffer used is Memory 1 */
+        if((hdma->Instance->CR & DMA_SxCR_CT) == 0)
+        {
+          if(hdma->XferM1CpltCallback != NULL)
+          {
+            /* Transfer complete Callback for memory1 */
+            hdma->XferM1CpltCallback(hdma);
+          }
+        }
+        /* Current memory buffer used is Memory 0 */
+        else if((hdma->Instance->CR & DMA_SxCR_CT) != 0)
+        {
+          if(hdma->XferCpltCallback != NULL)
+          {
+            /* Transfer complete Callback for memory0 */
+            hdma->XferCpltCallback(hdma);
+          }
+        }
+      }
+      /* Disable the transfer complete interrupt if the DMA mode is not CIRCULAR */
+      else
+      {
+        if((hdma->Instance->CR & DMA_SxCR_CIRC) == 0)
+        {
+          /* Disable the transfer complete interrupt */
+          __HAL_DMA_DISABLE_IT(hdma, DMA_IT_TC);
+        }
+        /* Clear the transfer complete flag */
+        __HAL_DMA_CLEAR_FLAG(hdma, __HAL_DMA_GET_TC_FLAG_INDEX(hdma));
+
+        /* Update error code */
+        hdma->ErrorCode |= HAL_DMA_ERROR_NONE;
+
+        /* Change the DMA state */
+        hdma->State = HAL_DMA_STATE_READY_MEM0;
+
+        /* Process Unlocked */
+        __HAL_UNLOCK(hdma);
+
+        if(hdma->XferCpltCallback != NULL)
+        {
+          /* Transfer complete callback */
+          hdma->XferCpltCallback(hdma);
+        }
+      }
+    }
+  }
+}
+
+static void DMA_SetConfig(DMA_HandleTypeDef *hdma, uint32_t SrcAddress, uint32_t DstAddress, uint32_t DataLength)
+{
+  /* Clear DBM bit */
+  hdma->Instance->CR &= (uint32_t)(~DMA_SxCR_DBM);
+
+  /* Configure DMA Stream data length */
+  hdma->Instance->NDTR = DataLength;
+
+  /* Peripheral to Memory */
+  if((hdma->Init.Direction) == DMA_MEMORY_TO_PERIPH)
+  {
+    /* Configure DMA Stream destination address */
+    hdma->Instance->PAR = DstAddress;
+
+    /* Configure DMA Stream source address */
+    hdma->Instance->M0AR = SrcAddress;
+  }
+  /* Memory to Peripheral */
+  else
+  {
+    /* Configure DMA Stream source address */
+    hdma->Instance->PAR = SrcAddress;
+
+    /* Configure DMA Stream destination address */
+    hdma->Instance->M0AR = DstAddress;
+  }
+}
+
+static HAL_StatusTypeDef _HAL_DMA_Start_IT(DMA_HandleTypeDef *hdma, uint32_t SrcAddress, uint32_t DstAddress, uint32_t DataLength)
+{
+  /* Process locked */
+  __HAL_LOCK(hdma);
+
+  /* Change DMA peripheral state */
+  hdma->State = HAL_DMA_STATE_BUSY;
+
+  /* Disable the peripheral */
+  __HAL_DMA_DISABLE(hdma);
+
+  /* Configure the source, destination address and the data length */
+  DMA_SetConfig(hdma, SrcAddress, DstAddress, DataLength);
+
+  /* Enable the transfer complete interrupt */
+  __HAL_DMA_ENABLE_IT(hdma, DMA_IT_TC);
+
+  /* Enable the Half transfer complete interrupt */
+  __HAL_DMA_ENABLE_IT(hdma, DMA_IT_HT);
+
+  /* Enable the transfer Error interrupt */
+  __HAL_DMA_ENABLE_IT(hdma, DMA_IT_TE);
+
+  /* Enable the FIFO Error interrupt */
+  __HAL_DMA_ENABLE_IT(hdma, DMA_IT_FE);
+
+  /* Enable the direct mode Error interrupt */
+  __HAL_DMA_ENABLE_IT(hdma, DMA_IT_DME);
+
+   /* Enable the Peripheral */
+  __HAL_DMA_ENABLE(hdma);
+
+  return HAL_OK;
+}
+
+static HAL_StatusTypeDef _HAL_SDRAM_Read_DMA(SDRAM_HandleTypeDef *hsdram, uint32_t *pAddress, uint32_t *pDstBuffer, uint32_t BufferSize)
+{
+  uint32_t tmp = 0;
+
+  /* Process Locked */
+  __HAL_LOCK(hsdram);
+
+  /* Check the SDRAM controller state */
+  tmp = hsdram->State;
+
+  if(tmp == HAL_SDRAM_STATE_BUSY)
+  {
+    return HAL_BUSY;
+  }
+  else if(tmp == HAL_SDRAM_STATE_PRECHARGED)
+  {
+    return  HAL_ERROR;
+  }
+
+  /* Configure DMA user callbacks */
+  hsdram->hdma->XferCpltCallback  = HAL_SDRAM_DMA_XferCpltCallback;
+  hsdram->hdma->XferErrorCallback = HAL_SDRAM_DMA_XferErrorCallback;
+
+  /* Enable the DMA Stream */
+  _HAL_DMA_Start_IT(hsdram->hdma, (uint32_t)pAddress, (uint32_t)pDstBuffer, (uint32_t)BufferSize);
+
+  /* Process Unlocked */
+  __HAL_UNLOCK(hsdram);
+
+  return HAL_OK;
+}
+
+static HAL_StatusTypeDef _HAL_SDRAM_Write_32b(SDRAM_HandleTypeDef *hsdram, uint32_t *pAddress, uint32_t *pSrcBuffer, uint32_t BufferSize)
+{
+  __IO uint32_t *pSdramAddress = (uint32_t *)pAddress;
+  uint32_t tmp = 0;
+
+  /* Process Locked */
+  __HAL_LOCK(hsdram);
+
+  /* Check the SDRAM controller state */
+  tmp = hsdram->State;
+
+  if(tmp == HAL_SDRAM_STATE_BUSY)
+  {
+    return HAL_BUSY;
+  }
+  else if((tmp == HAL_SDRAM_STATE_PRECHARGED) || (tmp == HAL_SDRAM_STATE_WRITE_PROTECTED))
+  {
+    return  HAL_ERROR;
+  }
+
+  /* Write data to memory */
+  for(; BufferSize != 0; BufferSize--)
+  {
+    *(__IO uint32_t *)pSdramAddress = *pSrcBuffer;
+    pSrcBuffer++;
+    pSdramAddress++;
+  }
+
+  /* Process Unlocked */
+  __HAL_UNLOCK(hsdram);
+
+  return HAL_OK;
+}
+
+static HAL_StatusTypeDef _HAL_SDRAM_Write_DMA(SDRAM_HandleTypeDef *hsdram, uint32_t *pAddress, uint32_t *pSrcBuffer, uint32_t BufferSize)
+{
+  uint32_t tmp = 0;
+
+  /* Process Locked */
+  __HAL_LOCK(hsdram);
+
+  /* Check the SDRAM controller state */
+  tmp = hsdram->State;
+
+  if(tmp == HAL_SDRAM_STATE_BUSY)
+  {
+    return HAL_BUSY;
+  }
+  else if((tmp == HAL_SDRAM_STATE_PRECHARGED) || (tmp == HAL_SDRAM_STATE_WRITE_PROTECTED))
+  {
+    return  HAL_ERROR;
+  }
+
+  /* Configure DMA user callbacks */
+  hsdram->hdma->XferCpltCallback  = HAL_SDRAM_DMA_XferCpltCallback;
+  hsdram->hdma->XferErrorCallback = HAL_SDRAM_DMA_XferErrorCallback;
+
+  /* Enable the DMA Stream */
+  _HAL_DMA_Start_IT(hsdram->hdma, (uint32_t)pSrcBuffer, (uint32_t)pAddress, (uint32_t)BufferSize);
+
+  /* Process Unlocked */
+  __HAL_UNLOCK(hsdram);
+
+  return HAL_OK;
 }
 
 /**
@@ -225,11 +826,11 @@ void BSP_SDRAM_Initialization_sequence(uint32_t RefreshCount)
   Command.ModeRegisterDefinition = 0;
 
   /* Send the command */
-  HAL_SDRAM_SendCommand(&sdramHandle, &Command, SDRAM_TIMEOUT);
+  _HAL_SDRAM_SendCommand(&sdramHandle, &Command, SDRAM_TIMEOUT);
 
   /* Step 2: Insert 100 us minimum delay */ 
   /* Inserted delay is equal to 1 ms due to systick time base unit (ms) */
-  HAL_Delay(1);
+  gfxSleepMilliseconds(1);
     
   /* Step 3: Configure a PALL (precharge all) command */ 
   Command.CommandMode            = FMC_SDRAM_CMD_PALL;
@@ -238,7 +839,7 @@ void BSP_SDRAM_Initialization_sequence(uint32_t RefreshCount)
   Command.ModeRegisterDefinition = 0;
 
   /* Send the command */
-  HAL_SDRAM_SendCommand(&sdramHandle, &Command, SDRAM_TIMEOUT);  
+  _HAL_SDRAM_SendCommand(&sdramHandle, &Command, SDRAM_TIMEOUT);
   
   /* Step 4: Configure an Auto Refresh command */ 
   Command.CommandMode            = FMC_SDRAM_CMD_AUTOREFRESH_MODE;
@@ -247,7 +848,7 @@ void BSP_SDRAM_Initialization_sequence(uint32_t RefreshCount)
   Command.ModeRegisterDefinition = 0;
 
   /* Send the command */
-  HAL_SDRAM_SendCommand(&sdramHandle, &Command, SDRAM_TIMEOUT);
+  _HAL_SDRAM_SendCommand(&sdramHandle, &Command, SDRAM_TIMEOUT);
   
   /* Step 5: Program the external memory mode register */
   tmpmrd = (uint32_t)SDRAM_MODEREG_BURST_LENGTH_1          |\
@@ -262,11 +863,11 @@ void BSP_SDRAM_Initialization_sequence(uint32_t RefreshCount)
   Command.ModeRegisterDefinition = tmpmrd;
 
   /* Send the command */
-  HAL_SDRAM_SendCommand(&sdramHandle, &Command, SDRAM_TIMEOUT);
+  _HAL_SDRAM_SendCommand(&sdramHandle, &Command, SDRAM_TIMEOUT);
   
   /* Step 6: Set the refresh rate counter */
   /* Set the device refresh rate */
-  HAL_SDRAM_ProgramRefreshRate(&sdramHandle, RefreshCount); 
+  _HAL_SDRAM_ProgramRefreshRate(&sdramHandle, RefreshCount);
 }
 
 /**
@@ -278,7 +879,7 @@ void BSP_SDRAM_Initialization_sequence(uint32_t RefreshCount)
   */
 uint8_t BSP_SDRAM_ReadData(uint32_t uwStartAddress, uint32_t *pData, uint32_t uwDataSize)
 {
-  if(HAL_SDRAM_Read_32b(&sdramHandle, (uint32_t *)uwStartAddress, pData, uwDataSize) != HAL_OK)
+  if(_HAL_SDRAM_Read_32b(&sdramHandle, (uint32_t *)uwStartAddress, pData, uwDataSize) != HAL_OK)
   {
     return SDRAM_ERROR;
   }
@@ -297,7 +898,7 @@ uint8_t BSP_SDRAM_ReadData(uint32_t uwStartAddress, uint32_t *pData, uint32_t uw
   */
 uint8_t BSP_SDRAM_ReadData_DMA(uint32_t uwStartAddress, uint32_t *pData, uint32_t uwDataSize)
 {
-  if(HAL_SDRAM_Read_DMA(&sdramHandle, (uint32_t *)uwStartAddress, pData, uwDataSize) != HAL_OK)
+  if(_HAL_SDRAM_Read_DMA(&sdramHandle, (uint32_t *)uwStartAddress, pData, uwDataSize) != HAL_OK)
   {
     return SDRAM_ERROR;
   }
@@ -316,7 +917,7 @@ uint8_t BSP_SDRAM_ReadData_DMA(uint32_t uwStartAddress, uint32_t *pData, uint32_
   */
 uint8_t BSP_SDRAM_WriteData(uint32_t uwStartAddress, uint32_t *pData, uint32_t uwDataSize) 
 {
-  if(HAL_SDRAM_Write_32b(&sdramHandle, (uint32_t *)uwStartAddress, pData, uwDataSize) != HAL_OK)
+  if(_HAL_SDRAM_Write_32b(&sdramHandle, (uint32_t *)uwStartAddress, pData, uwDataSize) != HAL_OK)
   {
     return SDRAM_ERROR;
   }
@@ -324,6 +925,37 @@ uint8_t BSP_SDRAM_WriteData(uint32_t uwStartAddress, uint32_t *pData, uint32_t u
   {
     return SDRAM_OK;
   }
+}
+
+__weak void HAL_SDRAM_DMA_XferCpltCallback(DMA_HandleTypeDef *hdma)
+{
+  /* NOTE: This function Should not be modified, when the callback is needed,
+            the HAL_SDRAM_DMA_XferCpltCallback could be implemented in the user file
+   */
+}
+
+/**
+  * @brief  DMA transfer complete error callback.
+  * @param  hdma: DMA handle
+  * @retval None
+  */
+__weak void HAL_SDRAM_DMA_XferErrorCallback(DMA_HandleTypeDef *hdma)
+{
+  /* NOTE: This function Should not be modified, when the callback is needed,
+            the HAL_SDRAM_DMA_XferErrorCallback could be implemented in the user file
+   */
+}
+
+static void _HAL_NVIC_EnableIRQ(IRQn_Type IRQn)
+{
+  /* Enable interrupt */
+  NVIC_EnableIRQ(IRQn);
+}
+
+static void _HAL_NVIC_DisableIRQ(IRQn_Type IRQn)
+{
+  /* Disable interrupt */
+  NVIC_DisableIRQ(IRQn);
 }
 
 /**
@@ -335,7 +967,7 @@ uint8_t BSP_SDRAM_WriteData(uint32_t uwStartAddress, uint32_t *pData, uint32_t u
   */
 uint8_t BSP_SDRAM_WriteData_DMA(uint32_t uwStartAddress, uint32_t *pData, uint32_t uwDataSize) 
 {
-  if(HAL_SDRAM_Write_DMA(&sdramHandle, (uint32_t *)uwStartAddress, pData, uwDataSize) != HAL_OK)
+  if(_HAL_SDRAM_Write_DMA(&sdramHandle, (uint32_t *)uwStartAddress, pData, uwDataSize) != HAL_OK)
   {
     return SDRAM_ERROR;
   }
@@ -352,7 +984,7 @@ uint8_t BSP_SDRAM_WriteData_DMA(uint32_t uwStartAddress, uint32_t *pData, uint32
   */  
 uint8_t BSP_SDRAM_Sendcmd(FMC_SDRAM_CommandTypeDef *SdramCmd)
 {
-  if(HAL_SDRAM_SendCommand(&sdramHandle, SdramCmd, SDRAM_TIMEOUT) != HAL_OK)
+  if(_HAL_SDRAM_SendCommand(&sdramHandle, SdramCmd, SDRAM_TIMEOUT) != HAL_OK)
   {
     return SDRAM_ERROR;
   }
@@ -362,13 +994,22 @@ uint8_t BSP_SDRAM_Sendcmd(FMC_SDRAM_CommandTypeDef *SdramCmd)
   }
 }
 
+static void _HAL_NVIC_SetPriority(IRQn_Type IRQn, uint32_t PreemptPriority, uint32_t SubPriority)
+{
+  uint32_t prioritygroup = 0x00;
+
+  prioritygroup = NVIC_GetPriorityGrouping();
+
+  NVIC_SetPriority(IRQn, NVIC_EncodePriority(prioritygroup, PreemptPriority, SubPriority));
+}
+
 /**
   * @brief  Handles SDRAM DMA transfer interrupt request.
   * @retval None
   */
 void BSP_SDRAM_DMA_IRQHandler(void)
 {
-  HAL_DMA_IRQHandler(sdramHandle.hdma); 
+  _HAL_DMA_IRQHandler(sdramHandle.hdma);
 }
 
 /**
@@ -452,14 +1093,14 @@ __weak void BSP_SDRAM_MspInit(SDRAM_HandleTypeDef  *hsdram, void *Params)
   __HAL_LINKDMA(hsdram, hdma, dma_handle);
   
   /* Deinitialize the stream for new transfer */
-  HAL_DMA_DeInit(&dma_handle);
+  _HAL_DMA_DeInit(&dma_handle);
   
   /* Configure the DMA stream */
-  HAL_DMA_Init(&dma_handle); 
+  _HAL_DMA_Init(&dma_handle);
   
   /* NVIC configuration for DMA transfer complete interrupt */
-  HAL_NVIC_SetPriority(SDRAM_DMAx_IRQn, 5, 0);
-  HAL_NVIC_EnableIRQ(SDRAM_DMAx_IRQn);
+  _HAL_NVIC_SetPriority(SDRAM_DMAx_IRQn, 5, 0);
+  _HAL_NVIC_EnableIRQ(SDRAM_DMAx_IRQn);
 }
 
 /**
@@ -473,11 +1114,11 @@ __weak void BSP_SDRAM_MspDeInit(SDRAM_HandleTypeDef  *hsdram, void *Params)
     static DMA_HandleTypeDef dma_handle;
   
     /* Disable NVIC configuration for DMA interrupt */
-    HAL_NVIC_DisableIRQ(SDRAM_DMAx_IRQn);
+    _HAL_NVIC_DisableIRQ(SDRAM_DMAx_IRQn);
 
     /* Deinitialize the stream for new transfer */
     dma_handle.Instance = SDRAM_DMAx_STREAM;
-    HAL_DMA_DeInit(&dma_handle);
+    _HAL_DMA_DeInit(&dma_handle);
 
     /* GPIO pins clock, FMC clock and DMA clock can be shut down in the applications
        by surcharging this __weak function */ 
