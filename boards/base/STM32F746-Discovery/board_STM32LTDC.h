@@ -8,8 +8,9 @@
 #ifndef _GDISP_LLD_BOARD_H
 #define _GDISP_LLD_BOARD_H
 
-#include "stm32f7xx_ll_fmc.h"
 #include "stm32f746g_discovery_sdram.h"
+#include "stm32f7xx_hal_rcc.h"
+#include "stm32f7xx_hal_gpio.h"
 #include <string.h>
 
 #if !GFX_USE_OS_CHIBIOS

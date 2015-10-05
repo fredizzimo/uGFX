@@ -1,6 +1,7 @@
 #include "gfx.h"
 #include "stm32f7xx_hal.h"
 
+#if !GFX_USE_OS_CHIBIOS
 systemticks_t gfxSystemTicks(void)
 {
 	return HAL_GetTick();
@@ -10,13 +11,12 @@ systemticks_t gfxMillisecondsToTicks(delaytime_t ms)
 {
 	return ms;
 }
+#endif
 
 static void SystemClock_Config(void);
 static void CPU_CACHE_Enable(void);
 
 void Raw32OSInit(void) {
-    RCC_PeriphCLKInitTypeDef  PeriphClkInitStruct;
-
     /* Enable the CPU Cache */
     CPU_CACHE_Enable();
 
@@ -31,6 +31,7 @@ void Raw32OSInit(void) {
     /* Configure the system clock to 216 MHz */
     SystemClock_Config();
 
+#if !GFX_USE_OS_CHIBIOS
     // LED - for testing
 	GPIO_InitTypeDef  GPIO_InitStruct;
 	GPIO_InitStruct.Pin = GPIO_PIN_1;
@@ -39,6 +40,7 @@ void Raw32OSInit(void) {
 	GPIO_InitStruct.Speed = GPIO_SPEED_FAST;
     __GPIOI_CLK_ENABLE();
 	HAL_GPIO_Init(GPIOI, &GPIO_InitStruct);
+#endif
 
 }
 
@@ -64,48 +66,6 @@ void Raw32OSInit(void) {
   */
 void SystemClock_Config(void)
 {
-#if 0
-  RCC_ClkInitTypeDef RCC_ClkInitStruct;
-  RCC_OscInitTypeDef RCC_OscInitStruct;
-  HAL_StatusTypeDef ret = HAL_OK;
-
-  /* Enable HSE Oscillator and activate PLL with HSE as source */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLM = 12;
-  RCC_OscInitStruct.PLL.PLLN = 192;		// 432
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = 2;		// 9
-
-  ret = HAL_RCC_OscConfig(&RCC_OscInitStruct);
-  if(ret != HAL_OK)
-  {
-    while(1) { ; }
-  }
-
-  /* Activate the OverDrive to reach the 200/216 MHz Frequency */
-  ret = HAL_PWREx_EnableOverDrive();
-  if(ret != HAL_OK)
-  {
-    while(1) { ; }
-  }
-
-  /* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2 clocks dividers */
-  RCC_ClkInitStruct.ClockType = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
-
-  ret = HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_6);	// FLASH_LATENCY_7
-  if(ret != HAL_OK)
-  {
-    while(1) { ; }
-  }
-#else
-
   RCC_OscInitTypeDef RCC_OscInitStruct;
   RCC_ClkInitTypeDef RCC_ClkInitStruct;
   RCC_PeriphCLKInitTypeDef PeriphClkInitStruct;
@@ -143,7 +103,6 @@ void SystemClock_Config(void)
   HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
 
   HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
-#endif
 }
 
 /**
