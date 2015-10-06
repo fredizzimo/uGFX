@@ -25,6 +25,11 @@
 // The FT5336 I2C slave address (including the R/W bit)
 #define FT5336_SLAVE_ADDR 0x70
 
+#if !GFX_USE_OS_CHIBIOS
+	#define AFRL	AFR[0]
+	#define AFRH	AFR[1]
+#endif
+
 static bool_t init_board(GMouse* m, unsigned instance)
 {
 	(void)m;
@@ -35,14 +40,14 @@ static bool_t init_board(GMouse* m, unsigned instance)
 	GPIOH->MODER |= GPIO_MODER_MODER7_1;					// Alternate function
 	GPIOH->OTYPER |= GPIO_OTYPER_OT_7;						// OpenDrain
 	GPIOH->OSPEEDR &= ~GPIO_OSPEEDER_OSPEEDR7;				// LowSpeed
-	GPIOH->AFR[0] |= (0b0100 << 4*7);						// AF4
+	GPIOH->AFRL |= (0b0100 << 4*7);							// AF4
 
 	// I2C3_SDA    GPIOH8, alternate, opendrain, highspeed
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOHEN;					// Enable clock
 	GPIOH->MODER |= GPIO_MODER_MODER8_1;					// Alternate function
 	GPIOH->OTYPER |= GPIO_OTYPER_OT_8;						// OpenDrain
 	GPIOH->OSPEEDR &= ~GPIO_OSPEEDER_OSPEEDR8;				// LowSpeed
-	GPIOH->AFR[1] |= (0b0100 << 4*0);						// AF4
+	GPIOH->AFRH |= (0b0100 << 4*0);							// AF4
 
 	// Initialize the I2C3 peripheral
 	if (!(i2cInit(I2C3))) {

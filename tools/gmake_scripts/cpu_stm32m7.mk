@@ -13,12 +13,7 @@
 #
 # NONE
 #
-
-#SRCFLAGS += -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -fsingle-precision-constant -falign-functions=16
-#LDFLAGS  += -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -fsingle-precision-constant -falign-functions=16
-#DEFS     += CORTEX_USE_FPU=TRUE
-#LIBS     += m
-SRCFLAGS += -mcpu=cortex-m7 -falign-functions=16
-LDFLAGS  += -mcpu=cortex-m7
-DEFS     += CORTEX_USE_FPU=FALSE
-
+SRCFLAGS += -mcpu=cortex-m7 -falign-functions=16 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -fsingle-precision-constant
+LDFLAGS  += -mcpu=cortex-m7 -falign-functions=16 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -fsingle-precision-constant
+DEFS     += CORTEX_USE_FPU=TRUE USE_FPU=hard
+LIBS	 += m

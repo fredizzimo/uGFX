@@ -1,3 +1,4 @@
+#include "gfx.h"
 #include "stm32f7_i2c.h"
 
 /*
@@ -119,6 +120,8 @@ void i2cWriteReg(I2C_TypeDef* i2c, uint8_t slaveAddr, uint8_t regAddr, uint8_t v
 
 void i2cRead(I2C_TypeDef* i2c, uint8_t slaveAddr, uint8_t* data, uint16_t length)
 {
+	int		i;
+
 	// We are currently not able to read more than 255 bytes at once
 	if (length > 255) {
 		return;
@@ -128,7 +131,7 @@ void i2cRead(I2C_TypeDef* i2c, uint8_t slaveAddr, uint8_t* data, uint16_t length
 	_i2cConfigTransfer(i2c, slaveAddr, length, I2C_CR2_RD_WRN | I2C_CR2_AUTOEND, I2C_CR2_START);
 
 	// Transmit the whole buffer
-	for (int i = 0; i < length; i++) {
+	for (i = 0; i < length; i++) {
 		while (!(i2c->ISR & I2C_ISR_RXNE));
 		data[i] = i2c->RXDR;
 	}

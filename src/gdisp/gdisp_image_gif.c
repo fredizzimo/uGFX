@@ -687,6 +687,7 @@ gdispImageError gdispImageCache_GIF(gdispImage *img) {
 
 	// Check for interlacing
 	cnt = 0;
+	q = 0;
 	if (cache->frame.flags & GIFL_INTERLACE) {
 		// Every 8th row starting at row 0
 		for(p=cache->imagebits, my=0; my < cache->frame.height; my+=8, p += cache->frame.width*7) {

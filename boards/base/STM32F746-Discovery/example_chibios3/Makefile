@@ -6,7 +6,7 @@
 
 # General settings
 	# See $(GFXLIB)/tools/gmake_scripts/readme.txt for the list of variables
-	OPT_OS					= raw32
+	OPT_OS					= chibios
 	OPT_THUMB				= yes
 	OPT_LINK_OPTIMIZE		= no
 	OPT_CPU					= stm32m7
@@ -55,8 +55,8 @@ LDFLAGS  =
 SRC      = 
 
 OBJS     =
-DEFS     = GFX_OS_HEAP_SIZE=40960
-#DEFS     = 
+#DEFS     = GFX_OS_HEAP_SIZE=40960
+DEFS     = 
 LIBS     =
 INCPATH  = 
 

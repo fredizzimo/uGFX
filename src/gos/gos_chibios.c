@@ -158,13 +158,13 @@ gfxThreadHandle gfxThreadCreate(void *stackarea, size_t stacksz, threadpriority_
 {
 	if (!stackarea) {
 		if (!stacksz) stacksz = 256;
-		return chThdCreateFromHeap(0, stacksz, prio, fn, param);
+		return chThdCreateFromHeap(0, stacksz, prio, (tfunc_t)fn, param);
 	}
 
 	if (!stacksz)
 		return 0;
 
-	return chThdCreateStatic(stackarea, stacksz, prio, fn, param);
+	return chThdCreateStatic(stackarea, stacksz, prio, (tfunc_t)fn, param);
 }
 
 #endif /* GFX_USE_OS_CHIBIOS */
