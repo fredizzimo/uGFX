@@ -14,7 +14,7 @@
 /* Driver hardware support.                                                  */
 /*===========================================================================*/
 
-#define	LTDC_USE_DMA2D					TRUE
+#define	LTDC_USE_DMA2D					FALSE	// Currently has display artifacts
 #define GDISP_HARDWARE_DRAWPIXEL		TRUE
 #define GDISP_HARDWARE_PIXELREAD		TRUE
 #define GDISP_HARDWARE_CONTROL			TRUE
