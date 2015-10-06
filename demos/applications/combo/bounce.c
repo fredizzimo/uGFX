@@ -91,8 +91,6 @@ static DECLARE_THREAD_FUNCTION(task, param) {
 	minx = miny = 0; maxx = width; maxy = height;		// The clipping window for this frame.
 
 	while(run) {
-		gfxYield();
-
 		// Draw one frame
 		gdispStreamStart(winx+minx, winy+miny, maxx-minx, maxy-miny);
 		for (y=miny; h = (bally-y)*ii, y<maxy; y++) {
@@ -144,6 +142,9 @@ static DECLARE_THREAD_FUNCTION(task, param) {
 		ballx += dx; bally += dy;
 		dx = ballx < radius || ballx > width-radius ? spinspeed=-spinspeed,-dx : dx;
 		dy = bally > height-1.75*floor ? -.04*height : dy+.002*height;
+
+		// Give someone else a go on cooperative os's like RAW32
+		gfxYield();
 	}
 	return 0;
 }
