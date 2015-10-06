@@ -15,7 +15,7 @@
 	# See $(GFXLIB)/tools/gmake_scripts/library_ugfx.mk for the list of variables
 	GFXLIB					= ../ugfx
 	GFXBOARD				= STM32F746-Discovery
-	GFXDEMO					= modules/gdisp/streaming
+	GFXDEMO					= applications/combo
 	#GFXDRIVERS				=
 	GFXSINGLEMAKE			= no
 

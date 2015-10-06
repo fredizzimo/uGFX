@@ -10,7 +10,9 @@ FEATURE:	New board STM32F746G-Discovery
 FEATURE:	New gdisp driver STM32LTDC
 FEATURE:	Better support for Raw32 platforms
 FEATURE:	Renaming GFX_NO_OS_INIT to GFX_OS_NO_INIT
-
+FEATURE:	New demo applications/combo
+FEATURE:    Adding more font metrics (BaselineX and BaselineY)
+FEATURE:    Adding gdispGetStringWidthCount()
 
 *** Release 2.3 ***
 FEATURE:	Added more events to the slider widget
