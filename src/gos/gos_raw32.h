@@ -33,6 +33,13 @@ typedef unsigned char	bool_t;
 
 #if __STDC_VERSION__ >= 199901L
 	#include <stdint.h>
+#elif defined(__GNUC__) || defined(__GNUG__)
+	typedef __INT8_TYPE__	int8_t;
+	typedef __UINT8_TYPE__	uint8_t;
+	typedef __INT16_TYPE__	int16_t;
+	typedef __UINT16_TYPE__	uint16_t;
+	typedef __INT32_TYPE__	int32_t;
+	typedef __UINT32_TYPE__	uint32_t;
 #else
 	typedef signed char		int8_t;
 	typedef unsigned char	uint8_t;
