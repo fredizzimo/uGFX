@@ -111,7 +111,7 @@ typedef enum powermode {
 /*
  * Our black box display structure.
  */
-typedef struct GDisplay GDisplay;
+typedef struct GDisplay		GDisplay;
 
 /**
  * @brief   The default screen to use for the gdispXXXX calls.
