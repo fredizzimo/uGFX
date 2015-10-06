@@ -72,7 +72,9 @@ typedef enum fontmetric {
 	fontLineSpacing,		/**< The line spacing */
 	fontCharPadding,		/**< The char padding */
 	fontMinWidth,			/**< The minimum width */
-	fontMaxWidth			/**< The maximum width */
+	fontMaxWidth,			/**< The maximum width */
+	fontBaselineX,			/**< The base line in x direction */
+	fontBaselineY			/**< The base line in y direction */
 } fontmetric_t;
 
 /**
@@ -976,7 +978,22 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 	coord_t gdispGetCharWidth(char c, font_t font);
 
 	/**
-	 * @brief   Get the pixel width of a string.
+	 * @brief   Get the pixel width of a string of a given character length.
+	 * @return  The width of the string in pixels.
+	 * @pre		GDISP_NEED_TEXT must be TRUE in your gfxconf.h
+	 *
+	 * @note	Passing 0 to count has the same effect as calling gdispGetStringWidt()
+	 *
+	 * @param[in] str     The string to measure
+	 * @param[in] font    The font to use
+	 * @param[in] count   The number of characters to take into account
+	 *
+	 * @api
+	 */
+	coord_t gdispGetStringWidthCount(const char* str, font_t font, uint16_t count);
+
+	/**
+	 * @brief   Get the pixel width of an entire string.
 	 * @return  The width of the string in pixels.
 	 * @pre		GDISP_NEED_TEXT must be TRUE in your gfxconf.h
 	 *

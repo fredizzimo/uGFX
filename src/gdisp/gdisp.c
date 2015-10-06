@@ -3313,6 +3313,8 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 		case fontCharPadding:		return 0;
 		case fontMinWidth:			return font->min_x_advance;
 		case fontMaxWidth:			return font->max_x_advance;
+		case fontBaselineX:			return font->baseline_x;
+		case fontBaselineY:			return font->baseline_y;
 		}
 		return 0;
 	}
@@ -3322,12 +3324,20 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 		return mf_character_width(font, c);
 	}
 
-	coord_t gdispGetStringWidth(const char* str, font_t font) {
+	coord_t gdispGetStringWidthCount(const char* str, font_t font, uint16_t count) {
 		if (!str)
 			return 0;
 
-		/* No mutex required as we only read static data */
-		return mf_get_string_width(font, str, 0, 0);
+		// No mutex required as we only read static data
+		#if GDISP_NEED_TEXT_KERNING
+			return mf_get_string_width(font, str, count, TRUE);
+		#else
+			return mf_get_string_width(font, str, count, FALSE);
+		#endif
+	}
+
+	coord_t gdispGetStringWidth(const char* str, font_t font) {
+		return gdispGetStringWidthCount(str, font, 0);
 	}
 #endif
 
