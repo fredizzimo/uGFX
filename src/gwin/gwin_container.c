@@ -110,6 +110,11 @@ static const gcontainerVMT containerVMT = {
 				0, 0, 0,				// No mouse
 			},
 		#endif
+		#if GINPUT_NEED_KEYBOARD || GWIN_NEED_KEYBOARD
+			{
+				0						// Process keyboard events
+			},
+		#endif
 		#if GINPUT_NEED_TOGGLE
 			{
 				0, 0, 0, 0, 0,			// No toggles

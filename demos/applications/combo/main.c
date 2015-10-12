@@ -42,7 +42,7 @@
 /* Our custom yellow style */
 static const GWidgetStyle YellowWidgetStyle = {
 	Yellow,							// window background
-	//HTML2COLOR(0x800000),			// focus - for text edit.
+	HTML2COLOR(0x800000),			// focus - for text edit.
 
 	// enabled color set
 	{

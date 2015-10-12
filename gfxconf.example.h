@@ -167,6 +167,7 @@
 //#define GWIN_NEED_GL3D                               FALSE
 
 //#define GWIN_NEED_WIDGET                             FALSE
+//#define GWIN_FOCUS_HIGHLIGHT_WIDTH                   1
 //    #define GWIN_NEED_LABEL                          FALSE
 //        #define GWIN_LABEL_ATTRIBUTE                 FALSE
 //    #define GWIN_NEED_BUTTON                         FALSE
@@ -186,6 +187,7 @@
 //    #define GWIN_NEED_KEYBOARD                       FALSE
 //        #define GWIN_KEYBOARD_DEFAULT_LAYOUT         VirtualKeyboard_English1
 //        #define GWIN_NEED_KEYBOARD_ENGLISH1          TRUE
+//    #define GWIN_NEED_TEXTEDIT                       FALSE
 //    #define GWIN_FLAT_STYLING                        FALSE
 //    #define GWIN_WIDGET_TAGS                         FALSE
 

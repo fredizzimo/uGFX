@@ -178,6 +178,11 @@ static const gcontainerVMT frameVMT = {
 				0,						// Process mouse move events
 			},
 		#endif
+		#if GINPUT_NEED_KEYBOARD || GWIN_NEED_KEYBOARD
+			{
+				0						// Process keyboard events
+			},
+		#endif
 		#if GINPUT_NEED_TOGGLE
 			{
 				0,						// 1 toggle role

@@ -50,6 +50,24 @@
 	}
 #endif
 
+#if GINPUT_NEED_KEYBOARD || GWIN_NEED_KEYBOARD
+	static void ButtonKeyboard(GWidgetObject* gw, GEventKeyboard* pke)
+	{
+		// ENTER and SPACE keys to press the button
+		if (pke->c[0] == GKEY_ENTER || pke->c[0] == GKEY_SPACE) {
+
+			// Press or release event?
+			if (pke->keystate & GKEYSTATE_KEYUP) {
+				gw->g.flags &= ~GBUTTON_FLG_PRESSED;
+			} else {
+				gw->g.flags |= GBUTTON_FLG_PRESSED;
+			}
+		}
+
+		_gwinUpdate((GHandle)gw);
+	}
+#endif
+
 #if GINPUT_NEED_TOGGLE
 	// A toggle off has occurred
 	static void ButtonToggleOff(GWidgetObject *gw, uint16_t role) {
@@ -93,6 +111,11 @@ static const gwidgetVMT buttonVMT = {
 			ButtonMouseDown,		// Process mouse down events
 			ButtonMouseUp,			// Process mouse up events
 			0,						// Process mouse move events (NOT USED)
+		},
+	#endif
+	#if GINPUT_NEED_KEYBOARD || GWIN_NEED_KEYBOARD
+		{
+			ButtonKeyboard			// Process keyboard events
 		},
 	#endif
 	#if GINPUT_NEED_TOGGLE

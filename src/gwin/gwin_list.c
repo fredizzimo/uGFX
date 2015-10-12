@@ -279,6 +279,11 @@ static const gwidgetVMT listVMT = {
 			ListMouseMove,
 		},
 	#endif
+	#if GINPUT_NEED_KEYBOARD || GWIN_NEED_KEYBOARD
+		{
+			0						// Process keyboard events
+		},
+	#endif
 	#if GINPUT_NEED_TOGGLE
 		{
 			2,					// two toggle roles
