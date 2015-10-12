@@ -30,6 +30,8 @@ typedef uint32_t	utf32;
 // A character code - note this is not UTF-32 but a representation of the UTF-8 code stream for a single character.
 typedef uint32_t	ucode;
 
+static GSourceHandle	AllKeyboards;
+
 // Get the length of a UTF-8 string
 static int UTF8StrLen(const utf8 *s) {
 	int				len;
@@ -163,6 +165,11 @@ static void SendKeyboardEventToListener(GSourceListener	*psl, GKeyboardObject *g
 
 static void SendKeyboardEvent(GKeyboardObject *gk) {
 	GSourceListener	*psl;
+
+	// Send to the "All Keyboards" source listeners
+	psl = 0;
+	while ((psl = geventGetSourceListener(AllKeyboards, psl)))
+		SendKeyboardEventToListener(psl, gk);
 
 	// Send to the keyboard specific source listeners
 	psl = 0;
@@ -313,6 +320,11 @@ static const gwidgetVMT keyboardVMT = {
 			KeyMouseMove,			// Process mouse move events
 		},
 	#endif
+	#if GINPUT_NEED_KEYBOARD || GWIN_NEED_KEYBOARD
+		{
+			0						// Process keyboard events
+		},
+	#endif
 	#if GINPUT_NEED_TOGGLE
 		{
 			0,						// No toggle roles
@@ -339,6 +351,10 @@ GHandle gwinGKeyboardCreate(GDisplay *g, GKeyboardObject *gk, const GWidgetInit 
 	gk->keytable = &GWIN_KEYBOARD_DEFAULT_LAYOUT;
 	gk->keyset = gk->keytable->ksets[0];
 	gk->lastkeyrow = gk->lastkeycol = gk->keyrow = gk->keycol = GKEY_BAD_ROWCOL;
+
+	if (!AllKeyboards)
+		AllKeyboards = ginputGetKeyboard(GKEYBOARD_ALL_INSTANCES);
+
 	gwinSetVisible((GHandle)gk, pInit->g.show);
 	return (GHandle)gk;
 }
@@ -467,5 +483,13 @@ void gwinKeyboardDraw_Normal(GWidgetObject *gw, void *param) {
 
 	#undef gk
 }
+
+#if !(GFX_USE_GINPUT && GINPUT_NEED_KEYBOARD)
+	GSourceHandle ginputGetKeyboard(unsigned instance) {
+		if (instance == GKEYBOARD_ALL_INSTANCES)
+			return (GSourceHandle)&AllKeyboards;
+		return 0;
+	}
+#endif
 
 #endif /* GFX_USE_GWIN && GWIN_NEED_KEYBOARD */
