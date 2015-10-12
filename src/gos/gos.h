@@ -464,6 +464,8 @@
 	#include "src/gos/gos_ecos.h"
 #elif GFX_USE_OS_ARDUINO
 	#include "src/gos/gos_arduino.h"
+#elif GFX_USE_OS_KEIL
+	#include "src/gos/gos_keil.h"
 #else
 	#error "Your operating system is not supported yet"
 #endif

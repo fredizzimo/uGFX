@@ -34,6 +34,8 @@
 //#define GFX_USE_OS_OSX                               FALSE
 //#define GFX_USE_OS_ECOS                              FALSE
 //#define GFX_USE_OS_RAWRTOS                           FALSE
+//#define GFX_USE_OS_ARDUINO                           FALSE
+//#define GFX_USE_OS_KEIL                              FALSE
 //#define GFX_USE_OS_RAW32                             FALSE
 //    #define INTERRUPTS_OFF()                         optional_code
 //    #define INTERRUPTS_ON()                          optional_code
