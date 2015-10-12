@@ -356,7 +356,7 @@ bool_t gwinAttachListener(GListener *pl);
 	bool_t gwinAttachDial(GHandle gh, uint16_t role, uint16_t instance);
 #endif
 
-#if (GFX_USE_GINPUT && GINPUT_NEED_KEYBOARD) || defined(__DOXYGEN__)
+#if (GFX_USE_GINPUT && GINPUT_NEED_KEYBOARD) || GWIN_NEED_KEYBOARD || defined(__DOXYGEN__)
 	/**
 	 * @brief	Set the keyboard focus to a specific window
 	 * @return	Returns TRUE if the focus could be set to that window

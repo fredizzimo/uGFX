@@ -18,110 +18,109 @@
 #include <string.h>
 
 // Some settings
-const int TEXT_PADDING_LEFT			= 4;
-const int FOCUS_BORDER_THICKNESS	= 3;
-const int CURSOR_PADDING_LEFT		= 0;
-const int CURSOR_EXTRA_HEIGHT		= 1;
+#define TEXT_PADDING_LEFT		4
+#define CURSOR_PADDING_LEFT		0
+#define CURSOR_EXTRA_HEIGHT		1
 
 // Macros to assist in data type conversions
 #define gh2obj ((GTexteditObject *)gh)
 #define gw2obj ((GTexteditObject *)gw)
 
-// cursorPos is the position of the next character
-// textBuffer[cursorPos++] = readKey();
+static bool_t resizeText(GWidgetObject* gw, size_t pos, int32_t diff) {
+	char	*p, *q;
+	size_t	sz;
 
-static void _shiftTextLeft(char* buffer, size_t maxSize, size_t index)
-{
-	// Find the end of the string
-	size_t indexTerminator = index;
-	while (buffer[indexTerminator] != '\0' && indexTerminator < maxSize-1) {
-		indexTerminator++;
+	p = (char *)gw->text;
+	sz = strlen(p)+1;
+	if (diff < 0)
+		memcpy(p+pos, p+pos-diff, sz-pos+diff);
+	if (!(p = gfxRealloc(p, sz, sz+diff)))
+		return FALSE;
+	gw->text = p;
+	if (diff > 0) {
+		q = p + sz;
+		p += pos;
+		while(--q >= p)
+			q[diff] = q[0];
 	}
-
-	// Shift
-	memcpy(&buffer[index-1], &buffer[index], indexTerminator-index);
-
-	// Terminate the string
-	buffer[indexTerminator-1] = '\0';
+	return TRUE;
 }
 
-static void _shiftTextRight(char* buffer, size_t maxSize, size_t index, char fillChar)
-{
-	// Find the end of the string
-	size_t indexTerminator = index;
-	while (buffer[indexTerminator] != '\0' && indexTerminator < maxSize-1) {
-		indexTerminator++;
-	}
-
-	// Shift
-	memcpy(&buffer[index+1], &buffer[index], indexTerminator-index);
-
-	// Fill the gap
-	buffer[index] = fillChar;
-}
-
-
-#if GINPUT_NEED_KEYBOARD || GWIN_NEED_KEYBOARD
-	static void TextEditKeyboard(GWidgetObject* gw, GEventKeyboard* pke)
-	{
+#if (GFX_USE_GINPUT && GINPUT_NEED_KEYBOARD) || GWIN_NEED_KEYBOARD
+	static void TextEditKeyboard(GWidgetObject* gw, GEventKeyboard* pke) {
 		// Only react on KEYDOWN events. Ignore KEYUP events.
-		if (pke->keystate & GKEYSTATE_KEYUP) {
+		if ((pke->keystate & GKEYSTATE_KEYUP) || !pke->bytecount)
 			return;
-		}
 
 		// Is it a special key?
 		if (pke->keystate & GKEYSTATE_SPECIAL) {
+
 			// Arrow keys to move the cursor
 			switch ((uint8_t)pke->c[0]) {
 			case GKEY_LEFT:
-				if (gw2obj->cursorPos > 0) {
-					gw2obj->cursorPos--;
-				}
+				if (!gw2obj->cursorPos)
+					return;
+				gw2obj->cursorPos--;
 				break;
-
 			case GKEY_RIGHT:
-				if (gw2obj->cursorPos < strlen(gw2obj->textBuffer)) {
-					gw2obj->cursorPos++;
-				}
+				if (!gw->text[gw2obj->cursorPos])
+					return;
+				gw2obj->cursorPos++;
 				break;
-
-
+			case GKEY_HOME:
+				if (!gw2obj->cursorPos)
+					return;
+				gw2obj->cursorPos = 0;
+				break;
+			case GKEY_END:
+				if (!gw->text[gw2obj->cursorPos])
+					return;
+				gw2obj->cursorPos = strlen(gw->text);
+				break;
 			default:
+				return;
+			}
+
+		} else {
+
+			// Normal key press
+			switch((uint8_t)pke->c[0]) {
+			case GKEY_BACKSPACE:
+				// Backspace
+				if (!gw2obj->cursorPos)
+					return;
+				gw2obj->cursorPos--;
+				resizeText(gw, gw2obj->cursorPos, -1);
+				break;
+			case GKEY_TAB:
+			case GKEY_LF:
+			case GKEY_CR:
+				// Move to the next field
+				_gwinMoveFocus();
+				return;
+			case GKEY_DEL:
+				// Delete
+				if (!gw->text[gw2obj->cursorPos])
+					return;
+				resizeText(gw, gw2obj->cursorPos, -1);
+				break;
+			default:
+				// Ignore any other control characters
+				if ((uint8_t)pke->c[0] < GKEY_SPACE)
+					return;
+
+				// Keep the edit length to less than the maximum
+				if (gw2obj->maxSize && gw2obj->cursorPos+pke->bytecount > gw2obj->maxSize)
+					return;
+
+				// Make space
+				resizeText(gw, gw2obj->cursorPos, pke->bytecount);
+
+				// Insert the character
+				memcpy((char *)gw->text+gw2obj->cursorPos, pke->c, pke->bytecount);
+				gw2obj->cursorPos += pke->bytecount;
 				break;
 			}
-		}
-
-		// Parse the key press
-		else if (pke->bytecount >= 1) {
-			// Is it backspace?
-			if (pke->c[0] == GKEY_BACKSPACE) {
-				if (gw2obj->cursorPos == 0) {
-					return;
-				}
-				_shiftTextLeft(gw2obj->textBuffer, gw2obj->maxSize, gw2obj->cursorPos--);
-			}
-
-			// Is it delete?
-			else if (pke->c[0] == GKEY_DEL) {
-				// Check whether there is a character on the right side of the cursor
-				if (gw2obj->textBuffer[gw2obj->cursorPos] == '\0') {
-					return;
-				}
-				_shiftTextLeft(gw2obj->textBuffer, gw2obj->maxSize, gw2obj->cursorPos+1);
-			}
-
-			// Add a new character
-			else {
-				// Prevent buffer overflow
-				if (gw2obj->cursorPos >= gw2obj->maxSize)
-					return;
-
-				// Shift everything right from the cursor by one character. This includes the '\0'. Then inser the new character.
-				_shiftTextRight(gw2obj->textBuffer, gw2obj->maxSize, gw2obj->cursorPos++, pke->c[0]);
-			}
-
-			// Set the new text
-			gwinSetText((GHandle)gw, gw2obj->textBuffer, FALSE);
 		}
 
 		_gwinUpdate((GHandle)gw);
@@ -141,12 +140,12 @@ static const gwidgetVMT texteditVMT = {
 	gwinTexteditDefaultDraw,		// default drawing routine
 	#if GINPUT_NEED_MOUSE
 		{
-			0,						// Process mose down events (NOT USED)
+			0,						// Process mouse down events (NOT USED)
 			0,						// Process mouse up events (NOT USED)
 			0,						// Process mouse move events (NOT USED)
 		},
 	#endif
-	#if GINPUT_NEED_KEYBOARD || GWIN_NEED_KEYBOARD
+	#if (GFX_USE_GINPUT && GINPUT_NEED_KEYBOARD) || GWIN_NEED_KEYBOARD
 		{
 			TextEditKeyboard		// Process keyboard key down events
 		},
@@ -172,25 +171,25 @@ static const gwidgetVMT texteditVMT = {
 
 GHandle gwinGTexteditCreate(GDisplay* g, GTexteditObject* wt, GWidgetInit* pInit, size_t maxSize)
 {
+	char	*p;
+
 	// Create the underlying widget
 	if (!(wt = (GTexteditObject*)_gwidgetCreate(g, &wt->w, pInit, &texteditVMT)))
 		return 0;
 
-	// Allocate the text buffer
 	wt->maxSize = maxSize;
-	wt->textBuffer = gfxAlloc(wt->maxSize);
-	if (wt->textBuffer == 0)
-		return 0;
 
-	// Initialize the text buffer
-	size_t i = 0;
-	for (i = 0; i < wt->maxSize; i++) {
-		wt->textBuffer[i] = '\0';
+	// Reallocate the text (if necessary)
+	if (!(wt->w.g.flags & GWIN_FLG_ALLOCTXT)) {
+		if (!(p = gfxAlloc(wt->maxSize+1)))
+			return 0;
+		strncpy(p, wt->w.text, wt->maxSize);
+		wt->w.text = p;
+		wt->w.g.flags |= GWIN_FLG_ALLOCTXT;
 	}
 
 	// Set text and cursor position
-	strncpy(wt->textBuffer, gwinGetText((GHandle)wt), wt->maxSize);	// FixMe: pInit->text leads to a segfault
-	wt->cursorPos = strlen(wt->textBuffer);
+	wt->cursorPos = strlen(wt->w.text);
 
 	gwinSetVisible(&wt->w.g, pInit->g.show);
 
@@ -199,43 +198,53 @@ GHandle gwinGTexteditCreate(GDisplay* g, GTexteditObject* wt, GWidgetInit* pInit
 
 static void gwinTexteditDefaultDraw(GWidgetObject* gw, void* param)
 {
-
+	const char *p;
+	coord_t		cpos, tpos;
+	color_t		ccol, tcol;
 	(void)param;
 
 	// Is it a valid handle?
-	if (gw->g.vmt != (gwinVMT*)&texteditVMT) {
+	if (gw->g.vmt != (gwinVMT*)&texteditVMT)
 		return;
-	}
 
 	// Retrieve colors
-	color_t textColor = (gw->g.flags & GWIN_FLG_SYSENABLED) ? gw->pstyle->enabled.text : gw->pstyle->disabled.text;
-	color_t cursorColor = (gw->g.flags & GWIN_FLG_SYSENABLED) ? gw->pstyle->enabled.edge : gw->pstyle->disabled.edge;
+	tcol = (gw->g.flags & GWIN_FLG_SYSENABLED) ? gw->pstyle->enabled.text : gw->pstyle->disabled.text;
+	ccol = (gw->g.flags & GWIN_FLG_SYSENABLED) ? gw->pstyle->enabled.edge : gw->pstyle->disabled.edge;
+
+	// Adjust the text position so the cursor fits in the window
+	p = gw->text;
+	if (!gw2obj->cursorPos)
+		tpos = 0;
+	else {
+		for(cpos = gw2obj->cursorPos; ; p++, cpos--) {
+			tpos = gdispGetStringWidthCount(p, gw->g.font, cpos);
+			if (tpos < gw->g.width-(TEXT_PADDING_LEFT+CURSOR_PADDING_LEFT))
+				break;
+		}
+	}
 
 	// Render background and string
-	gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, gw->pstyle->background);
-	gdispGFillStringBox(gw->g.display, gw->g.x + TEXT_PADDING_LEFT, gw->g.y, gw->g.width, gw->g.height, gw->text, gw->g.font, textColor, gw->pstyle->background, justifyLeft);
-
-	// Render border (always)
-	gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, (gw->g.flags & GWIN_FLG_SYSENABLED) ? gw->pstyle->enabled.edge : gw->pstyle->disabled.edge);
-
-	// Render highlighted border of focused
-	_gwidgetDrawFocusRect(gw, 1, 1, gw->g.width-2, gw->g.height-2);
+	#if TEXT_PADDING_LEFT
+		gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, TEXT_PADDING_LEFT, gw->g.height, gw->pstyle->background);
+	#endif
+	gdispGFillStringBox(gw->g.display, gw->g.x + TEXT_PADDING_LEFT, gw->g.y, gw->g.width-TEXT_PADDING_LEFT, gw->g.height, p, gw->g.font, tcol, gw->pstyle->background, justifyLeft);
 
 	// Render cursor (if focused)
 	if (gwinGetFocus() == (GHandle)gw) {
 		// Calculate cursor stuff
-		coord_t textWidth = gdispGetStringWidthCount(gw2obj->textBuffer, gw->g.font, gw2obj->cursorPos);
-		coord_t cursorHeight = gdispGetFontMetric(gw->g.font, fontHeight);
-		coord_t cursorSpacingTop = (gw->g.height - cursorHeight)/2 - CURSOR_EXTRA_HEIGHT;
-		coord_t cursorSpacingBottom = (gw->g.height - cursorHeight)/2 - CURSOR_EXTRA_HEIGHT;
 
 		// Draw cursor
-		coord_t lineX0 = gw->g.x + textWidth + CURSOR_PADDING_LEFT + TEXT_PADDING_LEFT + gdispGetFontMetric(gw->g.font, fontBaselineX)/2;
-		coord_t lineX1 = lineX0;
-		coord_t lineY0 = gw->g.y + cursorSpacingTop;
-		coord_t lineY1 = gw->g.y + gw->g.height - cursorSpacingBottom;
-		gdispGDrawLine(gw->g.display, lineX0, lineY0, lineX1, lineY1, cursorColor);
+		tpos += gw->g.x + CURSOR_PADDING_LEFT + TEXT_PADDING_LEFT + gdispGetFontMetric(gw->g.font, fontBaselineX)/2;
+		cpos = (gw->g.height - gdispGetFontMetric(gw->g.font, fontHeight))/2 - CURSOR_EXTRA_HEIGHT;
+		gdispGDrawLine(gw->g.display, tpos, gw->g.y + cpos, tpos, gw->g.y + gw->g.height - cpos, ccol);
 	}
+
+	// Render border
+	gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, ccol);
+
+	// Render highlighted border of focused
+	_gwidgetDrawFocusRect(gw, 1, 1, gw->g.width-2, gw->g.height-2);
+
 }
 
 #undef gh2obj

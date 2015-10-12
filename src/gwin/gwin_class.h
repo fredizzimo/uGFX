@@ -325,6 +325,8 @@ bool_t _gwinWMAdd(GHandle gh, const GWindowInit *pInit);
 		/**
 		 * @brief	Move the focus off the current focus window.
 		 *
+		 * @note	The focus can stay on the same window if there is no other focusable window
+		 *
 		 * @notapi
 		 */
 		void _gwinMoveFocus(void);

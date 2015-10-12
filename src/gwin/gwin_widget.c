@@ -145,11 +145,10 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 			if ((pme->buttons & GMETA_MOUSE_DOWN)) {
 				gh->flags |= GWIN_FLG_MOUSECAPTURE;
 
-				#if GFX_USE_GINPUT && GINPUT_NEED_KEYBOARD
+				#if (GFX_USE_GINPUT && GINPUT_NEED_KEYBOARD) || GWIN_NEED_KEYBOARD
 					// We should try and capture the focus on this window.
-					// If we can't no window should have the focus
-					if (!gwinSetFocus(gh))
-						gwinSetFocus(0);
+					// If we can't then we don't change the focus
+					gwinSetFocus(gh);
 				#endif
 
 				if (wvmt->MouseDown)
@@ -159,7 +158,7 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 		break;
 	#endif
 
-	#if GFX_USE_GINPUT && GINPUT_NEED_KEYBOARD
+	#if (GFX_USE_GINPUT && GINPUT_NEED_KEYBOARD) || GWIN_NEED_KEYBOARD
 	case GEVENT_KEYBOARD:
 		// If Tab key pressed then set focus to next widget
 		if (pke->bytecount == 1 && pke->c[0] == GKEY_TAB) {
@@ -227,7 +226,7 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 	#undef pde
 }
 
-#if GFX_USE_GINPUT && GINPUT_NEED_KEYBOARD
+#if (GFX_USE_GINPUT && GINPUT_NEED_KEYBOARD) || GWIN_NEED_KEYBOARD
 	GHandle gwinGetFocus(void) {
 		return _widgetInFocus;
 	}
@@ -254,13 +253,18 @@ static void gwidgetEvent(void *param, GEvent *pe) {
 
 	void _gwinMoveFocus(void) {
 		GHandle	gh;
+		bool_t	looponce;
 
 		// Find a new focus window (one may or may not exist).
-		for(gh = gwinGetNextWindow(_widgetInFocus); gh && gh != _widgetInFocus; gh = gwinGetNextWindow(gh)) {
+		looponce = FALSE;
+		for(gh = gwinGetNextWindow(_widgetInFocus); ; gh = gwinGetNextWindow(gh)) {
+			if (!gh && !looponce) {
+				looponce = TRUE;
+				gh = gwinGetNextWindow(0);
+			}
 			if (gwinSetFocus(gh))
-				return;
+				break;
 		}
-		gwinSetFocus(0);
 	}
 
 	void _gwinFixFocus(GHandle gh) {
