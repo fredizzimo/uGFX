@@ -50,7 +50,7 @@ extern "C" {
  * @param[in] g			The GDisplay on which the textedit should be displayed
  * @param[in] wt		The TextEdit structure to initialise. If this is NULL, the structure is dynamically allocated.
  * @param[in] pInit		The initialisation parameters to use.
- * @param[in] maxSize	The maximum number of characters the TextEdit widget can hold.
+ * @param[in] maxSize	The maximum number of characters the TextEdit widget can hold. (0 means unlimited).
  *
  * @return				NULL if there is no resultant drawing area, otherwise the widget handle.
  *
