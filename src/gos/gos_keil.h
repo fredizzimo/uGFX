@@ -15,6 +15,8 @@
 
 #if GFX_USE_OS_KEIL
 
+#include "cmsis_os.h"
+
 #ifndef GFX_OS_HEAP_SIZE
 	#define GFX_OS_HEAP_SIZE 10240
 #endif
@@ -22,6 +24,8 @@
 /*===========================================================================*/
 /* Type definitions                                                          */
 /*===========================================================================*/
+
+typedef uint8_t				bool_t;
 
 #define TIME_IMMEDIATE		0
 #define TIME_INFINITE		osWaitForever
@@ -37,14 +41,14 @@ typedef osPriority			threadpriority_t;
 #define HIGH_PRIORITY		osPriorityHigh
 
 typedef struct gfxSem {
-	osSemaphoreId	id;
-	osSemaphoreDef(id);
-	} gfxSem;
+	osSemaphoreDef_t def;
+	osSemaphoreId id;
+} gfxSem;
 
 typedef struct gfxMutex {
-	osMutexId	id;
-	osMutexDef(id);
-	} gfxMutex;
+	osMutexDef_t def;
+	osMutexId id;
+} gfxMutex;
 
 typedef osThreadId			gfxThreadHandle;
 
@@ -89,10 +93,10 @@ gfxThreadHandle gfxThreadCreate(void* stackarea, size_t stacksz, threadpriority_
 #endif
 
 /*===========================================================================*/
-/* Use the generic thread handling and heap handling                         */
+/* Use the generic heap handling                                             */
 /*===========================================================================*/
 
-#define GOS_NEED_X_HEAP		TRUE
+#define GOS_NEED_X_HEAP TRUE
 #include "gos_x_heap.h"
 
 #endif /* GFX_USE_OS_KEIL */

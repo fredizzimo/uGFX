@@ -10,6 +10,8 @@
 
 #if GFX_USE_OS_KEIL
 
+void _gosHeapInit(void);
+
 void _gosInit(void)
 {
 	#if !GFX_OS_NO_INIT
@@ -30,12 +32,12 @@ void _gosDeinit(void)
 
 void gfxMutexInit(gfxMutex* pmutex)
 {
-	pmutex->id = osMutexCreate(pmutex->osMutex(id));
+	pmutex->id = osMutexCreate(&(pmutex->def));
 }
 
 void gfxSemInit(gfxSem* psem, semcount_t val, semcount_t limit)
 {
-	psem->id = osSemaphoreCreate(psem->osSemaphore(id), limit);
+	psem->id = osSemaphoreCreate(&(psem->def), limit);
 	while(val--)
 		osSemaphoreRelease(psem->id);
 }
@@ -67,9 +69,13 @@ void gfxSemSignalI(gfxSem* psem)
 
 gfxThreadHandle gfxThreadCreate(void* stackarea, size_t stacksz, threadpriority_t prio, DECLARE_THREAD_FUNCTION((*fn),p), void* param)
 {
-	osThreadDef(ugfx_thread, prio, 1, stacksz);
+	osThreadDef_t def;
+	def.pthread = fn;
+	def.tpriority = prio;
+	def.instances = 1;
+	def.stacksize = stacksz;
 
-	return osThreadCreate(osThread(ugfx_thread), param);
+	return osThreadCreate(&def, param);
 }
 
 threadreturn_t gfxThreadWait(gfxThreadHandle thread) {
