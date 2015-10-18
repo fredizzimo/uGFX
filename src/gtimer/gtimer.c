@@ -29,13 +29,14 @@ static DECLARE_THREAD_STACK(waTimerThread, GTIMER_THREAD_WORKAREA_SIZE);
 /*===========================================================================*/
 
 static DECLARE_THREAD_FUNCTION(GTimerThreadHandler, arg) {
-	(void)arg;
 	GTimer			*pt;
 	systemticks_t	tm;
 	systemticks_t	nxtTimeout;
 	systemticks_t	lastTime;
 	GTimerFunction	fn;
 	void			*param;
+	
+	(void)arg;
 
 	nxtTimeout = TIME_INFINITE;
 	lastTime = 0;
