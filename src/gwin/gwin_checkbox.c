@@ -196,6 +196,9 @@ void gwinCheckboxDraw_CheckOnLeft(GWidgetObject *gw, void *param) {
 	if (gw->g.flags & GCHECKBOX_FLG_CHECKED)
 		gdispGFillArea(gw->g.display, gw->g.x+df, gw->g.y+df, ld-2*df, ld-2*df, pcol->fill);
 
+	// Render highlighted border if focused
+	_gwidgetDrawFocusRect(gw, 1, 1, ld-2, ld-2);
+
 	// Draw the text
 	gdispGFillStringBox(gw->g.display, gw->g.x+ld+1, gw->g.y, gw->g.width-ld-1, gw->g.height, gw->text, gw->g.font, pcol->text, gw->pstyle->background, justifyLeft);
 	#undef gcw
@@ -224,6 +227,9 @@ void gwinCheckboxDraw_CheckOnRight(GWidgetObject *gw, void *param) {
 	df = ld < 4 ? 1 : 2;
 	if (gw->g.flags & GCHECKBOX_FLG_CHECKED)
 		gdispGFillArea(gw->g.display, gw->g.x+ep+df, gw->g.y+df, ld-2*df, ld-2*df, pcol->fill);
+
+	// Render highlighted border if focused
+	_gwidgetDrawFocusRect(gw, ep+1, 1, ld-2, ld-2);
 
 	// Draw the text
 	gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, ep-1, gw->g.height, gw->text, gw->g.font, pcol->text, gw->pstyle->background, justifyRight);
