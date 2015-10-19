@@ -68,14 +68,15 @@ void gfxSemSignalI(gfxSem* psem)
 }
 
 gfxThreadHandle gfxThreadCreate(void* stackarea, size_t stacksz, threadpriority_t prio, DECLARE_THREAD_FUNCTION((*fn),p), void* param)
-{
+{	
 	osThreadDef_t def;
-	def.pthread = fn;
+
+	(void)stackarea;
+	
+	def.pthread = (os_pthread)fn;
 	def.tpriority = prio;
 	def.instances = 1;
 	def.stacksize = stacksz;
-
-	(void)stackarea;
 
 	return osThreadCreate(&def, param);
 }

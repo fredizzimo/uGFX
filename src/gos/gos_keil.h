@@ -15,6 +15,7 @@
 
 #if GFX_USE_OS_KEIL
 
+#include <stdbool.h>
 #include "cmsis_os.h"
 
 #ifndef GFX_OS_HEAP_SIZE
@@ -25,7 +26,7 @@
 /* Type definitions                                                          */
 /*===========================================================================*/
 
-typedef uint8_t				bool_t;
+typedef bool				bool_t;
 
 #define TIME_IMMEDIATE		0
 #define TIME_INFINITE		osWaitForever
@@ -52,8 +53,9 @@ typedef struct gfxMutex {
 
 typedef osThreadId			gfxThreadHandle;
 
-#define DECLARE_THREAD_STACK(name, sz)
-#define DECLARE_THREAD_FUNCTION(fnName, param)	threadreturn_t fnName(void* params)
+#define DECLARE_THREAD_STACK(name, sz)			uint8_t name[1];	// Some compilers don't allow zero sized arrays. Let's waste one byte
+#define DECLARE_THREAD_FUNCTION(fnName, param)	threadreturn_t fnName(void* param)
+#define THREAD_RETURN(retval)
 
 /*===========================================================================*/
 /* Function declarations.                                                    */
@@ -66,7 +68,7 @@ extern "C" {
 #define gfxExit()					os_error(0)
 #define gfxHalt(msg)				os_error(1)
 #define gfxSystemTicks()			osKernelSysTick()
-#define gfxMillisecondsToTicks(ms)	osKernelSysTickMicroSec(1000*(ms))
+#define gfxMillisecondsToTicks(ms)	osKernelSysTickMicroSec(1000*ms)
 #define gfxSystemLock()				osKernelInitialize()
 #define gfxSystemUnlock()			osKernelStart()
 #define gfxSleepMilliseconds(ms) 	osDelay(ms)
