@@ -75,6 +75,8 @@ gfxThreadHandle gfxThreadCreate(void* stackarea, size_t stacksz, threadpriority_
 	def.instances = 1;
 	def.stacksize = stacksz;
 
+	(void)stackarea;
+
 	return osThreadCreate(&def, param);
 }
 
