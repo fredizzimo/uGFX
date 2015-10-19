@@ -154,7 +154,8 @@
 		}
 
 		// We need to do this the hard way
-		if ((new = gfxAlloc(sz)))
+		new = gfxAlloc(sz);
+		if (new)
 			return 0;
 		memcpy(new, ptr, p->sz - sizeof(memslot));
 		gfxFree(ptr);
