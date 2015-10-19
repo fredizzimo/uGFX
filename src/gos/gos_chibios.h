@@ -56,6 +56,7 @@ typedef tprio_t		threadpriority_t;
 
 #define DECLARE_THREAD_STACK(name, sz)			WORKING_AREA(name, sz)
 #define DECLARE_THREAD_FUNCTION(fnName, param)	threadreturn_t fnName(void *param)
+#define THREAD_RETURN(retval)					return retval
 
 #if CH_KERNEL_MAJOR == 2
 	typedef struct {
