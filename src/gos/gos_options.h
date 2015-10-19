@@ -77,11 +77,18 @@
 		#define GFX_USE_OS_ARDUINO		FALSE
 	#endif
 	/**
+	 * @brief	Use CMSIS RTOS compatible OS
+	 * @details	Defaults to FALSE
+	 */
+	#ifndef GFX_USE_OS_CMSIS
+		#define GFX_USE_OS_CMSIS		FALSE
+	#endif
+	/**
 	 * @brief   Use Keil CMSIS
 	 * @details	Defaults to FALSE
 	 */
 	#ifndef GFX_USE_OS_KEIL
-		#define GFX_USE_OS_KEIL		FALSE
+		#define GFX_USE_OS_KEIL			FALSE
 	#endif
 /**
  * @}
