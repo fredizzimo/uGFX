@@ -60,7 +60,7 @@ static void SendCheckboxEvent(GWidgetObject *gw) {
 	{
 		// Only react on KEYDOWN events. Ignore KEYUP events.
 		if (pke->keystate & GKEYSTATE_KEYUP) {
-			break;
+			return;
 		}
 
 		// ENTER and SPACE keys to check/uncheck the checkbox
