@@ -55,9 +55,9 @@
  * __inline was standardized with C99. previous to that each compiler handles it differently.
  */
 #undef INLINE
-#ifdef(__KEIL__)
+#ifdef __KEIL__
 	#define INLINE __inline
-#elif(__C51__)
+#elif __C51__
  	#define INLINE __inline
 #else
 	#define INLINE inline
