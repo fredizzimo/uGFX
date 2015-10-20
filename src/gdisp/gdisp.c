@@ -12,18 +12,6 @@
 /* Include the low level driver information */
 #include "gdisp_driver.h"
 
-#if 1
-	#undef INLINE
-	#if defined(__KEIL__) || defined(__C51__)
-		#define INLINE	__inline
-	#else
-		#define INLINE	inline
-	#endif
-#else
-	#undef INLINE
-	#define INLINE
-#endif
-
 // Number of milliseconds for the startup logo - 0 means disabled.
 #if GDISP_NEED_STARTUP_LOGO
 	#define GDISP_STARTUP_LOGO_TIMEOUT		1000
