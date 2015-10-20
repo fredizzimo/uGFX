@@ -51,6 +51,18 @@
 	#endif
 #endif
 
+/**
+ * __inline was standardized with C99. previous to that each compiler handles it differently.
+ */
+#undef INLINE
+#ifdef(__KEIL__)
+	#define INLINE __inline
+#elif(__C51__)
+ 	#define INLINE __inline
+#else
+	#define INLINE inline
+#endif
+
 /* gfxconf.h is the user's project configuration for the GFX system. */
 #include "gfxconf.h"
 

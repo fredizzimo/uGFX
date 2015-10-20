@@ -40,14 +40,14 @@ static bool_t init_board(GMouse* m, unsigned instance)
 	GPIOH->MODER |= GPIO_MODER_MODER7_1;					// Alternate function
 	GPIOH->OTYPER |= GPIO_OTYPER_OT_7;						// OpenDrain
 	GPIOH->OSPEEDR &= ~GPIO_OSPEEDER_OSPEEDR7;				// LowSpeed
-	GPIOH->AFRL |= (0b0100 << 4*7);							// AF4
+	GPIOH->AFRL |= (uint32_t)(0x04 << 4*7);					// AF4
 
 	// I2C3_SDA    GPIOH8, alternate, opendrain, highspeed
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOHEN;					// Enable clock
 	GPIOH->MODER |= GPIO_MODER_MODER8_1;					// Alternate function
 	GPIOH->OTYPER |= GPIO_OTYPER_OT_8;						// OpenDrain
 	GPIOH->OSPEEDR &= ~GPIO_OSPEEDER_OSPEEDR8;				// LowSpeed
-	GPIOH->AFRH |= (0b0100 << 4*0);							// AF4
+	GPIOH->AFRH |= (uint32_t)(0x04 << 4*0);					// AF4
 
 	// Initialize the I2C3 peripheral
 	if (!(i2cInit(I2C3))) {
