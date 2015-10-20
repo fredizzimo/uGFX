@@ -28,7 +28,7 @@
 	 * @details	Defaults to FALSE
 	 */
 	#ifndef GWIN_NEED_WINDOWMANAGER
-		#define GWIN_NEED_WIDGET	FALSE
+		#define GWIN_NEED_WINDOWMANAGER	FALSE
 	#endif
 	/**
 	 * @brief	Should the widget hierarchy be included. This provides parent-child features.
