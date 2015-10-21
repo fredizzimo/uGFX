@@ -36,6 +36,18 @@ static color_t	defaultBgColor = Black;
 	static font_t	defaultFont;
 #endif
 
+/* These init functions are defined by each module but not published */
+extern void _gwmInit(void);
+extern void _gwmDeinit(void);
+#if GWIN_NEED_WIDGET
+	extern void _gwidgetInit(void);
+	extern void _gwidgetDeinit(void);
+#endif
+#if GWIN_NEED_CONTAINERS
+	extern void _gcontainerInit(void);
+	extern void _gcontainerDeinit(void);
+#endif
+
 /*-----------------------------------------------
  * Helper Routines
  *-----------------------------------------------*/
@@ -46,33 +58,24 @@ static color_t	defaultBgColor = Black;
 
 void _gwinInit(void)
 {
-	extern void _gwmInit(void);
-
 	_gwmInit();
-	#if GWIN_NEED_WIDGET
-		extern void _gwidgetInit(void);
 
+	#if GWIN_NEED_WIDGET
 		_gwidgetInit();
 	#endif
-	#if GWIN_NEED_CONTAINERS
-		extern void _gcontainerInit(void);
 
+	#if GWIN_NEED_CONTAINERS
 		_gcontainerInit();
 	#endif
 }
 
 void _gwinDeinit(void)
 {
-	extern void _gwmDeinit(void);
-
 	#if GWIN_NEED_CONTAINERS
-		extern void _gcontainerDeinit(void);
-
 		_gcontainerDeinit();
 	#endif
-	#if GWIN_NEED_WIDGET
-		extern void _gwidgetDeinit(void);
 
+	#if GWIN_NEED_WIDGET
 		_gwidgetDeinit();
 	#endif
 
