@@ -55,7 +55,7 @@ static GTIMER_DECL(MouseTimer);
 #if !GINPUT_TOUCH_NOCALIBRATE
 	#include <string.h>							// Required for memcpy
 
-	static inline void CalibrationTransform(GMouseReading *pt, const GMouseCalibration *c) {
+	static INLINE void CalibrationTransform(GMouseReading *pt, const GMouseCalibration *c) {
 		pt->x = (coord_t) (c->ax * pt->x + c->bx * pt->y + c->cx);
 		pt->y = (coord_t) (c->ay * pt->x + c->by * pt->y + c->cy);
 	}
@@ -330,7 +330,7 @@ static void MousePoll(void *param) {
 		#error "GINPUT: GFX_USE_GDISP must be defined when calibration is required"
 	#endif
 
-	static inline void CalibrationCrossDraw(GMouse *m, const point *pp) {
+	static INLINE void CalibrationCrossDraw(GMouse *m, const point *pp) {
 		gdispGDrawLine(m->display, pp->x-CALIBRATION_CROSS_RADIUS, pp->y, pp->x-CALIBRATION_CROSS_INNERGAP, pp->y, CALIBRATION_CROSS_COLOR1);
 		gdispGDrawLine(m->display, pp->x+CALIBRATION_CROSS_INNERGAP, pp->y, pp->x+CALIBRATION_CROSS_RADIUS, pp->y, CALIBRATION_CROSS_COLOR1);
 		gdispGDrawLine(m->display, pp->x, pp->y-CALIBRATION_CROSS_RADIUS, pp->x, pp->y-CALIBRATION_CROSS_INNERGAP, CALIBRATION_CROSS_COLOR1);
@@ -345,11 +345,11 @@ static void MousePoll(void *param) {
 		gdispGDrawLine(m->display, pp->x+CALIBRATION_CROSS_RADIUS, pp->y-CALIBRATION_CROSS_RADIUS, pp->x+CALIBRATION_CROSS_RADIUS, pp->y-CALIBRATION_CROSS_RADIUS/2, CALIBRATION_CROSS_COLOR2);
 	}
 
-	static inline void CalibrationCrossClear(GMouse *m, const point *pp) {
+	static INLINE void CalibrationCrossClear(GMouse *m, const point *pp) {
 		gdispGFillArea(m->display, pp->x - CALIBRATION_CROSS_RADIUS, pp->y - CALIBRATION_CROSS_RADIUS, CALIBRATION_CROSS_RADIUS*2+1, CALIBRATION_CROSS_RADIUS*2+1, CALIBRATION_BACKGROUND);
 	}
 
-	static inline void CalibrationCalculate(GMouse *m, const point *cross, const point *points) {
+	static INLINE void CalibrationCalculate(GMouse *m, const point *cross, const point *points) {
 		float		dx;
 		coord_t		c0, c1, c2;
 		(void)		m;
