@@ -41,6 +41,7 @@
 //    #define INTERRUPTS_ON()                          optional_code
 
 // Options that (should where relevant) apply to all operating systems
+//    #define GFX_NO_INLINE                            FALSE
 //    #define GFX_COMPILER                             GFX_COMPILER_UNKNOWN
 //    #define GFX_CPU                                  GFX_CPU_UNKNOWN
 //    #define GFX_OS_HEAP_SIZE                         0

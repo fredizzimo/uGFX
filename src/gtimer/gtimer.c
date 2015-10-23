@@ -35,8 +35,7 @@ static DECLARE_THREAD_FUNCTION(GTimerThreadHandler, arg) {
 	systemticks_t	lastTime;
 	GTimerFunction	fn;
 	void			*param;
-	
-	(void)arg;
+	(void)			arg;
 
 	nxtTimeout = TIME_INFINITE;
 	lastTime = 0;
@@ -109,7 +108,6 @@ static DECLARE_THREAD_FUNCTION(GTimerThreadHandler, arg) {
 		lastTime = tm;
 		gfxMutexExit(&mutex);
 	}
-
 	THREAD_RETURN(0);
 }
 

@@ -54,7 +54,7 @@
 #define dummy_read(g)               { volatile uint16_t dummy; dummy = read_data(g); (void) dummy; }
 #define write_reg(g, reg, data)     { write_index(g, reg); write_data(g, data); }
 
-static inline uint16_t read_reg(GDisplay *g, uint32_t reg) {
+static GFXINLINE uint16_t read_reg(GDisplay *g, uint32_t reg) {
   write_index(g, reg);
   return read_data(g);
  }

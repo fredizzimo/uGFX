@@ -5,6 +5,10 @@
 #include "stm32f7xx_hal_gpio.h"
 #include "stm32f7xx_hal_sdram.h"
 
+#if GFX_USE_OS_CHIBIOS
+	#define HAL_GPIO_Init(port, ptr)	palSetGroupMode(port, (ptr)->Pin, 0, (ptr)->Mode|((ptr)->Speed<<3)|((ptr)->Pull<<5)|((ptr)->Alternate<<7))
+#endif
+
 #define SDRAM_MEMORY_WIDTH               FMC_SDRAM_MEM_BUS_WIDTH_16
 #define SDCLOCK_PERIOD                   FMC_SDRAM_CLOCK_PERIOD_2
 #define REFRESH_COUNT                    ((uint32_t)0x0603)   /* SDRAM refresh counter (100Mhz SD clock) */

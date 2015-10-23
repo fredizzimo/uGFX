@@ -1,16 +1,18 @@
 #include "gfx.h"
 #include "stm32f7xx_hal.h"
 
-#if !GFX_USE_OS_CHIBIOS
-systemticks_t gfxSystemTicks(void)
-{
-	return HAL_GetTick();
-}
+#if GFX_USE_OS_CHIBIOS
+	#define HAL_GPIO_Init(port, ptr)	palSetGroupMode(port, (ptr)->Pin, 0, (ptr)->Mode|((ptr)->Speed<<3)|((ptr)->Pull<<5)|((ptr)->Alternate<<7))
+#else
+	systemticks_t gfxSystemTicks(void)
+	{
+		return HAL_GetTick();
+	}
 
-systemticks_t gfxMillisecondsToTicks(delaytime_t ms)
-{
-	return ms;
-}
+	systemticks_t gfxMillisecondsToTicks(delaytime_t ms)
+	{
+		return ms;
+	}
 #endif
 
 static void SystemClock_Config(void);

@@ -19,6 +19,8 @@ FEATURE:    Added color to widget style for focused widgets
 FEATURE:    Added GWIN_FOCUS_HIGHLIGHT_WIDTH as an option in the configuration file
 FEATURE:	Added support for CMSIS RTOS
 FEATURE:	Added support for KEIL RTX
+FEATURE:	Replace all references to inline with a reference to GFXINLINE
+FEATURE:	Added config option GFX_NO_INLINE to run off inlining of ugfx functions.
 
 
 *** Release 2.3 ***

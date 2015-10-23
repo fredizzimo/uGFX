@@ -15,7 +15,7 @@ static const SPIConfig spicfg = {
     /* SPI_CR1_BR_2 |*/ SPI_CR1_BR_1 | SPI_CR1_BR_0,
 };
  
-static inline void init_board(void)
+static GFXINLINE void init_board(void)
 {
   palSetPadMode(GPIOC, 6, PAL_MODE_OUTPUT_PUSHPULL);
   palSetPadMode(GPIOC, 4, PAL_MODE_INPUT);
@@ -26,24 +26,24 @@ static inline void init_board(void)
   spiStart(&SPID1, &spicfg);
 }
  
-static inline bool_t getpin_pressed(void)
+static GFXINLINE bool_t getpin_pressed(void)
 {
   return (!palReadPad(GPIOC, 4));
 }
  
-static inline void aquire_bus(void)
+static GFXINLINE void aquire_bus(void)
 {
   spiAcquireBus(&SPID1);
     palClearPad(GPIOC, 6);
 }
  
-static inline void release_bus(void)
+static GFXINLINE void release_bus(void)
 {
   palSetPad(GPIOC, 6);
   spiReleaseBus(&SPID1);
 }
  
-static inline uint16_t read_value(uint16_t port)
+static GFXINLINE uint16_t read_value(uint16_t port)
 {
     static uint8_t txbuf[3] = {0};
     static uint8_t rxbuf[3] = {0};

@@ -76,7 +76,7 @@ typedef struct LCD_Parameters {
 #define write_data16(g, data)		{ write_data(g, (data)>>8); write_data(g, (data) & 0xFF); }
 #define read_reg(g, reg)            { write_index(g, reg); read_data(g); }
 
-static inline void set_viewport(GDisplay* g) {
+static GFXINLINE void set_viewport(GDisplay* g) {
 	switch(g->g.Orientation) {
 		default:
 		case GDISP_ROTATE_0:
@@ -124,7 +124,7 @@ static inline void set_viewport(GDisplay* g) {
  *
  *	Backlight appears to be forced off (by chip) when display blanked
  */
-static inline void set_backlight(GDisplay *g, uint8_t percent) {
+static GFXINLINE void set_backlight(GDisplay *g, uint8_t percent) {
 	// The SSD1963 has a built-in PWM (duty_cycle 00..FF).
 	// Its output can be used by a Dynamic Background Control or by a host (user)
 	// Check your LCD's hardware, the PWM connection is default left open and instead
