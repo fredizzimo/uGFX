@@ -33,7 +33,7 @@ static const ltdcConfig driverCfg = {
 	LTDC_UNUSED_LAYER_CONFIG
 };
 
-static inline void init_board(GDisplay *g) {
+static GFXINLINE void init_board(GDisplay *g) {
 
 	// As we are not using multiple displays we set g->board to NULL as we don't use it.
 	g->board = 0;
@@ -45,22 +45,22 @@ static inline void init_board(GDisplay *g) {
 	}
 }
 
-static inline void post_init_board(GDisplay *g) {
+static GFXINLINE void post_init_board(GDisplay *g) {
 }
 
-static inline void set_backlight(GDisplay *g, uint8_t percent) {
+static GFXINLINE void set_backlight(GDisplay *g, uint8_t percent) {
 }
 
-static inline void acquire_bus(GDisplay *g) {
+static GFXINLINE void acquire_bus(GDisplay *g) {
 }
 
-static inline void release_bus(GDisplay *g) {
+static GFXINLINE void release_bus(GDisplay *g) {
 }
 
-static inline void write_index(GDisplay *g, uint8_t index) {
+static GFXINLINE void write_index(GDisplay *g, uint8_t index) {
 }
 
-static inline void write_data(GDisplay *g, uint8_t data) {
+static GFXINLINE void write_data(GDisplay *g, uint8_t data) {
 }
 
 #endif /* _GDISP_LLD_BOARD_H */

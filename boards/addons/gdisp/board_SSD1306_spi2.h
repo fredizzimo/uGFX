@@ -33,7 +33,7 @@
 
 static SPIConfig spi_cfg = { NULL, CS_PORT, CS_PAD, 0 };
 
-static inline void init_board(GDisplay *g) {
+static GFXINLINE void init_board(GDisplay *g) {
 	(void) g;
 	g->board = 0; 
 	// Maximum speed of SSD1306 is 10Mhz, so set SPI speed less or = to that.  
@@ -73,31 +73,31 @@ static inline void init_board(GDisplay *g) {
 	}
 }
 
-static inline void post_init_board(GDisplay *g) {
+static GFXINLINE void post_init_board(GDisplay *g) {
 	(void) g;
 }
 
 
-static inline void setpin_reset(GDisplay *g, bool_t state) {
+static GFXINLINE void setpin_reset(GDisplay *g, bool_t state) {
 	(void) g;
 	palWritePad(RESET_PORT, RESET_PAD, !state);
 }
 
-static inline void acquire_bus(GDisplay *g) {
+static GFXINLINE void acquire_bus(GDisplay *g) {
 	(void) g;
 	spiAcquireBus(SPI_DRIVER);
 	spiStart(SPI_DRIVER, &spi_cfg); 
 	spiSelect(SPI_DRIVER);
 }
 
-static inline void release_bus(GDisplay *g) {
+static GFXINLINE void release_bus(GDisplay *g) {
 	(void) g;
 	spiUnselect(SPI_DRIVER);
 	spiStop(SPI_DRIVER);
 	spiReleaseBus(SPI_DRIVER);
 }
 
-static inline void write_cmd(GDisplay *g, uint8_t cmd) {
+static GFXINLINE void write_cmd(GDisplay *g, uint8_t cmd) {
 	(void) g;
 	static uint8_t buf;
 	palClearPad(DNC_PORT, DNC_PAD);
@@ -105,7 +105,7 @@ static inline void write_cmd(GDisplay *g, uint8_t cmd) {
 	spiSend(SPI_DRIVER, 1, &buf);
 }
 
-static inline void write_data(GDisplay *g, uint8_t* data, uint16_t length) {
+static GFXINLINE void write_data(GDisplay *g, uint8_t* data, uint16_t length) {
 	(void) g;
 	palSetPad(DNC_PORT, DNC_PAD);
 	spiSend(SPI_DRIVER, length, data);

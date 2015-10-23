@@ -51,20 +51,22 @@
 	#endif
 #endif
 
-/**
- * __inline was standardized with C99. previous to that each compiler handles it differently.
- */
-#undef INLINE
-#ifdef __KEIL__
-	#define INLINE __inline
-#elif __C51__
- 	#define INLINE __inline
-#else
-	#define INLINE inline
-#endif
-
 /* gfxconf.h is the user's project configuration for the GFX system. */
 #include "gfxconf.h"
+
+/**
+ * @brief   Should various inline ugfx functions be non-inline.
+ * @details	Defaults to FALSE
+ */
+#if GFX_NO_INLINE
+	#define GFXINLINE
+#else
+	#if defined(__KEIL__) || defined(__C51__)
+		#define GFXINLINE	__inline
+	#else
+		#define GFXINLINE	inline
+	#endif
+#endif
 
 /**
  * @name    GFX sub-systems that can be turned on

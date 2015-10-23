@@ -79,7 +79,7 @@
 #define PRIV(g)		((drvPriv *)g->priv)
 
 /* Delay between signal changes, to give time for IO pins to change state. */
-static inline void clockdelay(void)
+static GFXINLINE void clockdelay(void)
 {
 	#if EINK_CLOCKDELAY & 1
 	asm("nop");

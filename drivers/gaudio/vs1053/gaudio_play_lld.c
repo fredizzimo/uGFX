@@ -81,7 +81,7 @@ static void cmd_write(uint16_t addr, uint16_t data) {
 }
 
 #if VS1053_CLK > 12288000
-	static inline void cmd_writenodreq(uint16_t addr, uint16_t data) {
+	static GFXINLINE void cmd_writenodreq(uint16_t addr, uint16_t data) {
 		uint8_t	buf[4];
 
 		// This is the same as cmd_write() except for it doesn't wait for dreq first

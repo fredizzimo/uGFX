@@ -52,7 +52,7 @@ static const SPIConfig spi1config = {
 	static int32_t thdPriority = 0;
 #endif
 
-static inline void init_board(GDisplay *g) {
+static GFXINLINE void init_board(GDisplay *g) {
 	unsigned	i;
 
 	// As we are not using multiple displays we set g->board to NULL as we don't use it.
@@ -78,11 +78,11 @@ static inline void init_board(GDisplay *g) {
 	}
 }
 
-static inline void post_init_board(GDisplay *g) {
+static GFXINLINE void post_init_board(GDisplay *g) {
 	(void) g;
 }
 
-static inline void setpin_reset(GDisplay *g, bool_t state) {
+static GFXINLINE void setpin_reset(GDisplay *g, bool_t state) {
 	(void) g;
 	if(state)
 		CLR_RST
@@ -90,7 +90,7 @@ static inline void setpin_reset(GDisplay *g, bool_t state) {
 		SET_RST
 }
 
-static inline void acquire_bus(GDisplay *g) {
+static GFXINLINE void acquire_bus(GDisplay *g) {
 	(void) g;
 	#if GFX_USE_OS_CHIBIOS
 		thdPriority = (int32_t)chThdGetPriority();
@@ -99,7 +99,7 @@ static inline void acquire_bus(GDisplay *g) {
 	spiAcquireBus(&SPID1);
 }
 
-static inline void release_bus(GDisplay *g) {
+static GFXINLINE void release_bus(GDisplay *g) {
 	(void) g;
 	#if GFX_USE_OS_CHIBIOS
 		chThdSetPriority(thdPriority);
@@ -107,7 +107,7 @@ static inline void release_bus(GDisplay *g) {
 	spiReleaseBus(&SPID1);
 }
 
-static inline void write_cmd(GDisplay *g, uint8_t cmd) {
+static GFXINLINE void write_cmd(GDisplay *g, uint8_t cmd) {
 	uint8_t command[2];
 	(void)	g;
 
@@ -121,7 +121,7 @@ static inline void write_cmd(GDisplay *g, uint8_t cmd) {
 	spiStop(&SPID1);
 }
 
-static inline void write_data(GDisplay *g, uint8_t* data, uint16_t length) {
+static GFXINLINE void write_data(GDisplay *g, uint8_t* data, uint16_t length) {
 	(void) g;
 
 	spiStart(&SPID1, &spi1config);

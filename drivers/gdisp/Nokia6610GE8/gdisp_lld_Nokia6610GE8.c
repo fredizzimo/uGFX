@@ -129,7 +129,7 @@
 #define write_cmd4(g, cmd, d1, d2, d3, d4)	{ write_index(g, cmd); write_data4(g, d1, d2, d3, d4); }
 
 #if GDISP_HARDWARE_DRAWPIXEL
-	static inline void set_viewpoint(GDisplay* g) {
+	static GFXINLINE void set_viewpoint(GDisplay* g) {
 		#if GDISP_NOKIA_ORIENTATION && GDISP_NEED_CONTROL
 			switch(g->g.Orientation) {
 			default:
@@ -158,7 +158,7 @@
 	}
 #endif
 
-static inline void set_viewport(GDisplay* g) {
+static GFXINLINE void set_viewport(GDisplay* g) {
 	#if GDISP_NOKIA_ORIENTATION && GDISP_NEED_CONTROL
 		switch(g->g.Orientation) {
 		default:

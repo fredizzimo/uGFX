@@ -40,7 +40,7 @@
 
 #define write_reg(g, reg, data)		{ write_index(g, reg); write_data(g, data); }
 
-static inline void set_viewport(GDisplay* g) {
+static GFXINLINE void set_viewport(GDisplay* g) {
 	write_reg(g, HX8347D_REG_SCL, g->p.x);
 	write_reg(g, HX8347D_REG_SCH, g->p.x >> 8);
 	write_reg(g, HX8347D_REG_ECL, g->p.x + g->p.cx -1);
