@@ -69,6 +69,16 @@
 	 */
 	#define DECLARE_THREAD_STACK(name, sz)			uint8_t name[sz];
 
+	/*
+	 * @brief	Return from a thread
+	 *
+	 * @details	Some underlying operating systems allow to return a value from a thread while others don't.
+	 *			For systems that don't allow to return a value from a thread function this call is simply ignored.
+	 *
+	 * @param[in] reval		The value which should be returned
+	 */
+	#define THREAD_RETURN(retval)					return retval
+
 	/**
 	 * @name	Various platform (and operating system) constants
 	 * @note	Your platform may use slightly different definitions to these
