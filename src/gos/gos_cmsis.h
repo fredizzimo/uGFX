@@ -42,12 +42,12 @@ typedef osPriority			threadpriority_t;
 #define HIGH_PRIORITY		osPriorityHigh
 
 typedef struct gfxSem {
-	osSemaphoreDef_t def;
+	uint32_t semaphore[2];
 	osSemaphoreId id;
 } gfxSem;
 
 typedef struct gfxMutex {
-	osMutexDef_t def;
+	uint32_t mutex[4];
 	osMutexId id;
 } gfxMutex;
 

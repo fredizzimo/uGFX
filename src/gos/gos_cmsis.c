@@ -32,14 +32,20 @@ void _gosDeinit(void)
 
 void gfxMutexInit(gfxMutex* pmutex)
 {
-	pmutex->id = osMutexCreate(&(pmutex->def));
+	osMutexDef_t def;
+	def.mutex = pmutex->mutex;
+	
+	pmutex->id = osMutexCreate(&def);
 }
 
 void gfxSemInit(gfxSem* psem, semcount_t val, semcount_t limit)
 {
-	psem->id = osSemaphoreCreate(&(psem->def), limit);
-	while(val--)
-		osSemaphoreRelease(psem->id);
+	osSemaphoreDef_t def;
+	def.semaphore = psem->semaphore;
+	
+	(void)limit;
+	
+	psem->id = osSemaphoreCreate(&def, val);
 }
 
 void gfxSemDestroy(gfxSem* psem)
