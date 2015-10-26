@@ -43,9 +43,9 @@ void gfxSemInit(gfxSem* psem, semcount_t val, semcount_t limit)
 	osSemaphoreDef_t def;
 	def.semaphore = psem->semaphore;
 	
-	psem->id = osSemaphoreCreate(&def, limit);
-	while(val--)
-		osSemaphoreRelease(psem->id);
+	if (val > limit) val = limit;
+	psem->available = limit - val;
+	psem->id = osSemaphoreCreate(&def, val);
 }
 
 void gfxSemDestroy(gfxSem* psem)
@@ -55,22 +55,29 @@ void gfxSemDestroy(gfxSem* psem)
 
 bool_t gfxSemWait(gfxSem* psem, delaytime_t ms)
 {
-	return osSemaphoreWait(psem->id, ms) > 0;
+	if (osSemaphoreWait(psem->id, ms) == osOK) {
+		psem->available++;
+		return TRUE;
+	}
+	return FALSE;
 }
 
 bool_t gfxSemWaitI(gfxSem* psem)
 {
-	return osSemaphoreWait(psem->id, 0) > 0;
+	return gfxSemWait(psem, 0);
 }
 
 void gfxSemSignal(gfxSem* psem)
 {
-	osSemaphoreRelease(psem->id);
+	gfxSemSignalI(psem);
 }
 
 void gfxSemSignalI(gfxSem* psem)
 {
-	osSemaphoreRelease(psem->id);
+	if (psem->available) {
+		psem->available--;
+		osSemaphoreRelease(psem->id);
+	}
 }
 
 gfxThreadHandle gfxThreadCreate(void* stackarea, size_t stacksz, threadpriority_t prio, DECLARE_THREAD_FUNCTION((*fn),p), void* param)
