@@ -43,9 +43,9 @@ void gfxSemInit(gfxSem* psem, semcount_t val, semcount_t limit)
 	osSemaphoreDef_t def;
 	def.semaphore = psem->semaphore;
 	
-	(void)limit;
-	
-	psem->id = osSemaphoreCreate(&def, val);
+	psem->id = osSemaphoreCreate(&def, limit);
+	while(val--)
+		osSemaphoreRelease(psem->id);
 }
 
 void gfxSemDestroy(gfxSem* psem)
