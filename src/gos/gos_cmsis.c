@@ -55,7 +55,7 @@ void gfxSemDestroy(gfxSem* psem)
 
 bool_t gfxSemWait(gfxSem* psem, delaytime_t ms)
 {
-	if (osSemaphoreWait(psem->id, ms) == osOK) {
+	if (osSemaphoreWait(psem->id, ms) > 0) {
 		psem->available++;
 		return TRUE;
 	}
