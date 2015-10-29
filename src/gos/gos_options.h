@@ -70,6 +70,13 @@
 		#define GFX_USE_OS_ECOS			FALSE
 	#endif
 	/**
+	 * @brief   Use RAWRTOS
+	 * @details Defaults to FALSE
+	 */
+	#ifndef GFX_USE_OS_RAWRTOS
+		#define GFX_USE_OS_RAWRTOS		FALSE
+	#endif
+	/**
 	 * @brief   Use Arduino
 	 * @details	Defaults to FALSE
 	 */
