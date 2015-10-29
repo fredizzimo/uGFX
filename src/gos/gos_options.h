@@ -56,7 +56,7 @@
 		#define GFX_USE_OS_OSX			FALSE
 	#endif
 	/**
-	 * @brief   Use a Raw 32 bit CPU based system
+	 * @brief   Use a Raw 32-bit CPU based system (Bare Metal)
 	 * @details	Defaults to FALSE
 	 */
 	#ifndef GFX_USE_OS_RAW32
