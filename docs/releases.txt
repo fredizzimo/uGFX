@@ -11,12 +11,12 @@ FEATURE:	New gdisp driver STM32LTDC
 FEATURE:	Better support for Raw32 platforms
 FEATURE:	Renaming GFX_NO_OS_INIT to GFX_OS_NO_INIT
 FEATURE:	New demo applications/combo
-FEATURE:    Adding more font metrics (BaselineX and BaselineY)
-FEATURE:    Adding gdispGetStringWidthCount()
-FEATURE:    Implementing widget focusing. See gwinSetFocus() and gwinGetFocus()
-FEATURE:    Adding TextEdit widget
-FEATURE:    Added color to widget style for focused widgets
-FEATURE:    Added GWIN_FOCUS_HIGHLIGHT_WIDTH as an option in the configuration file
+FEATURE:	Adding more font metrics (BaselineX and BaselineY)
+FEATURE:	Adding gdispGetStringWidthCount()
+FEATURE:	Implementing widget focusing. See gwinSetFocus() and gwinGetFocus()
+FEATURE:	Adding TextEdit widget
+FEATURE:	Added color to widget style for focused widgets
+FEATURE:	Added GWIN_FOCUS_HIGHLIGHT_WIDTH as an option in the configuration file
 FEATURE:	Added support for CMSIS RTOS
 FEATURE:	Added support for KEIL RTX
 FEATURE:	Replace all references to inline with a reference to GFXINLINE
