@@ -45,6 +45,7 @@ typedef int16_t	coord_t;
 /*===========================================================================*/
 
 /**
+ * @struct point
  * @brief   Type for a 2D point on the screen.
  */
 typedef struct point {
