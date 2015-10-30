@@ -20,6 +20,17 @@
 	#define GDISP_STARTUP_LOGO_TIMEOUT		0
 #endif
 
+// For internal use only.
+#if GDISP_NEED_TEXT_WORDWRAP
+	typedef struct wrapParameters {
+		GDisplay* g;
+		coord_t x;
+		coord_t y;
+		font_t font;
+		justify_t justify;
+	} wrapParameters_t;
+#endif
+
 /*===========================================================================*/
 /* Driver local variables.                                                   */
 /*===========================================================================*/
@@ -3156,6 +3167,19 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 		#undef GD
 	}
 
+	/* Callback to render string boxes with word wrap. */
+	#if GDISP_NEED_TEXT_WORDWRAP
+		static bool mf_line_callback(mf_str line, uint16_t count, void *state) {
+			wrapParameters_t* wrapParameters = (wrapParameters_t*)state;
+
+			mf_render_aligned(wrapParameters->font, wrapParameters->x, wrapParameters->y, wrapParameters->justify, line, count, fillcharglyph, wrapParameters->g);
+
+			wrapParameters->y += wrapParameters->font->baseline_y;
+
+			return TRUE;
+		}	
+	#endif
+
 	void gdispGDrawChar(GDisplay *g, coord_t x, coord_t y, uint16_t c, font_t font, color_t color) {
 		MUTEX_ENTER(g);
 		g->t.font = font;
@@ -3247,7 +3271,19 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 		}
 		y += (cy+1 - font->height)/2;
 
-		mf_render_aligned(font, x, y, justify, str, 0, drawcharglyph, g);
+		/* Render */
+		#if GDISP_NEED_TEXT_WORDWRAP
+			wrapParameters_t wrapParameters;
+			wrapParameters.x = x;
+			wrapParameters.y = y;
+			wrapParameters.font = font;
+			wrapParameters.justify = justify;
+			wrapParameters.g = g;
+
+			mf_wordwrap(font, cx, str, mf_line_callback, &wrapParameters);
+		#else
+			mf_render_aligned(font, x, y, justify, str, 0, fillcharglyph, g);
+		#endif
 
 		autoflush(g);
 		MUTEX_EXIT(g);
@@ -3285,7 +3321,18 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 			y += (cy+1 - font->height)/2;
 
 			/* Render */
-			mf_render_aligned(font, x, y, justify, str, 0, fillcharglyph, g);
+			#if GDISP_NEED_TEXT_WORDWRAP
+				wrapParameters_t wrapParameters;
+				wrapParameters.x = x;
+				wrapParameters.y = y;
+				wrapParameters.font = font;
+				wrapParameters.justify = justify;
+				wrapParameters.g = g;
+
+				mf_wordwrap(font, cx, str, mf_line_callback, &wrapParameters);
+			#else
+				mf_render_aligned(font, x, y, justify, str, 0, fillcharglyph, g);
+			#endif
 		}
 
 		autoflush(g);

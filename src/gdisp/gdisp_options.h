@@ -387,6 +387,14 @@
  * @{
  */
 	/**
+	 * @brief	Enable advanced word-wrapping.
+	 * @details	Only has an effect with @p gdispGDrawStringBox() and @p gdispGFillStringBox()
+	 * @details Defaults to FALSE
+	 */
+	#ifndef GDISP_NEED_TEXT_WORDWRAP
+		#define GDISP_NEED_TEXT_WORDWRAP		FALSE
+	#endif
+	/**
 	 * @brief	Enable UTF-8 support for text rendering.
 	 * @details Defaults to FALSE
 	 */
