@@ -3174,8 +3174,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 
 			mf_render_aligned(wrapParameters->font, wrapParameters->x, wrapParameters->y, wrapParameters->justify, line, count, fillcharglyph, wrapParameters->g);
 
-			wrapParameters->y += wrapParameters->font->baseline_y;
-
+			wrapParameters->y += wrapParameters->font->line_height;
 			return TRUE;
 		}	
 	#endif
