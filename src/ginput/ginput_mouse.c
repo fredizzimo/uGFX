@@ -56,8 +56,11 @@ static GTIMER_DECL(MouseTimer);
 	#include <string.h>							// Required for memcpy
 
 	static GFXINLINE void CalibrationTransform(GMouseReading *pt, const GMouseCalibration *c) {
-		pt->x = (coord_t) (c->ax * pt->x + c->bx * pt->y + c->cx);
-		pt->y = (coord_t) (c->ay * pt->x + c->by * pt->y + c->cy);
+		coord_t x = (coord_t) (c->ax * pt->x + c->bx * pt->y + c->cx);
+		coord_t y = (coord_t) (c->ay * pt->x + c->by * pt->y + c->cy);
+		
+		pt->x = x;
+		pt->y = y;
 	}
 #endif
 
