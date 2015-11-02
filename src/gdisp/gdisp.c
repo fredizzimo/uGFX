@@ -3248,7 +3248,12 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 	}
 
 	void gdispGDrawStringBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, const char* str, font_t font, color_t color, justify_t justify) {
+		#if GDISP_NEED_TEXT_WORDWRAP
+			wrapParameters_t wrapParameters;
+		#endif
+
 		MUTEX_ENTER(g);
+
 		g->t.font = font;
 		g->t.clipx0 = x;
 		g->t.clipy0 = y;
@@ -3272,7 +3277,6 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 
 		/* Render */
 		#if GDISP_NEED_TEXT_WORDWRAP
-			wrapParameters_t wrapParameters;
 			wrapParameters.x = x;
 			wrapParameters.y = y;
 			wrapParameters.font = font;
@@ -3289,7 +3293,12 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 	}
 
 	void gdispGFillStringBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, const char* str, font_t font, color_t color, color_t bgcolor, justify_t justify) {
+		#if GDISP_NEED_TEXT_WORDWRAP
+			wrapParameters_t wrapParameters;
+		#endif
+
 		MUTEX_ENTER(g);
+
 		g->p.cx = cx;
 		g->p.cy = cy;
 		g->t.font = font;
@@ -3321,7 +3330,6 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 
 			/* Render */
 			#if GDISP_NEED_TEXT_WORDWRAP
-				wrapParameters_t wrapParameters;
 				wrapParameters.x = x;
 				wrapParameters.y = y;
 				wrapParameters.font = font;
