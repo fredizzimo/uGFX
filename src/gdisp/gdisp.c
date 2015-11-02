@@ -3285,7 +3285,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 
 			mf_wordwrap(font, cx, str, mf_line_callback, &wrapParameters);
 		#else
-			mf_render_aligned(font, x, y, justify, str, 0, fillcharglyph, g);
+			mf_render_aligned(font, x, y, justify, str, 0, drawcharglyph, g);
 		#endif
 
 		autoflush(g);
