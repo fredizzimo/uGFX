@@ -61,7 +61,7 @@ GHandle gwinGTexteditCreate(GDisplay* g, GTexteditObject* wt, GWidgetInit* pInit
 #define gwinTexteditCreate(wt, pInit, maxSize)			gwinGTexteditCreate(GDISP, wt, pInit, maxSize)
 
 /**
- * @defgroup Renderings_Textedit Textedit rendering functions
+ * @defgroup Renderings_Textedit Renderings
  *
  * @brief				Built-in rendering functions for the textedit widget.
  *

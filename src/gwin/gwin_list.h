@@ -327,7 +327,7 @@ void gwinListViewItem(GHandle gh, int item);
 #endif
 
 /**
- * @defgroup Renderings_List List rendering functions
+ * @defgroup Renderings_List Renderings
  *
  * @brief				Built-in rendering functions for the list widget.
  *

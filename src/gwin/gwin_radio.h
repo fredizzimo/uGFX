@@ -116,7 +116,7 @@ bool_t gwinRadioIsPressed(GHandle gh);
 GHandle gwinRadioGetActive(uint16_t group);
 
 /**
- * @defgroup Renderings_Radiobutton RadioButton rendering functions
+ * @defgroup Renderings_Radiobutton Renderings
  *
  * @brief				Built-in rendering functions for the radiobutton widget.
  *

@@ -120,7 +120,7 @@ GHandle gwinGContainerCreate(GDisplay *g, GContainerObject *gw, const GWidgetIni
 
 
 /**
- * @defgroup Renderings_Container Container rendering functions
+ * @defgroup Renderings_Container Renderings
  *
  * @brief				Built-in rendering functions for the container widget.
  *
@@ -158,21 +158,26 @@ void gwinContainerDraw_Std(GWidgetObject *gw, void *param);
  */
 void gwinContainerDraw_Transparent(GWidgetObject *gw, void *param);
 
-/**
- * @brief				Renders the container and uses the specified image for the client area.
- *
- * @details				The image will be tiled throghout the client area. Therefore, to archive the best looking result the
- *						supplied image needs to be of the same size as the client area size of the container widget (inner size).
- *
- * @param[in] gw		The widget object (must be a container object).
- * @param[in] param		A parameter passed in from the user. Must be an image handle. See note below.
- *
- * @note				The image must be already opened before calling  @p gwinSetCustomDraw(). The handle is passed as the parameter
- *						to this function.
- *
- * @api
- */
-void gwinContainerDraw_Image(GWidgetObject *gw, void *param);
+#if GDISP_NEED_IMAGE || defined(__DOXYGEN__)
+	/**
+	 * @brief				Renders the container and uses the specified image for the client area.
+	 *
+	 * @details				The image will be tiled throghout the client area. Therefore, to archive the best looking result the
+	 *						supplied image needs to be of the same size as the client area size of the container widget (inner size).
+	 *
+	 * @param[in] gw		The widget object (must be a container object).
+	 * @param[in] param		A parameter passed in from the user. Must be an image handle. See note below.
+	 *
+	 * @note				The image must be already opened before calling  @p gwinSetCustomDraw(). The handle is passed as the parameter
+	 *						to this function.
+	 *
+	 * @pre					GDISP_NEED_IMAGE must be set to TRUE
+	 *
+	 * @api
+	 */
+	void gwinContainerDraw_Image(GWidgetObject *gw, void *param);
+#endif /* GDISP_NEED_IMAGE */
+
 /** @} */
 
 #ifdef __cplusplus

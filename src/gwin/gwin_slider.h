@@ -143,7 +143,7 @@ void gwinSliderSetPosition(GHandle gh, int pos);
 void gwinSliderSendExtendedEvents(GHandle gh, bool_t enabled);
 
 /**
- * @defgroup Renderings_Slider Slider rendering functions
+ * @defgroup Renderings_Slider Renderings
  *
  * @brief				Built-in rendering functions for the slider widget.
  *

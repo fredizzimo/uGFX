@@ -86,7 +86,7 @@ GHandle gwinGButtonCreate(GDisplay *g, GButtonObject *gb, const GWidgetInit *pIn
 bool_t gwinButtonIsPressed(GHandle gh);
 
 /**
- * @defgroup Renderings_Button Button rendering functions
+ * @defgroup Renderings_Button Renderings
  *
  * @brief				Built-in rendering functions for the button widget.
  *

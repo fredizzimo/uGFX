@@ -101,7 +101,7 @@ void gwinLabelSetBorder(GHandle gh, bool_t border);
 #endif
 
 /**
- * @defgroup Renderings_Label Label rendering functions
+ * @defgroup Renderings_Label Renderings
  *
  * @brief				Built-in rendering functions for the label widget.
  *

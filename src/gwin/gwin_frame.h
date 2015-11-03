@@ -62,7 +62,7 @@ GHandle gwinGFrameCreate(GDisplay *g, GFrameObject *fo, GWidgetInit *pInit, uint
 #define gwinFrameCreate(fo, pInit, flags)	gwinGFrameCreate(GDISP, fo, pInit, flags);
 
 /**
- * @defgroup Renderings_Frame Frame rendering functions
+ * @defgroup Renderings_Frame Renderings
  *
  * @brief				Built-in rendering functions for the frame widget.
  *
@@ -103,21 +103,25 @@ void gwinFrameDraw_Std(GWidgetObject *gw, void *param);
  */
 void gwinFrameDraw_Transparent(GWidgetObject *gw, void *param);
 
-/**
- * @brief				Renders the frame widget and uses the specified image for the client area.
- *
- * @details				The image will be tiled throghout the client area. Therefore, to archive the best looking result the
- *						supplied image needs to be of the same size as the client area size of the frame widget (inner size).
- *
- * @param[in] gw		The widget object (must be a frame object).
- * @param[in] param		A parameter passed in from the user. Must be an image handle. See note below.
- *
- * @note				The image must be already opened before calling  @p gwinSetCustomDraw(). The handle is passed as the parameter
- *						to this function.
- *
- * @api
- */
-void gwinFrameDraw_Image(GWidgetObject *gw, void *param);
+#if GDISP_NEED_IMAGE || defined(__DOXYGEN__)
+	/**
+	 * @brief				Renders the frame widget and uses the specified image for the client area.
+	 *
+	 * @details				The image will be tiled throghout the client area. Therefore, to archive the best looking result the
+	 *						supplied image needs to be of the same size as the client area size of the frame widget (inner size).
+	 *
+	 * @param[in] gw		The widget object (must be a frame object).
+	 * @param[in] param		A parameter passed in from the user. Must be an image handle. See note below.
+	 *
+	 * @note				The image must be already opened before calling  @p gwinSetCustomDraw(). The handle is passed as the parameter
+	 *						to this function.
+	 *
+	 * @pre					GDISP_NEED_IMAGE must be set to TRUE
+	 *
+	 * @api
+	 */
+	void gwinFrameDraw_Image(GWidgetObject *gw, void *param);
+#endif /* GDISP_NEED_IMAGE */
 /** @} */
 
 #ifdef __cplusplus

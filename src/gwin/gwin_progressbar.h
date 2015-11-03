@@ -176,7 +176,7 @@ void gwinProgressbarDecrement(GHandle gh);
 #endif /* GWIN_PROGRESSBAR_AUTO */
 
 /**
- * @defgroup Renderings_Progressbar Progressbar rendering functions
+ * @defgroup Renderings_Progressbar Renderings
  *
  * @brief				Built-in rendering functions for the progressbar widget.
  *

@@ -99,7 +99,7 @@ void gwinCheckboxCheck(GHandle gh, bool_t isChecked);
 bool_t gwinCheckboxIsChecked(GHandle gh);
 
 /**
- * @defgroup Renderings_Checkbox Checkbox rendering functions
+ * @defgroup Renderings_Checkbox Renderings
  *
  * @brief				Built-in rendering functions for the checkbox widget.
  *

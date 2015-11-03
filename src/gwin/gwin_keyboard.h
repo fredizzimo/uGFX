@@ -9,7 +9,7 @@
  * @file    src/gwin/gwin_keyboard.h
  * @brief   GWIN Graphic window subsystem header file.
  *
- * @defgroup Keyboard Keyboard
+ * @defgroup VirtualKeyboard VirtualKeyboard
  * @ingroup Widgets
  *
  * @details		GWIN allows it to easily create buttons with different styles
@@ -102,7 +102,7 @@ GSourceHandle gwinKeyboardGetEventSource(GHandle gh);
 void gwinKeyboardSetLayout(GHandle gh, struct GVKeyTable *layout);
 
 /**
- * @defgroup Renderings_Keyboard Keyboard rendering functions
+ * @defgroup Renderings_Keyboard Renderings
  *
  * @brief				Built-in rendering functions for the keyboard widget.
  *
