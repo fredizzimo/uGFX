@@ -40,8 +40,6 @@ static coord_t getheight(const char *text, font_t font, coord_t maxwidth) {
 	return gdispGetFontMetric(font, fontHeight);
 }
 
-static void gwinLabelDefaultDraw(GWidgetObject *gw, void *param);
-
 static const gwidgetVMT labelVMT = {
 	{
 		"Label",				// The class name
@@ -136,7 +134,7 @@ void gwinLabelSetBorder(GHandle gh, bool_t border) {
 	}
 #endif // GWIN_LABEL_ATTRIBUTE
 
-static void gwinLabelDefaultDraw(GWidgetObject *gw, void *param) {
+void gwinLabelDefaultDraw(GWidgetObject *gw, void *param) {
 	coord_t				w, h;
 	color_t				c;
 	(void)				param;

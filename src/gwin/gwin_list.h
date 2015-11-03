@@ -326,6 +326,33 @@ void gwinListViewItem(GHandle gh, int item);
 	void gwinListItemSetImage(GHandle gh, int item, gdispImage *pimg);
 #endif
 
+/**
+ * @defgroup Renderings_List List rendering functions
+ *
+ * @brief				Built-in rendering functions for the list widget.
+ *
+ * @details				These function may be passed to @p gwinSetCustomDraw() to get different list drawing styles.
+ *
+ * @note				In your custom list drawing function you may optionally call these
+ * 						standard functions and then draw your extra details on top.
+ * @note				These custom drawing routines don't have to worry about setting clipping as the framework
+ * 						sets clipping to the object window prior to calling these routines.
+ *
+ * @{
+ */
+
+/**
+ * @brief				The default rendering function for the list widget
+ *
+ * @param[in] gw		The widget object (must be a list object)
+ * @param[in] param		A parameter passed in from the user. Ignored by this function.
+ *
+ * @api
+ */
+void gwinListDefaultDraw(GWidgetObject* gw, void* param);
+
+/** @} */
+
 #ifdef __cplusplus
 }
 #endif

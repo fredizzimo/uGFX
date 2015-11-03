@@ -74,8 +74,6 @@ static void sendListEvent(GWidgetObject *gw, int item) {
 	}
 }
 
-static void gwinListDefaultDraw(GWidgetObject* gw, void* param);
-
 #if GINPUT_NEED_MOUSE
     static void ListMouseSelect(GWidgetObject* gw, coord_t x, coord_t y) {
         const gfxQueueASyncItem*    qi;
@@ -657,7 +655,7 @@ void gwinListViewItem(GHandle gh, int item) {
 	}
 #endif
 
-static void gwinListDefaultDraw(GWidgetObject* gw, void* param) {
+void gwinListDefaultDraw(GWidgetObject* gw, void* param) {
 	(void)param;
 
 	#if GDISP_NEED_CONVEX_POLYGON

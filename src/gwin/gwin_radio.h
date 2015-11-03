@@ -116,24 +116,54 @@ bool_t gwinRadioIsPressed(GHandle gh);
 GHandle gwinRadioGetActive(uint16_t group);
 
 /**
- * @brief	Some custom radio button drawing routines
- * @details	These function may be passed to @p gwinSetCustomDraw() to get different radio button drawing styles
+ * @defgroup Renderings_Radiobutton RadioButton rendering functions
  *
- * @param[in] gw		The widget object (in this case a radio button)
- * @param[in] param		A parameter passed in from the user
+ * @brief				Built-in rendering functions for the radiobutton widget.
  *
- * @note				In your custom radio drawing function you may optionally call these
+ * @details				These function may be passed to @p gwinSetCustomDraw() to get different radiobutton drawing styles.
+ *
+ * @note				In your custom radiobutton drawing function you may optionally call these
  * 						standard functions and then draw your extra details on top.
- * @note				The standard functions below ignore the param parameter.
  * @note				These custom drawing routines don't have to worry about setting clipping as the framework
  * 						sets clipping to the object window prior to calling these routines.
  *
- * @api
  * @{
  */
-void gwinRadioDraw_Radio(GWidgetObject *gw, void *param);					// @< A standard radio button
-void gwinRadioDraw_Button(GWidgetObject *gw, void *param);					// @< Draw as a button
-void gwinRadioDraw_Tab(GWidgetObject *gw, void *param);						// @< Draw as a tab
+
+/**
+ * @brief				The default rendering function for the radiobutton widget
+ *
+ * @param[in] gw		The widget object (must be a button radioobject)
+ * @param[in] param		A parameter passed in from the user. Ignored by this function.
+ *
+ * @api
+ */
+void gwinRadioDraw_Radio(GWidgetObject *gw, void *param);
+
+/**
+ * @brief				Renders the radiobutton in form of a regular rectangular button
+ *
+ * @param[in] gw		The widget object (must be a button radioobject)
+ * @param[in] param		A parameter passed in from the user. Ignored by this function.
+ *
+ * @api
+ */
+void gwinRadioDraw_Button(GWidgetObject *gw, void *param);
+
+/**
+ * @brief				Used to render tabbed menus.
+ *
+ * @details				Multiple radiobutton widgets can be placed right next to each other and be used to implement
+ *						a tabbed menu using this rendering function.
+ *
+ * @note				This exists for legacy reasons. Have a look at the @p Tabset widget instead.
+ *
+ * @param[in] gw		The widget object (must be a button radioobject)
+ * @param[in] param		A parameter passed in from the user. Ignored by this function.
+ *
+ * @api
+ */
+void gwinRadioDraw_Tab(GWidgetObject *gw, void *param);
 /** @} */
 
 #ifdef __cplusplus

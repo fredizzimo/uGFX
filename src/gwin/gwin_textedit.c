@@ -127,8 +127,6 @@ static bool_t resizeText(GWidgetObject* gw, size_t pos, int32_t diff) {
 	}
 #endif
 
-static void gwinTexteditDefaultDraw(GWidgetObject* gw, void* param);
-
 static const gwidgetVMT texteditVMT = {
 	{
 		"TextEdit",					// The class name
@@ -196,7 +194,7 @@ GHandle gwinGTexteditCreate(GDisplay* g, GTexteditObject* wt, GWidgetInit* pInit
 	return (GHandle)wt;
 }
 
-static void gwinTexteditDefaultDraw(GWidgetObject* gw, void* param)
+void gwinTexteditDefaultDraw(GWidgetObject* gw, void* param)
 {
 	const char *p;
 	coord_t		cpos, tpos;

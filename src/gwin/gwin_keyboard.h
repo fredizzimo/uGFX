@@ -101,6 +101,32 @@ GSourceHandle gwinKeyboardGetEventSource(GHandle gh);
  */
 void gwinKeyboardSetLayout(GHandle gh, struct GVKeyTable *layout);
 
+/**
+ * @defgroup Renderings_Keyboard Keyboard rendering functions
+ *
+ * @brief				Built-in rendering functions for the keyboard widget.
+ *
+ * @details				These function may be passed to @p gwinSetCustomDraw() to get different keyboard drawing styles.
+ *
+ * @note				In your custom keyboard drawing function you may optionally call these
+ * 						standard functions and then draw your extra details on top.
+ * @note				The built-in functions below ignore the param parameter.
+ * @note				These custom drawing routines don't have to worry about setting clipping as the framework
+ * 						sets clipping to the object window prior to calling these routines.
+ *
+ * @{
+ */
+
+/**
+ * @brief				The default rendering function for the keyboard widget
+ *
+ * @param[in] gw		The widget object (must be a keyboard object)
+ * @param[in] param		A parameter passed in from the user. Ignored by this function.
+ *
+ * @api
+ */
+void gwinKeyboardDraw_Normal(GWidgetObject *gw, void *param);
+
 /** @} */
 
 #ifdef __cplusplus

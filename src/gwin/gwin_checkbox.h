@@ -99,23 +99,50 @@ void gwinCheckboxCheck(GHandle gh, bool_t isChecked);
 bool_t gwinCheckboxIsChecked(GHandle gh);
 
 /**
- * @brief	Some custom checkbox drawing routines
- * @details	These function may be passed to @p gwinSetCustomDraw() to get different checkbox drawing styles
+ * @defgroup Renderings_Checkbox Checkbox rendering functions
  *
- * @param[in] gw			The widget (which must be a checkbox)
- * @param[in] param			A parameter passed in from the user
+ * @brief				Built-in rendering functions for the checkbox widget.
  *
- * @note				In your custom checkbox drawing function you may optionally call this
+ * @details				These function may be passed to @p gwinSetCustomDraw() to get different checkbox drawing styles.
+ *
+ * @note				In your custom checkbox drawing function you may optionally call these
  * 						standard functions and then draw your extra details on top.
- * @note				The standard functions below ignore the param parameter.
  * @note				These custom drawing routines don't have to worry about setting clipping as the framework
  * 						sets clipping to the object window prior to calling these routines.
  *
- * @api
  * @{
  */
+
+/**
+ * @brief				Renders a square checkbox where the text is on the right side of the checkbox.
+ *
+ * @param[in] gw		The widget (must be a checkbox)
+ * @param[in] param		A parameter passed in from the user. Ignored by this function.
+ *
+ * @api
+ */
 void gwinCheckboxDraw_CheckOnLeft(GWidgetObject *gw, void *param);
+
+/**
+ * @brief				Renders a square checkbox where the text is on the left side of the checkbox.
+ *
+ * @param[in] gw		The widget (must be a checkbox)
+ * @param[in] param		A parameter passed in from the user. Ignored by this function.
+ *
+ * @api
+ */
 void gwinCheckboxDraw_CheckOnRight(GWidgetObject *gw, void *param);
+
+/**
+ * @brief				Renders a checkbox in form of a rectangular button with the text inside of it.
+ *
+ * @details				This behaves like a button that can be toggled.
+ *
+ * @param[in] gw		The widget (must be a checkbox)
+ * @param[in] param		A parameter passed in from the user. Ignored by this function.
+ *
+ * @api
+ */
 void gwinCheckboxDraw_Button(GWidgetObject *gw, void *param);
 /** @} */
 

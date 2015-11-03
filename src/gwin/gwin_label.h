@@ -100,6 +100,34 @@ void gwinLabelSetBorder(GHandle gh, bool_t border);
 	void gwinLabelSetAttribute(GHandle gh, coord_t tab, const char* attr);
 #endif
 
+/**
+ * @defgroup Renderings_Label Label rendering functions
+ *
+ * @brief				Built-in rendering functions for the label widget.
+ *
+ * @details				These function may be passed to @p gwinSetCustomDraw() to get different label drawing styles.
+ *
+ * @note				In your custom label drawing function you may optionally call these
+ * 						standard functions and then draw your extra details on top.
+ * @note				The built-in functions below ignore the param parameter.
+ * @note				These custom drawing routines don't have to worry about setting clipping as the framework
+ * 						sets clipping to the object window prior to calling these routines.
+ *
+ * @{
+ */
+
+/**
+ * @brief				The default rendering function for the label widget
+ *
+ * @param[in] gw		The widget object (must be a label object)
+ * @param[in] param		A parameter passed in from the user. Ignored by this function.
+ *
+ * @api
+ */
+void gwinLabelDefaultDraw(GWidgetObject *gw, void *param)
+
+/** @} */
+
 #ifdef __cplusplus
 }
 #endif
