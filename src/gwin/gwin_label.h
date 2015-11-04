@@ -124,7 +124,7 @@ void gwinLabelSetBorder(GHandle gh, bool_t border);
  *
  * @api
  */
-void gwinLabelDefaultDraw(GWidgetObject *gw, void *param)
+void gwinLabelDefaultDraw(GWidgetObject *gw, void *param);
 
 /** @} */
 

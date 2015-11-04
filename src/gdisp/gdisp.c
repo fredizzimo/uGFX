@@ -3169,7 +3169,15 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 
 	/* Callback to render string boxes with word wrap. */
 	#if GDISP_NEED_TEXT_WORDWRAP
-		static bool mf_line_callback(mf_str line, uint16_t count, void *state) {
+		static bool mf_drawline_callback(mf_str line, uint16_t count, void *state) {
+			wrapParameters_t* wrapParameters = (wrapParameters_t*)state;
+
+			mf_render_aligned(wrapParameters->font, wrapParameters->x, wrapParameters->y, wrapParameters->justify, line, count, drawcharglyph, wrapParameters->g);
+
+			wrapParameters->y += wrapParameters->font->line_height;
+			return TRUE;
+		}	
+		static bool mf_fillline_callback(mf_str line, uint16_t count, void *state) {
 			wrapParameters_t* wrapParameters = (wrapParameters_t*)state;
 
 			mf_render_aligned(wrapParameters->font, wrapParameters->x, wrapParameters->y, wrapParameters->justify, line, count, fillcharglyph, wrapParameters->g);
@@ -3283,7 +3291,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 			wrapParameters.justify = justify;
 			wrapParameters.g = g;
 
-			mf_wordwrap(font, cx, str, mf_line_callback, &wrapParameters);
+			mf_wordwrap(font, cx, str, mf_drawline_callback, &wrapParameters);
 		#else
 			mf_render_aligned(font, x, y, justify, str, 0, drawcharglyph, g);
 		#endif
@@ -3336,7 +3344,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 				wrapParameters.justify = justify;
 				wrapParameters.g = g;
 
-				mf_wordwrap(font, cx, str, mf_line_callback, &wrapParameters);
+				mf_wordwrap(font, cx, str, mf_fillline_callback, &wrapParameters);
 			#else
 				mf_render_aligned(font, x, y, justify, str, 0, fillcharglyph, g);
 			#endif
