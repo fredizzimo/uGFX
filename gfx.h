@@ -54,10 +54,6 @@
 /* gfxconf.h is the user's project configuration for the GFX system. */
 #include "gfxconf.h"
 
-/**
- * @brief   Should various inline ugfx functions be non-inline.
- * @details	Defaults to FALSE
- */
 #if GFX_NO_INLINE
 	#define GFXINLINE
 #else

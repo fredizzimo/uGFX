@@ -103,6 +103,15 @@
  * @name    GOS Optional Parameters
  * @{
  */
+ 	/**
+	 * @brief	Should various inline ugfx functions be non-inline.
+	 * @details	Defaults to FALSE
+	 * @note	Generally there is no need to set this to TRUE as it will have huge performance impacts
+	 *			in the driver level.
+	 */
+	#ifndef GFX_NO_INLINE
+		#define GFX_NO_INLINE			FALSE
+	#endif
 	/**
 	 * @brief	Enable compiler specific code
 	 * @details	Defaults to GFX_COMPILER_UNKNOWN
