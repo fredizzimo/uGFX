@@ -19,8 +19,10 @@ static void SystemClock_Config(void);
 static void CPU_CACHE_Enable(void);
 
 void Raw32OSInit(void) {
-    /* Enable the CPU Cache */
-    CPU_CACHE_Enable();
+    /* Enable the CPU Cache's */
+	SCB_EnableICache();	// Enable I-Cache
+	SCB_EnableDCache();	// Enable D-Cache
+
 
     /* STM32F7xx HAL library initialization:
          - Configure the Flash ART accelerator on ITCM interface
@@ -106,18 +108,3 @@ void SystemClock_Config(void)
 
   HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
 }
-
-/**
-  * @brief  CPU L1-Cache enable.
-  * @param  None
-  * @retval None
-  */
-static void CPU_CACHE_Enable(void)
-{
-  /* Enable I-Cache */
-  SCB_EnableICache();
-
-  /* Enable D-Cache */
-  SCB_EnableDCache();
-}
-

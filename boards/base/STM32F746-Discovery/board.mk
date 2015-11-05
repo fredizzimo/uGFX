@@ -1,5 +1,4 @@
-GFXINC  +=	$(GFXLIB)/boards/base/STM32F746-Discovery \
-			$(STMHAL)/Inc
+GFXINC  +=	$(GFXLIB)/boards/base/STM32F746-Discovery
 GFXSRC  +=	$(GFXLIB)/boards/base/STM32F746-Discovery/stm32f746g_discovery_sdram.c \
 			$(GFXLIB)/boards/base/STM32F746-Discovery/stm32f7_i2c.c
 				
