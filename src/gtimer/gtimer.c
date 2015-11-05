@@ -22,6 +22,7 @@ static gfxMutex			mutex;
 static gfxThreadHandle	hThread = 0;
 static GTimer			*pTimerHead = 0;
 static gfxSem			waitsem;
+static systemticks_t	ticks2ms;
 static DECLARE_THREAD_STACK(waTimerThread, GTIMER_THREAD_WORKAREA_SIZE);
 
 /*===========================================================================*/
@@ -99,7 +100,7 @@ static DECLARE_THREAD_FUNCTION(GTimerThreadHandler, arg) {
 				
 				// Find when we next need to wake up
 				if (!(pt->flags & GTIMER_FLG_INFINITE) && pt->when - tm < nxtTimeout)
-					nxtTimeout = pt->when - tm;
+					nxtTimeout = (pt->when - tm)/ticks2ms;
 				pt = pt->next;
 			} while(pt != pTimerHead);
 		}
@@ -115,6 +116,7 @@ void _gtimerInit(void)
 {
 	gfxSemInit(&waitsem, 0, 1);
 	gfxMutexInit(&mutex);
+	ticks2ms = gfxMillisecondsToTicks(1);
 }
 
 void _gtimerDeinit(void)

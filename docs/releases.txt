@@ -23,7 +23,7 @@ FEATURE:	Replace all references to inline with a reference to GFXINLINE
 FEATURE:	Added config option GFX_NO_INLINE to run off inlining of ugfx functions.
 FEATURE:	Added word-wrapping support for gdispDrawStringBox() and gdispFillStringBox()
 FIX:		Fixing issue in touchscreen calibration code
-
+FIX:		Fix gtimer for high clock rate devices
 
 *** Release 2.3 ***
 FEATURE:	Added more events to the slider widget
