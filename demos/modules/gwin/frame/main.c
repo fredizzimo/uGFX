@@ -31,7 +31,7 @@ static void _createWidgets(void) {
     wi.g.y = 100;
     wi.g.x = 150;
     wi.text = "Surprise!";
-    gwinLabelCreate(0, &wi, justifyCenter);
+    gwinLabelCreate(0, &wi);
 
     // Apply the frame parameters
     wi.g.width = 300;

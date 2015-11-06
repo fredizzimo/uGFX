@@ -38,8 +38,6 @@
 typedef struct GLabelObject {
 	GWidgetObject	w;
 
-	justify_t justify;
-
 	#if GWIN_LABEL_ATTRIBUTE
 		coord_t         tab;
 		const char*		attr;
@@ -57,14 +55,13 @@ extern "C" {
  * @param[in] g			The GDisplay to display this window on
  * @param[in] widget	The label structure to initialise. If this is NULL, the structure is dynamically allocated.
  * @param[in] pInit		The initialisation parameters to use.
- * @param[in] justify	The justification.
  *
  * @return				NULL if there is no resultat drawing area, otherwise the widget handle.
  *
  * @api
  */
-GHandle gwinGLabelCreate(GDisplay *g, GLabelObject *widget, GWidgetInit *pInit, justify_t justify);
-#define gwinLabelCreate(w, pInit, justify)			gwinGLabelCreate(GDISP, w, pInit, justify)
+GHandle gwinGLabelCreate(GDisplay *g, GLabelObject *widget, GWidgetInit *pInit);
+#define gwinLabelCreate(w, pInit)			gwinGLabelCreate(GDISP, w, pInit)
 
 /**
  * @brief				Border settings for the default rendering routine

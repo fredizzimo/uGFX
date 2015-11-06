@@ -43,12 +43,12 @@ static void createWidgets(void) {
 	// Create the label for the first list
 	wi.g.width = 150; wi.g.height = 20; wi.g.x = 10, wi.g.y = 80;
 	wi.text = "List 1: Default";
-	ghLabel1 = gwinLabelCreate(0, &wi, justifyCenter);
+	ghLabel1 = gwinLabelCreate(0, &wi);
 
 	// Create the label for the second list
 	wi.g.width = 150; wi.g.height = 20; wi.g.x = 165, wi.g.y = 80;
 	wi.text = "List 2: Smooth scrolling";
-	ghLabel1 = gwinLabelCreate(0, &wi, justifyCenter);
+	ghLabel1 = gwinLabelCreate(0, &wi);
 
 	// The first list widget
 	wi.g.width = 150;
