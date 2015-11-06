@@ -79,7 +79,7 @@ void gwinLabelSetJustification(GHandle gh, justify_t justify);
 /**
  * @brief				Border settings for the default rendering routine
  *
- * @param[in] gh		The widget handle (must be a list handle)
+ * @param[in] gh		The widget handle (must be a label handle)
  * @param[in] border	Shall a border be rendered?
  *
  * @api
