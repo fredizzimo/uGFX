@@ -117,14 +117,36 @@ void gwinLabelSetBorder(GHandle gh, bool_t border);
  */
 
 /**
- * @brief				The default rendering function for the label widget
+ * @brief				Renders a label with the text left jestified.
+ *
+ * @note				This is the default rendering function.
  *
  * @param[in] gw		The widget object (must be a label object)
  * @param[in] param		A parameter passed in from the user. Ignored by this function.
  *
  * @api
  */
-void gwinLabelDefaultDraw(GWidgetObject *gw, void *param);
+void gwinLabelDrawJustifiedLeft(GWidgetObject *gw, void *param);
+
+/**
+ * @brief				Renders a label with the text right jestified.
+ *
+ * @param[in] gw		The widget object (must be a label object)
+ * @param[in] param		A parameter passed in from the user. Ignored by this function.
+ *
+ * @api
+ */
+void gwinLabelDrawJustifiedRight(GWidgetObject *gw, void *param);
+
+/**
+ * @brief				Renders a label with the text center jestified.
+ *
+ * @param[in] gw		The widget object (must be a label object)
+ * @param[in] param		A parameter passed in from the user. Ignored by this function.
+ *
+ * @api
+ */
+void gwinLabelDrawJustifiedCenter(GWidgetObject *gw, void *param);
 
 /** @} */
 
