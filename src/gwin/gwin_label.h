@@ -67,6 +67,16 @@ GHandle gwinGLabelCreate(GDisplay *g, GLabelObject *widget, GWidgetInit *pInit, 
 #define gwinLabelCreate(w, pInit, justify)			gwinGLabelCreate(GDISP, w, pInit, justify)
 
 /**
+ * @brief				Set text justification
+ *
+ * @param[in] gh		The widget handle (must be a label handle)
+ * @param[in] justify	The justification
+ *
+ * @api
+ */
+void gwinLabelSetJustification(GHandle gh, justify_t justify);
+
+/**
  * @brief				Border settings for the default rendering routine
  *
  * @param[in] gh		The widget handle (must be a list handle)
