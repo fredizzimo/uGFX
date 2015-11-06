@@ -112,15 +112,6 @@ GHandle gwinGLabelCreate(GDisplay *g, GLabelObject *widget, GWidgetInit *pInit, 
 	return (GHandle)widget;
 }
 
-void gwinLabelSetJustification(GHandle gh, justify_t justify)
-{
-	// is it a valid handle?
-	if (gh->vmt != (gwinVMT *)&labelVMT)
-		return;
-
-	gh2obj->justify = justify;
-}
-
 void gwinLabelSetBorder(GHandle gh, bool_t border) {
 	// is it a valid handle?
 	if (gh->vmt != (gwinVMT *)&labelVMT)
