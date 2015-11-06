@@ -42,13 +42,13 @@ static void createWidgets(void) {
 	// Create the IP label
 	wi.g.width = 200; wi.g.height = 20; wi.g.x = 10, wi.g.y = 80;
 	wi.text = "192.168.1.42";
-	ghLabel1 = gwinLabelCreate(0, &wi);
+	ghLabel1 = gwinLabelCreate(0, &wi, justifyLeft);
 	gwinLabelSetAttribute(ghLabel1, 100, "Current IP:");
 
 	// Create the DHCP label
 	wi.g.width = 200; wi.g.height = 20; wi.g.x = 10, wi.g.y = 100;
 	wi.text = "Off";
-	ghLabel2 = gwinLabelCreate(0, &wi);
+	ghLabel2 = gwinLabelCreate(0, &wi, justifyLeft);
 	gwinLabelSetAttribute(ghLabel2, 100, "DHCP:");
 }
 

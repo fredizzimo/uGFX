@@ -80,7 +80,7 @@ static const gwidgetVMT labelVMT = {
 	#endif
 };
 
-GHandle gwinGLabelCreate(GDisplay *g, GLabelObject *widget, GWidgetInit *pInit) {
+GHandle gwinGLabelCreate(GDisplay *g, GLabelObject *widget, GWidgetInit *pInit, justify_t justify) {
 	uint16_t flags = 0;
 
 	// auto assign width
@@ -89,7 +89,7 @@ GHandle gwinGLabelCreate(GDisplay *g, GLabelObject *widget, GWidgetInit *pInit) 
 		flags |= GLABEL_FLG_WAUTO;
 		pInit->g.width = getwidth(pInit->text, gwinGetDefaultFont(), gdispGGetWidth(g) - pInit->g.x);
 	}
- 
+
 	// auto assign height
 	if (pInit->g.height <= 0) {
 		flags |= GLABEL_FLG_HAUTO;
@@ -98,6 +98,8 @@ GHandle gwinGLabelCreate(GDisplay *g, GLabelObject *widget, GWidgetInit *pInit) 
 
 	if (!(widget = (GLabelObject *)_gwidgetCreate(g, &widget->w, pInit, &labelVMT)))
 		return 0;
+
+ 	widget->justify = justify;
 
 	#if GWIN_LABEL_ATTRIBUTE
 		widget->tab = 0;
@@ -163,12 +165,13 @@ void gwinLabelDefaultDraw(GWidgetObject *gw, void *param) {
 
 	#if GWIN_LABEL_ATTRIBUTE
 		if (gw2obj->attr) {
-			gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, gw2obj->tab, h, gw2obj->attr, gw->g.font, c, gw->pstyle->background, justifyLeft);
-			gdispGFillStringBox(gw->g.display, gw->g.x + gw2obj->tab, gw->g.y, w-gw2obj->tab, h, gw->text, gw->g.font, c, gw->pstyle->background, justifyLeft);
-		} else
-			gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, w, h, gw->text, gw->g.font, c, gw->pstyle->background, justifyLeft);
+			gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, gw2obj->tab, h, gw2obj->attr, gw->g.font, c, gw->pstyle->background, gw2obj->justify);
+			gdispGFillStringBox(gw->g.display, gw->g.x + gw2obj->tab, gw->g.y, w-gw2obj->tab, h, gw->text, gw->g.font, c, gw->pstyle->background, gw2obj->justify);
+		} else {
+			gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, w, h, gw->text, gw->g.font, c, gw->pstyle->background, gw2obj->justify);
+		}
 	#else
-		gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, w, h, gw->text, gw->g.font, c, gw->pstyle->background, justifyLeft);
+		gdispGFillStringBox(gw->g.display, gw->g.x, gw->g.y, w, h, gw->text, gw->g.font, c, gw->pstyle->background, gw2obj->justify);
 	#endif
 
 	// render the border (if any)

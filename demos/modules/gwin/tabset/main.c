@@ -52,19 +52,19 @@ static void createWidgets(void) {
 	wi.g.width = 120; wi.g.height = 20; wi.g.x = 10; wi.g.y = 10;
 	wi.g.parent = ghPage1;
 	wi.text = "This is page Nr. 1";
-	ghLabel1 = gwinLabelCreate(0, &wi);
+	ghLabel1 = gwinLabelCreate(0, &wi, justifyLeft);
 
 	// Add some widgets to Page 2
 	wi.g.width = 120; wi.g.height = 20; wi.g.x = 10; wi.g.y = 50;
 	wi.g.parent = ghPage2;
 	wi.text = "This is page Nr. 2";
-	ghLabel2 = gwinLabelCreate(0, &wi);
+	ghLabel2 = gwinLabelCreate(0, &wi, justifyLeft);
 
 	// Add some widgets to Page 3
 	wi.g.width = 120; wi.g.height = 20; wi.g.x = 10; wi.g.y = 90;
 	wi.g.parent = ghPage3;
 	wi.text = "This is page Nr. 3";
-	ghLabel3 = gwinLabelCreate(0, &wi);
+	ghLabel3 = gwinLabelCreate(0, &wi, justifyLeft);
 }
 
 int main(void) {

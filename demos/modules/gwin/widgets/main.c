@@ -325,19 +325,19 @@ static void createWidgets(void) {
 	wi.g.parent = ghPgLabels;
 	wi.g.width = pagewidth-10;	wi.g.height = LABEL_HEIGHT;
 	wi.g.x = wi.g.y = 5; wi.text = "N/A";
-	ghLabelSlider1 = gwinLabelCreate(0, &wi);
+	ghLabelSlider1 = gwinLabelCreate(0, &wi, justifyLeft);
 	gwinLabelSetAttribute(ghLabelSlider1, 100, "Slider 1:");
 	wi.g.y += LABEL_HEIGHT + 2;
-	ghLabelSlider2 = gwinLabelCreate(0, &wi);
+	ghLabelSlider2 = gwinLabelCreate(0, &wi, justifyLeft);
 	gwinLabelSetAttribute(ghLabelSlider2, 100, "Slider 2:");
 	wi.g.y += LABEL_HEIGHT + 2;
-	ghLabelSlider3 = gwinLabelCreate(0, &wi);
+	ghLabelSlider3 = gwinLabelCreate(0, &wi, justifyLeft);
 	gwinLabelSetAttribute(ghLabelSlider3, 100, "Slider 3:");
 	wi.g.y += LABEL_HEIGHT + 2;
-	ghLabelSlider4 = gwinLabelCreate(0, &wi);
+	ghLabelSlider4 = gwinLabelCreate(0, &wi, justifyLeft);
 	gwinLabelSetAttribute(ghLabelSlider4, 100, "Slider 4:");
 	wi.g.y += LABEL_HEIGHT + 2;
-	ghLabelRadio1 = gwinLabelCreate(0, &wi);
+	ghLabelRadio1 = gwinLabelCreate(0, &wi, justifyLeft);
 	gwinLabelSetAttribute(ghLabelRadio1, 100, "RadioButton 1:");
 
 
