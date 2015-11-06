@@ -725,7 +725,9 @@ void gwinListDefaultDraw(GWidgetObject* gw, void* param) {
 	gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, ps->edge);
 
 	// Set the clipping region so we do not override the frame.
-	gdispGSetClip(gw->g.display, gw->g.x+1, gw->g.y+1, gw->g.width-2, gw->g.height-2);
+	#if GDISP_NEED_CLIP
+		gdispGSetClip(gw->g.display, gw->g.x+1, gw->g.y+1, gw->g.width-2, gw->g.height-2);
+	#endif
 
 	// Draw until we run out of room or items
 	for (y = 1-(gw2obj->top%iheight); y < gw->g.height-2 && qi; qi = gfxQueueASyncNext(qi), y += iheight) {
