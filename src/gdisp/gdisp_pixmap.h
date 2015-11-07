@@ -7,10 +7,11 @@
 
 /**
  * @file    src/gdisp/gdisp_pixmap.h
- * @brief   GDISP image header file.
  *
  * @defgroup Pixmap Pixmap
  * @ingroup GDISP
+ *
+ * @brief   Sub-Module for dynamic framebuffers.
  *
  * @note	A Pixmap is an off-screen virtual display that can be drawn to just like any other
  * 			display. It can then be copied to a real display using the standard gdispGBlitArea() call.

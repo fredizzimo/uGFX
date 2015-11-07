@@ -12,6 +12,8 @@
  * @defgroup Widget Widget
  * @ingroup Widgets
  *
+ * @brief		The basic widget implementation (base class).
+ *
  * @details		A widget is a Window that supports interacting with the user
  * 				via an input device such as a mouse or toggle buttons. It is the
  * 				base class for widgets such as buttons and sliders.

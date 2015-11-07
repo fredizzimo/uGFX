@@ -12,7 +12,7 @@
  * @defgroup Progressbar Progressbar
  * @ingroup Widgets
  *
- * @details		Create progressbars with different styles
+ * @brief		ProgressBar widget.
  *
  * @pre			GFX_USE_GWIN must be set to TRUE in your gfxconf.h
  * @pre			GWIN_NEED_PROGRESSBAR must be set to TRUE in your gfxconf.h

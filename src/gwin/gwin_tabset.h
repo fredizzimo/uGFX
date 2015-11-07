@@ -12,6 +12,8 @@
  * @defgroup Tabset Tabset
  * @ingroup Containers
  *
+ * @brief		Tabwidget to implement different "Tabs" or "Pages". Used to structure menus.
+ *
  * @details		A tabset is a set of tabs that control visibility of a number of pages of widgets.
  *				Note: Although the tabset is implemented as a container - you don't put your controls
  *				directly on the tabset. Instead you create a page and put your widgets on the page.

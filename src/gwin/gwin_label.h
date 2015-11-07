@@ -12,8 +12,7 @@
  * @defgroup Label Label
  * @ingroup Widgets
  *
- * @details		GWIN allos it to create an label widget. The widget
- *				takes no user input.
+ * @brief		Simple label widget.
  *
  * @details		Setting the dimensions of the widget to 0 will automatically
  *				set the labels dimensions to fit the entire text. Note that the

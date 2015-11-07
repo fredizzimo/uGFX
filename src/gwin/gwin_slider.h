@@ -12,7 +12,9 @@
  * @defgroup Slider Slider
  * @ingroup Widgets
  *
- * @details		Create sliders with different styles
+ * @brief		Slider widget.
+ *
+ * @details		Extended events can be enabled using @p gwinSliderSendExtendedEvents().
  *
  * @pre			GFX_USE_GWIN must be set to TRUE in your gfxconf.h
  * @pre			GWIN_NEED_SLIDER must be set to TRUE in your gfxconf.h

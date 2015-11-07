@@ -11,8 +11,10 @@
  * @defgroup Container Container
  * @ingroup Containers
  *
- * @details		A Container is a GWindow that supports child windows. It is also
- * 				a widget in its own right and therefore can accept user input directly.
+ * @brief	Basic container.
+ *
+ * @details	A Container is a GWindow that supports child windows. It is also
+ * 			a widget in its own right and therefore can accept user input directly.
  *
  * @pre		GFX_USE_GWIN and GWIN_NEED_CONTAINERS must be set to TRUE in your gfxconf.h
  * @{

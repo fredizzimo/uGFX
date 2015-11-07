@@ -12,6 +12,8 @@
  * @defgroup Frame Frame
  * @ingroup Containers
  *
+ * @brief		Container with window decoration.
+ *
  * @details		A frame is a rectangular window that can have optional border as well as buttons to
  *				close, maximize and minimize it. The main purpose of this widget is to contain children. 	
  *

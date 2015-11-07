@@ -12,6 +12,8 @@
  * @defgroup Button Button
  * @ingroup Widgets
  *
+ * @brief		PushButton widget.
+ *
  * @details		GWIN allows it to easily create buttons with different styles
  *				and check for different meta states such as: PRESSED, CLICKED,
  *				RELEASED etc.

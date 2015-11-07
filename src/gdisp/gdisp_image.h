@@ -7,10 +7,12 @@
 
 /**
  * @file    src/gdisp/gdisp_image.h
- * @brief   GDISP image header file.
  *
  * @defgroup Image Image
  * @ingroup GDISP
+ *
+ * @brief   Sub-Module for image handling.
+ *
  * @{
  */
 

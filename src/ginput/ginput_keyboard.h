@@ -7,10 +7,12 @@
 
 /**
  * @file    src/ginput/ginput_keyboard.h
- * @brief   GINPUT GFX User Input subsystem header file.
  *
  * @defgroup Keyboard Keyboard
  * @ingroup GINPUT
+ *
+ * @brief   Sub-Module to handle physical keyboards.
+ *
  * @{
  */
 

@@ -9,8 +9,11 @@
  * @file    src/gaudio/gaudio_driver_play.h
  * @brief   GAUDIO - Audio play driver header file.
  *
- * @defgroup Driver Driver
+ * @defgroup GAUDIO_Driver_Playback Driver Playback
  * @ingroup GAUDIO
+ *
+ * @brief Playback driver interface for the GAUDIO module.
+ *
  * @{
  */
 

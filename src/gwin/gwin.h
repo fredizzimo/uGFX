@@ -11,6 +11,8 @@
  * @defgroup Window Window
  * @ingroup Windows
  *
+ * @brief		The basic window implementation (base class).
+ *
  * @details		GWIN provides a basic window manager which allows it to easily
  *				create and destroy different windows at runtime. Each window
  *				will have it's own properties such as colors as well as

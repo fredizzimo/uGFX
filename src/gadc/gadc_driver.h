@@ -9,8 +9,11 @@
  * @file    src/gadc/gadc_driver.h
  * @brief   GADC - Periodic ADC driver header file.
  *
- * @defgroup Driver Driver
+ * @defgroup GADC_Driver Driver
  * @ingroup GADC
+ *
+ * @brief Driver interface for the GADC module.
+ *
  * @{
  */
 

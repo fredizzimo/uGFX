@@ -7,12 +7,12 @@
 
 /**
  * @file    src/gdisp/gdisp_colors.h
- * @brief   GDISP color definitions header file.
- *
- * @details	GDISP color definitions and macros
  *
  * @defgroup Colors Colors
  * @ingroup GDISP
+ *
+ * @brief   Sub-Module for color handling.
+ *
  * @{
  */
 

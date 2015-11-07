@@ -12,6 +12,8 @@
  * @defgroup Checkbox Checkbox
  * @ingroup Widgets
  *
+ * @brief		CheckBox widget.
+ *
  * @details		GWIN allows it to easily create a group of checkbox buttons.
  *
  * @pre			GFX_USE_GWIN must be set to TRUE in your gfxconf.h

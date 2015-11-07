@@ -12,7 +12,9 @@
  * @defgroup List List
  * @ingroup Widgets
  *
- * @details		GWIN allows it to create a list widget.
+ * @brief		List Widget. Used to display lists of items.
+ *
+ * @details		Provides advanced features such as multi-selection, smooth scrolling and item icons.
  *
  * @pre			GFX_USE_GDISP must be set to TRUE in your gfxconf.h
  * @pre			GFX_USE_GWIN must be set to TRUE in your gfxconf.h

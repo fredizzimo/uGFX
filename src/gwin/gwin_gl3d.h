@@ -12,7 +12,10 @@
  * @defgroup 3D 3D
  * @ingroup Windows
  *
+ * @brief	Widget that can be used to render OpenGL.
+ *
  * @details	3D GWIN window based on OpenGL (or more exactly Tiny GL)
+ *
  * @pre		GFX_USE_GWIN must be set to TRUE in your gfxconf.h
  * @pre		GWIN_NEED_GL3D must be set to TRUE in your gfxconf.h
  *

@@ -9,8 +9,11 @@
  * @file    src/gaudio/gaudio_driver_record.h
  * @brief   GAUDIO - Audio Recording driver header file.
  *
- * @defgroup Driver Driver
+ * @defgroup GAUDIO_Driver_Record Driver Recording
  * @ingroup GAUDIO
+ *
+ * @brief Recording driver interface for the GAUDIO module.
+ *
  * @{
  */
 
