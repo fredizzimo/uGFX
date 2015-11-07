@@ -656,13 +656,6 @@ void gwinListViewItem(GHandle gh, int item) {
 #endif
 
 void gwinListDefaultDraw(GWidgetObject* gw, void* param) {
-	(void)param;
-
-	#if GDISP_NEED_CONVEX_POLYGON
-		static const point upArrow[] = { {0, LST_ARROW_SZ}, {LST_ARROW_SZ, LST_ARROW_SZ}, {LST_ARROW_SZ/2, 0} };
-		static const point downArrow[] = { {0, 0}, {LST_ARROW_SZ, 0}, {LST_ARROW_SZ/2, LST_ARROW_SZ} };
-	#endif
-
 	const gfxQueueASyncItem*	qi;
 	int							i;
 	coord_t						x, y, iheight, iwidth;
@@ -671,6 +664,12 @@ void gwinListDefaultDraw(GWidgetObject* gw, void* param) {
 	#if GWIN_NEED_LIST_IMAGES
 		coord_t					sy;
 	#endif
+	#if GDISP_NEED_CONVEX_POLYGON
+		static const point upArrow[] = { {0, LST_ARROW_SZ}, {LST_ARROW_SZ, LST_ARROW_SZ}, {LST_ARROW_SZ/2, 0} };
+		static const point downArrow[] = { {0, 0}, {LST_ARROW_SZ, 0}, {LST_ARROW_SZ/2, LST_ARROW_SZ} };
+	#endif
+
+	(void)param;
 
 	// is it a valid handle?
 	if (gw->g.vmt != (gwinVMT *)&listVMT)
