@@ -11,7 +11,7 @@
  *
  * @addtogroup GFILE
  *
- * @brief	Module which contains Operating system independent FILEIO
+ * @brief	Module which contains operating system independent file I/O.
  *
  * @{
  */
