@@ -2,7 +2,7 @@
 *** Releases                                                              ***
 *****************************************************************************
 
-*** Changes after 2.3 ***
+*** Release 2.4 ***
 FIX:		Add missing stm32m3 cpu makefile option. Update doc to match.
 FEATURE:	Added ability to compile ugfx as a single file. Simply compile src/gfx_mk.c
 FEATURE:	Added GFXSINGLEMAKE=yes|no to the ugfx makefile to compile ugfx as a single file.
