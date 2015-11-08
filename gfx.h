@@ -35,12 +35,7 @@
  * @brief   Generic 'true' boolean constant.
  */
 #if !defined(TRUE) || defined(__DOXYGEN__)
- 	// Keil/ARMCC requires some special threatment. can probably be generalized to always be 1.
- 	#if (GFX_COMPILER == GFX_COMPILER_ARMCC) || (GFX_COMPILER == GFX_COMPILER_KEIL)
-		#define TRUE		1
-	#else
-		#define TRUE        -1
- 	#endif
+	#define TRUE        -1
 #endif
 
 /**
