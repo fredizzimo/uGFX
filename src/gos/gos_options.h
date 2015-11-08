@@ -118,13 +118,14 @@
 	 * @note	This is setting enables optimisations that are compiler specific. It does
 	 * 			not need to be specified as reasonable defaults and various auto-detection
 	 * 			will happen as required.
-	 * @note	Currently only used by ugfx generic thread handling (GOS_USE_OS_RAW32 and GOS_USE_OS_ARDUINO)
 	 */
 	#ifndef GFX_COMPILER
 		#define GFX_COMPILER			GFX_COMPILER_UNKNOWN
 	#endif
 	#define GFX_COMPILER_UNKNOWN		0		// Unknown compiler
 	#define GFX_COMPILER_MINGW32		1		// MingW32 (x86) compiler for windows
+	#define GFX_COMPILER_ARMCC			2		// ARMCC compiler
+	#define GFX_COMPILER_KEIL			3		// Keil (use this when working with uVision IDE)
 	/**
 	 * @brief	Enable cpu specific code
 	 * @details	Defaults to GFX_CPU_UNKNOWN
