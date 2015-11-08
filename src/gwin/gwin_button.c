@@ -168,6 +168,7 @@ static const GColorSet *getButtonColors(GWidgetObject *gw) {
 #if GWIN_FLAT_STYLING
 	void gwinButtonDraw_Normal(GWidgetObject *gw, void *param) {
 		const GColorSet *	pcol;
+
 		(void)				param;
 
 		if (gw->g.vmt != (gwinVMT *)&buttonVMT)	return;
@@ -187,6 +188,7 @@ static const GColorSet *getButtonColors(GWidgetObject *gw) {
 		fixed				dalpha;
 		coord_t				i;
 		color_t				tcol, bcol;
+
 		(void)				param;
 
 		if (gw->g.vmt != (gwinVMT *)&buttonVMT)	return;
@@ -211,6 +213,7 @@ static const GColorSet *getButtonColors(GWidgetObject *gw) {
 #if GDISP_NEED_ARC
 	void gwinButtonDraw_Rounded(GWidgetObject *gw, void *param) {
 		const GColorSet *	pcol;
+
 		(void)				param;
 
 		if (gw->g.vmt != (gwinVMT *)&buttonVMT)	return;
@@ -231,6 +234,7 @@ static const GColorSet *getButtonColors(GWidgetObject *gw) {
 #if GDISP_NEED_ELLIPSE
 	void gwinButtonDraw_Ellipse(GWidgetObject *gw, void *param) {
 		const GColorSet *	pcol;
+
 		(void)				param;
 
 		if (gw->g.vmt != (gwinVMT *)&buttonVMT)	return;
@@ -246,8 +250,9 @@ static const GColorSet *getButtonColors(GWidgetObject *gw) {
 #if GDISP_NEED_CONVEX_POLYGON
 	void gwinButtonDraw_ArrowUp(GWidgetObject *gw, void *param) {
 		const GColorSet *	pcol;
-		(void)				param;
 		point				arw[7];
+
+		(void)				param;
 
 		if (gw->g.vmt != (gwinVMT *)&buttonVMT)	return;
 		pcol = getButtonColors(gw);
@@ -296,8 +301,9 @@ static const GColorSet *getButtonColors(GWidgetObject *gw) {
 
 	void gwinButtonDraw_ArrowDown(GWidgetObject *gw, void *param) {
 		const GColorSet *	pcol;
-		(void)				param;
 		point				arw[7];
+
+		(void)				param;
 
 		if (gw->g.vmt != (gwinVMT *)&buttonVMT)	return;
 		pcol = getButtonColors(gw);
@@ -346,8 +352,9 @@ static const GColorSet *getButtonColors(GWidgetObject *gw) {
 
 	void gwinButtonDraw_ArrowLeft(GWidgetObject *gw, void *param) {
 		const GColorSet *	pcol;
-		(void)				param;
 		point				arw[7];
+
+		(void)				param;
 
 		if (gw->g.vmt != (gwinVMT *)&buttonVMT)	return;
 		pcol = getButtonColors(gw);
@@ -396,8 +403,9 @@ static const GColorSet *getButtonColors(GWidgetObject *gw) {
 
 	void gwinButtonDraw_ArrowRight(GWidgetObject *gw, void *param) {
 		const GColorSet *	pcol;
-		(void)				param;
 		point				arw[7];
+		
+		(void)				param;
 
 		if (gw->g.vmt != (gwinVMT *)&buttonVMT)	return;
 		pcol = getButtonColors(gw);
