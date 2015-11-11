@@ -9,47 +9,13 @@
 
 #if GFX_USE_GDISP && GDISP_NEED_IMAGE && GDISP_NEED_IMAGE_GIF
 
-/**
- * Helper Routines Needed
- */
-void *gdispImageAlloc(gdispImage *img, size_t sz);
-void gdispImageFree(gdispImage *img, void *ptr, size_t sz);
+#include "gdisp_image_support.h"
 
 /**
  * How big an array to allocate for blitting (in pixels)
  * Bigger is faster but uses more RAM.
  */
 #define BLIT_BUFFER_SIZE	32
-
-/*
- * Determining endianness as at compile time is not guaranteed or compiler portable.
- * We use the best test we can. If we can't guarantee little endianness we do things the
- * hard way.
- */
-#define GUARANTEED_LITTLE_ENDIAN	(!defined(SAFE_ENDIAN) && !defined(SAFE_ALIGNMENT) && (\
-		(defined(__BYTE_ORDER__)&&(__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)) \
-		|| defined(__LITTLE_ENDIAN__) \
-		|| defined(__LITTLE_ENDIAN) \
-		|| defined(_LITTLE_ENDIAN) \
-/*		|| (1 == *(unsigned char *)&(const int){1})*/ \
-		))
-
-
-/* This is a runtime test */
-static const uint8_t	dwordOrder[4]	= { 1, 2, 3, 4 };
-
-#define isWordLittleEndian()	(*(uint16_t *)&dwordOrder == 0x0201)
-#define isDWordLittleEndian()	(*(uint32_t *)&dwordOrder == 0x04030201)
-
-#if GUARANTEED_LITTLE_ENDIAN
-	/* These are fast routines for guaranteed little endian machines */
-	#define CONVERT_FROM_WORD_LE(w)
-	#define CONVERT_FROM_DWORD_LE(dw)
-#else
-	/* These are slower routines for when little endianness cannot be guaranteed at compile time */
-	#define CONVERT_FROM_WORD_LE(w)		{ if (!isWordLittleEndian()) w = ((((uint16_t)(w))>>8)|(((uint16_t)(w))<<8)); }
-	#define CONVERT_FROM_DWORD_LE(dw)	{ if (!isDWordLittleEndian()) dw = (((uint32_t)(((const uint8_t *)(&dw))[0]))|(((uint32_t)(((const uint8_t *)(&dw))[1]))<<8)|(((uint32_t)(((const uint8_t *)(&dw))[2]))<<16)|(((uint32_t)(((const uint8_t *)(&dw))[3]))<<24)); }
-#endif
 
 // We need a special error to indicate the end of file (which may not actually be an error)
 #define GDISP_IMAGE_EOF		((gdispImageError)-1)
@@ -416,14 +382,10 @@ static gdispImageError initFrame(gdispImage *img) {
 			// Read the Image Descriptor
 			if (gfileRead(img->f, priv->buf, 9) != 9)
 				return GDISP_IMAGE_ERR_BADDATA;
-			priv->frame.x = *(uint16_t *)(((uint8_t *)priv->buf)+0);
-			CONVERT_FROM_WORD_LE(priv->frame.x);
-			priv->frame.y = *(uint16_t *)(((uint8_t *)priv->buf)+2);
-			CONVERT_FROM_WORD_LE(priv->frame.y);
-			priv->frame.width = *(uint16_t *)(((uint8_t *)priv->buf)+4);
-			CONVERT_FROM_WORD_LE(priv->frame.width);
-			priv->frame.height = *(uint16_t *)(((uint8_t *)priv->buf)+6);
-			CONVERT_FROM_WORD_LE(priv->frame.height);
+			priv->frame.x = gdispImageGetAlignedLE16(priv->buf, 0);
+			priv->frame.y = gdispImageGetAlignedLE16(priv->buf, 2);
+			priv->frame.width = gdispImageGetAlignedLE16(priv->buf, 4);
+			priv->frame.height = gdispImageGetAlignedLE16(priv->buf, 6);
 			if (((uint8_t *)priv->buf)[8] & 0x80)				// Local color table?
 				priv->frame.palsize = 2 << (((uint8_t *)priv->buf)[8] & 0x07);
 			if (((uint8_t *)priv->buf)[8] & 0x40)				// Interlaced?
@@ -468,8 +430,7 @@ static gdispImageError initFrame(gdispImage *img) {
 				else
 					img->flags &= ~GDISP_IMAGE_FLG_MULTIPAGE;
 				// Process frame delay and the transparent color (if any)
-				priv->frame.delay = *(uint16_t *)(((uint8_t *)priv->buf)+2);
-				CONVERT_FROM_WORD_LE(priv->frame.delay);
+				priv->frame.delay = gdispImageGetAlignedLE16(priv->buf, 2);
 				priv->frame.paltrans = ((uint8_t *)priv->buf)[4];
 				break;
 
@@ -489,8 +450,7 @@ static gdispImageError initFrame(gdispImage *img) {
 						&& ((uint8_t *)priv->buf)[7] == 'P' && ((uint8_t *)priv->buf)[8] == 'E' && ((uint8_t *)priv->buf)[9] == '2'
 						&& ((uint8_t *)priv->buf)[10] == '.' && ((uint8_t *)priv->buf)[11] == '0') {
 					if (((uint8_t *)priv->buf)[13] == 1) {
-						priv->loops = *(uint16_t *)(((uint8_t *)priv->buf)+14);
-						CONVERT_FROM_WORD_LE(priv->loops);
+						priv->loops = gdispImageGetAlignedLE16(priv->buf, 14);
 						priv->flags |= GIF_LOOP;
 						if (!priv->loops)
 							priv->flags |= GIF_LOOPFOREVER;
@@ -597,11 +557,9 @@ gdispImageError gdispImageOpen_GIF(gdispImage *img) {
 	if (gfileRead(img->f, priv->buf, 7) != 7)
 		goto baddatacleanup;
 	// Get the width
-	img->width = *(uint16_t *)(((uint8_t *)priv->buf)+0);
-	CONVERT_FROM_WORD_LE(img->width);
+	img->width = gdispImageGetAlignedLE16(priv->buf, 0);
 	// Get the height
-	img->height = *(uint16_t *)(((uint8_t *)priv->buf)+2);
-	CONVERT_FROM_WORD_LE(img->height);
+	img->height = gdispImageGetAlignedLE16(priv->buf, 2);
 	if (((uint8_t *)priv->buf)[4] & 0x80) {
 		// Global color table
 		priv->palsize = 2 << (((uint8_t *)priv->buf)[4] & 0x07);

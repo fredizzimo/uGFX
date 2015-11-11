@@ -9,6 +9,8 @@
 
 #if GFX_USE_GDISP && GDISP_NEED_IMAGE
 
+#include "gdisp_image_support.h"
+
 #if GDISP_NEED_IMAGE_NATIVE
 	extern gdispImageError gdispImageOpen_NATIVE(gdispImage *img);
 	extern void gdispImageClose_NATIVE(gdispImage *img);
@@ -89,39 +91,6 @@ static gdispImageHandlers ImageHandlers[] = {
 		},
 	#endif
 };
-
-gdispImageError
-		DEPRECATED("Use gdispImageOpenGFile() instead")
-		gdispImageOpen(gdispImage *img) {
-	return gdispImageOpenGFile(img, img->f);
-}
-
-#if GFILE_NEED_MEMFS
-	bool_t
-			DEPRECATED("Use gdispImageOpenMemory() instead")
-			gdispImageSetMemoryReader(gdispImage *img, const void *memimage) {
-		img->f = gfileOpenMemory((void *)memimage, "rb");
-		return img->f != 0;
-	}
-#endif
-
-#if defined(WIN32) || GFX_USE_OS_WIN32 || GFX_USE_OS_LINUX || GFX_USE_OS_OSX
-	bool_t
-			DEPRECATED("Use gdispImageOpenFile() instead")
-			gdispImageSetFileReader(gdispImage *img, const char *filename) {
-		img->f = gfileOpen(filename, "rb");
-		return img->f != 0;
-	}
-#endif
-
-#if GFILE_NEED_CHIBIOSFS && GFX_USE_OS_CHIBIOS
-	bool_t
-			DEPRECATED("Use gdispImageOpenBaseFileStream() instead")
-			gdispImageSetBaseFileStreamReader(gdispImage *img, void *BaseFileStreamPtr) {
-		img->f = gfileOpenBaseFileStream(BaseFileStreamPtr, "rb");
-		return img->f != 0;
-	}
-#endif
 
 void gdispImageInit(gdispImage *img) {
 	img->type = GDISP_IMAGE_TYPE_UNKNOWN;
@@ -221,5 +190,9 @@ void gdispImageFree(gdispImage *img, void *ptr, size_t sz) {
 		gfxFree(ptr);
 	#endif
 }
+
+#if GFX_CPU_ENDIAN != GFX_CPU_ENDIAN_LITTLE && GFX_CPU_ENDIAN != GFX_CPU_ENDIAN_BIG
+	const uint8_t	gdispImageEndianArray[4]	= { 1, 2, 3, 4 };
+#endif
 
 #endif /* GFX_USE_GDISP && GDISP_NEED_IMAGE */

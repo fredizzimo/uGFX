@@ -9,6 +9,8 @@
 
 #if GFX_USE_GDISP && GDISP_NEED_IMAGE && GDISP_NEED_IMAGE_NATIVE
 
+#include "gdisp_image_support.h"
+
 /**
  * How big a pixel array to allocate for blitting
  * Bigger is faster but uses more RAM.
