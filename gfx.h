@@ -177,12 +177,46 @@
 	 * 			not need to be specified as reasonable defaults and various auto-detection
 	 * 			will happen as required.
 	 * @note	Currently only used by ugfx generic thread handling (GOS_USE_OS_RAW32 and GOS_USE_OS_ARDUINO)
+	 * @{
 	 */
 	#ifndef GFX_COMPILER
 		#define GFX_COMPILER			GFX_COMPILER_UNKNOWN
 	#endif
-	#define GFX_COMPILER_UNKNOWN		0		// Unknown compiler
-	#define GFX_COMPILER_MINGW32		1		// MingW32 (x86) compiler for windows
+	#define GFX_COMPILER_UNKNOWN		0		//**< Unknown compiler
+	#define GFX_COMPILER_GCC			1		//**< Standard GCC/G++
+	#define GFX_COMPILER_MINGW32		2		//**< MingW32 (x86) compiler for windows
+	#define GFX_COMPILER_MINGW64		3		//**< MingW64 (x64) compiler for windows
+	#define GFX_COMPILER_CYGWIN			4		//**< Cygwin (x86) unix emulator compiler for windows
+	#define GFX_COMPILER_ARMCC			5		//**< ARMCC compiler
+	#define GFX_COMPILER_KEIL			6		//**< Keil (use this when working with uVision IDE)
+	#define GFX_COMPILER_CLANG			7		//**< CLang (LLVM) compiler
+	#define GFX_COMPILER_HP				8		//**< HP C/aC++
+	#define GFX_COMPILER_IBMXL			9		//**< IBM XL C/C++ Compiler
+	#define GFX_COMPILER_ICC			10		//**< Intel ICC/ICPC Compiler
+	#define GFX_COMPILER_VS				11		//**< Microsoft Visual Studio
+	#define GFX_COMPILER_OSS			12		//**< Oracle Solaris Studio
+	#define GFX_COMPILER_PGCC			13		//**< Portland PGCC/PGCPP
+	#define GFX_COMPILER_TURBOC			14		//**< Borland Turbo C
+	#define GFX_COMPILER_BORLAND		15		//**< Borland C++
+	#define GFX_COMPILER_COMEAU			16		//**< Comeau C++
+	#define GFX_COMPILER_COMPAQ			17		//**< Compaq C
+	#define GFX_COMPILER_DEC			18		//**< The older DEC C Compiler
+	#define GFX_COMPILER_CRAY			19		//**< Cray C/C++
+	#define GFX_COMPILER_DAIB			20		//**< Diab C/C++
+	#define GFX_COMPILER_DMARS			21		//**< Digital Mars/Symantic C++/Zortech C++
+	#define GFX_COMPILER_KAI			22		//**< Kai C++
+	#define GFX_COMPILER_LCC			23		//**< LCC
+	#define GFX_COMPILER_HIGHC			24		//**< Metaware High C/C++
+	#define GFX_COMPILER_METROWORKS		25		//**< Metroworks
+	#define GFX_COMPILER_MIPSPRO		26		//**< MIPS Pro
+	#define GFX_COMPILER_MPW			27		//**< MPW C++
+	#define GFX_COMPILER_NORCROFT		28		//**< Norcroft ARM
+	#define GFX_COMPILER_SASC			29		//**< SAS/C
+	#define GFX_COMPILER_SCO			30		//**< SCO OpenServer
+	#define GFX_COMPILER_TINYC			31		//**< Tiny C
+	#define GFX_COMPILER_USL			32		//**< USL C
+	#define GFX_COMPILER_WATCOM			33		//**< Watcom
+	/** @} */
 	/**
 	 * @brief	Enable cpu specific code
 	 * @details	Defaults to GFX_CPU_UNKNOWN
@@ -196,14 +230,20 @@
 		#define GFX_CPU					GFX_CPU_UNKNOWN
 	#endif
 	#define GFX_CPU_UNKNOWN				0		//**< Unknown cpu
-	#define GFX_CPU_CORTEX_M0			1		//**< Cortex M0
-	#define GFX_CPU_CORTEX_M1			2		//**< Cortex M1
-	#define GFX_CPU_CORTEX_M2			3		//**< Cortex M2
-	#define GFX_CPU_CORTEX_M3			4		//**< Cortex M3
-	#define GFX_CPU_CORTEX_M4			5		//**< Cortex M4
-	#define GFX_CPU_CORTEX_M4_FP		6		//**< Cortex M4 with hardware floating point
-	#define GFX_CPU_CORTEX_M7			7		//**< Cortex M7
-	#define GFX_CPU_CORTEX_M7_FP		8		//**< Cortex M7 with hardware floating point
+	#define GFX_CPU_CORTEX_M0			0x01	//**< Cortex M0
+	#define GFX_CPU_CORTEX_M1			0x02	//**< Cortex M1
+	#define GFX_CPU_CORTEX_M2			0x03	//**< Cortex M2
+	#define GFX_CPU_CORTEX_M3			0x04	//**< Cortex M3
+	#define GFX_CPU_CORTEX_M4			0x05	//**< Cortex M4
+	#define GFX_CPU_CORTEX_M4_FP		0x06	//**< Cortex M4 with hardware floating point
+	#define GFX_CPU_CORTEX_M7			0x07	//**< Cortex M7
+	#define GFX_CPU_CORTEX_M7_FP		0x08	//**< Cortex M7 with hardware floating point
+	#define GFX_CPU_X86					0x10	//**< Intel x86
+	#define GFX_CPU_X64					0x11	//**< Intel x64
+	#define GFX_CPU_IA64				0x12	//**< Intel Itanium
+	#define GFX_CPU_POWERPC32			0x20	//**< PowerPC
+	#define GFX_CPU_POWERPC64			0x21	//**< PowerPC
+	#define GFX_CPU_SPARC				0x22	//**< Sparc
 	/** @} */
 	/**
 	 * @brief   Does this CPU generate no alignment faults
@@ -235,6 +275,113 @@
 
 /** @} */
 
+/* Try to auto-detect some stuff from the compiler itself */
+#if GFX_COMPILER == GFX_COMPILER_UNKNOWN
+	#undef GFX_COMPILER
+	#if defined(__MINGW32__)
+		#define GFX_COMPILER	GFX_COMPILER_MINGW32
+	#elif defined(__MINGW64__)
+		#define GFX_COMPILER	GFX_COMPILER_MINGW64
+	#elif defined(__CYGWIN__)
+		#define GFX_COMPILER	GFX_COMPILER_CYGWIN
+	#elif defined(__KEIL__) || defined(__C51__)
+		#define GFX_COMPILER	GFX_COMPILER_KEIL
+	#elif defined(__clang__)
+		#define GFX_COMPILER	GFX_COMPILER_CLANG
+	#elif defined(__ICC) || defined(__INTEL_COMPILER)
+		#define GFX_COMPILER	GFX_COMPILER_ICC
+	#elif defined(__GNUC__) || defined(__GNUG__)
+		#define GFX_COMPILER	GFX_COMPILER_GCC
+	#elif defined(__HP_cc) || defined(__HP_aCC)
+		#define GFX_COMPILER	GFX_COMPILER_HP
+	#elif defined(__IBMC__) || defined(__IBMCPP__)
+		#define GFX_COMPILER	GFX_COMPILER_IBMXL
+	#elif defined(_MSC_VER)
+		#define GFX_COMPILER	GFX_COMPILER_VS
+	#elif defined(__PGI)
+		#define GFX_COMPILER	GFX_COMPILER_PGCC
+	#elif defined(__SUNPRO_C) || defined(__SUNPRO_CC)
+		#define GFX_COMPILER	GFX_COMPILER_OSS
+	#elif defined(__TURBOC__)
+		#define GFX_COMPILER	GFX_COMPILER_TURBOC
+	#elif defined(__BORLANDC__)
+		#define GFX_COMPILER	GFX_COMPILER_BORLAND
+	#elif defined(__COMO__)
+		#define GFX_COMPILER	GFX_COMPILER_COMEAU
+	#elif defined(__DECC) || defined(__VAXC) || defined(VAXC) || defined(__DECCXX)
+		#define GFX_COMPILER	GFX_COMPILER_COMPAQ
+	#elif defined(__osf__) && defined(__LANGUAGE_C__)
+		#define GFX_COMPILER	GFX_COMPILER_DEC
+	#elif defined(_CRAYC)
+		#define GFX_COMPILER	GFX_COMPILER_CRAY
+	#elif defined(__DCC__)
+		#define GFX_COMPILER	GFX_COMPILER_DAIB
+	#elif defined(__DMC__) || defined(__SC__) || defined(__ZTC__)
+		#define GFX_COMPILER	GFX_COMPILER_DMARS
+	#elif defined(__KCC)
+		#define GFX_COMPILER	GFX_COMPILER_KAI
+	#elif defined(__LCC__)
+		#define GFX_COMPILER	GFX_COMPILER_LCC
+	#elif defined(__HIGHC__)
+		#define GFX_COMPILER	GFX_COMPILER_HIGHC
+	#elif defined(__MWERKS__)
+		#define GFX_COMPILER	GFX_COMPILER_METROWORKS
+	#elif defined(__sgi)
+		#define GFX_COMPILER	GFX_COMPILER_MIPSPRO
+	#elif defined(__MRC__)
+		#define GFX_COMPILER	GFX_COMPILER_MPW
+	#elif defined(__CC_NORCROFT)
+		#define GFX_COMPILER	GFX_COMPILER_NORCROFT
+	#elif defined(__SASC__)
+		#define GFX_COMPILER	GFX_COMPILER_SASC
+	#elif defined( _SCO_DS )
+		#define GFX_COMPILER	GFX_COMPILER_SCO
+	#elif defined(__TINYC__)
+		#define GFX_COMPILER	GFX_COMPILER_TINYC
+	#elif defined( __USLC__ )
+		#define GFX_COMPILER	GFX_COMPILER_USL
+	#elif defined(__WATCOMC__)
+		#define GFX_COMPILER	GFX_COMPILER_WATCOM
+	#else
+		#define GFX_COMPILER	GFX_COMPILER_UNKNOWN
+	#endif
+#endif
+#if GFX_CPU == GFX_CPU_UNKNOWN
+	#undef GFX_CPU
+	#if defined(__ia64) || defined(__itanium__) || defined(_M_IA64)
+		#define GFX_CPU		GFX_CPU_IA64
+	#elif defined(__powerpc__) || defined(__ppc__) || defined(__PPC__)
+		#if defined(__powerpc64__) || defined(__ppc64__) || defined(__PPC64__) || defined(__64BIT__) || defined(_LP64) || defined(__LP64__)
+			#define GFX_CPU		GFX_CPU_POWERPC64
+		#else
+			#define GFX_CPU		GFX_CPU_POWERPC32
+		#endif
+	#elif defined(__sparc)
+		#define GFX_CPU		GFX_CPU_SPARC
+	#elif defined(__x86_64__) || defined(_M_X64)
+		#define GFX_CPU		GFX_CPU_X86
+	#elif defined(__i386) || defined(_M_IX86)
+		#define GFX_CPU		GFX_CPU_X64
+	#else
+		#define GFX_CPU		GFX_CPU_UNKNOWN
+	#endif
+#endif
+#if GFX_CPU_ENDIAN == GFX_CPU_ENDIAN_UNKNOWN
+	#undef GFX_CPU_ENDIAN
+	#if (defined(__BYTE_ORDER__)&&(__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)) \
+			|| defined(__LITTLE_ENDIAN__) \
+			|| defined(__LITTLE_ENDIAN) \
+			|| defined(_LITTLE_ENDIAN)
+		#define GFX_CPU_ENDIAN			GFX_CPU_ENDIAN_LITTLE
+	#elif (defined(__BYTE_ORDER__)&&(__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)) \
+			|| defined(__BIG_ENDIAN__) \
+			|| defined(__BIG_ENDIAN) \
+			|| defined(_BIG_ENDIAN)
+		#define GFX_CPU_ENDIAN			GFX_CPU_ENDIAN_BIG
+	#else
+		#define GFX_CPU_ENDIAN			GFX_CPU_ENDIAN_UNKNOWN
+	#endif
+#endif
 
 #if GFX_NO_INLINE
 	#define GFXINLINE
@@ -243,22 +390,6 @@
 		#define GFXINLINE	__inline
 	#else
 		#define GFXINLINE	inline
-	#endif
-#endif
-
-#if GFX_CPU_ENDIAN == GFX_CPU_ENDIAN_UNKNOWN
-	#if (defined(__BYTE_ORDER__)&&(__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)) \
-			|| defined(__LITTLE_ENDIAN__) \
-			|| defined(__LITTLE_ENDIAN) \
-			|| defined(_LITTLE_ENDIAN)
-		#undef GFX_CPU_ENDIAN
-		#define GFX_CPU_ENDIAN			GFX_CPU_ENDIAN_LITTLE
-	#elif (defined(__BYTE_ORDER__)&&(__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)) \
-			|| defined(__BIG_ENDIAN__) \
-			|| defined(__BIG_ENDIAN) \
-			|| defined(_BIG_ENDIAN)
-		#undef GFX_CPU_ENDIAN
-		#define GFX_CPU_ENDIAN			GFX_CPU_ENDIAN_BIG
 	#endif
 #endif
 
