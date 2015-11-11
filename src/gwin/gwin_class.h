@@ -23,7 +23,7 @@
 
 #if GFX_USE_GWIN || defined(__DOXYGEN__)
 
-#if (GFX_COMPILER == GFX_COMPILER_ARMCC) || (GFX_COMPILER == GFX_COMPILER_KEIL)
+#if defined(__KEIL__) || defined(__C51__)
 	#pragma anon_unions
 #endif
 
