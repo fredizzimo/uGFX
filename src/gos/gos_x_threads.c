@@ -203,12 +203,12 @@ static thread		mainthread;				// The main thread context
 	 * If they don't exist compile them to be the standard setjmp() function.
 	 * Similarly for longjmp().
 	 */
-	#if (!defined(setjmp) && !defined(_setjmp)) || (GFX_COMPILER == GFX_COMPILER_ARMCC) || (GFX_COMPILER == GFX_COMPILER_KEIL)
+	#if (!defined(setjmp) && !defined(_setjmp)) || defined(__KEIL__) || defined(__C51__)
 		#define CXT_SAVE 		setjmp
 	#else
 		#define CXT_SAVE 		_setjmp
 	#endif
-	#if (!defined(longjmp) && !defined(_longjmp)) || (GFX_COMPILER == GFX_COMPILER_ARMCC) || (GFX_COMPILER == GFX_COMPILER_KEIL)
+	#if (!defined(longjmp) && !defined(_longjmp)) || defined(__KEIL__) || defined(__C51__)
 		#define CXT_RESTORE 	longjmp
 	#else
 		#define CXT_RESTORE 	_longjmp

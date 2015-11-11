@@ -57,7 +57,7 @@
 #if GFX_NO_INLINE
 	#define GFXINLINE
 #else
-	#if (GFX_COMPILER == GFX_COMPILER_ARMCC) || (GFX_COMPILER == GFX_COMPILER_KEIL)
+	#if defined(__KEIL__) || defined(__C51__)
 		#define GFXINLINE	__inline
 	#else
 		#define GFXINLINE	inline
