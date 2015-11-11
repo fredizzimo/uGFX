@@ -54,16 +54,6 @@
 /* gfxconf.h is the user's project configuration for the GFX system. */
 #include "gfxconf.h"
 
-#if GFX_NO_INLINE
-	#define GFXINLINE
-#else
-	#if defined(__KEIL__) || defined(__C51__)
-		#define GFXINLINE	__inline
-	#else
-		#define GFXINLINE	inline
-	#endif
-#endif
-
 /**
  * @name    GFX sub-systems that can be turned on
  * @{
@@ -166,6 +156,111 @@
 		#define GFX_USE_GFILE	FALSE
 	#endif
 /** @} */
+
+/**
+ * @name    GFX system-wide options
+ * @{
+ */
+ 	/**
+	 * @brief	Should various inline ugfx functions be non-inline.
+	 * @details	Defaults to FALSE
+	 * @note	Generally there is no need to set this to TRUE as it will have huge performance impacts
+	 *			in the driver level.
+	 */
+	#ifndef GFX_NO_INLINE
+		#define GFX_NO_INLINE			FALSE
+	#endif
+	/**
+	 * @brief	Enable compiler specific code
+	 * @details	Defaults to GFX_COMPILER_UNKNOWN
+	 * @note	This is setting enables optimisations that are compiler specific. It does
+	 * 			not need to be specified as reasonable defaults and various auto-detection
+	 * 			will happen as required.
+	 * @note	Currently only used by ugfx generic thread handling (GOS_USE_OS_RAW32 and GOS_USE_OS_ARDUINO)
+	 */
+	#ifndef GFX_COMPILER
+		#define GFX_COMPILER			GFX_COMPILER_UNKNOWN
+	#endif
+	#define GFX_COMPILER_UNKNOWN		0		// Unknown compiler
+	#define GFX_COMPILER_MINGW32		1		// MingW32 (x86) compiler for windows
+	/**
+	 * @brief	Enable cpu specific code
+	 * @details	Defaults to GFX_CPU_UNKNOWN
+	 * @note	This is setting enables optimisations that are cpu specific. It does
+	 * 			not need to be specified as reasonable defaults and various auto-detection
+	 * 			will happen as required.
+	 * @note	Currently only used by ugfx generic thread handling (GOS_USE_OS_RAW32 and GOS_USE_OS_ARDUINO)
+	 * @{
+	 */
+	#ifndef GFX_CPU
+		#define GFX_CPU					GFX_CPU_UNKNOWN
+	#endif
+	#define GFX_CPU_UNKNOWN				0		//**< Unknown cpu
+	#define GFX_CPU_CORTEX_M0			1		//**< Cortex M0
+	#define GFX_CPU_CORTEX_M1			2		//**< Cortex M1
+	#define GFX_CPU_CORTEX_M2			3		//**< Cortex M2
+	#define GFX_CPU_CORTEX_M3			4		//**< Cortex M3
+	#define GFX_CPU_CORTEX_M4			5		//**< Cortex M4
+	#define GFX_CPU_CORTEX_M4_FP		6		//**< Cortex M4 with hardware floating point
+	#define GFX_CPU_CORTEX_M7			7		//**< Cortex M7
+	#define GFX_CPU_CORTEX_M7_FP		8		//**< Cortex M7 with hardware floating point
+	/** @} */
+	/**
+	 * @brief   Does this CPU generate no alignment faults
+	 * @details	Defaults to FALSE
+	 * @note	Turning this on can increase code size and speed but
+	 * 			should not be turned on with a CPU that can generate
+	 * 			alignment segfaults.
+	 * @note	If you are unsure leave this as FALSE as that generates
+	 * 			the more conservative code.
+	 */
+	#ifndef GFX_CPU_NO_ALIGNMENT_FAULTS
+		#define GFX_CPU_NO_ALIGNMENT_FAULTS		FALSE
+	#endif
+	/**
+	 * @brief	What is the CPU endianness
+	 * @details	Defaults to GFX_CPU_ENDIAN_UNKNOWN
+	 * @note	This is setting enables optimisations that are cpu endian specific. It does
+	 * 			not need to be specified as reasonable defaults and various auto-detection
+	 * 			will happen as required.
+	 * @{
+	 */
+	#ifndef GFX_CPU_ENDIAN
+		#define GFX_CPU_ENDIAN			GFX_CPU_ENDIAN_UNKNOWN
+	#endif
+	#define GFX_CPU_ENDIAN_UNKNOWN		0				//**< Unknown endianness
+	#define GFX_CPU_ENDIAN_LITTLE		0x04030201		//**< Little Endian
+	#define GFX_CPU_ENDIAN_BIG			0x01020304		//**< Big Endian
+	/** @} */
+
+/** @} */
+
+
+#if GFX_NO_INLINE
+	#define GFXINLINE
+#else
+	#if defined(__KEIL__) || defined(__C51__)
+		#define GFXINLINE	__inline
+	#else
+		#define GFXINLINE	inline
+	#endif
+#endif
+
+#if GFX_CPU_ENDIAN == GFX_CPU_ENDIAN_UNKNOWN
+	#if (defined(__BYTE_ORDER__)&&(__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)) \
+			|| defined(__LITTLE_ENDIAN__) \
+			|| defined(__LITTLE_ENDIAN) \
+			|| defined(_LITTLE_ENDIAN)
+		#undef GFX_CPU_ENDIAN
+		#define GFX_CPU_ENDIAN			GFX_CPU_ENDIAN_LITTLE
+	#elif (defined(__BYTE_ORDER__)&&(__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)) \
+			|| defined(__BIG_ENDIAN__) \
+			|| defined(__BIG_ENDIAN) \
+			|| defined(_BIG_ENDIAN)
+		#undef GFX_CPU_ENDIAN
+		#define GFX_CPU_ENDIAN			GFX_CPU_ENDIAN_BIG
+	#endif
+#endif
 
 /**
  * Get all the options for each sub-system.

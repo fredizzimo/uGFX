@@ -104,50 +104,44 @@
  * @{
  */
  	/**
-	 * @brief	Should various inline ugfx functions be non-inline.
-	 * @details	Defaults to FALSE
-	 * @note	Generally there is no need to set this to TRUE as it will have huge performance impacts
-	 *			in the driver level.
-	 */
-	#ifndef GFX_NO_INLINE
-		#define GFX_NO_INLINE			FALSE
-	#endif
+ 	 * @name	GFX_OS_PRE_INIT_FUNCTION
+ 	 * @brief	A macro that defines a function that uGFX calls as part of gfxInit() in order to initialize hardware
+ 	 * @details	Defaults to undefined
+ 	 * @note	If defined the specified function is called before any other initialization.
+ 	 * 			It is typically used to initialize hardware or the C runtime.
+ 	 * @note	Eg. In your source:
+ 	 * 					void myHardwareInitRoutine(void);
+ 	 * 				In gfxconf.h:
+ 	 * 					#define GFX_OS_PRE_INIT_FUNCTION myHardwareInitRoutine
+ 	 */
+    //#define GFX_OS_PRE_INIT_FUNCTION                 myHardwareInitRoutine
+ 	/**
+ 	 * @name	GFX_OS_EXTRA_INIT_FUNCTION
+ 	 * @brief	A macro that defines a function that uGFX calls as part of gfxInit() just after initializing
+ 	 * 			the operating system.
+ 	 * @details	Defaults to undefined
+ 	 * @note	If defined the specified function is called just after the operating system is initialized by
+ 	 * 			gfxInit(). Note that if gfxInit() is set up to not initialize an operating system it is called after
+ 	 * 			the GFX_OS_PRE_INIT_FUNCTION function (if any).
+ 	 * @note	Eg. In your source:
+ 	 * 					void myOSInitRoutine(void);
+ 	 * 				In gfxconf.h:
+ 	 * 					#define GFX_OS_EXTRA_INIT_FUNCTION myOSInitRoutine
+ 	 */
+    //#define GFX_OS_EXTRA_INIT_FUNCTION               myOSInitRoutine
 	/**
-	 * @brief	Enable compiler specific code
-	 * @details	Defaults to GFX_COMPILER_UNKNOWN
-	 * @note	This is setting enables optimisations that are compiler specific. It does
-	 * 			not need to be specified as reasonable defaults and various auto-detection
-	 * 			will happen as required.
-	 */
-	#ifndef GFX_COMPILER
-		#define GFX_COMPILER			GFX_COMPILER_UNKNOWN
-	#endif
-	#define GFX_COMPILER_UNKNOWN		0		// Unknown compiler
-	#define GFX_COMPILER_MINGW32		1		// MingW32 (x86) compiler for windows
-	#define GFX_COMPILER_ARMCC			2		// ARMCC compiler
-	#define GFX_COMPILER_KEIL			3		// Keil (use this when working with uVision IDE)
-	/**
-	 * @brief	Enable cpu specific code
-	 * @details	Defaults to GFX_CPU_UNKNOWN
-	 * @note	This is setting enables optimisations that are cpu specific. It does
-	 * 			not need to be specified as reasonable defaults and various auto-detection
-	 * 			will happen as required.
-	 * @note	Currently only used by ugfx generic thread handling (GOS_USE_OS_RAW32 and GOS_USE_OS_ARDUINO)
-	 * @{
-	 */
-	#ifndef GFX_CPU
-		#define GFX_CPU					GFX_CPU_UNKNOWN
-	#endif
-	#define GFX_CPU_UNKNOWN				0		//**< Unknown cpu
-	#define GFX_CPU_CORTEX_M0			1		//**< Cortex M0
-	#define GFX_CPU_CORTEX_M1			2		//**< Cortex M1
-	#define GFX_CPU_CORTEX_M2			3		//**< Cortex M2
-	#define GFX_CPU_CORTEX_M3			4		//**< Cortex M3
-	#define GFX_CPU_CORTEX_M4			5		//**< Cortex M4
-	#define GFX_CPU_CORTEX_M4_FP		6		//**< Cortex M4 with hardware floating point
-	#define GFX_CPU_CORTEX_M7			7		//**< Cortex M7
-	#define GFX_CPU_CORTEX_M7_FP		8		//**< Cortex M7 with hardware floating point
-	/** @} */
+ 	 * @name	GFX_OS_EXTRA_DEINIT_FUNCTION
+ 	 * @brief	A macro that defines a function that uGFX calls as part of gfxDeInit() just before de-initializing
+ 	 * 			the operating system.
+ 	 * @details	Defaults to undefined
+ 	 * @note	If defined the specified function is called just before the operating system is de-initialized by
+ 	 * 			gfxDeInit().
+ 	 * @note	Eg. In your source:
+ 	 * 					void myOSDeInitRoutine(void);
+ 	 * 				In gfxconf.h:
+ 	 * 					#define GFX_OS_EXTRA_DEINIT_FUNCTION myOSDeInitRoutine
+ 	 */
+    //#define GFX_OS_EXTRA_DEINIT_FUNCTION             myOSDeInitRoutine
  	/**
  	 * @brief	Should uGFX avoid initializing the operating system
  	 * @details	Defaults to FALSE
@@ -165,8 +159,8 @@
  	/**
  	 * @brief	Turn off warnings about initializing the operating system
  	 * @details	Defaults to FALSE
- 	 * @note	This is only relevant where GOS cannot initialise the operating
- 	 * 			system automatically or the operating system initialisation has been
+ 	 * @note	This is only relevant where GOS cannot initialize the operating
+ 	 * 			system automatically or the operating system initialization has been
  	 * 			explicitly turned off.
  	 */
 	#ifndef GFX_OS_INIT_NO_WARNING
@@ -182,7 +176,7 @@
  	/**
  	 * @brief	How much RAM should uGFX use for the heap
  	 * @details	Defaults to 0.
- 	 * @note	Only used when the generic ugfx heap code is used (GFX_USE_OS_RAW32 and GFX_USE_OS_ARDUINO)
+ 	 * @note	Only used when the generic ugfx heap code is used (GFX_USE_OS_RAW32, GFX_USE_OS_ARDUINO, GFX_US_OS_KEIL, GFX_USE_OS_CMSIS)
  	 * @note	If 0 then the standard C runtime malloc(), free() and realloc()
  	 * 			are used.
  	 * @note	If it is non-zero then this is the number of bytes of RAM
