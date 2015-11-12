@@ -269,8 +269,10 @@
 		#define GFX_CPU_ENDIAN			GFX_CPU_ENDIAN_UNKNOWN
 	#endif
 	#define GFX_CPU_ENDIAN_UNKNOWN		0				//**< Unknown endianness
-	#define GFX_CPU_ENDIAN_LITTLE		0x04030201		//**< Little Endian
-	#define GFX_CPU_ENDIAN_BIG			0x01020304		//**< Big Endian
+	#define GFX_CPU_ENDIAN_LITTLE		0x03020100		//**< Little endian
+	#define GFX_CPU_ENDIAN_BIG			0x00010203		//**< Big endian
+	#define GFX_CPU_ENDIAN_WBDWL		0x02030001		//**< Words are big endian, DWords are little endian eg. Honeywell 316
+	#define GFX_CPU_ENDIAN_WLDWB		0x01000302		//**< Words are little endian, DWords are big endian eg PDP-11
 	/** @} */
 
 /** @} */
@@ -369,14 +371,18 @@
 #if GFX_CPU_ENDIAN == GFX_CPU_ENDIAN_UNKNOWN
 	#undef GFX_CPU_ENDIAN
 	#if (defined(__BYTE_ORDER__)&&(__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)) \
-			|| defined(__LITTLE_ENDIAN__) \
-			|| defined(__LITTLE_ENDIAN) \
-			|| defined(_LITTLE_ENDIAN)
+			|| defined(__LITTLE_ENDIAN__) || defined(__LITTLE_ENDIAN) || defined(_LITTLE_ENDIAN) \
+			|| defined(__MIPSEL__) || defined(__MIPSEL) || defined(_MIPSEL) \
+			|| defined(__THUMBEL__) \
+			|| defined(__AARCH64EL__) \
+			|| defined(__ARMEL__)
 		#define GFX_CPU_ENDIAN			GFX_CPU_ENDIAN_LITTLE
 	#elif (defined(__BYTE_ORDER__)&&(__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)) \
-			|| defined(__BIG_ENDIAN__) \
-			|| defined(__BIG_ENDIAN) \
-			|| defined(_BIG_ENDIAN)
+			|| defined(__BIG_ENDIAN__) || defined(__BIG_ENDIAN) || defined(_BIG_ENDIAN) \
+			|| defined(__MIPSEB__) || defined(__MIPSEB) || defined(_MIPSEB) \
+			|| defined(__THUMBEB__) \
+			|| defined(__AARCH64EB__) \
+			|| defined(__ARMEB__)
 		#define GFX_CPU_ENDIAN			GFX_CPU_ENDIAN_BIG
 	#else
 		#define GFX_CPU_ENDIAN			GFX_CPU_ENDIAN_UNKNOWN

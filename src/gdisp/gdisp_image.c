@@ -191,8 +191,49 @@ void gdispImageFree(gdispImage *img, void *ptr, size_t sz) {
 	#endif
 }
 
-#if GFX_CPU_ENDIAN != GFX_CPU_ENDIAN_LITTLE && GFX_CPU_ENDIAN != GFX_CPU_ENDIAN_BIG
-	const uint8_t	gdispImageEndianArray[4]	= { 1, 2, 3, 4 };
+#if GFX_CPU_ENDIAN != GFX_CPU_ENDIAN_LITTLE && GFX_CPU_ENDIAN != GFX_CPU_ENDIAN_BIG \
+		&& GFX_CPU_ENDIAN != GFX_CPU_ENDIAN_WBDWL && GFX_CPU_ENDIAN != GFX_CPU_ENDIAN_WLDWB
+
+	union wbyteorder_u {
+		uint8_t		b[2];
+		uint32_t	w;
+	};
+	union dwbyteorder_u {
+		uint8_t		b[4];
+		uint32_t	l;
+	};
+
+	uint16_t gdispImageH16toLE16(uint16_t w) {
+		union wbyteorder_u	we;
+
+		we.w = w;
+		return	 (((uint16_t)we.b[0]))|(((uint16_t)we.b[1]) << 8);
+	}
+	uint16_t gdispImageH16toBE16(uint16_t dw) {
+		union wbyteorder_u	we;
+
+		we.w = w;
+		return	 (((uint16_t)we.b[0]) << 8)|(((uint16_t)we.b[1]));
+	}
+
+	uint32_t gdispImageH32toLE32(uint32_t dw) {
+		union dwbyteorder_u	we;
+
+		we.l = dw;
+		return	 (((uint32_t)we.b[0]))
+				|(((uint32_t)we.b[1]) << 8)
+				|(((uint32_t)we.b[2]) << 16)
+				|(((uint32_t)we.b[3]) << 24);
+	}
+	uint32_t gdispImageH32toBE32(uint32_t dw) {
+		union dwbyteorder_u	we;
+
+		we.l = dw;
+		return	 (((uint32_t)we.b[0]) << 24)
+				|(((uint32_t)we.b[1]) << 16)
+				|(((uint32_t)we.b[2]) << 8)
+				|(((uint32_t)we.b[3]));
+	}
 #endif
 
 #endif /* GFX_USE_GDISP && GDISP_NEED_IMAGE */

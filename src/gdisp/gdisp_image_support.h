@@ -23,6 +23,9 @@
 #define gdispImageSwap16(w)							((((uint16_t)(w))>>8)|(((uint16_t)(w))<<8))
 #define gdispImageSwap32(dw)						((((uint32_t)(w))>>24)|((((uint32_t)(w))&0x00FF0000)>>8)\
 													 |((((uint32_t)(w))&0x0000FF00)<<8)|(((uint32_t)(w))<<24))
+#define gdispImageSwapWords32(dw)					((((uint32_t)(w))>>16)|(((uint32_t)(w))<<16))
+#define gdispImageSwapBytes32(dw)					(((((uint32_t)(w))&0xFF000000)>>8)|((((uint32_t)(w))&0x00FF0000)<<8)\
+													 |((((uint32_t)(w))&0x0000FF00)>>8)|(((uint32_t)(w))<<8))
 
 /*
  * Get a uint16_t/uint32_t from memory in the required endianness.
@@ -70,23 +73,52 @@
  * Change a uint16 or uint32 already in a register to the required endianness.
  */
 #if GFX_CPU_ENDIAN == GFX_CPU_ENDIAN_LITTLE
+	#define gdispImageH16toLE16(w)			(w)
+	#define gdispImageH16toBE16(w)			gdispImageSwap16(w)
+	#define gdispImageH32toLE32(dw)			(dw)
+	#define gdispImageH32toBE32(dw)			gdispImageSwap32(dw)
 	#define gdispImageMakeLE16(w)
+	#define gdispImageMakeBE16(w)			{ w = gdispImageH16toBE16(w); }
 	#define gdispImageMakeLE32(dw)
-	#define gdispImageMakeBE16(w)			{ w = gdispImageSwap16(w); }
-	#define gdispImageMakeBE32(dw)			{ dw = gdispImageSwap32(dw); }
+	#define gdispImageMakeBE32(dw)			{ dw = gdispImageH32toBE32(dw); }
 #elif GFX_CPU_ENDIAN == GFX_CPU_ENDIAN_BIG
-	#define gdispImageMakeLE16(w)			{ w = gdispImageSwap16(w); }
-	#define gdispImageMakeLE32(dw)			{ dw = gdispImageSwap32(dw); }
+	#define gdispImageH16toLE16(w)			gdispImageSwap16(w)
+	#define gdispImageH16toBE16(w)			(w)
+	#define gdispImageH32toLE32(dw)			gdispImageSwap32(dw)
+	#define gdispImageH32toBE32(dw)			(dw)
+	#define gdispImageMakeLE16(w)			{ w = gdispImageH16toLE16(w); }
 	#define gdispImageMakeBE16(w)
+	#define gdispImageMakeLE32(dw)			{ dw = gdispImageH32toLE32(dw); }
 	#define gdispImageMakeBE32(dw)
+#elif GFX_CPU_ENDIAN == GFX_CPU_ENDIAN_WBDWL
+	#define gdispImageH16toLE16(w)			gdispImageSwap16(w)
+	#define gdispImageH16toBE16(w)			(w)
+	#define gdispImageH32toLE32(dw)			gdispImageSwapBytes32(dw)
+	#define gdispImageH32toBE32(dw)			gdispImageSwapWords32(dw)
+	#define gdispImageMakeLE16(w)			{ w = gdispImageH16toLE16(w); }
+	#define gdispImageMakeBE16(w)
+	#define gdispImageMakeLE32(dw)			{ dw = gdispImageH32toLE32(dw); }
+	#define gdispImageMakeBE32(dw)			{ dw = gdispImageH32toBE32(dw); }
+#elif GFX_CPU_ENDIAN == GFX_CPU_ENDIAN_WLDWB
+	#define gdispImageH16toLE16(w)			(w)
+	#define gdispImageH16toBE16(w)			gdispImageSwap16(w)
+	#define gdispImageH32toLE32(dw)			gdispImageSwapWords32(dw)
+	#define gdispImageH32toBE32(dw)			gdispImageSwapBytes32(dw)
+	#define gdispImageMakeLE16(w)
+	#define gdispImageMakeBE16(w)			{ w = gdispImageH16toBE16(w); }
+	#define gdispImageMakeLE32(dw)			{ dw = gdispImageH32toLE32(dw); }
+	#define gdispImageMakeBE32(dw)			{ dw = gdispImageH32toBE32(dw); }
 #else
-    #define gdispImageEndianness() 			(*(uint32_t *)&gdispImageEndianArray)
-
-	#define gdispImageMakeLE16(w)			{ if (gdispImageEndianness() != GFX_CPU_ENDIAN_LITTLE) w = gdispImageSwap16(w); }
-	#define gdispImageMakeLE32(dw)			{ if (gdispImageEndianness() != GFX_CPU_ENDIAN_LITTLE) dw = gdispImageSwap32(dw); }
-	#define gdispImageMakeBE16(w)			{ if (gdispImageEndianness() != GFX_CPU_ENDIAN_BIG) w = gdispImageSwap16(w); }
-	#define gdispImageMakeBE32(dw)			{ if (gdispImageEndianness() != GFX_CPU_ENDIAN_BIG) dw = gdispImageSwap32(dw); }
+	uint16_t gdispImageH16toLE16(uint16_t w);
+	uint16_t gdispImageH16toBE16(uint16_t w);
+	uint32_t gdispImageH32toLE32(uint32_t dw);
+	uint32_t gdispImageH32toBE32(uint32_t dw);
+	#define gdispImageMakeLE16(w)			{ w = gdispImageH16toLE16(w); }
+	#define gdispImageMakeBE16(w)			{ w = gdispImageH16toBE16(w); }
+	#define gdispImageMakeLE32(dw)			{ dw = gdispImageH32toLE32(dw); }
+	#define gdispImageMakeBE32(dw)			{ dw = gdispImageH32toBE32(dw); }
 #endif
+
 
 	
 #ifdef __cplusplus
