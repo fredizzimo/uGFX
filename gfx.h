@@ -286,7 +286,7 @@
 		#define GFX_COMPILER	GFX_COMPILER_MINGW64
 	#elif defined(__CYGWIN__)
 		#define GFX_COMPILER	GFX_COMPILER_CYGWIN
-	#elif defined(__KEIL__) || defined(__C51__)
+	#elif defined(__KEIL__) || defined(__C51__) || (defined(__CC_ARM) && defined(__EDG__))
 		#define GFX_COMPILER	GFX_COMPILER_KEIL
 	#elif defined(__clang__)
 		#define GFX_COMPILER	GFX_COMPILER_CLANG
@@ -392,7 +392,7 @@
 #if GFX_NO_INLINE
 	#define GFXINLINE
 #else
-	#if defined(__KEIL__) || defined(__C51__)
+	#if GFX_COMPILER == GFX_COMILER_KEIL
 		#define GFXINLINE	__inline
 	#else
 		#define GFXINLINE	inline
