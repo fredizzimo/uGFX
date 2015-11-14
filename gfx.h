@@ -392,7 +392,7 @@
 #if GFX_NO_INLINE
 	#define GFXINLINE
 #else
-	#if GFX_COMPILER == GFX_COMILER_KEIL
+	#if GFX_COMPILER == GFX_COMPILER_KEIL
 		#define GFXINLINE	__inline
 	#else
 		#define GFXINLINE	inline
