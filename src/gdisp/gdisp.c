@@ -3169,6 +3169,12 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 
 	/* Callback to render string boxes with word wrap. */
 	#if GDISP_NEED_TEXT_WORDWRAP
+		static bool mf_countline_callback(mf_str line, uint16_t count, void *state) {
+			int *linecount = (int*)state;
+			(*linecount)++;
+
+			return TRUE;
+		}
 		static bool mf_drawline_callback(mf_str line, uint16_t count, void *state) {
 			wrapParameters_t* wrapParameters = (wrapParameters_t*)state;
 
@@ -3176,7 +3182,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 
 			wrapParameters->y += wrapParameters->font->line_height;
 			return TRUE;
-		}	
+		}
 		static bool mf_fillline_callback(mf_str line, uint16_t count, void *state) {
 			wrapParameters_t* wrapParameters = (wrapParameters_t*)state;
 
@@ -3258,6 +3264,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 	void gdispGDrawStringBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, const char* str, font_t font, color_t color, justify_t justify) {
 		#if GDISP_NEED_TEXT_WORDWRAP
 			wrapParameters_t wrapParameters;
+			uint16_t nbrLines;
 		#endif
 
 		MUTEX_ENTER(g);
@@ -3281,7 +3288,6 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 			x += font->baseline_x;
 			break;
 		}
-		y += (cy+1 - font->height)/2;
 
 		/* Render */
 		#if GDISP_NEED_TEXT_WORDWRAP
@@ -3291,8 +3297,14 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 			wrapParameters.justify = justify;
 			wrapParameters.g = g;
 
-			mf_wordwrap(font, cx, str, mf_drawline_callback, &wrapParameters);
+			// Count the number of lines
+			nbrLines = 0;
+			mf_wordwrap(font, cx, str, mf_countline_callback, &nbrLines);
+			wrapParameters.y += (cy+1 - nbrLines*font->height)/2;
+			
+			mf_wordwrap(font, cx, str, mf_fillline_callback, &wrapParameters);
 		#else
+			y += (cy+1 - font->height)/2;
 			mf_render_aligned(font, x, y, justify, str, 0, drawcharglyph, g);
 		#endif
 
@@ -3303,6 +3315,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 	void gdispGFillStringBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, const char* str, font_t font, color_t color, color_t bgcolor, justify_t justify) {
 		#if GDISP_NEED_TEXT_WORDWRAP
 			wrapParameters_t wrapParameters;
+			uint16_t nbrLines;
 		#endif
 
 		MUTEX_ENTER(g);
@@ -3334,7 +3347,6 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 				x += font->baseline_x;
 				break;
 			}
-			y += (cy+1 - font->height)/2;
 
 			/* Render */
 			#if GDISP_NEED_TEXT_WORDWRAP
@@ -3344,8 +3356,15 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 				wrapParameters.justify = justify;
 				wrapParameters.g = g;
 
+
+				// Count the number of lines
+				nbrLines = 0;
+				mf_wordwrap(font, cx, str, mf_countline_callback, &nbrLines);
+				wrapParameters.y += (cy+1 - nbrLines*font->height)/2;
+
 				mf_wordwrap(font, cx, str, mf_fillline_callback, &wrapParameters);
 			#else
+				y += (cy+1 - font->height)/2;
 				mf_render_aligned(font, x, y, justify, str, 0, fillcharglyph, g);
 			#endif
 		}
