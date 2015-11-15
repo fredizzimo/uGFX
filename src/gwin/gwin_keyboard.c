@@ -300,7 +300,7 @@ static void SendKeyboardEvent(GKeyboardObject *gk) {
 	}
 #endif
 
-extern GVKeyTable GWIN_KEYBOARD_DEFAULT_LAYOUT;
+extern const GVKeyTable GWIN_KEYBOARD_DEFAULT_LAYOUT;
 
 // The button VMT table
 static const gwidgetVMT keyboardVMT = {
