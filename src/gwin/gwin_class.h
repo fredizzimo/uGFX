@@ -321,7 +321,7 @@ bool_t _gwinWMAdd(GHandle gh, const GWindowInit *pInit);
 	 */
 	void _gwinSendEvent(GHandle gh, GEventType type);
 
-	#if ((GFX_USE_GINPUT && GINPUT_NEED_KEYBOARD) || GWIN_NEED_KEYBOARD) || defined(__DOXYGEN__)
+	#if (GFX_USE_GINPUT && GINPUT_NEED_KEYBOARD) || GWIN_NEED_KEYBOARD || defined(__DOXYGEN__)
 		/**
 		 * @brief	Move the focus off the current focus window.
 		 *
