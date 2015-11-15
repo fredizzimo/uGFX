@@ -21,7 +21,7 @@
 // Our listener for events for widgets
 static GListener gl;
 
-#if GFX_USE_GINPUT && GINPUT_NEED_KEYBOARD
+#if (GFX_USE_GINPUT && GINPUT_NEED_KEYBOARD) || GWIN_NEED_KEYBOARD
 	// Our current focus window
 	static GHandle				_widgetInFocus;
 #endif
@@ -366,7 +366,7 @@ void _gwidgetInit(void)
 	geventRegisterCallback(&gl, gwidgetEvent, 0);
 	geventAttachSource(&gl, ginputGetMouse(GMOUSE_ALL_INSTANCES), GLISTEN_MOUSEMETA|GLISTEN_MOUSEDOWNMOVES);
 
-	#if GINPUT_NEED_KEYBOARD
+	#if GINPUT_NEED_KEYBOARD || GWIN_NEED_KEYBOARD
 		geventAttachSource(&gl, ginputGetKeyboard(GKEYBOARD_ALL_INSTANCES), GLISTEN_KEYUP);
 	#endif
 }
