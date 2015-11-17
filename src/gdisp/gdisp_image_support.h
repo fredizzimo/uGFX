@@ -32,16 +32,16 @@
  *	There is no alignment requirement.
  */
 #if GFX_CPU_ENDIAN == GFX_CPU_ENDIAN_LITTLE && GFX_CPU_NO_ALIGNMENT_FAULTS
-	#define gidspImageGetLE16(p, idx)		gdispImageGetVar(uint16_t, (p), (idx))
-	#define gidspImageGetLE32(p, idx)		gdispImageGetVar(uint32_t, (p), (idx))
+	#define gdispImageGetLE16(p, idx)		gdispImageGetVar(uint16_t, (p), (idx))
+	#define gdispImageGetLE32(p, idx)		gdispImageGetVar(uint32_t, (p), (idx))
 #else
 	#define gdispImageGetLE16(p, idx)		( gdispImageGetByte(uint16_t, (p), (idx)  ,  0) | gdispImageGetByte(uint16_t, (p), (idx)+1,  8))
 	#define gdispImageGetLE32(p, idx)		( gdispImageGetByte(uint32_t, (p), (idx)  ,  0) | gdispImageGetByte(uint32_t, (p), (idx)+1,  8)\
 										 	 |gdispImageGetByte(uint32_t, (p), (idx)+2, 16) | gdispImageGetByte(uint32_t, (p), (idx)+3, 24))
 #endif
 #if GFX_CPU_ENDIAN == GFX_CPU_ENDIAN_BIG && GFX_CPU_NO_ALIGNMENT_FAULTS
-	#define gidspImageGetBE16(p, idx)		gdispImageGetVar(uint16_t, (p), (idx))
-	#define gidspImageGetBE32(p, idx)		gdispImageGetVar(uint32_t, (p), (idx))
+	#define gdispImageGetBE16(p, idx)		gdispImageGetVar(uint16_t, (p), (idx))
+	#define gdispImageGetBE32(p, idx)		gdispImageGetVar(uint32_t, (p), (idx))
 #else
 	#define gdispImageGetBE16(p, idx)		( gdispImageGetByte(uint16_t, (p), (idx)  ,  8) | gdispImageGetByte(uint16_t, (p), (idx)+1,  0))
 	#define gdispImageGetBE32(p, idx)		( gdispImageGetByte(uint32_t, (p), (idx)  , 24) | gdispImageGetByte(uint32_t, (p), (idx)+1, 16)\
@@ -54,19 +54,19 @@
  */
 #if GFX_CPU_ENDIAN == GFX_CPU_ENDIAN_LITTLE
 	#define gdispImageGetAlignedLE16(p, idx)		gdispImageGetVar(uint16_t, (p), (idx))
-	#define gdispImageGetAlignedBE16(p, idx)		gidspImageGetBE16(p, (idx))
+	#define gdispImageGetAlignedBE16(p, idx)		gdispImageGetBE16(p, (idx))
 	#define gdispImageGetAlignedLE32(p, idx)		gdispImageGetVar(uint32_t, (p), (idx))
-	#define gdispImageGetAlignedBE32(p, idx)		gidspImageGetBE32(p, (idx))
+	#define gdispImageGetAlignedBE32(p, idx)		gdispImageGetBE32(p, (idx))
 #elif GFX_CPU_ENDIAN == GFX_CPU_ENDIAN_BIG
-	#define gdispImageGetAlignedLE16(p, idx)		gidspImageGetLE16(p, (idx))
+	#define gdispImageGetAlignedLE16(p, idx)		gdispImageGetLE16(p, (idx))
 	#define gdispImageGetAlignedBE16(p, idx)		gdispImageGetVar(uint16_t, (p), (idx))
-	#define gdispImageGetAlignedLE32(p, idx)		gidspImageGetLE32(p, (idx))
+	#define gdispImageGetAlignedLE32(p, idx)		gdispImageGetLE32(p, (idx))
 	#define gdispImageGetAlignedBE32(p, idx)		gdispImageGetVar(uint32_t, (p), (idx))
 #else
-	#define gdispImageGetAlignedLE16(p, idx)		gidspImageGetLE16(p, (idx))
-	#define gdispImageGetAlignedBE16(p, idx)		gidspImageGetBE16(p, (idx))
-	#define gdispImageGetAlignedLE32(p, idx)		gidspImageGetLE32(p, (idx))
-	#define gdispImageGetAlignedBE32(p, idx)		gidspImageGetBE32(p, (idx))
+	#define gdispImageGetAlignedLE16(p, idx)		gdispImageGetLE16(p, (idx))
+	#define gdispImageGetAlignedBE16(p, idx)		gdispImageGetBE16(p, (idx))
+	#define gdispImageGetAlignedLE32(p, idx)		gdispImageGetLE32(p, (idx))
+	#define gdispImageGetAlignedBE32(p, idx)		gdispImageGetBE32(p, (idx))
 #endif
 
 /*
