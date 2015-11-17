@@ -23,10 +23,6 @@
 
 #if GFX_USE_GWIN || defined(__DOXYGEN__)
 
-#if GFX_COMPILER == GFX_COMPILER_KEIL
-	#pragma anon_unions
-#endif
-
 /**
  * @brief	The predefined flags for a Window
  * @{
