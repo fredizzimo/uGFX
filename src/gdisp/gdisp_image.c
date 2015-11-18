@@ -209,7 +209,7 @@ void gdispImageFree(gdispImage *img, void *ptr, size_t sz) {
 		we.w = w;
 		return	 (((uint16_t)we.b[0]))|(((uint16_t)we.b[1]) << 8);
 	}
-	uint16_t gdispImageH16toBE16(uint16_t dw) {
+	uint16_t gdispImageH16toBE16(uint16_t w) {
 		union wbyteorder_u	we;
 
 		we.w = w;

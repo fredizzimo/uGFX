@@ -38,19 +38,6 @@
 	#define TRUE        -1
 #endif
 
-/**
- * @brief   Mark a function as deprecated.
- */
-#ifndef DEPRECATED
-	#if defined(__GNUC__) || defined(__MINGW32_) || defined(__CYGWIN__)
-		#define DEPRECATED(msg)		__attribute__((deprecated(msg)))
-	#elif defined(_MSC_VER)
-		#define DEPRECATED(msg)		__declspec(deprecated(msg))
-	#else
-		#define DEPRECATED(msg)
-	#endif
-#endif
-
 /* gfxconf.h is the user's project configuration for the GFX system. */
 #include "gfxconf.h"
 
@@ -277,7 +264,12 @@
 
 /** @} */
 
-/* Try to auto-detect some stuff from the compiler itself */
+/* Set some defaults */
+#if GFX_NO_INLINE
+	#define GFXINLINE
+#endif
+
+/* Try to auto-detect the compiler */
 #if GFX_COMPILER == GFX_COMPILER_UNKNOWN
 	#undef GFX_COMPILER
 	#if defined(__MINGW32__)
@@ -348,6 +340,28 @@
 		#define GFX_COMPILER	GFX_COMPILER_UNKNOWN
 	#endif
 #endif
+
+/* Compiler specific defines */
+#if GFX_COMPILER == GFX_COMPILER_KEIL
+	#define DEPRECATED(msg)		__attribute__((deprecated(msg)))
+	#pragma anon_unions						// Allow anonymous unions
+	#pragma diag_remark 1293				// Turn off warning: assignment in condition
+	#pragma diag_remark 83					// Turn off warning: type qualifier specified more than once
+	#pragma diag_remark 767					// Turn off warning: conversion from pointer to smaller integer
+	#pragma diag_remark 188					// Turn off warning: enumerated type mixed with another type
+	#ifndef GFXINLINE						// Get the Keil definition for inline
+		#define GFXINLINE	__inline
+	#endif
+	#if !defined(__BIG_ENDIAN) && !defined(__LITTLE_ENDIAN)			// Oops - Keil defines __BIG_ENDIAN or nothing
+		#define __LITTLE_ENDIAN
+	#endif
+#elif GFX_COMPILER == GFX_COMPILER_MINGW32 || GFX_COMPILER == GFX_COMPILER_MINGW64 || GFX_COMPILER == GFX_COMPILER_CYGWIN || GFX_COMPILER == GFX_COMPILER_GCC
+	#define DEPRECATED(msg)		__attribute__((deprecated(msg)))
+#elif GFX_COMPILER == GFX_COMPILER_VS
+	#define DEPRECATED(msg)		__declspec(deprecated(msg))
+#endif
+
+/* Try to auto-detect the cpu */
 #if GFX_CPU == GFX_CPU_UNKNOWN
 	#undef GFX_CPU
 	#if defined(__ia64) || defined(__itanium__) || defined(_M_IA64)
@@ -368,6 +382,8 @@
 		#define GFX_CPU		GFX_CPU_UNKNOWN
 	#endif
 #endif
+
+/* Try to auto-detect the endianness */
 #if GFX_CPU_ENDIAN == GFX_CPU_ENDIAN_UNKNOWN
 	#undef GFX_CPU_ENDIAN
 	#if (defined(__BYTE_ORDER__)&&(__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)) \
@@ -389,14 +405,18 @@
 	#endif
 #endif
 
-#if GFX_NO_INLINE
-	#define GFXINLINE
-#else
-	#if GFX_COMPILER == GFX_COMPILER_KEIL
-		#define GFXINLINE	__inline
-	#else
-		#define GFXINLINE	inline
-	#endif
+/**
+ * @brief   Mark a function as deprecated.
+ */
+#ifndef DEPRECATED
+	#define DEPRECATED(msg)
+#endif
+
+/**
+ * @brief   Mark a function as inline.
+ */
+#ifndef GFXINLINE
+	#define GFXINLINE	inline
 #endif
 
 /**
