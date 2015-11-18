@@ -408,7 +408,7 @@ typedef struct GDISPVMT {
 	extern "C" {
 	#endif
 
-	// Should the driver routines should be static or not
+	// Should the driver routines be static or not
 	#if USE_VMT
 		#define LLDSPEC         static
 	#else
