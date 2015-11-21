@@ -1,4 +1,4 @@
-#include "gfx.h"
+#include "../../../gfx.h"
 #include "stm32f7xx_hal.h"
 
 #if GFX_USE_OS_CHIBIOS

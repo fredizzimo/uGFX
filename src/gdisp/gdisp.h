@@ -27,7 +27,7 @@
 #ifndef _GDISP_H
 #define _GDISP_H
 
-#include "gfx.h"
+#include "../../gfx.h"
 
 /* This type definition is defined here as it gets used in other gfx sub-systems even
  * if GFX_USE_GDISP is FALSE.
@@ -153,6 +153,7 @@ extern GDisplay	*GDISP;
 	// Pull in the default hardware configuration for a single controller.
 	// If we have multiple controllers the settings must be set in the
 	// users gfxconf.h file.
+	// Use the compiler include path to find it
 	#include "gdisp_lld_config.h"
 
 	// Unless the user has specified a specific pixel format, use

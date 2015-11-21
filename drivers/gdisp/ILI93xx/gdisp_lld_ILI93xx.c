@@ -20,8 +20,8 @@
 #endif
 
 #define GDISP_DRIVER_VMT			GDISPVMT_ILI93xx
-#include "drivers/gdisp/ILI93xx/gdisp_lld_config.h"
-#include "src/gdisp/gdisp_driver.h"
+#include "gdisp_lld_config.h"
+#include "../../../src/gdisp/gdisp_driver.h"
 
 #include "board_ILI93xx.h"
 

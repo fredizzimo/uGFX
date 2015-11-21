@@ -288,9 +288,7 @@
 // GADC                                                                  //
 ///////////////////////////////////////////////////////////////////////////
 //#define GFX_USE_GADC                                 FALSE
-
-//#define GADC_MAX_LOWSPEED_DEVICES                    4
-
+//    #define GADC_MAX_LOWSPEED_DEVICES                4
 
 ///////////////////////////////////////////////////////////////////////////
 // GAUDIO                                                                //
@@ -298,7 +296,6 @@
 //#define GFX_USE_GAUDIO                               FALSE
 //    #define GAUDIO_NEED_PLAY                         FALSE
 //    #define GAUDIO_NEED_RECORD                       FALSE
-
 
 ///////////////////////////////////////////////////////////////////////////
 // GMISC                                                                 //

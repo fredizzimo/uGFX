@@ -23,8 +23,8 @@
 #endif
 
 #define GDISP_DRIVER_VMT			GDISPVMT_STM32LTDC
-#include "drivers/gdisp/STM32LTDC/gdisp_lld_config.h"
-#include "src/gdisp/gdisp_driver.h"
+#include "gdisp_lld_config.h"
+#include "../../../src/gdisp/gdisp_driver.h"
 
 #include "stm32_ltdc.h"
 

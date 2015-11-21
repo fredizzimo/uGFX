@@ -22,7 +22,7 @@
 #ifndef _GEVENT_H
 #define _GEVENT_H
 
-#include "gfx.h"
+#include "../../gfx.h"
 
 #if GFX_USE_GEVENT || defined(__DOXYGEN__)
 

@@ -5,7 +5,7 @@
 /* disk I/O modules and attach it to FatFs module with common interface. */
 /*-----------------------------------------------------------------------*/
 
-#include "gfx.h"
+#include "../../gfx.h"
 
 #if GFX_USE_GFILE && GFILE_NEED_PETITFS && GFX_USE_OS_CHIBIOS
 

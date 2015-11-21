@@ -10,8 +10,8 @@
 #if GFX_USE_GDISP
 
 #define GDISP_DRIVER_VMT			GDISPVMT_SSD1306
-#include "drivers/gdisp/SSD1306/gdisp_lld_config.h"
-#include "src/gdisp/gdisp_driver.h"
+#include "gdisp_lld_config.h"
+#include "../../../src/gdisp/gdisp_driver.h"
 
 #include "board_SSD1306.h"
 #include <string.h>   // for memset
@@ -42,7 +42,7 @@
 
 #define GDISP_FLG_NEEDFLUSH			(GDISP_FLG_DRIVER<<0)
 
-#include "drivers/gdisp/SSD1306/SSD1306.h"
+#include "SSD1306.h"
 
 /*===========================================================================*/
 /* Driver local functions.                                                   */

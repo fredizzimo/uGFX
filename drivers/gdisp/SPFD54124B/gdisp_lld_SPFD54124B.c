@@ -24,8 +24,8 @@
 #undef GDISP_SCREEN_WIDTH
 #endif
 
-#include "drivers/gdisp/SPFD54124B/gdisp_lld_config.h"
-#include "src/gdisp/gdisp_driver.h"
+#include "gdisp_lld_config.h"
+#include "../../../src/gdisp/gdisp_driver.h"
 
 #include "board_SPFD54124B.h"
 

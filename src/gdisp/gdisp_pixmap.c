@@ -5,7 +5,7 @@
  *              http://ugfx.org/license.html
  */
 
-#include "gfx.h"
+#include "../../gfx.h"
 
 #if GFX_USE_GDISP && GDISP_NEED_PIXMAP
 
@@ -39,8 +39,8 @@
 	#error "GDISP Pixmap: Pixmap's do not currently support the specified GDISP_LLD_PIXELFORMAT"
 #endif
 
-#include "src/gdisp/gdisp_driver.h"
-#include "src/gdriver/gdriver.h"
+#include "gdisp_driver.h"
+#include "../gdriver/gdriver.h"
 
 typedef struct pixmap {
 	#if GDISP_NEED_PIXMAP_IMAGE

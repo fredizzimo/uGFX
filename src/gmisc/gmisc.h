@@ -19,7 +19,7 @@
 #ifndef _GMISC_H
 #define _GMISC_H
 
-#include "gfx.h"
+#include "../../gfx.h"
 
 /*===========================================================================*/
 /* Type definitions                                                          */

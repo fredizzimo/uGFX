@@ -10,7 +10,7 @@
  * @brief   GWIN sub-system container code
  */
 
-#include "gfx.h"
+#include "../../gfx.h"
 
 #if GFX_USE_GWIN && GWIN_NEED_CONTAINERS
 

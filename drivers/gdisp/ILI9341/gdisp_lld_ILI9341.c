@@ -19,8 +19,8 @@
 #endif
 
 #define GDISP_DRIVER_VMT			GDISPVMT_ILI9341
-#include "drivers/gdisp/ILI9341/gdisp_lld_config.h"
-#include "src/gdisp/gdisp_driver.h"
+#include "gdisp_lld_config.h"
+#include "../../../src/gdisp/gdisp_driver.h"
 
 #include "board_ILI9341.h"
 
@@ -41,7 +41,7 @@
 	#define GDISP_INITIAL_BACKLIGHT	100
 #endif
 
-#include "drivers/gdisp/ILI9341/ILI9341.h"
+#include "ILI9341.h"
 
 /*===========================================================================*/
 /* Driver local functions.                                                   */

@@ -19,7 +19,7 @@
 #ifndef _GFILE_H
 #define _GFILE_H
 
-#include "gfx.h"
+#include "../../gfx.h"
 
 #if GFX_USE_GFILE || defined(__DOXYGEN__)
 

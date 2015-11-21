@@ -10,7 +10,7 @@
  * @brief	GWIN sub-system code
  */
 
-#include "gfx.h"
+#include "../../gfx.h"
 
 #if GFX_USE_GWIN
 

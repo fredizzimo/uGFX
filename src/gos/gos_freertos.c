@@ -5,7 +5,7 @@
  *              http://ugfx.org/license.html
  */
 
-#include "gfx.h"
+#include "../../gfx.h"
 #include <string.h>
 
 #if GFX_USE_OS_FREERTOS

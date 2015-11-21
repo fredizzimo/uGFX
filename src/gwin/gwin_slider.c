@@ -10,7 +10,7 @@
  * @brief   GWIN sub-system slider code
  */
 
-#include "gfx.h"
+#include "../../gfx.h"
 
 #if (GFX_USE_GWIN && GWIN_NEED_SLIDER) || defined(__DOXYGEN__)
 

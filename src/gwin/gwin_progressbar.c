@@ -10,7 +10,7 @@
  * @brief   GWIN sub-system progressbar code
  */
 
-#include "gfx.h"
+#include "../../gfx.h"
 
 #if (GFX_USE_GWIN && GWIN_NEED_PROGRESSBAR) || defined(__DOXYGEN__)
 

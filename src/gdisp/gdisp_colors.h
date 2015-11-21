@@ -19,7 +19,7 @@
 #ifndef _GDISP_COLORS_H
 #define _GDISP_COLORS_H
 
-#include "gfx.h"
+#include "../../gfx.h"
 
 #if GFX_USE_GDISP || defined(__DOXYGEN__)
 

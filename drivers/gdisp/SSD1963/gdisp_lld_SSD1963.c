@@ -10,8 +10,8 @@
 #if GFX_USE_GDISP
 
 #define GDISP_DRIVER_VMT			GDISPVMT_SSD1963
-#include "drivers/gdisp/SSD1963/gdisp_lld_config.h"
-#include "src/gdisp/gdisp_driver.h"
+#include "gdisp_lld_config.h"
+#include "../../../src/gdisp/gdisp_driver.h"
 
 #define CALC_PERIOD(w,b,f,p)				(p+b+w+f)
 #define CALC_FPR(w,h,hb,hf,hp,vb,vf,vp,fps)	((fps * CALC_PERIOD(w,hb,hf,hp) * CALC_PERIOD(h,vb,vf,vp) * 1048576)/100000000)
@@ -69,7 +69,7 @@ typedef struct LCD_Parameters {
 /* Driver local functions.                                                   */
 /*===========================================================================*/
 
-#include "drivers/gdisp/SSD1963/ssd1963.h"
+#include "ssd1963.h"
 
 #define dummy_read(g)               { volatile uint16_t dummy; dummy = read_data(g); (void) dummy; }
 #define write_reg(g, reg, data)		{ write_index(g, reg); write_data(g, data); }

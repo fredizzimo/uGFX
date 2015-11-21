@@ -20,7 +20,7 @@
 #ifndef _GADC_LLD_H
 #define _GADC_LLD_H
 
-#include "gfx.h"
+#include "../../gfx.h"
 
 #if GFX_USE_GADC || defined(__DOXYGEN__)
 

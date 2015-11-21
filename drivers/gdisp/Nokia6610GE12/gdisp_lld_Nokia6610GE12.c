@@ -19,8 +19,8 @@
 #endif
 
 #define GDISP_DRIVER_VMT			GDISPVMT_Nokia6610GE12
-#include "drivers/gdisp/Nokia6610GE12/gdisp_lld_config.h"
-#include "src/gdisp/gdisp_driver.h"
+#include "gdisp_lld_config.h"
+#include "../../../src/gdisp/gdisp_driver.h"
 
 #include "board_Nokia6610GE12.h"
 
@@ -28,7 +28,7 @@
 /* Driver local definitions.                                                 */
 /*===========================================================================*/
 
-#include "drivers/gdisp/Nokia6610GE12/GE12.h"
+#include "GE12.h"
 
 #define GDISP_SCAN_LINES			132
 #define GDISP_SLEEP_SIZE			32		/* Sleep mode window lines - this must be 32 on this controller */

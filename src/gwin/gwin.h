@@ -25,7 +25,7 @@
 #ifndef _GWIN_H
 #define _GWIN_H
 
-#include "gfx.h"
+#include "../../gfx.h"
 
 #if GFX_USE_GWIN || defined(__DOXYGEN__)
 

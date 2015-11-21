@@ -12,7 +12,7 @@
  * @addtogroup GINPUT
  * @{
  */
-#include "gfx.h"
+#include "../../gfx.h"
 
 #if GFX_USE_GINPUT
 

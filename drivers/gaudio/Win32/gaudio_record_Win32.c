@@ -13,7 +13,7 @@
 #if GFX_USE_GAUDIO && GAUDIO_NEED_RECORD
 
 /* Include the driver defines */
-#include "src/gaudio/gaudio_driver_record.h"
+#include "../../../src/gaudio/gaudio_driver_record.h"
 
 #undef Red
 #undef Green

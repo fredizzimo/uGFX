@@ -5,7 +5,7 @@
  *              http://ugfx.org/license.html
  */
 
-#include "gfx.h"
+#include "../../gfx.h"
 
 #if GOS_NEED_X_HEAP
 

@@ -23,8 +23,8 @@
 #endif
 
 #define GDISP_DRIVER_VMT			GDISPVMT_STM32F429iDiscovery
-#include "drivers/gdisp/STM32F429iDiscovery/gdisp_lld_config.h"
-#include "src/gdisp/gdisp_driver.h"
+#include "gdisp_lld_config.h"
+#include "../../../src/gdisp/gdisp_driver.h"
 
 #include "stm32_ltdc.h"
 

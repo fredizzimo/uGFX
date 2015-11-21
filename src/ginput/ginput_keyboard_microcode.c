@@ -10,7 +10,7 @@
  * @brief   GINPUT keyboard standard microcode definitions.
  */
 
-#include "gfx.h"
+#include "../../gfx.h"
 
 #if GFX_USE_GINPUT && GINPUT_NEED_KEYBOARD && !GKEYBOARD_LAYOUT_OFF
 

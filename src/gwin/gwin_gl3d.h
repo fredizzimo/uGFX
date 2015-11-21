@@ -62,7 +62,7 @@ GHandle gwinGGL3DCreate(GDisplay *g, GGL3DObject *gg, const GWindowInit *pInit);
 #define gwinGL3DCreate(gg, pInit)			gwinGGL3DCreate(GDISP, gg, pInit)
 
 /* Include the gl interface */
-#include "3rdparty/tinygl-0.4-ugfx/include/GL/gl.h"
+#include "../../3rdparty/tinygl-0.4-ugfx/include/GL/gl.h"
 
 #ifdef __cplusplus
 }

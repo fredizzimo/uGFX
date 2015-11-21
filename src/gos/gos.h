@@ -457,27 +457,27 @@
  * (without any of the documentation overheads) is in the files below.
  */
 #elif GFX_USE_OS_RAWRTOS
- 	#include "src/gos/gos_rawrtos.h"
+ 	#include "gos_rawrtos.h"
 #elif GFX_USE_OS_CHIBIOS
-	#include "src/gos/gos_chibios.h"
+	#include "gos_chibios.h"
 #elif GFX_USE_OS_FREERTOS
-	#include "src/gos/gos_freertos.h"
+	#include "gos_freertos.h"
 #elif GFX_USE_OS_WIN32
-	#include "src/gos/gos_win32.h"
+	#include "gos_win32.h"
 #elif GFX_USE_OS_LINUX
-	#include "src/gos/gos_linux.h"
+	#include "gos_linux.h"
 #elif GFX_USE_OS_OSX
-	#include "src/gos/gos_osx.h"
+	#include "gos_osx.h"
 #elif GFX_USE_OS_RAW32
-	#include "src/gos/gos_raw32.h"
+	#include "gos_raw32.h"
 #elif GFX_USE_OS_ECOS
-	#include "src/gos/gos_ecos.h"
+	#include "gos_ecos.h"
 #elif GFX_USE_OS_ARDUINO
-	#include "src/gos/gos_arduino.h"
+	#include "gos_arduino.h"
 #elif GFX_USE_OS_CMSIS
- 	#include "src/gos/gos_cmsis.h"
+ 	#include "gos_cmsis.h"
 #elif GFX_USE_OS_KEIL
- 	#include "src/gos/gos_keil.h"
+ 	#include "gos_keil.h"
 #else
 	#error "Your operating system is not supported yet"
 #endif

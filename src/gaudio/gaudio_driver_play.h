@@ -20,7 +20,7 @@
 #ifndef _GAUDIO_PLAY_LLD_H
 #define _GAUDIO_PLAY_LLD_H
 
-#include "gfx.h"
+#include "../../gfx.h"
 
 #if (GFX_USE_GAUDIO && GAUDIO_NEED_PLAY) || defined(__DOXYGEN__)
 

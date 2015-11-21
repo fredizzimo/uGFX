@@ -9,7 +9,7 @@
  * @file    src/ginput/ginput_mouse.c
  * @brief   GINPUT mouse/touch code.
  */
-#include "gfx.h"
+#include "../../gfx.h"
 
 #if GFX_USE_GINPUT && GINPUT_NEED_MOUSE
 

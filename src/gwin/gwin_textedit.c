@@ -10,7 +10,7 @@
  * @brief	GWIN TextEdit widget header file
  */
 
-#include "gfx.h"
+#include "../../gfx.h"
 
 #if GFX_USE_GWIN && GWIN_NEED_TEXTEDIT
 

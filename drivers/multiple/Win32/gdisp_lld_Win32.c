@@ -14,7 +14,7 @@
 
 #define GDISP_DRIVER_VMT			GDISPVMT_Win32
 #include "gdisp_lld_config.h"
-#include "src/gdisp/gdisp_driver.h"
+#include "../../../src/gdisp/gdisp_driver.h"
 
 // Configuration parameters for this driver
 #ifndef GDISP_SCREEN_WIDTH
@@ -82,7 +82,7 @@
 
 #if GINPUT_NEED_TOGGLE
 	/* Include toggle support code */
-	#include "src/ginput/ginput_driver_toggle.h"
+	#include "../../../src/ginput/ginput_driver_toggle.h"
 
 	// Hack until toggle use gdriver.
 	static GDisplay *toggleWindow;
@@ -91,7 +91,7 @@
 #if GINPUT_NEED_MOUSE
 	// Include mouse support code
 	#define GMOUSE_DRIVER_VMT		GMOUSEVMT_Win32
-	#include "src/ginput/ginput_driver_mouse.h"
+	#include "../../../src/ginput/ginput_driver_mouse.h"
 
 	// Forward definitions
 	static bool_t Win32MouseInit(GMouse *m, unsigned driverinstance);
@@ -132,14 +132,14 @@
 
 #if GINPUT_NEED_KEYBOARD
 	#define GKEYBOARD_DRIVER_VMT		GKEYBOARDVMT_Win32
-	#include "src/ginput/ginput_driver_keyboard.h"
+	#include "../../../src/ginput/ginput_driver_keyboard.h"
 
 	#if !GKEYBOARD_WIN32_NO_LAYOUT
 		#if GKEYBOARD_LAYOUT_OFF
 			#error "The Win32 keyboard driver is using the layout engine. Please set GKEYBOARD_LAYOUT_OFF=FALSE or GKEYBOARD_WIN32_NO_LAYOUT=TRUE."
 		#endif
 
-		#include "src/ginput/ginput_keyboard_microcode.h"
+		#include "../../../src/ginput/ginput_keyboard_microcode.h"
 
 		// Forward definitions
 		extern uint8_t	GKEYBOARD_WIN32_DEFAULT_LAYOUT[];
