@@ -15,10 +15,10 @@
  * How big a pixel array to allocate for blitting
  * Bigger is faster but uses more RAM.
  */
-#define BLIT_BUFFER_SIZE	32
+#define BLIT_BUFFER_SIZE_NATIVE	32
 
-#define HEADER_SIZE			8
-#define FRAME0POS			(HEADER_SIZE)
+#define HEADER_SIZE_NATIVE			8
+#define FRAME0POS_NATIVE			(HEADER_SIZE_NATIVE)
 
 /**
  * Helper Routines Needed
@@ -28,7 +28,7 @@ void gdispImageFree(gdispImage *img, void *ptr, size_t sz);
 
 typedef struct gdispImagePrivate {
 	pixel_t		*frame0cache;
-	pixel_t		buf[BLIT_BUFFER_SIZE];
+	pixel_t		buf[BLIT_BUFFER_SIZE_NATIVE];
 	} gdispImagePrivate;
 
 void gdispImageClose_NATIVE(gdispImage *img) {
@@ -41,7 +41,7 @@ void gdispImageClose_NATIVE(gdispImage *img) {
 }
 
 gdispImageError gdispImageOpen_NATIVE(gdispImage *img) {
-	uint8_t		hdr[HEADER_SIZE];
+	uint8_t		hdr[HEADER_SIZE_NATIVE];
 
 	/* Read the 8 byte header */
 	if (gfileRead(img->f, hdr, 8) != 8)
@@ -81,7 +81,7 @@ gdispImageError gdispImageCache_NATIVE(gdispImage *img) {
 		return GDISP_IMAGE_ERR_NOMEMORY;
 
 	/* Read the entire bitmap into cache */
-	gfileSetPos(img->f, FRAME0POS);
+	gfileSetPos(img->f, FRAME0POS_NATIVE);
 	if (gfileRead(img->f, img->priv->frame0cache, len) != len)
 		return GDISP_IMAGE_ERR_BADDATA;
 
@@ -104,7 +104,7 @@ gdispImageError gdispGImageDraw_NATIVE(GDisplay *g, gdispImage *img, coord_t x, 
 	}
 
 	/* For this image decoder we cheat and just seek straight to the region we want to display */
-	pos = FRAME0POS + (img->width * sy + sx) * sizeof(pixel_t);
+	pos = FRAME0POS_NATIVE + (img->width * sy + sx) * sizeof(pixel_t);
 
 	/* Cycle through the lines */
 	for(;cy;cy--, y++) {
@@ -116,7 +116,7 @@ gdispImageError gdispGImageDraw_NATIVE(GDisplay *g, gdispImage *img, coord_t x, 
 			// Read the data
 			len = gfileRead(img->f,
 						img->priv->buf,
-						mcx > BLIT_BUFFER_SIZE ? (BLIT_BUFFER_SIZE*sizeof(pixel_t)) : (mcx * sizeof(pixel_t)))
+						mcx > BLIT_BUFFER_SIZE_NATIVE ? (BLIT_BUFFER_SIZE_NATIVE*sizeof(pixel_t)) : (mcx * sizeof(pixel_t)))
 					/ sizeof(pixel_t);
 			if (!len)
 				return GDISP_IMAGE_ERR_BADDATA;

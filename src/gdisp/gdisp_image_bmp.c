@@ -16,9 +16,9 @@
  * Bigger is faster but uses more RAM.
  * This must be greater than 40 bytes and 32 pixels as we read our headers into this space as well
  */
-#define BLIT_BUFFER_SIZE	32
+#define BLIT_BUFFER_SIZE_BMP	32
 
-typedef struct gdispImagePrivate {
+typedef struct gdispImagePrivate_BMP {
 	uint8_t		bmpflags;
 		#define BMP_V2				0x01		// Version 2 (old) header format
 		#define BMP_V4				0x02		// Version 4 (alpha support) header format
@@ -49,8 +49,8 @@ typedef struct gdispImagePrivate {
 #endif
 	size_t		frame0pos;
 	pixel_t		*frame0cache;
-	pixel_t		buf[BLIT_BUFFER_SIZE];
-	} gdispImagePrivate;
+	pixel_t		buf[BLIT_BUFFER_SIZE_BMP];
+	} gdispImagePrivate_BMP;
 
 void gdispImageClose_BMP(gdispImage *img) {
 	if (img->priv) {
@@ -60,13 +60,13 @@ void gdispImageClose_BMP(gdispImage *img) {
 #endif
 		if (img->priv->frame0cache)
 			gdispImageFree(img, (void *)img->priv->frame0cache, img->width*img->height*sizeof(pixel_t));
-		gdispImageFree(img, (void *)img->priv, sizeof(gdispImagePrivate));
+		gdispImageFree(img, (void *)img->priv, sizeof(gdispImagePrivate_BMP));
 		img->priv = 0;
 	}
 }
 
 gdispImageError gdispImageOpen_BMP(gdispImage *img) {
-	gdispImagePrivate *priv;
+	gdispImagePrivate_BMP *priv;
 	uint8_t		hdr[2];
 	uint16_t	aword;
 	uint32_t	adword;
@@ -89,7 +89,7 @@ gdispImageError gdispImageOpen_BMP(gdispImage *img) {
 	img->flags = 0;
 
 	/* Allocate our private area */
-	if (!(img->priv = (gdispImagePrivate *)gdispImageAlloc(img, sizeof(gdispImagePrivate))))
+	if (!(img->priv = (gdispImagePrivate_BMP *)gdispImageAlloc(img, sizeof(gdispImagePrivate_BMP))))
 		return GDISP_IMAGE_ERR_NOMEMORY;
 
 	/* Initialise the essential bits in the private area */
@@ -357,7 +357,7 @@ unsupportedcleanup:
 }
 
 static coord_t getPixels(gdispImage *img, coord_t x) {
-	gdispImagePrivate *	priv;
+	gdispImagePrivate_BMP *	priv;
 	color_t *			pc;
 	coord_t				len;
 
@@ -376,7 +376,7 @@ static coord_t getPixels(gdispImage *img, coord_t x) {
 			pc = priv->buf;
 			len = 0;
 
-			while(x < img->width && len <= BLIT_BUFFER_SIZE-32) {
+			while(x < img->width && len <= BLIT_BUFFER_SIZE_BMP-32) {
 				if (gfileRead(img->f, &b, 4) != 4)
 					return 0;
 
@@ -406,7 +406,7 @@ static coord_t getPixels(gdispImage *img, coord_t x) {
 
 			while(x < img->width) {
 				if (priv->bmpflags & BMP_RLE_ENC) {
-					while (priv->rlerun && len <= BLIT_BUFFER_SIZE-2 && x < img->width) {
+					while (priv->rlerun && len <= BLIT_BUFFER_SIZE_BMP-2 && x < img->width) {
 						*pc++ = priv->palette[priv->rlecode >> 4];
 						priv->rlerun--;
 						len++;
@@ -421,7 +421,7 @@ static coord_t getPixels(gdispImage *img, coord_t x) {
 					if (priv->rlerun)			// Return if we have more run to do
 						return len;
 				} else if (priv->bmpflags & BMP_RLE_ABS) {
-					while (priv->rlerun && len <= BLIT_BUFFER_SIZE-2 && x < img->width) {
+					while (priv->rlerun && len <= BLIT_BUFFER_SIZE_BMP-2 && x < img->width) {
 						if (gfileRead(img->f, &b, 1) != 1)
 							return 0;
 						*pc++ = priv->palette[b[0] >> 4];
@@ -481,7 +481,7 @@ static coord_t getPixels(gdispImage *img, coord_t x) {
 		{
 			uint8_t		b[4];
 
-			while(x < img->width && len <= BLIT_BUFFER_SIZE-8) {
+			while(x < img->width && len <= BLIT_BUFFER_SIZE_BMP-8) {
 				if (gfileRead(img->f, &b, 4) != 4)
 					return 0;
 
@@ -512,7 +512,7 @@ static coord_t getPixels(gdispImage *img, coord_t x) {
 
 			while(x < img->width) {
 				if (priv->bmpflags & BMP_RLE_ENC) {
-					while (priv->rlerun && len < BLIT_BUFFER_SIZE && x < img->width) {
+					while (priv->rlerun && len < BLIT_BUFFER_SIZE_BMP && x < img->width) {
 						*pc++ = priv->palette[priv->rlecode];
 						priv->rlerun--;
 						len++;
@@ -521,7 +521,7 @@ static coord_t getPixels(gdispImage *img, coord_t x) {
 					if (priv->rlerun)			// Return if we have more run to do
 						return len;
 				} else if (priv->bmpflags & BMP_RLE_ABS) {
-					while (priv->rlerun && len < BLIT_BUFFER_SIZE && x < img->width) {
+					while (priv->rlerun && len < BLIT_BUFFER_SIZE_BMP && x < img->width) {
 						if (gfileRead(img->f, &b, 1) != 1)
 							return 0;
 						*pc++ = priv->palette[b[0]];
@@ -575,7 +575,7 @@ static coord_t getPixels(gdispImage *img, coord_t x) {
 		{
 			uint8_t		b[4];
 
-			while(x < img->width && len <= BLIT_BUFFER_SIZE-4) {
+			while(x < img->width && len <= BLIT_BUFFER_SIZE_BMP-4) {
 				if (gfileRead(img->f, &b, 4) != 4)
 					return 0;
 
@@ -597,7 +597,7 @@ static coord_t getPixels(gdispImage *img, coord_t x) {
 		uint16_t	w[2];
 		color_t		r, g, b;
 
-			while(x < img->width && len <= BLIT_BUFFER_SIZE-2) {
+			while(x < img->width && len <= BLIT_BUFFER_SIZE_BMP-2) {
 				if (gfileRead(img->f, &w, 4) != 4)
 					return 0;
 				gdispImageMakeLE16(w[0]);
@@ -642,7 +642,7 @@ static coord_t getPixels(gdispImage *img, coord_t x) {
 		{
 		uint8_t		b[3];
 
-			while(x < img->width && len < BLIT_BUFFER_SIZE) {
+			while(x < img->width && len < BLIT_BUFFER_SIZE_BMP) {
 				if (gfileRead(img->f, &b, 3) != 3)
 					return 0;
 				*pc++ = RGB2COLOR(b[2], b[1], b[0]);
@@ -665,7 +665,7 @@ static coord_t getPixels(gdispImage *img, coord_t x) {
 		uint32_t	dw;
 		color_t		r, g, b;
 
-			while(x < img->width && len < BLIT_BUFFER_SIZE) {
+			while(x < img->width && len < BLIT_BUFFER_SIZE_BMP) {
 				if (gfileRead(img->f, &dw, 4) != 4)
 					return 0;
 				gdispImageMakeLE32(dw);
@@ -696,7 +696,7 @@ static coord_t getPixels(gdispImage *img, coord_t x) {
 }
 
 gdispImageError gdispImageCache_BMP(gdispImage *img) {
-	gdispImagePrivate *	priv;
+	gdispImagePrivate_BMP *	priv;
 	color_t *			pcs;
 	color_t *			pcd;
 	coord_t				pos, x, y;
@@ -752,7 +752,7 @@ gdispImageError gdispImageCache_BMP(gdispImage *img) {
 }
 
 gdispImageError gdispGImageDraw_BMP(GDisplay *g, gdispImage *img, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t sx, coord_t sy) {
-	gdispImagePrivate *	priv;
+	gdispImagePrivate_BMP *	priv;
 	coord_t				mx, my;
 	coord_t				pos, len, st;
 
