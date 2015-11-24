@@ -31,7 +31,7 @@
 /* Type definitions                                                          */
 /*===========================================================================*/
 
-typedef bool	bool_t;
+typedef unsigned char	bool_t;
 
 #if 0
 	// Already defined by Arduino
