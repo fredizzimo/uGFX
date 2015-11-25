@@ -117,7 +117,7 @@ static gdispImageError startDecodeGif(gdispImage *img) {
 	gifimgdecode *			decode;
 	uint16_t				cnt;
 
-	priv = img->priv;
+	priv = (gdispImagePrivate_GIF *)img->priv;
 
 	// We need the decode ram, and possibly a palette
 	if (!(decode = (gifimgdecode *)gdispImageAlloc(img, sizeof(gifimgdecode)+priv->frame.palsize*sizeof(color_t))))
@@ -179,7 +179,7 @@ baddatacleanup:
 static void stopDecodeGif(gdispImage *img) {
 	gdispImagePrivate_GIF *	priv;
 
-	priv = img->priv;
+	priv = (gdispImagePrivate_GIF *)img->priv;
 
 	// Free the decode data
 	if (priv->decode) {
@@ -214,7 +214,7 @@ static uint16_t getBytesGif(gdispImage *img) {
 	uint16_t				code, prefix;
 	uint8_t					bdata;
 
-	priv = img->priv;
+	priv = (gdispImagePrivate_GIF *)img->priv;
 	decode = priv->decode;
 	cnt = 0;
 
@@ -346,7 +346,7 @@ static gdispImageError initFrameGif(gdispImage *img) {
 	uint8_t					blocktype;
 	uint8_t					blocksz;
 
-	priv = img->priv;
+	priv = (gdispImagePrivate_GIF *)img->priv;
 
 	// Save the dispose info from the existing frame
 	priv->dispose.flags = priv->frame.flags;
@@ -504,7 +504,7 @@ void gdispImageClose_GIF(gdispImage *img) {
 	gifimgcache *			cache;
 	gifimgcache *			ncache;
 
-	priv = img->priv;
+	priv = (gdispImagePrivate_GIF *)img->priv;
 	if (priv) {
 		// Free any stored frames
 		cache = priv->cache;
@@ -515,7 +515,7 @@ void gdispImageClose_GIF(gdispImage *img) {
 		}
 		if (priv->palette)
 			gdispImageFree(img, (void *)priv->palette, priv->palsize*sizeof(color_t));
-		gdispImageFree(img, (void *)img->priv, sizeof(gdispImagePrivate_GIF));
+		gdispImageFree(img, (void *)priv, sizeof(gdispImagePrivate_GIF));
 		img->priv = 0;
 	}
 }
@@ -539,11 +539,11 @@ gdispImageError gdispImageOpen_GIF(gdispImage *img) {
 	img->flags = 0;
 
 	/* Allocate our private area */
-	if (!(img->priv = (gdispImagePrivate_GIF *)gdispImageAlloc(img, sizeof(gdispImagePrivate_GIF))))
+	if (!(img->priv = gdispImageAlloc(img, sizeof(gdispImagePrivate_GIF))))
 		return GDISP_IMAGE_ERR_NOMEMORY;
 
 	/* Initialise the essential bits in the private area */
-	priv = img->priv;
+	priv = (gdispImagePrivate_GIF *)img->priv;
 	priv->flags = 0;
 	priv->palsize = 0;
 	priv->palette = 0;
@@ -610,7 +610,7 @@ gdispImageError gdispImageCache_GIF(gdispImage *img) {
 	uint16_t				cnt;
 
 	/* If we are already cached - just return OK */
-	priv = img->priv;
+	priv = (gdispImagePrivate_GIF *)img->priv;
 	if (priv->curcache)
 		return GDISP_IMAGE_ERR_OK;
 
@@ -779,7 +779,7 @@ gdispImageError gdispGImageDraw_GIF(GDisplay *g, gdispImage *img, coord_t x, coo
 	uint16_t				cnt, gcnt;
 	uint8_t					col;
 
-	priv = img->priv;
+	priv = (gdispImagePrivate_GIF *)img->priv;
 
 	/* Handle previous frame disposing */
 	if (priv->dispose.flags & (GIFL_DISPOSECLEAR|GIFL_DISPOSEREST)) {
@@ -1116,7 +1116,7 @@ delaytime_t gdispImageNext_GIF(gdispImage *img) {
 	delaytime_t				delay;
 	uint8_t					blocksz;
 
-	priv = img->priv;
+	priv = (gdispImagePrivate_GIF *)img->priv;
 
 	// Save the delay and convert to millisecs
 	delay = (delaytime_t)priv->frame.delay * 10;

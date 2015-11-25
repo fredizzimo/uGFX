@@ -66,7 +66,7 @@ typedef struct gdispImage {
 		uint32_t						maxmemused;			/* @< How much RAM has been allocated (maximum) */
 	#endif
 	const struct gdispImageHandlers *	fns;				/* @< Don't mess with this! */
-	struct gdispImagePrivate *			priv;				/* @< Don't mess with this! */
+	void *								priv;				/* @< Don't mess with this! */
 } gdispImage;
 	
 #ifdef __cplusplus
