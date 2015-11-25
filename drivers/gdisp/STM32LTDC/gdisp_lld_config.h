@@ -14,11 +14,15 @@
 /* Driver hardware support.                                                  */
 /*===========================================================================*/
 
-#define	LTDC_USE_DMA2D					FALSE	// Currently has display artifacts
-#define GDISP_HARDWARE_DRAWPIXEL		TRUE
-#define GDISP_HARDWARE_PIXELREAD		TRUE
-#define GDISP_HARDWARE_CONTROL			TRUE
-#define GDISP_LLD_PIXELFORMAT			GDISP_PIXELFORMAT_RGB565
+#define	LTDC_USE_DMA2D						TRUE
+#define GDISP_HARDWARE_DRAWPIXEL			TRUE
+#define GDISP_HARDWARE_PIXELREAD			TRUE
+#define GDISP_HARDWARE_CONTROL				TRUE
+
+// Both these pixel formats are supported - pick one.
+// RGB565 obviously is faster and uses less RAM but with lower color resolution than RGB888
+#define GDISP_LLD_PIXELFORMAT				GDISP_PIXELFORMAT_RGB565
+//#define GDISP_LLD_PIXELFORMAT				GDISP_PIXELFORMAT_RGB888
 
 
 /*===========================================================================*/
@@ -26,11 +30,14 @@
 /*===========================================================================*/
 
 #if LTDC_USE_DMA2D
+	// DMA2D supports accelerated fills
  	#define GDISP_HARDWARE_FILLS		TRUE
- 	#define GDISP_HARDWARE_BITFILLS		TRUE
-#else
- 	#define GDISP_HARDWARE_FILLS		FALSE
- 	#define GDISP_HARDWARE_BITFILLS		FALSE
+
+	// Accelerated bitfills are also possible but only for GDISP_ROTATE_0
+	//	and if no color translation is required (for now)
+	#if !GDISP_NEED_CONTROL && GDISP_PIXELFORMAT == GDISP_LLD_PIXELFORMAT
+ 		#define GDISP_HARDWARE_BITFILLS	TRUE
+	#endif
 #endif /* GDISP_USE_DMA2D */
 
 #endif	/* GFX_USE_GDISP */

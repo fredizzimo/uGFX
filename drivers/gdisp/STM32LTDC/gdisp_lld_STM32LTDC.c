@@ -102,17 +102,13 @@ typedef struct ltdcConfig {
 /* Driver exported functions.                                                */
 /*===========================================================================*/
 
-static void _ltdc_reload(void)
-{
+static void _ltdc_reload(void) {
 	LTDC->SRCR |= LTDC_SRCR_IMR;
-	
-	while (LTDC->SRCR & (LTDC_SRCR_IMR | LTDC_SRCR_VBR)) {
+	while (LTDC->SRCR & (LTDC_SRCR_IMR | LTDC_SRCR_VBR))
 		gfxYield();
-	}
 }
 
-static void _ltdc_layer_init(LTDC_Layer_TypeDef* pLayReg, const ltdcLayerConfig* pCfg)
-{
+static void _ltdc_layer_init(LTDC_Layer_TypeDef* pLayReg, const ltdcLayerConfig* pCfg) {
 	static const uint8_t fmt2Bpp[] = {
 		4, /* LTDC_FMT_ARGB8888 */
 		3, /* LTDC_FMT_RGB888 */
@@ -151,8 +147,7 @@ static void _ltdc_layer_init(LTDC_Layer_TypeDef* pLayReg, const ltdcLayerConfig*
 	pLayReg->CR = (pLayReg->CR & ~LTDC_LEF_MASK) | ((uint32_t)pCfg->layerflags & LTDC_LEF_MASK);
 }
 
-static void _ltdc_init(void)
-{
+static void _ltdc_init(void) {
 	// Set up the display scanning
 	uint32_t hacc, vacc;
 
@@ -161,9 +156,9 @@ static void _ltdc_init(void)
 	RCC->APB2RSTR = 0;
 
 	// Enable the LTDC clock
-	#if defined(STM32F4)
+	#if defined(STM32F4) || defined(STM32F429_439xx) || defined(STM32F429xx)
 		RCC->DCKCFGR = (RCC->DCKCFGR & ~RCC_DCKCFGR_PLLSAIDIVR) | (1 << 16);
-	#elif defined(STM32F7)
+	#elif defined(STM32F7) || defined(STM32F746xx)
 		RCC->DCKCFGR1 = (RCC->DCKCFGR1 & ~RCC_DCKCFGR1_PLLSAIDIVR) | (1 << 16);
 	#else
 		#error STM32LTDC driver not implemented for your platform
@@ -219,8 +214,7 @@ static void _ltdc_init(void)
 	_ltdc_reload();
 }
 
-LLDSPEC bool_t gdisp_lld_init(GDisplay* g)
-{
+LLDSPEC bool_t gdisp_lld_init(GDisplay* g) {
 	// Initialize the private structure
 	g->priv = 0;
 	g->board = 0;
@@ -253,8 +247,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay* g)
 	return TRUE;
 }
 
-LLDSPEC void gdisp_lld_draw_pixel(GDisplay* g)
-{
+LLDSPEC void gdisp_lld_draw_pixel(GDisplay* g) {
 	unsigned	pos;
 
 	#if GDISP_NEED_CONTROL
@@ -277,11 +270,14 @@ LLDSPEC void gdisp_lld_draw_pixel(GDisplay* g)
 		pos = PIXIL_POS(g, g->p.x, g->p.y);
 	#endif
 
-		PIXEL_ADDR(g, pos)[0] = gdispColor2Native(g->p.color);
+	#if LTDC_USE_DMA2D
+		while(DMA2D->CR & DMA2D_CR_START);
+	#endif
+
+	PIXEL_ADDR(g, pos)[0] = gdispColor2Native(g->p.color);
 }
 
-LLDSPEC	color_t gdisp_lld_get_pixel_color(GDisplay* g)
-{
+LLDSPEC	color_t gdisp_lld_get_pixel_color(GDisplay* g) {
 	unsigned		pos;
 	LLDCOLOR_TYPE	color;
 
@@ -305,24 +301,28 @@ LLDSPEC	color_t gdisp_lld_get_pixel_color(GDisplay* g)
 		pos = PIXIL_POS(g, g->p.x, g->p.y);
 	#endif
 
+	#if LTDC_USE_DMA2D
+		while(DMA2D->CR & DMA2D_CR_START);
+	#endif
+
 	color = PIXEL_ADDR(g, pos)[0];
 	
 	return gdispNative2Color(color);
 }
 
 #if GDISP_NEED_CONTROL
-	LLDSPEC void gdisp_lld_control(GDisplay* g)
-	{
+	LLDSPEC void gdisp_lld_control(GDisplay* g) {
 		switch(g->p.x) {
 		case GDISP_CONTROL_POWER:
-			// Don't do anything if it is the same power mode
 			if (g->g.Powermode == (powermode_t)g->p.ptr)
 				return;
 			switch((powermode_t)g->p.ptr) {
+			case powerOff: case powerOn: case powerSleep: case powerDeepSleep:
+				// TODO
+				break;
 			default:
 				return;
 			}
-
 			g->g.Powermode = (powermode_t)g->p.ptr;
 			return;
 
@@ -353,7 +353,6 @@ LLDSPEC	color_t gdisp_lld_get_pixel_color(GDisplay* g)
 				default:
 					return;
 			}
-
 			g->g.Orientation = (orientation_t)g->p.ptr;
 			return;
 
@@ -373,8 +372,7 @@ LLDSPEC	color_t gdisp_lld_get_pixel_color(GDisplay* g)
 #endif
 
 #if LTDC_USE_DMA2D
-	static void dma2d_init(void)
-	{
+	static void dma2d_init(void) {
 		// Enable DMA2D clock
 		RCC->AHB1ENR |= RCC_AHB1ENR_DMA2DEN;
 	
@@ -396,91 +394,88 @@ LLDSPEC	color_t gdisp_lld_get_pixel_color(GDisplay* g)
 	// Uses p.x,p.y  p.cx,p.cy  p.color
 	LLDSPEC void gdisp_lld_fill_area(GDisplay* g)
 	{	
-		uint32_t reg_omar = 0;
-		uint32_t reg_oor = 0;
-		uint32_t reg_nlr = 0;
+		uint32_t pos;
+		uint32_t lineadd;
+		uint32_t shape;
 
 		// Wait until DMA2D is ready
-		while (1) {
-			if (!(DMA2D->CR & DMA2D_CR_START)) {
-				break;
-			}
-		}
+		while(DMA2D->CR & DMA2D_CR_START);
 
-		// Calculate pixel positions and stuff like that
 		#if GDISP_NEED_CONTROL
 			switch(g->g.Orientation) {
 			case GDISP_ROTATE_0:
 			default:
-				reg_omar = g->p.y * g->g.Width * LTDC_PIXELBYTES + g->p.x * LTDC_PIXELBYTES + (uint32_t)driverCfg.bglayer.frame;
-				reg_oor = g->g.Width - g->p.cx;
-				reg_nlr = (g->p.cx << 16) | (g->p.cy);
+				pos = PIXIL_POS(g, g->p.x, g->p.y);
+				lineadd = g->g.Width - g->p.cx;
+				shape = (g->p.cx << 16) | (g->p.cy);
 				break;
-
 			case GDISP_ROTATE_90:
+				pos = PIXIL_POS(g, g->p.y, g->g.Width-g->p.x-g->p.cx);
+				lineadd = g->g.Height - g->p.cy;
+				shape = (g->p.cy << 16) | (g->p.cx);
 				break;
-
 			case GDISP_ROTATE_180:
-				reg_omar = g->g.Width * (g->g.Height - g->p.y - g->p.cy) * LTDC_PIXELBYTES + (g->g.Width - g->p.x - g->p.cx) * LTDC_PIXELBYTES + (uint32_t)driverCfg.bglayer.frame;
-				reg_oor = g->g.Width - g->p.cx;
-				reg_nlr = (g->p.cy << 16) | (g->p.cx);
+				pos = PIXIL_POS(g, g->g.Width-g->p.x-g->p.cx, g->g.Height-g->p.y-g->p.cy);
+				lineadd = g->g.Width - g->p.cx;
+				shape = (g->p.cx << 16) | (g->p.cy);
 				break;
-
 			case GDISP_ROTATE_270:
+				pos = PIXIL_POS(g, g->g.Height-g->p.y-g->p.cy, g->p.x);
+				lineadd = g->g.Height - g->p.cy;
+				shape = (g->p.cy << 16) | (g->p.cx);
 				break;
 			}
 		#else
-			reg_omar = g->p.y * g->g.Width * LTDC_PIXELBYTES + g->p.x * LTDC_PIXELBYTES + (uint32_t)driverCfg.bglayer.frame;
-			reg_oor = g->g.Width - g->p.cx;
-			reg_nlr = (g->p.cx << 16) | (g->p.cy);
+			pos = PIXIL_POS(g, g->p.x, g->p.y);
+			lineadd = g->g.Width - g->p.cx;
+			shape = (g->p.cx << 16) | (g->p.cy);
 		#endif
-
-		// Output memory address register
-		DMA2D->OMAR = reg_omar;
-
-		// Output offset register (in pixels)
-		DMA2D->OOR = reg_oor;
-
-		// PL (pixel per lines to be transferred); NL (number of lines)
-		DMA2D->NLR = reg_nlr;
-
-		// Output color register
+		
+		// Start the DMA2D
+		DMA2D->OMAR = (uint32_t)PIXEL_ADDR(g, pos);
+		DMA2D->OOR = lineadd;
+		DMA2D->NLR = shape;
 		DMA2D->OCOLR = (uint32_t)(gdispColor2Native(g->p.color));
-
-		// Set MODE to R2M and Start the process
 		DMA2D->CR = DMA2D_CR_MODE_R2M | DMA2D_CR_START;	
 	}
 
-	// Uses p.x,p.y  p.cx,p.cy  p.x1,p.y1 (=srcx,srcy)  p.x2 (=srccx), p.ptr (=buffer)
-	LLDSPEC void gdisp_lld_blit_area(GDisplay* g)
-	{
-		// Wait until DMA2D is ready
-		while (1) {
-			if (!(DMA2D->CR & DMA2D_CR_START)) {
-				break;
-			}
+	/* Oops - the DMA2D only supports GDISP_ROTATE_0.
+	 *
+	 * Where the width is 1 we can trick it for other orientations.
+	 * That is worthwhile as a width of 1 is common. For other
+	 * situations we need to fall back to pixel pushing.
+	 *
+	 * Additionally, although DMA2D can translate color formats
+	 * it can only do it for a small range of formats. For any
+	 * other formats we also need to fall back to pixel pushing.
+	 *
+	 * As the code to actually do all that for other than the
+	 * simplest case (orientation == GDISP_ROTATE_0 and
+	 * GDISP_PIXELFORMAT == GDISP_LLD_PIXELFORMAT) is very complex
+	 * we will always pixel push for now. In practice that is OK as
+	 * access to the framebuffer is fast - probably faster than DMA2D.
+	 * It just uses more CPU.
+	 */
+	#if GDISP_HARDWARE_BITFILLS 
+		// Uses p.x,p.y  p.cx,p.cy  p.x1,p.y1 (=srcx,srcy)  p.x2 (=srccx), p.ptr (=buffer)
+		LLDSPEC void gdisp_lld_blit_area(GDisplay* g) {
+			// Wait until DMA2D is ready
+			while(DMA2D->CR & DMA2D_CR_START);
+
+			// Source setup
+			DMA2D->FGMAR = LTDC_PIXELBYTES * (g->p.y1 * g->p.x2 + g->p.x1) + (uint32_t)g->p.ptr;
+			DMA2D->FGOR = g->p.x2 - g->p.cx;
+		
+			// Output setup
+			DMA2D->OMAR = (uint32_t)PIXEL_ADDR(g, PIXIL_POS(g, g->p.x, g->p.y));
+			DMA2D->OOR = g->g.Width - g->p.cx;
+			DMA2D->NLR = (g->p.cx << 16) | (g->p.cy);
+
+			// Set MODE to M2M and Start the process
+			DMA2D->CR = DMA2D_CR_MODE_M2M | DMA2D_CR_START;
 		}
-
-		// Foreground memory address register
-		DMA2D->FGMAR = g->p.y1 * g->p.x2 * LTDC_PIXELBYTES + g->p.x1 * LTDC_PIXELBYTES + (uint32_t)g->p.ptr;
-
-		// Foreground offset register (expressed in pixels)
-		DMA2D->FGOR = g->p.x2 - g->p.cx;
-	
-		// Output memory address register
-		DMA2D->OMAR = g->p.y * g->g.Width * LTDC_PIXELBYTES + g->p.x * LTDC_PIXELBYTES + (uint32_t)driverCfg.bglayer.frame;
-
-		// Output offset register (expressed in pixels)
-		DMA2D->OOR = g->g.Width - g->p.cx;
-	
-		// PL (pixel per lines to be transferred); NL (number of lines)
-		DMA2D->NLR = (g->p.cx << 16) | (g->p.cy);
-
-		// Set MODE to M2M and Start the process
-		DMA2D->CR = DMA2D_CR_MODE_M2M | DMA2D_CR_START;
-	}
+	#endif
 
 #endif /* LTDC_USE_DMA2D */
-
 
 #endif /* GFX_USE_GDISP */
