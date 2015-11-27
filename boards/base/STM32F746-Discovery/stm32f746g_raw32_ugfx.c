@@ -16,7 +16,6 @@
 #endif
 
 static void SystemClock_Config(void);
-static void CPU_CACHE_Enable(void);
 
 void Raw32OSInit(void) {
     /* Enable the CPU Cache's */

@@ -53,14 +53,17 @@ typedef struct gdispImagePrivate_BMP {
 	} gdispImagePrivate_BMP;
 
 void gdispImageClose_BMP(gdispImage *img) {
-	if (img->priv) {
+	gdispImagePrivate_BMP *priv;
+
+	priv = (gdispImagePrivate_BMP *)img->priv;
+	if (priv) {
 #if GDISP_NEED_IMAGE_BMP_1 || GDISP_NEED_IMAGE_BMP_4 || GDISP_NEED_IMAGE_BMP_4_RLE || GDISP_NEED_IMAGE_BMP_8 || GDISP_NEED_IMAGE_BMP_8_RLE
-		if (img->priv->palette)
-			gdispImageFree(img, (void *)img->priv->palette, img->priv->palsize*sizeof(color_t));
+		if (priv->palette)
+			gdispImageFree(img, (void *)priv->palette, priv->palsize*sizeof(color_t));
 #endif
-		if (img->priv->frame0cache)
-			gdispImageFree(img, (void *)img->priv->frame0cache, img->width*img->height*sizeof(pixel_t));
-		gdispImageFree(img, (void *)img->priv, sizeof(gdispImagePrivate_BMP));
+		if (priv->frame0cache)
+			gdispImageFree(img, (void *)priv->frame0cache, img->width*img->height*sizeof(pixel_t));
+		gdispImageFree(img, (void *)priv, sizeof(gdispImagePrivate_BMP));
 		img->priv = 0;
 	}
 }
@@ -89,11 +92,11 @@ gdispImageError gdispImageOpen_BMP(gdispImage *img) {
 	img->flags = 0;
 
 	/* Allocate our private area */
-	if (!(img->priv = (gdispImagePrivate_BMP *)gdispImageAlloc(img, sizeof(gdispImagePrivate_BMP))))
+	if (!(img->priv = gdispImageAlloc(img, sizeof(gdispImagePrivate_BMP))))
 		return GDISP_IMAGE_ERR_NOMEMORY;
 
 	/* Initialise the essential bits in the private area */
-	priv = img->priv;
+	priv = (gdispImagePrivate_BMP *)img->priv;
 	priv->frame0cache = 0;
 	priv->bmpflags = 0;
 #if GDISP_NEED_IMAGE_BMP_1 || GDISP_NEED_IMAGE_BMP_4 || GDISP_NEED_IMAGE_BMP_4_RLE || GDISP_NEED_IMAGE_BMP_8 || GDISP_NEED_IMAGE_BMP_8_RLE
@@ -119,7 +122,7 @@ gdispImageError gdispImageOpen_BMP(gdispImage *img) {
 
 	// Detect our bitmap version
 	if (offsetColorTable == 12+14) {
-		img->priv->bmpflags |= BMP_V2;
+		priv->bmpflags |= BMP_V2;
 
 		// Read the header
 		if (gfileRead(img->f, priv->buf, 12-4) != 12-4)
@@ -129,7 +132,7 @@ gdispImageError gdispImageOpen_BMP(gdispImage *img) {
 		// Get the height
 		img->height = gdispImageGetAlignedLE16(priv->buf, 2);
 		if (img->height < 0) {
-			img->priv->bmpflags |= BMP_TOP_TO_BOTTOM;
+			priv->bmpflags |= BMP_TOP_TO_BOTTOM;
 			img->height = -img->height;
 		}
 		// Get the planes
@@ -361,7 +364,7 @@ static coord_t getPixels(gdispImage *img, coord_t x) {
 	color_t *			pc;
 	coord_t				len;
 
-	priv = img->priv;
+	priv = (gdispImagePrivate_BMP *)img->priv;
 	pc = priv->buf;
 	len = 0;
 
@@ -372,7 +375,7 @@ static coord_t getPixels(gdispImage *img, coord_t x) {
 		uint8_t		b[4];
 		uint8_t		m;
 
-			priv = img->priv;
+			priv = (gdispImagePrivate_BMP *)img->priv;
 			pc = priv->buf;
 			len = 0;
 
@@ -703,7 +706,7 @@ gdispImageError gdispImageCache_BMP(gdispImage *img) {
 	size_t				len;
 
 	/* If we are already cached - just return OK */
-	priv = img->priv;
+	priv = (gdispImagePrivate_BMP *)img->priv;
 	if (priv->frame0cache)
 		return GDISP_IMAGE_ERR_OK;
 
@@ -719,6 +722,8 @@ gdispImageError gdispImageCache_BMP(gdispImage *img) {
 	priv->rlerun = 0;
 	priv->rlecode = 0;
 #endif
+
+	pcs = priv->buf;				// This line is just to prevent a compiler warning.
 
 	if (priv->bmpflags & BMP_TOP_TO_BOTTOM) {
 		for(y = 0, pcd = priv->frame0cache; y < img->height; y++) {
@@ -756,7 +761,7 @@ gdispImageError gdispGImageDraw_BMP(GDisplay *g, gdispImage *img, coord_t x, coo
 	coord_t				mx, my;
 	coord_t				pos, len, st;
 
-	priv = img->priv;
+	priv = (gdispImagePrivate_BMP *)img->priv;
 
 	/* Check some reasonableness */
 	if (sx >= img->width || sy >= img->height) return GDISP_IMAGE_ERR_OK;

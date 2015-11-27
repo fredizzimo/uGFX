@@ -54,6 +54,7 @@
 //    #define GFX_OS_PRE_INIT_FUNCTION                 myHardwareInitRoutine
 //    #define GFX_OS_EXTRA_INIT_FUNCTION               myOSInitRoutine
 //    #define GFX_OS_EXTRA_DEINIT_FUNCTION             myOSDeInitRoutine
+//    #define GFX_EMULATE_MALLOC                       FALSE
 
 
 ///////////////////////////////////////////////////////////////////////////

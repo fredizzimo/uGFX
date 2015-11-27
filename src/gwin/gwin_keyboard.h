@@ -101,7 +101,7 @@ GSourceHandle gwinKeyboardGetEventSource(GHandle gh);
  * @note	Changing the layout resets the keyboard to key set 0 of the keyboard and cancels any
  * 			pending shifts.
  */
-void gwinKeyboardSetLayout(GHandle gh, struct GVKeyTable *layout);
+void gwinKeyboardSetLayout(GHandle gh, const struct GVKeyTable *layout);
 
 /**
  * @defgroup Renderings_Keyboard Renderings

@@ -16,6 +16,7 @@
 	GFXLIB					= ../path/to/ugfx
 	GFXBOARD				= STM32F429i-Discovery
 	GFXDEMO					= modules/gdisp/basics
+	GFXSINGLEMAKE			= no
 
 # ChibiOS settings
 ifeq ($(OPT_OS),chibios)
@@ -36,7 +37,7 @@ endif
 #
 
 ARCH     = arm-none-eabi-
-SRCFLAGS = -ggdb -O0
+SRCFLAGS = -ggdb -O1
 CFLAGS   =
 CXXFLAGS = -fno-rtti
 ASFLAGS  =

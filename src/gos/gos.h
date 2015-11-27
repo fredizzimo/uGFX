@@ -176,6 +176,23 @@
 	void gfxFree(void *ptr);
 
 	/**
+	 * @brief	Use gfxAlloc and gfxFree to implement malloc() and free()
+	 *
+	 * @notes	Sometimes your application will include functions that
+	 * 			want to internally use malloc() and free(). As the default
+	 * 			implementations of these in your C library are almost
+	 * 			invariably incorrect for an embedded platform, this option
+	 * 			allows you to emulate those calls with gfxAlloc() and gfxFree().
+	 *			An example is the C library routine rand() which on many
+	 *			implementations internally uses malloc().
+	 *
+	 * @api
+	 */
+	#ifndef GFX_EMULATE_MALLOC
+		#define GFX_EMULATE_MALLOC			FALSE
+	#endif
+
+	/**
 	 * @brief	Yield the current thread
 	 * @details	Give up the rest of the current time slice for this thread in order to give other threads
 	 * 			a chance to run.

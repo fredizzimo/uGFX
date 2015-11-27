@@ -364,7 +364,7 @@ GSourceHandle gwinKeyboardGetEventSource(GHandle gh) {
 	return (GSourceHandle)gh;
 }
 
-void gwinKeyboardSetLayout(GHandle gh, struct GVKeyTable *layout) {
+void gwinKeyboardSetLayout(GHandle gh, const struct GVKeyTable *layout) {
 	#define gk		((GKeyboardObject *)gh)
 
 	if (gh->vmt != (gwinVMT *)&keyboardVMT)

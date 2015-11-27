@@ -118,8 +118,6 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	write_cmd(g, 0xAF); // sleep mode OFF (display on)
 	write_cmd(g, 0x5C); // write to RAM
 
-	release_bus(g);
-
     // Finish Init
     post_init_board(g);
 

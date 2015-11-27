@@ -181,9 +181,10 @@
  		#define GFX_FREERTOS_USE_TRACE	FALSE
  	#endif
  	/**
- 	 * @brief	How much RAM should uGFX use for the heap
+ 	 * @brief	How much RAM should uGFX use for the heap when using its own internal heap allocator
  	 * @details	Defaults to 0.
- 	 * @note	Only used when the generic ugfx heap code is used (GFX_USE_OS_RAW32, GFX_USE_OS_ARDUINO, GFX_US_OS_KEIL, GFX_USE_OS_CMSIS)
+ 	 * @note	Only used when the internal ugfx heap allocator is used
+ 	 * 				(GFX_USE_OS_RAW32, GFX_USE_OS_ARDUINO, GFX_US_OS_KEIL, GFX_USE_OS_CMSIS)
  	 * @note	If 0 then the standard C runtime malloc(), free() and realloc()
  	 * 			are used.
  	 * @note	If it is non-zero then this is the number of bytes of RAM

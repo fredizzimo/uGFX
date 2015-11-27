@@ -194,3 +194,14 @@
 #endif
 
 #endif /* GOS_NEED_X_HEAP */
+
+#if GFX_EMULATE_MALLOC
+	#include <stdlib.h>
+
+	void* malloc(size_t size) {
+		return gfxAlloc(size);
+	}
+	void free(void *ptr) {
+		gfxFree(ptr);
+	}
+#endif
