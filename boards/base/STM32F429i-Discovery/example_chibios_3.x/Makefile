@@ -16,6 +16,7 @@
 	GFXLIB					= ../path/to/ugfx
 	GFXBOARD				= STM32F429i-Discovery
 	GFXDEMO					= modules/gdisp/basics
+	GFXSINGLEMAKE			= no
 
 # ChibiOS settings
 ifeq ($(OPT_OS),chibios)
