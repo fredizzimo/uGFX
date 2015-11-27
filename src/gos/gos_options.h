@@ -97,6 +97,13 @@
 	#ifndef GFX_USE_OS_KEIL
 		#define GFX_USE_OS_KEIL			FALSE
 	#endif
+	/**
+	 * @brief   Use NIOS-II
+	 * @details	Defaults to FALSE
+	 */
+	#ifndef GFX_USE_OS_NIOS
+		#define GFX_USE_OS_NIOS			FALSE
+	#endif
 /**
  * @}
  *

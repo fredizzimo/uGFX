@@ -15,5 +15,6 @@
 #include "gos_rawrtos.c"
 #include "gos_win32.c"
 #include "gos_cmsis.c"
+#include "gos_nios.c"
 #include "gos_x_threads.c"
 #include "gos_x_heap.c"

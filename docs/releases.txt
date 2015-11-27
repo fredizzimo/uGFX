@@ -26,6 +26,7 @@ FIX:		Fixing issue in touchscreen calibration code
 FEATURE:	Added GFX_OS_PRE_INIT_FUNCTION for early hardware initialization
 FIX:		Fixing GTIMER for high clock rate devices
 FEATURE:	Added GFX_COMPILER_KEIL and GFX_COMPILER_ARMCC macros
+FEATURE:	Added support for NIOS-II platform
 
 
 *** Release 2.3 ***

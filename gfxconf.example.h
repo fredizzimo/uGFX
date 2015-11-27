@@ -38,6 +38,7 @@
 //#define GFX_USE_OS_KEIL                              FALSE
 //#define GFX_USE_OS_CMSIS                             FALSE
 //#define GFX_USE_OS_RAW32                             FALSE
+//#define GFX_USE_OS_NIOS                              FALSE
 //    #define INTERRUPTS_OFF()                         optional_code
 //    #define INTERRUPTS_ON()                          optional_code
 

@@ -478,6 +478,8 @@
  	#include "gos_cmsis.h"
 #elif GFX_USE_OS_KEIL
  	#include "gos_keil.h"
+#elif GFX_USE_OS_NIOS
+ 	#include "gos_nios.h"
 #else
 	#error "Your operating system is not supported yet"
 #endif
