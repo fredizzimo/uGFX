@@ -35,7 +35,7 @@ endif
 #
 
 ARCH     = arm-none-eabi-
-SRCFLAGS = -ggdb -O0
+SRCFLAGS = -ggdb -O1
 CFLAGS   =
 CXXFLAGS = -fno-rtti
 ASFLAGS  =
