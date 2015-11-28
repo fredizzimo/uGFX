@@ -75,14 +75,14 @@ typedef int32_t	fixed;
 /**
  * @brief   The famous number pi
  */
-#ifndef PI
-	#define PI	3.1415926535897932384626433832795028841971693993751
+#ifndef GFX_PI
+	#define GFX_PI	3.1415926535897932384626433832795028841971693993751
 #endif
 
 /**
  * @brief   pi as a fixed point
  */
-#define FIXED_PI	FP2FIXED(PI)
+#define FIXED_PI	FP2FIXED(GFX_PI)
 
 /*===========================================================================*/
 /* External declarations.                                                    */

@@ -82,14 +82,14 @@ int main(void) {
 	gwinGraphDrawAxis(gh);
 	
 	for(i = 0; i < gwinGetWidth(gh); i++)
-		gwinGraphDrawPoint(gh, i-gwinGetWidth(gh)/2, 80*fsin(2*i/5));	//sin(2*0.2*M_PI*i/180));
+		gwinGraphDrawPoint(gh, i-gwinGetWidth(gh)/2, 80*fsin(2*i/5));	//sin(2*0.2*GFX_PI*i/180));
 
 	gwinGraphStartSet(gh);
 	GraphStyle1.point.color = Green;
 	gwinGraphSetStyle(gh, &GraphStyle1);
 	
 	for(i = 0; i < gwinGetWidth(gh)*5; i++)
-		gwinGraphDrawPoint(gh, i/5-gwinGetWidth(gh)/2, 95*fsin(2*i/5));	//sin(2*0.2*M_PI*i/180));
+		gwinGraphDrawPoint(gh, i/5-gwinGetWidth(gh)/2, 95*fsin(2*i/5));	//sin(2*0.2*GFX_PI*i/180));
 
 	gwinGraphStartSet(gh);
 	gwinGraphSetStyle(gh, &GraphStyle2);

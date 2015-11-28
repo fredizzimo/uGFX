@@ -1725,8 +1725,8 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 			sedge = round(radius * ((sbit & 0x99) ? fsin(start) : fcos(start)));
 			eedge = round(radius * ((ebit & 0x99) ? fsin(end) : fcos(end)));
 		#else
-			sedge = round(radius * ((sbit & 0x99) ? sin(start*M_PI/180) : cos(start*M_PI/180)));
-			eedge = round(radius * ((ebit & 0x99) ? sin(end*M_PI/180) : cos(end*M_PI/180)));
+			sedge = round(radius * ((sbit & 0x99) ? sin(start*GFX_PI/180) : cos(start*GFX_PI/180)));
+			eedge = round(radius * ((ebit & 0x99) ? sin(end*GFX_PI/180) : cos(end*GFX_PI/180)));
 		#endif
 		if (sbit & 0xB4) sedge = -sedge;
 		if (ebit & 0xB4) eedge = -eedge;
@@ -1852,8 +1852,8 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 			sxb = FP2FIXED(radius*fcos(start));	sy = -round(radius*fsin(start));
 			exb = FP2FIXED(radius*fcos(end));	ey = -round(radius*fsin(end));
 		#else
-			sxb = FP2FIXED(radius*cos(start*M_PI/180));	sy = -round(radius*sin(start*M_PI/180));
-			exb = FP2FIXED(radius*cos(end*M_PI/180));	ey = -round(radius*sin(end*M_PI/180));
+			sxb = FP2FIXED(radius*cos(start*GFX_PI/180));	sy = -round(radius*sin(start*GFX_PI/180));
+			exb = FP2FIXED(radius*cos(end*GFX_PI/180));	ey = -round(radius*sin(end*GFX_PI/180));
 		#endif
 		sxd = sy ? sxb/sy : sxb;
 		exd = ey ? exb/ey : exb;
