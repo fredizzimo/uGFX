@@ -2,6 +2,13 @@
 *** Releases                                                              ***
 *****************************************************************************
 
+*** Changes after 2.4 ***
+FEATURE:	Added support for numerous compilers
+FIX:		Improving STM32LTDC driver
+FEATURE:	Added support for NIOS-II platform
+FEATURE:	Added Altera-MAX10-NEEK board support
+
+
 *** Release 2.4 ***
 FIX:		Add missing stm32m3 cpu makefile option. Update doc to match.
 FEATURE:	Added ability to compile ugfx as a single file. Simply compile src/gfx_mk.c
@@ -26,8 +33,6 @@ FIX:		Fixing issue in touchscreen calibration code
 FEATURE:	Added GFX_OS_PRE_INIT_FUNCTION for early hardware initialization
 FIX:		Fixing GTIMER for high clock rate devices
 FEATURE:	Added GFX_COMPILER_KEIL and GFX_COMPILER_ARMCC macros
-FEATURE:	Added support for NIOS-II platform
-FEATURE:	Added Altera-MAX10-NEEK board support
 
 
 *** Release 2.3 ***
