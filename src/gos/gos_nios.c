@@ -50,9 +50,7 @@ void gfxExit(void) {
 
 systemticks_t gfxSystemTicks(void)
 {
-	volatile alt_u32 ticks = alt_nticks();
-
-	return ticks;
+	return alt_nticks();
 }
 
 systemticks_t gfxMillisecondsToTicks(delaytime_t ms)
