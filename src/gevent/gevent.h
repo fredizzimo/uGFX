@@ -69,8 +69,8 @@ typedef struct GSource_t			GSource, *GSourceHandle;
 typedef struct GSourceListener_t {
 	GListener		*pListener;			// The listener
 	GSource			*pSource;			// The source
-	unsigned		listenflags;		// The flags the listener passed when the source was assigned to it.
-	unsigned		srcflags;			// For the source's exclusive use. Initialised as 0 for a new listener source assignment.
+	uint32_t		listenflags;		// The flags the listener passed when the source was assigned to it.
+	uint32_t		srcflags;			// For the source's exclusive use. Initialised as 0 for a new listener source assignment.
 	} GSourceListener;
 
 /*===========================================================================*/
@@ -130,7 +130,7 @@ void geventListenerInit(GListener *pl);
  *
  * @return TRUE if succeeded, FALSE otherwise
  */
-bool_t geventAttachSource(GListener *pl, GSourceHandle gsh, unsigned flags);
+bool_t geventAttachSource(GListener *pl, GSourceHandle gsh, uint32_t flags);
 
 /**
  * @brief	Detach a source from a listener

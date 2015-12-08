@@ -71,7 +71,7 @@ void geventListenerInit(GListener *pl) {
 	pl->flags = 0;
 }
 
-bool_t geventAttachSource(GListener *pl, GSourceHandle gsh, unsigned flags) {
+bool_t geventAttachSource(GListener *pl, GSourceHandle gsh, uint32_t flags) {
 	GSourceListener *psl, *pslfree;
 
 	// Safety first
