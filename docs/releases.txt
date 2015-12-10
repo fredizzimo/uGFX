@@ -7,6 +7,7 @@ FEATURE:	Added support for numerous compilers
 FIX:		Improving STM32LTDC driver
 FEATURE:	Added support for NIOS-II platform
 FEATURE:	Added Altera-MAX10-NEEK board support
+FIX:		Vastly improving keyboard widget default rendering
 
 
 *** Release 2.4 ***

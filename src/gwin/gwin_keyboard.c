@@ -393,24 +393,27 @@ static const GColorSet *getDrawColors(GWidgetObject *gw) {
 */
 
 void gwinKeyboardDraw_Normal(GWidgetObject *gw, void *param) {
-	#define gk		((GKeyboardObject *)gw)
+	#define gk ((GKeyboardObject *)gw)
 
-	char	cap[5];
+	char cap[5];
 	const char *pcap;
 	const utf8 *krow;
-	coord_t	x, y, cx, cy;
-	uint8_t	rows, cols, row, col, kcols;
-	ucode	key;
-	fixed	fx, fy;
-	const GColorSet	*pcol;
+	coord_t x, y, cx, cy;
+	uint8_t rows, cols, row, col, kcols;
+	ucode key;
+	fixed fx, fy;
+	const GColorSet *pcol;
+
 	(void) param;
 
-	if (gw->g.vmt != (gwinVMT *)&keyboardVMT)	return;
+	// Make sure that this is a keyboard widget object
+	if (gw->g.vmt != (gwinVMT *)&keyboardVMT)
+		return;
 
 	// Get the y parameters
 	rows = NumKeyRows(gk->keyset);
 	fy = FIXED(gk->w.g.height) / rows;
-	for(row = 0; row < rows; row++) {
+	for (row = 0; row < rows; row++) {
 		y = NONFIXED(fy * row + FIXED0_5);
 		cy = NONFIXED(fy * (row+1) + FIXED0_5) - y;
 
@@ -420,82 +423,159 @@ void gwinKeyboardDraw_Normal(GWidgetObject *gw, void *param) {
 		// Get the x parameters
 		cols = UTF8StrLen(krow);
 		fx = FIXED(gk->w.g.width) / cols;
-		for(col = 0; col < cols; col=kcols) {
+		for (col = 0; col < cols; col=kcols) {
 
-			// Choose the color
+			// Get the correct color set
 			if (!(gk->w.g.flags & GWIN_FLG_SYSENABLED))
-				pcol = &gk->w.pstyle->disabled;
-			else if (gk->keyrow == row && gk->keycol == col)
-				pcol = &gk->w.pstyle->pressed;
-			else
+					pcol = &gk->w.pstyle->disabled;
+			else 
 				pcol = &gk->w.pstyle->enabled;
-
+        	 
 			// Get the key
 			key = UTF8CharAt(krow, col);
-
-			// Amalgamate identical keys into one big key
+	
+			// Fuse identical keys into one big key
 			kcols = col+1;
-			while(UTF8CharAt(krow, kcols) == key)
+			while (UTF8CharAt(krow, kcols) == key)
 				kcols++;
+        	 
+			// If quick update needed and keyboard already drawn (if not use this flag, then bug when screen touched before keyboard was drawn)
+			if ( (gk->w.g.flags & GKEYBOARD_FLG_QUICKUPDATE) && !(gk->w.g.flags & GWIN_FLG_BGREDRAW) )  {
+
+				// If key pressed
+				if ( (gk->keyrow != GKEY_BAD_ROWCOL) && (gk->keycol != GKEY_BAD_ROWCOL) ) {
+
+					// And previous key have
+					if ( (gk->lastkeyrow != GKEY_BAD_ROWCOL) && (gk->lastkeycol != GKEY_BAD_ROWCOL) ) {
+						
+						if (gk->lastkeyrow == row && gk->lastkeycol == col) {
+							// If keyboard has no "disabled" color
+							if (pcol != &gk->w.pstyle->disabled)
+								pcol = &gk->w.pstyle->enabled;
+							gk->lastkeyrow = gk->lastkeycol = GKEY_BAD_ROWCOL;
+						} else {
+							continue;
+						}
+					}
+
+					// If no previous key
+					else {
+
+						if (gk->keyrow == row && gk->keycol == col) {
+							if (pcol != &gk->w.pstyle->disabled)
+								pcol = &gk->w.pstyle->pressed;
+							gk->lastkeyrow = row;
+							gk->lastkeycol = col;
+						}
+						else if (gk->lastkeyrow == row && gk->lastkeycol == col)
+						{
+							if (pcol != &gk->w.pstyle->disabled) pcol = &gk->w.pstyle->enabled;
+						}
+						else continue;
+					}
+				}
+
+				// If key up, and need clear the previous key
+				else if ( (gk->lastkeyrow != GKEY_BAD_ROWCOL) && (gk->lastkeycol != GKEY_BAD_ROWCOL) )
+				{
+					if ( (gk->lastkeyrow == row) && (gk->lastkeycol == col) )
+					{
+						if (pcol != &gk->w.pstyle->disabled) pcol = &gk->w.pstyle->enabled;
+					}
+					else continue;
+				}
+			}                  
+			else
+			{
+				gk->lastkeyrow = gk->lastkeycol = GKEY_BAD_ROWCOL;
+			}
+
 			x = NONFIXED(fx * col + FIXED0_5);
 			cx = NONFIXED(fx * kcols + FIXED0_5) - x;
-
+			
 			if (key < 0x20) {
 				pcap = gk->keytable->skeys[key-1].keycap;
 			} else {
 				cap[UCode2UTF8((utf8 *)cap, key)] = 0;
 				pcap = cap;
 			}
-switch(*pcap) {
-         case  '\001':   // Shift (up arrow)
-            gdispGFillArea(gw->g.display, gw->g.x+x, gw->g.y+y, cx, cy, pcol->fill);
+			
+			switch(*pcap) {
 
-            gdispGDrawLine(gw->g.display, gw->g.x+x    +cx/4, gw->g.y+y+cy/2, gw->g.x+x+cx/2, gw->g.y+y +cy/4, pcol->text);                /*  / \   */
-            gdispGDrawLine(gw->g.display, gw->g.x+x+cx -cx/4, gw->g.y+y+cy/2, gw->g.x+x+cx/2, gw->g.y+y +cy/4, pcol->text); 
-            gdispGDrawLine(gw->g.display, gw->g.x+x    +cx/4, gw->g.y+y+cy/2, gw->g.x+x+cx/2-cx/6, gw->g.y+y+cy/2, pcol->text);            /*  _ _   */
-            gdispGDrawLine(gw->g.display, gw->g.x+x+cx -cx/4, gw->g.y+y+cy/2, gw->g.x+x+cx/2+cx/6, gw->g.y+y+cy/2, pcol->text);
-            gdispGDrawLine(gw->g.display, gw->g.x+x+cx/2-cx/6, gw->g.y+y+cy/2, gw->g.x+x+cx/2-cx/6, gw->g.y+y+cy -cy/3, pcol->text);       /*   ||   */
-            gdispGDrawLine(gw->g.display, gw->g.x+x+cx/2+cx/6, gw->g.y+y+cy/2, gw->g.x+x+cx/2+cx/6, gw->g.y+y+cy -cy/3, pcol->text);
-            gdispGDrawLine(gw->g.display, gw->g.x+x+cx/2-cx/6, gw->g.y+y+cy -cy/3, gw->g.x+x+cx/2+cx/6, gw->g.y+y+cy -cy/3, pcol->text);   /*   _    */
-            break;
-         case '\002':   // Shift locked (up arrow - bold)
-            gdispGFillArea(gw->g.display, gw->g.x+x, gw->g.y+y, cx, cy, pcol->fill);
-         
-            gdispGDrawLine(gw->g.display, gw->g.x+x    +cx/4, gw->g.y+y+cy/2, gw->g.x+x+cx/2, gw->g.y+y +cy/4, pcol->text);                 /*  / \  */
-            gdispGDrawLine(gw->g.display, gw->g.x+x+cx -cx/4, gw->g.y+y+cy/2, gw->g.x+x+cx/2, gw->g.y+y +cy/4, pcol->text);    
-            gdispGDrawLine(gw->g.display, gw->g.x+x    +cx/4, gw->g.y+y+cy/2, gw->g.x+x+cx/2-cx/6, gw->g.y+y+cy/2, pcol->text);             /*  _ _  */
-            gdispGDrawLine(gw->g.display, gw->g.x+x+cx -cx/4, gw->g.y+y+cy/2, gw->g.x+x+cx/2+cx/6, gw->g.y+y+cy/2, pcol->text);
-            gdispGDrawLine(gw->g.display, gw->g.x+x+cx/2-cx/6, gw->g.y+y+cy/2, gw->g.x+x+cx/2-cx/6, gw->g.y+y+cy -cy/3, pcol->text);        /*  ||   */
-            gdispGDrawLine(gw->g.display, gw->g.x+x+cx/2+cx/6, gw->g.y+y+cy/2, gw->g.x+x+cx/2+cx/6, gw->g.y+y+cy -cy/3, pcol->text);
-            gdispGDrawLine(gw->g.display, gw->g.x+x+cx/2-cx/6, gw->g.y+y+cy -cy/3, gw->g.x+x+cx/2+cx/6, gw->g.y+y+cy -cy/3, pcol->text);    /*   _   */
-            gdispGDrawLine(gw->g.display, gw->g.x+x+cx/2-cx/5, gw->g.y+y+cy -cy/4, gw->g.x+x+cx/2+cx/5, gw->g.y+y+cy -cy/4, pcol->text);    /*  ___  */
-            break;
-         case '\t':
-            gdispGFillArea(gw->g.display, gw->g.x+x, gw->g.y+y, cx, cy, pcol->fill);
-            gdispGDrawLine(gw->g.display, gw->g.x+x+1, gw->g.y+y+1, gw->g.x+x+cx-1, gw->g.y+y+cy/2, pcol->text);
-            gdispGDrawLine(gw->g.display, gw->g.x+x+1, gw->g.y+y+cy-1, gw->g.x+x+cx-1, gw->g.y+y+cy/2, pcol->text);
-            gdispGDrawLine(gw->g.display, gw->g.x+x+cx-1, gw->g.y+y+1, gw->g.x+x+cx-1, gw->g.y+y+cy-1, pcol->text);
-            break;
-         case '\b': // Backspace
-            gdispGFillArea(gw->g.display, gw->g.x+x, gw->g.y+y, cx, cy, pcol->fill);
+			case  '\001':	// Shift (up-arrow)
+				gdispGFillArea(gw->g.display, gw->g.x+x, gw->g.y+y, cx, cy, pcol->fill);
 
-            gdispGDrawLine(gw->g.display, gw->g.x+x+ cx/8, gw->g.y+y+cy/2, gw->g.x+x+cx/2, gw->g.y+y    +cy/3, pcol->text);                 /* /     */
-            gdispGDrawLine(gw->g.display, gw->g.x+x+ cx/8, gw->g.y+y+cy/2, gw->g.x+x+cx-cx/8, gw->g.y+y+cy/2, pcol->text);                  /*  --   */
-            gdispGDrawLine(gw->g.display, gw->g.x+x+ cx/8, gw->g.y+y+cy/2, gw->g.x+x+cx/2, gw->g.y+y+cy -cy/3, pcol->text);                 /* \     */
-            break;
-         case '\r': // Enter
-            gdispGFillArea(gw->g.display, gw->g.x+x, gw->g.y+y, cx, cy, pcol->fill);
+				gdispGDrawLine(gw->g.display, gw->g.x+x    +cx/4, gw->g.y+y+cy/2, gw->g.x+x+cx/2, gw->g.y+y +cy/4, pcol->text);               /*    / \    */
+				gdispGDrawLine(gw->g.display, gw->g.x+x+cx -cx/4, gw->g.y+y+cy/2, gw->g.x+x+cx/2, gw->g.y+y +cy/4, pcol->text); 
+				gdispGDrawLine(gw->g.display, gw->g.x+x    +cx/4, gw->g.y+y+cy/2, gw->g.x+x+cx/2-cx/6, gw->g.y+y+cy/2, pcol->text);           /*    _ _    */
+				gdispGDrawLine(gw->g.display, gw->g.x+x+cx -cx/4, gw->g.y+y+cy/2, gw->g.x+x+cx/2+cx/6, gw->g.y+y+cy/2, pcol->text);
+				gdispGDrawLine(gw->g.display, gw->g.x+x+cx/2-cx/6, gw->g.y+y+cy/2, gw->g.x+x+cx/2-cx/6, gw->g.y+y+cy -cy/3, pcol->text);      /*    ||     */
+				gdispGDrawLine(gw->g.display, gw->g.x+x+cx/2+cx/6, gw->g.y+y+cy/2, gw->g.x+x+cx/2+cx/6, gw->g.y+y+cy -cy/3, pcol->text);
+				gdispGDrawLine(gw->g.display, gw->g.x+x+cx/2-cx/6, gw->g.y+y+cy -cy/3, gw->g.x+x+cx/2+cx/6, gw->g.y+y+cy -cy/3, pcol->text);  /*    _      */
 
-            gdispGDrawLine(gw->g.display, gw->g.x+x+(cx/3)*2, gw->g.y+y+cy/2, gw->g.x+x+(cx/3)*2, gw->g.y+y+cy/5, pcol->text);              /*     | */
-            gdispGDrawLine(gw->g.display, gw->g.x+x+ cx/3, gw->g.y+y+cy/2, gw->g.x+x+cx/3 +cx/8, gw->g.y+y    +cy/3, pcol->text);           /* /     */
-            gdispGDrawLine(gw->g.display, gw->g.x+x+ cx/3, gw->g.y+y+cy/2, gw->g.x+x+(cx/3)*2, gw->g.y+y+cy/2, pcol->text);                 /*  --   */
-            gdispGDrawLine(gw->g.display, gw->g.x+x+ cx/3, gw->g.y+y+cy/2, gw->g.x+x+cx/3 +cx/8, gw->g.y+y+cy -cy/3, pcol->text);           /* \     */
-            break;
-         default:
-            gdispGFillStringBox(gw->g.display, gw->g.x+x, gw->g.y+y, cx, cy, pcap, gw->g.font, pcol->text, pcol->fill, justifyCenter);
-         }
-         
-         gdispGDrawBox(gw->g.display, gw->g.x+x, gw->g.y+y, cx, cy, pcol->text);   // Frame
+				break;
+
+			case '\002':	// Shift locked (underlined up-arrow)
+				gdispGFillArea(gw->g.display, gw->g.x+x, gw->g.y+y, cx, cy, pcol->fill);
+
+				gdispGDrawLine(gw->g.display, gw->g.x+x    +cx/4, gw->g.y+y+cy/2, gw->g.x+x+cx/2, gw->g.y+y +cy/4, pcol->text);               /*   / \     */
+				gdispGDrawLine(gw->g.display, gw->g.x+x+cx -cx/4, gw->g.y+y+cy/2, gw->g.x+x+cx/2, gw->g.y+y +cy/4, pcol->text);    
+				gdispGDrawLine(gw->g.display, gw->g.x+x    +cx/4, gw->g.y+y+cy/2, gw->g.x+x+cx/2-cx/6, gw->g.y+y+cy/2, pcol->text);           /*   _ _     */
+				gdispGDrawLine(gw->g.display, gw->g.x+x+cx -cx/4, gw->g.y+y+cy/2, gw->g.x+x+cx/2+cx/6, gw->g.y+y+cy/2, pcol->text);
+				gdispGDrawLine(gw->g.display, gw->g.x+x+cx/2-cx/6, gw->g.y+y+cy/2, gw->g.x+x+cx/2-cx/6, gw->g.y+y+cy -cy/3, pcol->text);      /*    ||     */
+				gdispGDrawLine(gw->g.display, gw->g.x+x+cx/2+cx/6, gw->g.y+y+cy/2, gw->g.x+x+cx/2+cx/6, gw->g.y+y+cy -cy/3, pcol->text);
+				gdispGDrawLine(gw->g.display, gw->g.x+x+cx/2-cx/6, gw->g.y+y+cy -cy/3, gw->g.x+x+cx/2+cx/6, gw->g.y+y+cy -cy/3, pcol->text);  /*     _     */
+				gdispGDrawLine(gw->g.display, gw->g.x+x+cx/2-cx/5, gw->g.y+y+cy -cy/4, gw->g.x+x+cx/2+cx/5, gw->g.y+y+cy -cy/4, pcol->text);  /*    ___    */
+
+				break;
+
+			case '\t':	// Tabulator
+				gdispGFillArea(gw->g.display, gw->g.x+x, gw->g.y+y, cx, cy, pcol->fill);
+
+				gdispGDrawLine(gw->g.display, gw->g.x+x+1, gw->g.y+y+1, gw->g.x+x+cx-1, gw->g.y+y+cy/2, pcol->text);
+				gdispGDrawLine(gw->g.display, gw->g.x+x+1, gw->g.y+y+cy-1, gw->g.x+x+cx-1, gw->g.y+y+cy/2, pcol->text);
+				gdispGDrawLine(gw->g.display, gw->g.x+x+cx-1, gw->g.y+y+1, gw->g.x+x+cx-1, gw->g.y+y+cy-1, pcol->text);
+
+				break;
+
+			case '\b': // Backspace
+				gdispGFillArea(gw->g.display, gw->g.x+x, gw->g.y+y, cx, cy, pcol->fill);
+
+				gdispGDrawLine(gw->g.display, gw->g.x+x+ cx/8, gw->g.y+y+cy/2, gw->g.x+x+cx/2, gw->g.y+y    +cy/3, pcol->text);               /* /      */
+				gdispGDrawLine(gw->g.display, gw->g.x+x+ cx/8, gw->g.y+y+cy/2, gw->g.x+x+cx-cx/8, gw->g.y+y+cy/2, pcol->text);                /*  --    */
+				gdispGDrawLine(gw->g.display, gw->g.x+x+ cx/8, gw->g.y+y+cy/2, gw->g.x+x+cx/2, gw->g.y+y+cy -cy/3, pcol->text);               /* \      */
+
+				break;
+
+			case '\r': // Enter
+				gdispGFillArea(gw->g.display, gw->g.x+x, gw->g.y+y, cx, cy, pcol->fill);
+
+				gdispGDrawLine(gw->g.display, gw->g.x+x+(cx/3)*2, gw->g.y+y+cy/2, gw->g.x+x+(cx/3)*2, gw->g.y+y+cy/5, pcol->text);            /*      | */
+				gdispGDrawLine(gw->g.display, gw->g.x+x+ cx/3, gw->g.y+y+cy/2, gw->g.x+x+cx/3 +cx/8, gw->g.y+y+cy/3, pcol->text);             /* /      */
+				gdispGDrawLine(gw->g.display, gw->g.x+x+ cx/3, gw->g.y+y+cy/2, gw->g.x+x+(cx/3)*2, gw->g.y+y+cy/2, pcol->text);               /*  --    */
+				gdispGDrawLine(gw->g.display, gw->g.x+x+ cx/3, gw->g.y+y+cy/2, gw->g.x+x+cx/3 +cx/8, gw->g.y+y+cy -cy/3, pcol->text);         /* \      */
+
+				break;
+
+			default:   // Regular character
+				gdispGFillStringBox(gw->g.display, gw->g.x+x, gw->g.y+y, cx, cy, pcap, gw->g.font, pcol->text, pcol->fill, justifyCenter);
+				
+				break;
+			}
+			
+			// Draw the frame (border around the entire widget)
+			gdispGDrawBox(gw->g.display, gw->g.x+x, gw->g.y+y, cx, cy, pcol->edge);
+			
+			// If key up and we already cleared the previous key
+			if ( (gk->keyrow == GKEY_BAD_ROWCOL) && (gk->keycol == GKEY_BAD_ROWCOL) && (gk->lastkeyrow == row) && (gk->lastkeycol == col) ) {
+			   gk->lastkeyrow = gk->lastkeycol = GKEY_BAD_ROWCOL;
+			   return;
+			}
+
+			// Just quit the cycle if we did all the work in order not to waste any CPU time
+			if ( (row >= gk->keyrow && col >= gk->keycol) && (row >= gk->lastkeyrow && col >= gk->lastkeycol) ) {
+				return;
+			}
 		}
 	}
 
