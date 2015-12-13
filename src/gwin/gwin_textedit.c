@@ -46,6 +46,31 @@ static bool_t resizeText(GWidgetObject* gw, size_t pos, int32_t diff) {
 	return TRUE;
 }
 
+// Function that allows to set the cursor to any position in the string
+// This should be optimized. Currently it is an O(n^2) problem and therefore very
+// slow. An optimized version would copy the behavior of mf_get_string_width()
+// and do the comparation directly inside of that loop so we only iterate
+// the string once.
+static void TextEditMouseDown(GWidgetObject* gw, coord_t x, coord_t y) {
+	uint16_t i = 0;
+
+	// Directly jump to the end of the string
+	if (x > gdispGetStringWidth(gw->text, gw->g.font)) {
+		gw2obj->cursorPos = strlen(gw->text);
+
+	// Otherwise iterate through each character and get the size in pixels to compare
+	} else {
+		i = 1;
+		while (gdispGetStringWidthCount(gw->text, gw->g.font, i) < x) {
+			i++;
+		}
+
+		gw2obj->cursorPos = i-1;
+	}
+
+	_gwinUpdate((GHandle)gw);
+}
+
 #if (GFX_USE_GINPUT && GINPUT_NEED_KEYBOARD) || GWIN_NEED_KEYBOARD
 	static void TextEditKeyboard(GWidgetObject* gw, GEventKeyboard* pke) {
 		// Only react on KEYDOWN events. Ignore KEYUP events.
@@ -138,7 +163,7 @@ static const gwidgetVMT texteditVMT = {
 	gwinTexteditDefaultDraw,		// default drawing routine
 	#if GINPUT_NEED_MOUSE
 		{
-			0,						// Process mouse down events (NOT USED)
+			TextEditMouseDown,		// Process mouse down events (NOT USED)
 			0,						// Process mouse up events (NOT USED)
 			0,						// Process mouse move events (NOT USED)
 		},
