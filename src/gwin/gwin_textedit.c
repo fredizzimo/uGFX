@@ -54,6 +54,8 @@ static bool_t resizeText(GWidgetObject* gw, size_t pos, int32_t diff) {
 static void TextEditMouseDown(GWidgetObject* gw, coord_t x, coord_t y) {
 	uint16_t i = 0;
 
+	(void)y;
+
 	// Directly jump to the end of the string
 	if (x > gdispGetStringWidth(gw->text, gw->g.font)) {
 		gw2obj->cursorPos = strlen(gw->text);
