@@ -381,11 +381,6 @@ GHandle _gwidgetCreate(GDisplay *g, GWidgetObject *pgw, const GWidgetInit *pInit
 	if (!(pgw = (GWidgetObject *)_gwindowCreate(g, &pgw->g, &pInit->g, &vmt->g, GWIN_FLG_WIDGET|GWIN_FLG_ENABLED|GWIN_FLG_SYSENABLED)))
 		return 0;
 
-	#if GWIN_NEED_COLLECTIONS
-		// This window can't be system enabled if the parent is not enabled
-		if (pgw->parent && !(pgw->parent->flags & GWIN_FLG_SYSENABLED))
-			pgw->g.flags &= ~GWIN_FLG_SYSENABLED;
-	#endif
 	pgw->text = pInit->text ? pInit->text : "";
 	pgw->fnDraw = pInit->customDraw ? pInit->customDraw : vmt->DefaultDraw;
 	pgw->fnParam = pInit->customParam;
