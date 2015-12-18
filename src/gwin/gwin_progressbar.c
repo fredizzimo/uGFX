@@ -238,7 +238,7 @@ void gwinProgressbarDraw_Std(GWidgetObject *gw, void *param) {
 
 	// get the colors right
 	if ((gw->g.flags & GWIN_FLG_SYSENABLED))
-		pcol = &gw->pstyle->pressed;
+		pcol = &gw->pstyle->enabled;
 	else
 		pcol = &gw->pstyle->disabled;
 
@@ -247,14 +247,14 @@ void gwinProgressbarDraw_Std(GWidgetObject *gw, void *param) {
 		if (gsw->dpos != gw->g.height-1)
 			gdispGFillArea(gw->g.display, gw->g.x, gw->g.y+gsw->dpos, gw->g.width, gw->g.height - gsw->dpos, pcol->progress);				// Active Area
 		if (gsw->dpos != 0)
-			gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gsw->dpos, gw->pstyle->enabled.progress);							// Inactive area
+			gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gsw->dpos, pcol->fill);											// Inactive area
 		gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, pcol->edge);												// Edge
 		gdispGDrawLine(gw->g.display, gw->g.x, gw->g.y+gsw->dpos, gw->g.x+gw->g.width-1, gw->g.y+gsw->dpos, pcol->edge);					// Thumb
 
 	// Horizontal progressbar
 	} else {
 		if (gsw->dpos != gw->g.width-1)
-			gdispGFillArea(gw->g.display, gw->g.x+gsw->dpos, gw->g.y, gw->g.width-gsw->dpos, gw->g.height, gw->pstyle->enabled.progress);	// Inactive area
+			gdispGFillArea(gw->g.display, gw->g.x+gsw->dpos, gw->g.y, gw->g.width-gsw->dpos, gw->g.height, pcol->fill);						// Inactive area
 		if (gsw->dpos != 0)
 			gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gsw->dpos, gw->g.height, pcol->progress);										// Active Area
 		gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, pcol->edge);												// Edge
@@ -276,11 +276,12 @@ void gwinProgressbarDraw_Image(GWidgetObject *gw, void *param) {
 		return;
 
 	if ((gw->g.flags & GWIN_FLG_SYSENABLED))
-		pcol = &gw->pstyle->pressed;
+		pcol = &gw->pstyle->enabled;
 	else
 		pcol = &gw->pstyle->disabled;
 
-	if (gw->g.width < gw->g.height) {			// Vertical progressbar
+	// Vertical progressbar
+	if (gw->g.width < gw->g.height) {
 		if (gsw->dpos != 0)							// The unfilled area
 			gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gsw->dpos, gw->pstyle->enabled.progress);	// Inactive area
 		if (gsw->dpos != gw->g.height-1) {			// The filled area
