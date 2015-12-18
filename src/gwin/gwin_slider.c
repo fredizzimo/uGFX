@@ -351,17 +351,18 @@ void gwinSliderDraw_Std(GWidgetObject *gw, void *param) {
 		return;
 
 	if ((gw->g.flags & GWIN_FLG_SYSENABLED))
-		pcol = &gw->pstyle->pressed;
+		pcol = &gw->pstyle->enabled;
 	else
 		pcol = &gw->pstyle->disabled;
 
-	if (gw->g.width < gw->g.height) {			// Vertical slider
+	// Vertical slider
+	if (gw->g.width < gw->g.height) {
 		if (gsw->dpos != gw->g.height-1)
-			gdispGFillArea(gw->g.display, gw->g.x, gw->g.y+gsw->dpos, gw->g.width, gw->g.height - gsw->dpos, pcol->progress);	// Active Area
+			gdispGFillArea(gw->g.display, gw->g.x, gw->g.y+gsw->dpos, gw->g.width, gw->g.height - gsw->dpos, pcol->progress);		// Active area
 		if (gsw->dpos != 0)
-			gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gsw->dpos, gw->pstyle->enabled.progress);			// Inactive area
-		gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, pcol->edge);								// Edge
-		gdispGDrawLine(gw->g.display, gw->g.x, gw->g.y+gsw->dpos, gw->g.x+gw->g.width-1, gw->g.y+gsw->dpos, pcol->edge);	// Thumb
+			gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gsw->dpos, pcol->fill);									// Inactive area
+		gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, pcol->edge);										// Edge
+		gdispGDrawLine(gw->g.display, gw->g.x, gw->g.y+gsw->dpos, gw->g.x+gw->g.width-1, gw->g.y+gsw->dpos, pcol->edge);			// Thumb
 		if (gsw->dpos >= 2)
 			gdispGDrawLine(gw->g.display, gw->g.x, gw->g.y+gsw->dpos-2, gw->g.x+gw->g.width-1, gw->g.y+gsw->dpos-2, pcol->edge);	// Thumb
 		if (gsw->dpos <= gw->g.height-2)
@@ -370,16 +371,18 @@ void gwinSliderDraw_Std(GWidgetObject *gw, void *param) {
 	// Horizontal slider
 	} else {
 		if (gsw->dpos != gw->g.width-1)
-			gdispGFillArea(gw->g.display, gw->g.x+gsw->dpos, gw->g.y, gw->g.width-gsw->dpos, gw->g.height, gw->pstyle->enabled.progress);	// Inactive area
+			gdispGFillArea(gw->g.display, gw->g.x+gsw->dpos, gw->g.y, gw->g.width-gsw->dpos, gw->g.height, pcol->fill);				// Inactive area
 		if (gsw->dpos != 0)
-			gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gsw->dpos, gw->g.height, pcol->progress);	// Active Area
-		gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, pcol->edge);								// Edge
-		gdispGDrawLine(gw->g.display, gw->g.x+gsw->dpos, gw->g.y, gw->g.x+gsw->dpos, gw->g.y+gw->g.height-1, pcol->edge);	// Thumb
+			gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, gsw->dpos, gw->g.height, pcol->progress);								// Active area
+		gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, pcol->edge);										// Edge
+		gdispGDrawLine(gw->g.display, gw->g.x+gsw->dpos, gw->g.y, gw->g.x+gsw->dpos, gw->g.y+gw->g.height-1, pcol->edge);			// Thumb
 		if (gsw->dpos >= 2)
 			gdispGDrawLine(gw->g.display, gw->g.x+gsw->dpos-2, gw->g.y, gw->g.x+gsw->dpos-2, gw->g.y+gw->g.height-1, pcol->edge);	// Thumb
 		if (gsw->dpos <= gw->g.width-2)
 			gdispGDrawLine(gw->g.display, gw->g.x+gsw->dpos+2, gw->g.y, gw->g.x+gsw->dpos+2, gw->g.y+gw->g.height-1, pcol->edge);	// Thumb
 	}
+
+	// Draw the string
 	gdispGDrawStringBox(gw->g.display, gw->g.x+1, gw->g.y+1, gw->g.width-2, gw->g.height-2, gw->text, gw->g.font, pcol->text, justifyCenter);
 
 	#undef gsw
