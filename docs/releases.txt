@@ -9,6 +9,7 @@ FEATURE:	Added support for NIOS-II platform
 FEATURE:	Added Altera-MAX10-NEEK board support
 FIX:		Vastly improving keyboard widget default rendering
 FEATURE:	Added ILI9342 driver
+FIX:		Fixing issues where wrong 'progress' color from widget style palette was used
 
 
 *** Release 2.4 ***

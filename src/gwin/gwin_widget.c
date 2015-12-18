@@ -36,7 +36,7 @@ const GWidgetStyle WhiteWidgetStyle = {
 		HTML2COLOR(0x000000),		// text
 		HTML2COLOR(0x404040),		// edge
 		HTML2COLOR(0xE0E0E0),		// fill
-		HTML2COLOR(0xE0E0E0)		// progress - inactive area
+		HTML2COLOR(0x00E000)		// progress - active area
 	},
 
 	// disabled color set
@@ -66,7 +66,7 @@ const GWidgetStyle BlackWidgetStyle = {
 		HTML2COLOR(0xC0C0C0),		// text
 		HTML2COLOR(0xC0C0C0),		// edge
 		HTML2COLOR(0x606060),		// fill
-		HTML2COLOR(0x404040)		// progress - inactive area
+		HTML2COLOR(0x008000)		// progress - active area
 	},
 
 	// disabled color set

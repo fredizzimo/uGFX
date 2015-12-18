@@ -56,7 +56,7 @@ static const GWidgetStyle YellowWidgetStyle = {
 		HTML2COLOR(0x0000FF),		// text
 		HTML2COLOR(0x404040),		// edge
 		HTML2COLOR(0xE0E0E0),		// fill
-		HTML2COLOR(0xE0E0E0)		// progress - inactive area
+		HTML2COLOR(0x00E000)		// progress - active area
 	},
 
 	// disabled color set

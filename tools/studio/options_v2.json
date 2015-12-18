@@ -317,7 +317,7 @@
 		               			{
 		                			"User": "",
 		                			"Library": "",
-		                			"RGB": "0xE0E0E0"
+		                			"RGB": "0x00E000"
 		            			}
 		               		},
 		               		"Disabled":
@@ -417,7 +417,7 @@
 		               			{
 		                			"User": "",
 		                			"Library": "",
-		                			"RGB": "0x404040"
+		                			"RGB": "0x008000"
 		            			}
 		               		},
 		               		"Disabled":
