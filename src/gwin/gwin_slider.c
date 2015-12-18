@@ -399,7 +399,7 @@ void gwinSliderDraw_Image(GWidgetObject *gw, void *param) {
 		return;
 
 	if ((gw->g.flags & GWIN_FLG_SYSENABLED))
-		pcol = &gw->pstyle->pressed;
+		pcol = &gw->pstyle->enabled;
 	else
 		pcol = &gw->pstyle->disabled;
 
