@@ -221,9 +221,10 @@ GHandle gwinGTexteditCreate(GDisplay* g, GTexteditObject* wt, GWidgetInit* pInit
 
 void gwinTexteditDefaultDraw(GWidgetObject* gw, void* param)
 {
-	const char *p;
-	coord_t		cpos, tpos;
-	color_t		ccol, tcol;
+	const char*			p;
+	coord_t				cpos, tpos;
+	const GColorSet*	pcol;
+
 	(void)param;
 
 	// Is it a valid handle?
@@ -231,8 +232,10 @@ void gwinTexteditDefaultDraw(GWidgetObject* gw, void* param)
 		return;
 
 	// Retrieve colors
-	tcol = (gw->g.flags & GWIN_FLG_SYSENABLED) ? gw->pstyle->enabled.text : gw->pstyle->disabled.text;
-	ccol = (gw->g.flags & GWIN_FLG_SYSENABLED) ? gw->pstyle->enabled.edge : gw->pstyle->disabled.edge;
+	if ((gw->g.flags & GWIN_FLG_SYSENABLED))
+		pcol = &gw->pstyle->enabled;
+	else
+		pcol = &gw->pstyle->disabled;
 
 	// Adjust the text position so the cursor fits in the window
 	p = gw->text;
@@ -248,9 +251,9 @@ void gwinTexteditDefaultDraw(GWidgetObject* gw, void* param)
 
 	// Render background and string
 	#if TEXT_PADDING_LEFT
-		gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, TEXT_PADDING_LEFT, gw->g.height, gw->pstyle->background);
+		gdispGFillArea(gw->g.display, gw->g.x, gw->g.y, TEXT_PADDING_LEFT, gw->g.height, pcol->fill);
 	#endif
-	gdispGFillStringBox(gw->g.display, gw->g.x + TEXT_PADDING_LEFT, gw->g.y, gw->g.width-TEXT_PADDING_LEFT, gw->g.height, p, gw->g.font, tcol, gw->pstyle->background, justifyLeft);
+	gdispGFillStringBox(gw->g.display, gw->g.x + TEXT_PADDING_LEFT, gw->g.y, gw->g.width-TEXT_PADDING_LEFT, gw->g.height, p, gw->g.font, pcol->text, pcol->fill, justifyLeft);
 
 	// Render cursor (if focused)
 	if (gwinGetFocus() == (GHandle)gw) {
@@ -259,14 +262,15 @@ void gwinTexteditDefaultDraw(GWidgetObject* gw, void* param)
 		// Draw cursor
 		tpos += gw->g.x + CURSOR_PADDING_LEFT + TEXT_PADDING_LEFT + gdispGetFontMetric(gw->g.font, fontBaselineX)/2;
 		cpos = (gw->g.height - gdispGetFontMetric(gw->g.font, fontHeight))/2 - CURSOR_EXTRA_HEIGHT;
-		gdispGDrawLine(gw->g.display, tpos, gw->g.y + cpos, tpos, gw->g.y + gw->g.height - cpos, ccol);
+		gdispGDrawLine(gw->g.display, tpos, gw->g.y + cpos, tpos, gw->g.y + gw->g.height - cpos, pcol->edge);
 	}
 
 	// Render border
-	gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, ccol);
+	gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, pcol->edge);
 
 	// Render highlighted border if focused
-	_gwidgetDrawFocusRect(gw, 1, 1, gw->g.width-2, gw->g.height-2);
+	//_gwidgetDrawFocusRect(gw, 1, 1, gw->g.width-2, gw->g.height-2);
+	_gwidgetDrawFocusRect(gw, 0, 0, gw->g.width, gw->g.height);
 
 }
 
