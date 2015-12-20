@@ -53,6 +53,9 @@ void crop_glyphs(std::vector<DataFile::glyphentry_t> &glyphtable,
     bbox_t bbox;
     for (DataFile::glyphentry_t &glyph : glyphtable)
     {
+        if (glyph.data.size() == 0)
+            continue; // Dummy glyph
+    
         for (int y = 0; y < fontinfo.max_height; y++)
         {
             for (int x = 0; x < fontinfo.max_width; x++)
@@ -63,12 +66,18 @@ void crop_glyphs(std::vector<DataFile::glyphentry_t> &glyphtable,
         }
     }
     
+    if (bbox.right < bbox.left)
+        return; // There were no glyphs
+    
     // Crop the glyphs to that
     size_t old_w = fontinfo.max_width;
     size_t new_w = bbox.right - bbox.left + 1;
     size_t new_h = bbox.bottom - bbox.top + 1;
     for (DataFile::glyphentry_t &glyph : glyphtable)
     {
+        if (glyph.data.size() == 0)
+            continue; // Dummy glyph
+    
         DataFile::pixels_t old = glyph.data;
         glyph.data.clear();
         
