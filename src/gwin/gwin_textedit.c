@@ -271,7 +271,6 @@ void gwinTexteditDefaultDraw(GWidgetObject* gw, void* param)
 	gdispGDrawBox(gw->g.display, gw->g.x, gw->g.y, gw->g.width, gw->g.height, pcol->edge);
 
 	// Render highlighted border if focused
-	//_gwidgetDrawFocusRect(gw, 1, 1, gw->g.width-2, gw->g.height-2);
 	_gwidgetDrawFocusRect(gw, 0, 0, gw->g.width, gw->g.height);
 
 }
