@@ -19,8 +19,8 @@
 #endif
 
 #define GDISP_DRIVER_VMT			GDISPVMT_ILI9342
-#include "drivers/gdisp/ILI9342/gdisp_lld_config.h"
-#include "src/gdisp/gdisp_driver.h"
+#include "gdisp_lld_config.h"
+#include "../../../src/gdisp/gdisp_driver.h"
 
 #include "board_ILI9342.h"
 
@@ -28,16 +28,12 @@
 /* Driver local definitions.                                                 */
 /*===========================================================================*/
 
-	#define GDISP_SCREEN_HEIGHT		240
-	#define GDISP_SCREEN_WIDTH		320
-/*
 #ifndef GDISP_SCREEN_HEIGHT
-	#define GDISP_SCREEN_HEIGHT		320
+	#define GDISP_SCREEN_HEIGHT		240
 #endif
 #ifndef GDISP_SCREEN_WIDTH
-	#define GDISP_SCREEN_WIDTH		240
+	#define GDISP_SCREEN_WIDTH		320
 #endif
-*/
 #ifndef GDISP_INITIAL_CONTRAST
 	#define GDISP_INITIAL_CONTRAST	50
 #endif
