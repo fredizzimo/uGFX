@@ -76,7 +76,7 @@ static DECLARE_THREAD_FUNCTION(GTimerThreadHandler, arg) {
 						
 					} else {
 						// No - get us off the timers list
-						if (pt->next == pt->prev)
+						if (pt->next == pt)
 							pTimerHead = 0;
 						else {
 							pt->next->prev = pt->prev;
@@ -148,7 +148,7 @@ void gtimerStart(GTimer *pt, GTimerFunction fn, void *param, bool_t periodic, de
 	// Is this already scheduled?
 	if (pt->flags & GTIMER_FLG_SCHEDULED) {
 		// Cancel it!
-		if (pt->next == pt->prev)
+		if (pt->next == pt)
 			pTimerHead = 0;
 		else {
 			pt->next->prev = pt->prev;
