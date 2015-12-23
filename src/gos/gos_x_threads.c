@@ -191,8 +191,118 @@ static threadQ		deadQ;					// Where we put threads waiting to be deallocated
 static thread *		current;				// The current running thread
 static thread		mainthread;				// The main thread context
 
-#if GFX_CPU == GFX_CPU_UNKNOWN
+#if GFX_CPU == GFX_CPU_CORTEX_M0 || GFX_CPU == GFX_CPU_CORTEX_M1
 
+	// Use the EABI calling standard (ARM's AAPCS) - Save r4 - r11
+	// The context is saved at the current stack location and a pointer is maintained in the thread structure.
+
+	#define _gfxThreadsInit()
+
+	static __attribute__((pcs("aapcs"),naked)) void _gfxTaskSwitch(thread *oldt, thread *newt) {
+		__asm__ volatile (	"push    {r4, r5, r6, r7, lr}                   \n\t"
+							"mov     r4, r8                                 \n\t"
+							"mov     r5, r9                                 \n\t"
+							"mov     r6, r10                                \n\t"
+							"mov     r7, r11                                \n\t"
+							"push    {r4, r5, r6, r7}						\n\t"
+							"str	sp, %[oldtcxt]							\n\t"
+							"ldr	sp, %[newtcxt]							\n\t"
+							"pop     {r4, r5, r6, r7}                   	\n\t"
+							"mov     r8, r4                                 \n\t"
+							"mov     r9, r5                                 \n\t"
+							"mov     r10, r6                                \n\t"
+							"mov     r11, r7                                \n\t"
+							"pop     {r4, r5, r6, r7, pc}					\n\t"
+							: [newtcxt] "=m" (newt->cxt)
+							: [oldtcxt] "m" (oldt->cxt)
+							: "memory");
+	}
+
+	static __attribute__((pcs("aapcs"),naked)) void _gfxStartThread(thread *oldt, thread *newt) {
+		newt->cxt = (char *)newt + newt->size;
+		__asm__ volatile (	"push	{r4, r5, r6, r7, r8, r9, r10, r11, lr}	\n\t"		// save current context
+							"str	sp, %[oldtcxt]							\n\t"		// save context pointer
+							"ldr	sp, %[newtcxt]							\n\t"		// load new context pointer
+							: [newtcxt] "=m" (newt->cxt)
+							: [oldtcxt] "m" (oldt->cxt)
+							: "memory");
+
+		// Run the users function
+		gfxThreadExit(current->fn(current->param));
+	}
+
+#elif GFX_CPU == GFX_CPU_CORTEX_M3 || GFX_CPU == GFX_CPU_CORTEX_M4 || GFX_CPU == GFX_CPU_CORTEX_M7
+
+	// Use the EABI calling standard (ARM's AAPCS) - Save r4 - r11
+	// The context is saved at the current stack location and a pointer is maintained in the thread structure.
+
+	#if CORTEX_USE_FPU
+		#warning "GOS Threads: You have specified GFX_CPU=GFX_CPU_CORTX_M? with no hardware floating point support but CORTEX_USE_FPU is TRUE. Try using GFX_CPU_GFX_CPU_CORTEX_M?_FP instead"
+	#endif
+
+	#define _gfxThreadsInit()
+
+	static __attribute__((pcs("aapcs"),naked)) void _gfxTaskSwitch(thread *oldt, thread *newt) {
+		__asm__ volatile (	"push	{r4, r5, r6, r7, r8, r9, r10, r11, lr}	\n\t"
+							"str	sp, %[oldtcxt]							\n\t"
+							"ldr	sp, %[newtcxt]							\n\t"
+							"pop	{r4, r5, r6, r7, r8, r9, r10, r11, pc}	\n\t"
+							: [newtcxt] "=m" (newt->cxt)
+							: [oldtcxt] "m" (oldt->cxt)
+							: "memory");
+	}
+
+	static __attribute__((pcs("aapcs"),naked)) void _gfxStartThread(thread *oldt, thread *newt) {
+		newt->cxt = (char *)newt + newt->size;
+		__asm__ volatile (	"push	{r4, r5, r6, r7, r8, r9, r10, r11, lr}	\n\t"
+							"str	sp, %[oldtcxt]							\n\t"
+							"ldr	sp, %[newtcxt]							\n\t"
+							: [newtcxt] "=m" (newt->cxt)
+							: [oldtcxt] "m" (oldt->cxt)
+							: "memory");
+
+		// Run the users function
+		gfxThreadExit(current->fn(current->param));
+	}
+
+#elif GFX_CPU == GFX_CPU == GFX_CPU_CORTEX_M4_FP || GFX_CPU == GFX_CPU_CORTEX_M7_FP
+
+	// Use the EABI calling standard (ARM's AAPCS) - Save r4 - r11 and floating point
+	// The context is saved at the current stack location and a pointer is maintained in the thread structure.
+
+	#if !CORTEX_USE_FPU
+		#warning "GOS Threads: You have specified GFX_CPU=GFX_CPU_CORTX_M?_FP with hardware floating point support but CORTEX_USE_FPU is FALSE. Try using GFX_CPU_GFX_CPU_CORTEX_M? instead"
+	#endif
+
+	#define _gfxThreadsInit()
+
+	static __attribute__((pcs("aapcs-vfp"),naked)) void _gfxTaskSwitch(thread *oldt, thread *newt) {
+		__asm__ volatile (	"push	{r4, r5, r6, r7, r8, r9, r10, r11, lr}	\n\t"
+							"vpush	{s16-s31}								\n\t"
+							"str	sp, %[oldtcxt]							\n\t"
+							"ldr	sp, %[newtcxt]							\n\t"
+							"vpop	{s16-s31}								\n\t"
+							"pop	{r4, r5, r6, r7, r8, r9, r10, r11, pc}	\n\t"
+							: [newtcxt] "=m" (newt->cxt)
+							: [oldtcxt] "m" (oldt->cxt)
+							: "memory");
+	}
+
+	static __attribute__((pcs("aapcs-vfp"),naked)) void _gfxStartThread(thread *oldt, thread *newt) {
+		newt->cxt = (char *)newt + newt->size;
+		__asm__ volatile (	"push	{r4, r5, r6, r7, r8, r9, r10, r11, lr}	\n\t"
+							"vpush	{s16-s31}								\n\t"
+							"str	sp, %[oldtcxt]							\n\t"
+							"ldr	sp, %[newtcxt]							\n\t"
+							: [newtcxt] "=m" (newt->cxt)
+							: [oldtcxt] "m" (oldt->cxt)
+							: "memory");
+
+		// Run the users function
+		gfxThreadExit(current->fn(current->param));
+	}
+
+#else
 	#include <string.h>				// Prototype for memcpy()
 	#include <setjmp.h>
 
@@ -339,20 +449,20 @@ static thread		mainthread;				// The main thread context
 		// Copy the stack frame
 		#if AUTO_DETECT_STACKFRAME
 			if (STACK_DIR_UP) {					// Stack grows up
-				nf = (char *)(t) + sizeof(thread) + sizeof(jmp_buf) + stackbase;
-				memcpy(t+1, (char *)&s - stackbase, stackbase+sizeof(char *));
+				nf = (char *)(t) + sizeof(thread) + sizeof(jmp_buf) + STACK_BASE;
+				memcpy(t+1, (char *)&s - STACK_BASE, STACK_BASE+sizeof(char *));
 			} else {							// Stack grows down
-				nf = (char *)(t) + t->size - (stackbase + sizeof(char *));
-				memcpy(nf, &s, stackbase+sizeof(char *));
+				nf = (char *)(t) + t->size - (STACK_BASE + sizeof(char *));
+				memcpy(nf, &s, STACK_BASE+sizeof(char *));
 			}
 		#elif STACK_DIR_UP
 			// Stack grows up
-			nf = (char *)(t) + sizeof(thread) + sizeof(jmp_buf) + stackbase;
-			memcpy(t+1, (char *)&s - stackbase, stackbase+sizeof(char *));
+			nf = (char *)(t) + sizeof(thread) + sizeof(jmp_buf) + STACK_BASE;
+			memcpy(t+1, (char *)&s - STACK_BASE, STACK_BASE+sizeof(char *));
 		#else
 			// Stack grows down
-			nf = (char *)(t) + t->size - (stackbase + sizeof(char *));
-			memcpy(nf, &s, stackbase+sizeof(char *));
+			nf = (char *)(t) + t->size - (STACK_BASE + sizeof(char *));
+			memcpy(nf, &s, STACK_BASE+sizeof(char *));
 		#endif
 
 		// Relocate the context data
@@ -405,120 +515,6 @@ static thread		mainthread;				// The main thread context
 
 	#define _gfxTaskSwitch(oldt, newt)		_gfxXSwitch(oldt, newt, FALSE)
 	#define _gfxStartThread(oldt, newt)		_gfxXSwitch(oldt, newt, TRUE)
-
-#elif GFX_CPU == GFX_CPU_CORTEX_M0 || GFX_CPU == GFX_CPU_CORTEX_M1
-
-	// Use the EABI calling standard (ARM's AAPCS) - Save r4 - r11
-	// The context is saved at the current stack location and a pointer is maintained in the thread structure.
-
-	#define _gfxThreadsInit()
-
-	static __attribute__((pcs("aapcs"),naked)) void _gfxTaskSwitch(thread *oldt, thread *newt) {
-		__asm__ volatile (	"push    {r4, r5, r6, r7, lr}                   \n\t"
-							"mov     r4, r8                                 \n\t"
-							"mov     r5, r9                                 \n\t"
-							"mov     r6, r10                                \n\t"
-							"mov     r7, r11                                \n\t"
-							"push    {r4, r5, r6, r7}						\n\t"
-							"str	sp, %[oldtcxt]							\n\t"
-							"ldr	sp, %[newtcxt]							\n\t"
-							"pop     {r4, r5, r6, r7}                   	\n\t"
-							"mov     r8, r4                                 \n\t"
-							"mov     r9, r5                                 \n\t"
-							"mov     r10, r6                                \n\t"
-							"mov     r11, r7                                \n\t"
-							"pop     {r4, r5, r6, r7, pc}					\n\t"
-							: [newtcxt] "=m" (newt->cxt)
-							: [oldtcxt] "m" (oldt->cxt)
-							: "memory");
-	}
-
-	static __attribute__((pcs("aapcs"),naked)) void _gfxStartThread(thread *oldt, thread *newt) {
-		newt->cxt = (char *)newt + newt->size;
-		__asm__ volatile (	"push	{r4, r5, r6, r7, r8, r9, r10, r11, lr}	\n\t"		// save current context
-							"str	sp, %[oldtcxt]							\n\t"		// save context pointer
-							"ldr	sp, %[newtcxt]							\n\t"		// load new context pointer
-							: [newtcxt] "=m" (newt->cxt)
-							: [oldtcxt] "m" (oldt->cxt)
-							: "memory");
-
-		// Run the users function
-		gfxThreadExit(current->fn(current->param));
-	}
-
-#elif GFX_CPU == GFX_CPU_CORTEX_M3 || GFX_CPU == GFX_CPU_CORTEX_M4 || GFX_CPU == GFX_CPU_CORTEX_M7
-
-	// Use the EABI calling standard (ARM's AAPCS) - Save r4 - r11
-	// The context is saved at the current stack location and a pointer is maintained in the thread structure.
-
-	#if CORTEX_USE_FPU
-		#warning "GOS Threads: You have specified GFX_CPU=GFX_CPU_CORTX_M? with no hardware floating point support but CORTEX_USE_FPU is TRUE. Try using GFX_CPU_GFX_CPU_CORTEX_M?_FP instead"
-	#endif
-
-	#define _gfxThreadsInit()
-
-	static __attribute__((pcs("aapcs"),naked)) void _gfxTaskSwitch(thread *oldt, thread *newt) {
-		__asm__ volatile (	"push	{r4, r5, r6, r7, r8, r9, r10, r11, lr}	\n\t"
-							"str	sp, %[oldtcxt]							\n\t"
-							"ldr	sp, %[newtcxt]							\n\t"
-							"pop	{r4, r5, r6, r7, r8, r9, r10, r11, pc}	\n\t"
-							: [newtcxt] "=m" (newt->cxt)
-							: [oldtcxt] "m" (oldt->cxt)
-							: "memory");
-	}
-
-	static __attribute__((pcs("aapcs"),naked)) void _gfxStartThread(thread *oldt, thread *newt) {
-		newt->cxt = (char *)newt + newt->size;
-		__asm__ volatile (	"push	{r4, r5, r6, r7, r8, r9, r10, r11, lr}	\n\t"
-							"str	sp, %[oldtcxt]							\n\t"
-							"ldr	sp, %[newtcxt]							\n\t"
-							: [newtcxt] "=m" (newt->cxt)
-							: [oldtcxt] "m" (oldt->cxt)
-							: "memory");
-
-		// Run the users function
-		gfxThreadExit(current->fn(current->param));
-	}
-
-#elif GFX_CPU == GFX_CPU == GFX_CPU_CORTEX_M4_FP || GFX_CPU == GFX_CPU_CORTEX_M7_FP
-
-	// Use the EABI calling standard (ARM's AAPCS) - Save r4 - r11 and floating point
-	// The context is saved at the current stack location and a pointer is maintained in the thread structure.
-
-	#if !CORTEX_USE_FPU
-		#warning "GOS Threads: You have specified GFX_CPU=GFX_CPU_CORTX_M?_FP with hardware floating point support but CORTEX_USE_FPU is FALSE. Try using GFX_CPU_GFX_CPU_CORTEX_M? instead"
-	#endif
-
-	#define _gfxThreadsInit()
-
-	static __attribute__((pcs("aapcs-vfp"),naked)) void _gfxTaskSwitch(thread *oldt, thread *newt) {
-		__asm__ volatile (	"push	{r4, r5, r6, r7, r8, r9, r10, r11, lr}	\n\t"
-							"vpush	{s16-s31}								\n\t"
-							"str	sp, %[oldtcxt]							\n\t"
-							"ldr	sp, %[newtcxt]							\n\t"
-							"vpop	{s16-s31}								\n\t"
-							"pop	{r4, r5, r6, r7, r8, r9, r10, r11, pc}	\n\t"
-							: [newtcxt] "=m" (newt->cxt)
-							: [oldtcxt] "m" (oldt->cxt)
-							: "memory");
-	}
-
-	static __attribute__((pcs("aapcs-vfp"),naked)) void _gfxStartThread(thread *oldt, thread *newt) {
-		newt->cxt = (char *)newt + newt->size;
-		__asm__ volatile (	"push	{r4, r5, r6, r7, r8, r9, r10, r11, lr}	\n\t"
-							"vpush	{s16-s31}								\n\t"
-							"str	sp, %[oldtcxt]							\n\t"
-							"ldr	sp, %[newtcxt]							\n\t"
-							: [newtcxt] "=m" (newt->cxt)
-							: [oldtcxt] "m" (oldt->cxt)
-							: "memory");
-
-		// Run the users function
-		gfxThreadExit(current->fn(current->param));
-	}
-
-#else
-	#error "GOS Threads: Unsupported Scheduler. Try setting GFX_CPU = GFX_CPU_UNKNOWN"
 #endif
 
 static void Qinit(threadQ * q) {
