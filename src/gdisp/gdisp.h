@@ -743,7 +743,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 	 * @brief   Scroll vertically a section of the screen.
 	 * @pre		GDISP_NEED_SCROLL must be set to TRUE in gfxconf.h
 	 * @note    Optional.
-	 * @note    If lines is >= cy, it is equivelent to a area fill with bgcolor.
+	 * @note    If lines is >= cy, it is equivelent to an area fill with bgcolor.
 	 *
 	 * @param[in] g 		The display to use
 	 * @param[in] x, y		The start of the area to be scrolled
