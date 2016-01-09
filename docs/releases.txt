@@ -35,6 +35,7 @@ FEATURE:	Added config option GFX_NO_INLINE to run off inlining of ugfx functions
 FEATURE:	Added word-wrapping support for gdispDrawStringBox() and gdispFillStringBox()
 FIX:		Fixing issue in touchscreen calibration code
 FEATURE:	Added GFX_OS_PRE_INIT_FUNCTION for early hardware initialization
+FEATURE:	Added label rendering functions that allow to set text justification
 FIX:		Fixing GTIMER for high clock rate devices
 FEATURE:	Added GFX_COMPILER_KEIL and GFX_COMPILER_ARMCC macros
 
