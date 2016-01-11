@@ -182,7 +182,7 @@
  	#endif
  	/**
  	 * @brief	How much RAM should uGFX use for the heap when using its own internal heap allocator
- 	 * @details	Defaults to 5120.
+ 	 * @details	Defaults to 0.
  	 * @note	Only used when the internal ugfx heap allocator is used
  	 * 				(GFX_USE_OS_RAW32, GFX_USE_OS_ARDUINO, GFX_US_OS_KEIL, GFX_USE_OS_CMSIS)
  	 * @note	If 0 then the standard C runtime malloc(), free() and realloc()
@@ -193,7 +193,7 @@
  	 * 			is added allowing the user to add extra memory blocks to the heap.
  	 */
 	#ifndef GFX_OS_HEAP_SIZE
-		#define GFX_OS_HEAP_SIZE		5120
+		#define GFX_OS_HEAP_SIZE		0
 	#endif
 /** @} */
 

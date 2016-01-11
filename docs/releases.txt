@@ -10,7 +10,6 @@ FEATURE:	Added Altera-MAX10-NEEK board support
 FIX:		Vastly improving keyboard widget default rendering
 FEATURE:	Added ILI9342 driver
 FIX:		Fixing issues where wrong 'progress' color from widget style palette was used
-CHANGE:		Default heap size set to 5120 byes when using RAW32 port
 
 
 *** Release 2.4 ***
