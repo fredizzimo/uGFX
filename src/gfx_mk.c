@@ -18,3 +18,4 @@
 #include "gaudio/gaudio_mk.c"
 #include "gmisc/gmisc_mk.c"
 #include "gfile/gfile_mk.c"
+#include "gtrans/gtrans_mk.c"

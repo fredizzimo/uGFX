@@ -73,6 +73,10 @@ extern void _gosDeinit(void);
 	extern void _gmiscInit(void);
 	extern void _gmiscDeinit(void);
 #endif
+#if GFX_USE_GTRANS
+	extern void _gtransInit(void);
+	extern void _gtransDeinit(void);
+#endif
 
 void gfxInit(void)
 {
@@ -95,6 +99,9 @@ void gfxInit(void)
 	#endif
 	#if GFX_USE_GMISC
 		_gmiscInit();
+	#endif
+	#if GFX_USE_GTRANS
+		_gtransInit();
 	#endif
 	#if GFX_USE_GEVENT
 		_geventInit();
@@ -158,6 +165,9 @@ void gfxDeinit(void)
 	#endif
 	#if GFX_USE_GEVENT
 		_geventDeinit();
+	#endif
+	#if GFX_USE_GTRANS
+		_gtransDeinit();
 	#endif
 	#if GFX_USE_GMISC
 		_gmiscDeinit();
