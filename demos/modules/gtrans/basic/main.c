@@ -68,7 +68,7 @@ int main(void)
         gdispFillStringBox(20+300*i, 35*j, 300, 35, gtransIndex(j), font, Black, Silver, justifyLeft);
     }
 
-    gdispFillStringBox(20, 300, 300, 25, gtransString("Welcome"), font, Black, Silver, justifyLeft);
+    gdispFillStringBox(20, 300, 300, 25, gt("Welcome"), font, Black, Silver, justifyLeft);
 
 	while (TRUE) {
 		gfxSleepMilliseconds(500);

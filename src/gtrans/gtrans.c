@@ -25,23 +25,29 @@ void _gtransDeinit(void)
 
 const char* gtransString(const char* string)
 {
+	// Find the index of the specified string in the base language table
 	size_t i = 0;
 	while (1) {
+		// Prevent overflow
 		if (i >= _languageBase->numEntries-1) {
-			return 0;
+			return string;
 		}
 
+		// Check if we found the string
 		if (strcmp(string, _languageBase->strings[i]) == 0) {
 			break;
 		}
 
+		// Otherwise keep going
 		i++;
 	}
 
+	// Make sure that the index exists in the current language table
 	if (i >= _languageCurrent->numEntries-1) {
-		return 0;
+		return string;
 	}
 
+	// Return the translated string
 	return _languageCurrent->strings[i];
 }
 
