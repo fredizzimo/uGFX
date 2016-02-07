@@ -22,11 +22,19 @@
 
 #if GFX_USE_GTRANS || defined(__DOXYGEN__)
 
+typedef struct transTable {
+	unsigned numEntries;
+	const char** strings;
+} transTable;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
+const char* gtransString(const char* string);
+const char* gtransIndex(unsigned index);
+void gtransSetBaseLanguage(const transTable* const translation);
+void gtransSetLanguage(const transTable* const translation);
 
 #ifdef __cplusplus
 }

@@ -28,10 +28,47 @@
  */
 
 #include "gfx.h"
- 
+
+static const char* EnglishStrings[] = {
+    "Welcome",
+    "The number %s has the value %d",
+    "Goodbye"
+};
+static const transTable EnglishTranslation = { sizeof(EnglishStrings)/sizeof(EnglishStrings[0]), EnglishStrings };
+
+static const char* GermanStrings[] = {
+    "Herzlich Willkommen",
+    "Die Zahl %s hat den Wert %d",
+    "Auf Wiedersehen"
+};
+static const transTable GermanTranslation = { sizeof(GermanStrings)/sizeof(GermanStrings[0]), GermanStrings };
+
 int main(void)
 {
+    size_t i, j;
+    font_t font;
+
     gfxInit();
+    gdispClear(Silver);
+
+    font = gdispOpenFont("*");
+
+    gtransSetBaseLanguage(&EnglishTranslation);
+    gtransSetLanguage(&GermanTranslation);
+
+    gtransSetLanguage(&EnglishTranslation);
+    i = 0;
+    for (j = 0; j < EnglishTranslation.numEntries; j++) {
+        gdispFillStringBox(20+300*i, 35*j, 300, 35, gtransIndex(j), font, Black, Silver, justifyLeft);
+    }
+
+    gtransSetLanguage(&GermanTranslation);
+    i = 1;
+    for (j = 0; j < EnglishTranslation.numEntries; j++) {
+        gdispFillStringBox(20+300*i, 35*j, 300, 35, gtransIndex(j), font, Black, Silver, justifyLeft);
+    }
+
+    gdispFillStringBox(20, 300, 300, 25, gtransString("Welcome"), font, Black, Silver, justifyLeft);
 
 	while (TRUE) {
 		gfxSleepMilliseconds(500);
