@@ -27,53 +27,86 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdio.h>
 #include "gfx.h"
 
+#define COLOR_BACKGROUND    Silver
+#define COLOR_TEXT          Black
+
+font_t font;
+
+// English Translation
 static const char* EnglishStrings[] = {
     "Welcome",
-    "The number %s has the value %d",
-    "Goodbye"
+    "The temperature is %d degrees",
+    "Goodbye",
+    "This is a translated uGFX application"
 };
 static const transTable EnglishTranslation = { sizeof(EnglishStrings)/sizeof(EnglishStrings[0]), EnglishStrings };
 
+// German translation
 static const char* GermanStrings[] = {
     "Herzlich Willkommen",
-    "Die Zahl %s hat den Wert %d",
-    "Auf Wiedersehen"
+    "Die Temperatur beträgt %d Grad",
+    "Auf Wiedersehen",
+    "Das ist eine übersetzte uGFX Anwendung"
 };
 static const transTable GermanTranslation = { sizeof(GermanStrings)/sizeof(GermanStrings[0]), GermanStrings };
 
-int main(void)
+// French translation
+static const char* FrenchStrings[] = {
+    "Bienvenue",
+    "La température est de %d degrés",
+    "Au revoir",
+    "Ceci est une application traduit uGFX"
+};
+static const transTable FrenchTranslation = { sizeof(FrenchStrings)/sizeof(FrenchStrings[0]), FrenchStrings };
+
+void updateText()
 {
-    size_t i, j;
-    font_t font;
+    coord_t width = 400;
+    coord_t height = 30;
 
-    gfxInit();
-    gdispClear(Silver);
+    // Translate some basic strings
+    gdispFillStringBox(20,  20, width, height, gt("Welcome"), font, COLOR_TEXT, COLOR_BACKGROUND, justifyLeft);
+    gdispFillStringBox(20,  60, width, height, gt("This is a translated uGFX application"), font, COLOR_TEXT, COLOR_BACKGROUND, justifyLeft);
+    gdispFillStringBox(20, 100, width, height, gt("Goodbye"), font, COLOR_TEXT, COLOR_BACKGROUND, justifyLeft);
 
-    font = gdispOpenFont("*");
-
-    gtransSetBaseLanguage(&EnglishTranslation);
-    gtransSetLanguage(&GermanTranslation);
-
-    gtransSetLanguage(&EnglishTranslation);
-    i = 0;
-    for (j = 0; j < EnglishTranslation.numEntries; j++) {
-        gdispFillStringBox(20+300*i, 35*j, 300, 35, gtransIndex(j), font, Black, Silver, justifyLeft);
-    }
-
-    gtransSetLanguage(&GermanTranslation);
-    i = 1;
-    for (j = 0; j < EnglishTranslation.numEntries; j++) {
-        gdispFillStringBox(20+300*i, 35*j, 300, 35, gtransIndex(j), font, Black, Silver, justifyLeft);
-    }
-
-    gdispFillStringBox(20, 300, 300, 25, gt("Welcome"), font, Black, Silver, justifyLeft);
-
-	while (TRUE) {
-		gfxSleepMilliseconds(500);
-	}
-
-	return 0;
+    // A more complex example using string formatting
+    char buffer[128];
+    sprintf(buffer, gt("The temperature is %d degrees"), 18);
+    gdispFillStringBox(20, 140, width, height, buffer, font, COLOR_TEXT, COLOR_BACKGROUND, justifyLeft);
 }
 
+int main(void)
+{
+    // Initialize the uGFX library
+    gfxInit();
+    gdispClear(COLOR_BACKGROUND);
+
+    // Take the first font we find
+    font = gdispOpenFont("*");
+
+    // Set the base language of the application
+    gtransSetBaseLanguage(&EnglishTranslation);
+
+    // Loop through the languages
+    while (TRUE) {
+        // English
+        gtransSetLanguage(&EnglishTranslation);
+        updateText();
+        gfxSleepMilliseconds(1000);
+
+        // German
+        gtransSetLanguage(&GermanTranslation);
+        updateText();
+        gfxSleepMilliseconds(1000);
+
+        // French
+        gtransSetLanguage(&FrenchTranslation);
+        updateText();
+        gfxSleepMilliseconds(1000);
+    }
+
+    return 0;
+}
