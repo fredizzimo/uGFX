@@ -29,7 +29,7 @@ const char* gtransString(const char* string)
 	size_t i = 0;
 	while (1) {
 		// Prevent overflow
-		if (i >= _languageBase->numEntries-1) {
+		if (i >= _languageBase->numEntries) {
 			return string;
 		}
 
@@ -43,7 +43,7 @@ const char* gtransString(const char* string)
 	}
 
 	// Make sure that the index exists in the current language table
-	if (i >= _languageCurrent->numEntries-1) {
+	if (i >= _languageCurrent->numEntries) {
 		return string;
 	}
 
