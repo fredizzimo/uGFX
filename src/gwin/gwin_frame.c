@@ -28,11 +28,11 @@
 #define FRM_BORDER_B	2					// Bottom Border
 
 /* Internal state flags */
-#define GWIN_FRAME_USER_FLAGS		(GWIN_FRAME_CLOSE_BTN|GWIN_FRAME_MINMAX_BTN)
-#define GWIN_FRAME_CLOSE_PRESSED	(GWIN_FRAME_MINMAX_BTN << 1)
-#define GWIN_FRAME_MIN_PRESSED		(GWIN_FRAME_MINMAX_BTN << 2)
-#define GWIN_FRAME_MAX_PRESSED		(GWIN_FRAME_MINMAX_BTN << 3)
-#define GWIN_FRAME_REDRAW_FRAME		(GWIN_FRAME_MINMAX_BTN << 4)		// Only redraw the frame
+#define GWIN_FRAME_USER_FLAGS		(GWIN_FRAME_CLOSE_BTN|GWIN_FRAME_MINMAX_BTN|GWIN_FRAME_KEEPONCLOSE)
+#define GWIN_FRAME_CLOSE_PRESSED	(GWIN_FRAME_KEEPONCLOSE << 1)
+#define GWIN_FRAME_MIN_PRESSED		(GWIN_FRAME_KEEPONCLOSE << 2)
+#define GWIN_FRAME_MAX_PRESSED		(GWIN_FRAME_KEEPONCLOSE << 3)
+#define GWIN_FRAME_REDRAW_FRAME		(GWIN_FRAME_KEEPONCLOSE << 4)		// Only redraw the frame
 #if GWIN_FRAME_CLOSE_BTN < GWIN_FIRST_CONTROL_FLAG
 	#error "GWIN Frame: - Flag definitions don't match"
 #endif
@@ -96,7 +96,8 @@ static void forceFrameRedraw(GWidgetObject *gw) {
 				gw->g.flags &= ~(GWIN_FRAME_CLOSE_PRESSED|GWIN_FRAME_MAX_PRESSED|GWIN_FRAME_MIN_PRESSED);
 				forceFrameRedraw(gw);
 				_gwinSendEvent(&gw->g, GEVENT_GWIN_CLOSE);
-				_gwinDestroy(&gw->g, REDRAW_INSESSION);
+				if (!(gw->g.flags & GWIN_FRAME_KEEPONCLOSE))
+					_gwinDestroy(&gw->g, REDRAW_INSESSION);
 				return;
 			}
 			if ((gw->g.flags & GWIN_FRAME_MAX_PRESSED)) {
@@ -129,7 +130,8 @@ static void forceFrameRedraw(GWidgetObject *gw) {
 						gw->g.flags &= ~(GWIN_FRAME_CLOSE_PRESSED|GWIN_FRAME_MAX_PRESSED|GWIN_FRAME_MIN_PRESSED);
 						forceFrameRedraw(gw);
 						_gwinSendEvent(&gw->g, GEVENT_GWIN_CLOSE);
-						_gwinDestroy(&gw->g, REDRAW_INSESSION);
+						if (!(gw->g.flags & GWIN_FRAME_KEEPONCLOSE))
+							_gwinDestroy(&gw->g, REDRAW_INSESSION);
 						return;
 					}
 					pos -= FRM_BUTTON_X;
