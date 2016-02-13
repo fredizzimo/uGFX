@@ -196,6 +196,7 @@ GHandle gwinGWindowCreate(GDisplay *g, GWindowObject *pgw, const GWindowInit *pI
 		return 0;
 
 	gwinSetVisible(pgw, pInit->show);
+	_gwinFlushRedraws(REDRAW_WAIT);
 
 	return pgw;
 }

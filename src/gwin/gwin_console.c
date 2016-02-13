@@ -353,6 +353,7 @@ GHandle gwinGConsoleCreate(GDisplay *g, GConsoleObject *gc, const GWindowInit *p
 	#endif
 
 	gwinSetVisible((GHandle)gc, pInit->show);
+	_gwinFlushRedraws(REDRAW_WAIT);
 
 	return (GHandle)gc;
 }
