@@ -40,6 +40,14 @@
 typedef GEventGWin		GEventGWinButton;
 
 /**
+ * @brief	The internal button flags
+ * @note	Used only for writing a custom draw routine.
+ * @{
+ */
+#define GBUTTON_FLG_PRESSED		(GWIN_FIRST_CONTROL_FLAG<<0)
+/** @} */
+
+/**
  * @brief	The button widget structure
  * @note	Do not use the members directly - treat it as a black-box.
  */

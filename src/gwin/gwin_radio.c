@@ -21,9 +21,6 @@
 #define GRADIO_BOTTOM_FADE		25		// (GRADIO_BOTTOM_FADE/255)% fade to black for bottom of tab/button
 #define GRADIO_OUTLINE_FADE		128		// (GRADIO_OUTLINE_FADE/255)% fade to background for active tab edge
 
-// Our pressed state
-#define GRADIO_FLG_PRESSED		(GWIN_FIRST_CONTROL_FLAG<<0)
-
 // Send the button event
 static void SendRadioEvent(GWidgetObject *gw) {
 	GSourceListener	*	psl;

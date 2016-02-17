@@ -20,9 +20,6 @@
 #define CHK_TOP_FADE			50		// (CHK_TOP_FADE/255)% fade to white for top of button
 #define CHK_BOTTOM_FADE			25		// (CHK_BOTTOM_FADE/255)% fade to black for bottom of button
 
-// Our checked state
-#define GCHECKBOX_FLG_CHECKED		(GWIN_FIRST_CONTROL_FLAG<<0)
-
 // Send the checkbox event
 static void SendCheckboxEvent(GWidgetObject *gw) {
 	GSourceListener	*	psl;

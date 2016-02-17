@@ -45,6 +45,14 @@ typedef struct GEventGWinCheckbox {
 	bool_t			isChecked;		// Is the checkbox currently checked or unchecked?
 } GEventGWinCheckbox;
 
+/**
+ * @brief	The internal checkbox flags
+ * @note	Used only for writing a custom draw routine.
+ * @{
+ */
+#define GCHECKBOX_FLG_CHECKED		(GWIN_FIRST_CONTROL_FLAG<<0)
+/** @} */
+
 /* A Checkbox window */
 typedef struct GCheckboxObject {
 	GWidgetObject			w;

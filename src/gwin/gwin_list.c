@@ -31,27 +31,6 @@
 #define qix2li		((ListItem *)qix)
 #define ple			((GEventGWinList *)pe)
 
-// Flags for the GListObject
-#define GLIST_FLG_MULTISELECT		(GWIN_FIRST_CONTROL_FLAG << 0)
-#define GLIST_FLG_HASIMAGES			(GWIN_FIRST_CONTROL_FLAG << 1)
-#define GLIST_FLG_SCROLLALWAYS		(GWIN_FIRST_CONTROL_FLAG << 2)
-#define GLIST_FLG_SCROLLSMOOTH      (GWIN_FIRST_CONTROL_FLAG << 3)
-#define GLIST_FLG_ENABLERENDER      (GWIN_FIRST_CONTROL_FLAG << 4)
-
-// Flags on a ListItem.
-#define GLIST_FLG_SELECTED			0x0001
-
-typedef struct ListItem {
-	gfxQueueASyncItem	q_item;		// This must be the first member in the struct
-
-	uint16_t			flags;
-	uint16_t			param;		// A parameter the user can specify himself
-	const char*			text;
-	#if GWIN_NEED_LIST_IMAGES
-		gdispImage*		pimg;
-	#endif
-} ListItem;
-
 static void sendListEvent(GWidgetObject *gw, int item) {
 	GSourceListener*	psl;
 	GEvent*				pe;

@@ -20,11 +20,6 @@
 #define gh2obj					((GLabelObject *)gh)
 #define gw2obj					((GLabelObject *)gw)
 
-// flags for the GLabelObject
-#define GLABEL_FLG_WAUTO		(GWIN_FIRST_CONTROL_FLAG << 0)
-#define GLABEL_FLG_HAUTO		(GWIN_FIRST_CONTROL_FLAG << 1)
-#define GLABEL_FLG_BORDER		(GWIN_FIRST_CONTROL_FLAG << 2)
-
 // simple: single line with no wrapping
 static coord_t getwidth(const char *text, font_t font, coord_t maxwidth) {
 	(void) maxwidth;

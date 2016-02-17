@@ -33,6 +33,16 @@
 
 // This file is included within "src/gwin/gwin_widget.h"
 
+/**
+ * @brief	The internal label flags
+ * @note	Used only for writing a custom draw routine.
+ * @{
+ */
+#define GLABEL_FLG_WAUTO		(GWIN_FIRST_CONTROL_FLAG << 0)
+#define GLABEL_FLG_HAUTO		(GWIN_FIRST_CONTROL_FLAG << 1)
+#define GLABEL_FLG_BORDER		(GWIN_FIRST_CONTROL_FLAG << 2)
+/** @} */
+
 // An label window
 typedef struct GLabelObject {
 	GWidgetObject	w;

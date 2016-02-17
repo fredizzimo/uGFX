@@ -46,6 +46,14 @@ typedef struct GEventGWinRadio {
 } GEventGWinRadio;
 
 /**
+ * @brief	The internal radio button object flags
+ * @note	Used only for writing a custom draw routine.
+ * @{
+ */
+#define GRADIO_FLG_PRESSED		(GWIN_FIRST_CONTROL_FLAG<<0)
+/** @} */
+
+/**
  * @brief	The radio button widget structure
  * @note	Do not use the members directly - treat it as a black-box.
  */

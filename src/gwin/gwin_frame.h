@@ -37,6 +37,17 @@
 #define GWIN_FRAME_KEEPONCLOSE		0x00000004		/**< Don't automatically destroy the frame on close */
 /** @} */
 
+/**
+ * @brief	The internal frame flags
+ * @note	Used only for writing a custom draw routine.
+ * @{
+ */
+#define GWIN_FRAME_CLOSE_PRESSED	0x00000008
+#define GWIN_FRAME_MIN_PRESSED		0x00000010
+#define GWIN_FRAME_MAX_PRESSED		0x00000020
+#define GWIN_FRAME_REDRAW_FRAME		0x00000040		// Only redraw the frame
+/** @} */
+
 typedef GContainerObject GFrameObject;
 
 #ifdef __cplusplus

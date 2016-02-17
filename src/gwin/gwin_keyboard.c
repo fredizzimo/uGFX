@@ -17,12 +17,6 @@
 #include "gwin_class.h"
 #include "gwin_keyboard_layout.h"
 
-
-#define GKEYBOARD_FLG_REVERTSET		(GWIN_FIRST_CONTROL_FLAG<<0)
-#define GKEYBOARD_FLG_QUICKUPDATE	(GWIN_FIRST_CONTROL_FLAG<<1)
-
-#define GKEY_BAD_ROWCOL		255
-
 typedef uint8_t		utf8;
 typedef uint16_t	utf16;
 typedef uint32_t	utf32;

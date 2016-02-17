@@ -40,6 +40,16 @@
 typedef GEventGWin		GEventGWinKeyboard;
 
 /**
+ * @brief	The internal keyboard flags and other defines
+ * @note	Used only for writing a custom draw routine.
+ * @{
+ */
+#define GKEYBOARD_FLG_REVERTSET		(GWIN_FIRST_CONTROL_FLAG<<0)
+#define GKEYBOARD_FLG_QUICKUPDATE	(GWIN_FIRST_CONTROL_FLAG<<1)
+#define GKEY_BAD_ROWCOL				255
+/** @} */
+
+/**
  * @brief	The keyboard widget structure
  * @note	Do not use the members directly - treat it as a black-box.
  */

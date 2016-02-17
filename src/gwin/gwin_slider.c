@@ -16,8 +16,6 @@
 
 #include "gwin_class.h"
 
-#define GSLIDER_FLG_EXTENDED_EVENTS		(GWIN_FIRST_CONTROL_FLAG<<0)
-
 // Calculate the slider position from the display position
 static int SliderCalcPosFromDPos(GSliderObject *gsw) {
 	int		halfbit;

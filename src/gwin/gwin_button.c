@@ -23,9 +23,6 @@
 #define BTN_TOP_FADE			50		// (BTN_TOP_FADE/255)% fade to white for top of button
 #define BTN_BOTTOM_FADE			25		// (BTN_BOTTOM_FADE/255)% fade to black for bottom of button
 
-// Our pressed state
-#define GBUTTON_FLG_PRESSED		(GWIN_FIRST_CONTROL_FLAG<<0)
-
 #if GINPUT_NEED_MOUSE
 	// A mouse down has occurred over the button
 	static void ButtonMouseDown(GWidgetObject *gw, coord_t x, coord_t y) {
