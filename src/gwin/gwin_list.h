@@ -81,11 +81,11 @@ typedef enum scroll_t { scrollAlways, scrollAuto, scrollSmooth } scroll_t;
  * @note	Used only for writing a custom draw routine.
  * @{
  */
-#define GLIST_FLG_MULTISELECT		(GWIN_FIRST_CONTROL_FLAG << 0)
-#define GLIST_FLG_HASIMAGES			(GWIN_FIRST_CONTROL_FLAG << 1)
-#define GLIST_FLG_SCROLLALWAYS		(GWIN_FIRST_CONTROL_FLAG << 2)
-#define GLIST_FLG_SCROLLSMOOTH      (GWIN_FIRST_CONTROL_FLAG << 3)
-#define GLIST_FLG_ENABLERENDER      (GWIN_FIRST_CONTROL_FLAG << 4)
+#define GLIST_FLG_MULTISELECT		(0x00000001 << 0)
+#define GLIST_FLG_HASIMAGES			(0x00000001 << 1)
+#define GLIST_FLG_SCROLLALWAYS		(0x00000001 << 2)
+#define GLIST_FLG_SCROLLSMOOTH      (0x00000001 << 3)
+#define GLIST_FLG_ENABLERENDER      (0x00000001 << 4)
 /** @} */
 
 /**

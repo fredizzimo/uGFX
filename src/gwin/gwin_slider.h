@@ -50,7 +50,7 @@ typedef struct GEventGWinSlider {
  * @note	Used only for writing a custom draw routine.
  * @{
  */
-#define GSLIDER_FLG_EXTENDED_EVENTS		(GWIN_FIRST_CONTROL_FLAG<<0)
+#define GSLIDER_FLG_EXTENDED_EVENTS		(0x00000001<<0)
 /** @} */
 
 // A slider window

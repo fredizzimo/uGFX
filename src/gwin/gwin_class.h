@@ -27,7 +27,7 @@
  * @brief	The predefined flags for a Window
  * @{
  */
-#define GWIN_FIRST_CONTROL_FLAG			0x00000001			/**< 8 bits free for the control to use */
+#define GWIN_FIRST_CONTROL_FLAG			0x00000001			/**< 8 bits free for the control to use. Don't change this value as it is relied upon definitions in widget header files. */
 #define GWIN_LAST_CONTROL_FLAG			0x00000080			/**< 8 bits free for the control to use */
 #define GWIN_FLG_VISIBLE				0x00000100			/**< The window is "visible" */
 #define GWIN_FLG_SYSVISIBLE				0x00000200			/**< The window is visible after parents are tested */
