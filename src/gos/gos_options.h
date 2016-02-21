@@ -195,6 +195,18 @@
 	#ifndef GFX_OS_HEAP_SIZE
 		#define GFX_OS_HEAP_SIZE		0
 	#endif
+ 	/**
+ 	 * @brief	Enable wrappers for malloc() and free()
+ 	 * @details	Defaults to FALSE
+ 	 * @note	If enabled, malloc() and free() will be implemented as wrappers that call gfxAlloc() and
+ 	 *			gfxFree() in order to provide portability to libraries using these function.
+ 	 * @note	Enabling this can solve 'unresolved _sbrk' issues
+ 	 * @note	It is strongly recommended to always use gfxAlloc() and gfxFree() directy to ensure
+ 	 *			portability of uGFX applications across all platforms.
+ 	 */
+	#ifndef GFX_EMULATE_MALLOC
+		#define GFX_EMULATE_MALLOC	FALSE
+	#endif
 /** @} */
 
 #endif /* _GOS_OPTIONS_H */

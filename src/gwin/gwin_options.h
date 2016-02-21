@@ -136,6 +136,13 @@
 		#define GWIN_NEED_RADIO		FALSE
 	#endif
 	/**
+	 * @brief   Should list widget functions be included.
+	 * @details	Defaults to FALSE
+	 */
+	#ifndef GWIN_NEED_LIST
+		#define GWIN_NEED_LIST		FALSE
+	#endif
+	/**
 	 * @brief   Should tabset functions be included.
 	 * @details	Defaults to FALSE
 	 */
@@ -306,6 +313,22 @@
 	 */
 	#ifndef GWIN_NEED_IMAGE_ANIMATION
 		#define GWIN_NEED_IMAGE_ANIMATION		FALSE
+	#endif
+	/**
+	 * @brief	Enable the API to use attributes in the label widget
+	 * @details	Defaults to FALSE
+	 * @note	Using this feature is discouraged. The proper (and faster as well
+	 *			as more efficient) way is to use two separate labels.
+	 */
+	#ifndef GWIN_LABEL_ATTRIBUTE
+	 	#define GWIN_LABEL_ATTRIBUTE			FALSE
+	#endif
+	/**
+	 * @brief	Enable the API to use images in items in the list widget
+	 * @details	Defaults to FALSE
+	 */
+	#ifndef GWIN_NEED_LIST_IMAGES
+	 	#define GWIN_NEED_LIST_IMAGES			FALSE
 	#endif
 	/**
 	 * @brief	Enable the API to automatically increment the progressbar over time
