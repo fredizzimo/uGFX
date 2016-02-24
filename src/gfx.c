@@ -135,7 +135,7 @@ void gfxDeinit(void)
 	#if GFX_USE_GWIN
 		_gwinDeinit();
 	#endif
-	#if GFX_USE_GAUDIN
+	#if GFX_USE_GAUDIO
 		_gaudioDeinit();
 	#endif
 	#if GFX_USE_GADC
