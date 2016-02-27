@@ -154,6 +154,16 @@ gdispImageError gdispImageCache(gdispImage *img) {
 
 gdispImageError gdispGImageDraw(GDisplay *g, gdispImage *img, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t sx, coord_t sy) {
 	if (!img->fns) return GDISP_IMAGE_ERR_BADFORMAT;
+
+	// Check on window
+	if (cx <= 0 || cy <= 0) return GDISP_IMAGE_ERR_OK;
+	if (sx < 0) sx = 0;
+	if (sy < 0) sy = 0;
+	if (sx >= img->width || sy >= img->height) return GDISP_IMAGE_ERR_OK;
+	if (sx + cx > img->width)  cx = img->width - sx;
+	if (sy + cy > img->height) cy = img->height - sy;
+
+	// Draw
 	return img->fns->draw(g, img, x, y, cx, cy, sx, sy);
 }
 
