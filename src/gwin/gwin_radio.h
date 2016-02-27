@@ -50,7 +50,7 @@ typedef struct GEventGWinRadio {
  * @note	Used only for writing a custom draw routine.
  * @{
  */
-#define GRADIO_FLG_PRESSED		(0x00000001<<0)
+#define GRADIO_FLG_PRESSED		0x01
 /** @} */
 
 /**

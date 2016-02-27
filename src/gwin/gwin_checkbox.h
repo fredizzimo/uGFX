@@ -50,7 +50,7 @@ typedef struct GEventGWinCheckbox {
  * @note	Used only for writing a custom draw routine.
  * @{
  */
-#define GCHECKBOX_FLG_CHECKED		(0x00000001<<0)
+#define GCHECKBOX_FLG_CHECKED		0x01
 /** @} */
 
 /* A Checkbox window */

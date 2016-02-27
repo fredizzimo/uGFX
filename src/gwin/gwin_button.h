@@ -44,7 +44,7 @@ typedef GEventGWin		GEventGWinButton;
  * @note	Used only for writing a custom draw routine.
  * @{
  */
-#define GBUTTON_FLG_PRESSED		(0x00000001<<0)
+#define GBUTTON_FLG_PRESSED		0x01
 /** @} */
 
 /**

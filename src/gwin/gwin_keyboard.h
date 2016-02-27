@@ -44,8 +44,8 @@ typedef GEventGWin		GEventGWinKeyboard;
  * @note	Used only for writing a custom draw routine.
  * @{
  */
-#define GKEYBOARD_FLG_REVERTSET		(0x00000001<<0)
-#define GKEYBOARD_FLG_QUICKUPDATE	(0x00000001<<1)
+#define GKEYBOARD_FLG_REVERTSET		0x01
+#define GKEYBOARD_FLG_QUICKUPDATE	0x02
 #define GKEY_BAD_ROWCOL				255
 /** @} */
 
