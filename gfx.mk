@@ -21,6 +21,7 @@ else
 	include $(GFXLIB)/src/gaudio/gaudio.mk
 	include $(GFXLIB)/src/gmisc/gmisc.mk
 	include $(GFXLIB)/src/gfile/gfile.mk
+	include $(GFXLIB)/src/gtrans/gtrans.mk
 endif
 
 # Include the boards and drivers

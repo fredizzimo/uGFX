@@ -145,6 +145,13 @@
 	#ifndef GFX_USE_GFILE
 		#define GFX_USE_GFILE	FALSE
 	#endif
+	/**
+	 * @brief   GFX Translation Support API
+	 * @details	Defaults to FALSE
+	 */
+	#ifndef GFX_USE_GTRANS
+		#define GFX_USE_GTRANS	FALSE
+	#endif
 /** @} */
 
 /**
@@ -155,6 +162,7 @@
 #include "src/gdriver/gdriver_options.h"
 #include "src/gfile/gfile_options.h"
 #include "src/gmisc/gmisc_options.h"
+#include "src/gtrans/gtrans_options.h"
 #include "src/gqueue/gqueue_options.h"
 #include "src/gevent/gevent_options.h"
 #include "src/gtimer/gtimer_options.h"
@@ -181,6 +189,7 @@
 #include "src/gtimer/gtimer_rules.h"
 #include "src/gqueue/gqueue_rules.h"
 #include "src/gmisc/gmisc_rules.h"
+#include "src/gtrans/gtrans_rules.h"
 #include "src/gfile/gfile_rules.h"
 #include "src/gdriver/gdriver_rules.h"
 #include "src/gos/gos_rules.h"
@@ -192,6 +201,7 @@
 //#include "src/gdriver/gdriver.h"			// This module is only included by source that needs it.
 #include "src/gfile/gfile.h"
 #include "src/gmisc/gmisc.h"
+#include "src/gtrans/gtrans.h"
 #include "src/gqueue/gqueue.h"
 #include "src/gevent/gevent.h"
 #include "src/gtimer/gtimer.h"
