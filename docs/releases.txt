@@ -11,6 +11,7 @@ FIX:		Vastly improving keyboard widget default rendering
 FEATURE:	Added ILI9342 driver
 FIX:		Fixing issues where wrong 'progress' color from widget style palette was used
 FEATURE:	Added GWIN_FRAME_KEEPONCLOSE flag to prevent destruction of a frame on close
+FEATURE:	Added support for PNG images
 
 
 *** Release 2.4 ***
