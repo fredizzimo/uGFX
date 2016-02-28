@@ -2,7 +2,7 @@
 *** Releases                                                              ***
 *****************************************************************************
 
-*** Changes after 2.4 ***
+*** Release 2.5 ***
 FEATURE:	Added support for numerous compilers
 FIX:		Improving STM32LTDC driver
 FEATURE:	Added support for NIOS-II platform
