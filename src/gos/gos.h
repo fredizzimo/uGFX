@@ -178,7 +178,7 @@
 	/**
 	 * @brief	Use gfxAlloc and gfxFree to implement malloc() and free()
 	 *
-	 * @notes	Sometimes your application will include functions that
+	 * @note	Sometimes your application will include functions that
 	 * 			want to internally use malloc() and free(). As the default
 	 * 			implementations of these in your C library are almost
 	 * 			invariably incorrect for an embedded platform, this option
