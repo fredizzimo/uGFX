@@ -248,7 +248,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 				write_reg(g, 0x0010, 0x0000);	/* leave sleep mode */
 				release_bus(g);
 				if (g->g.Powermode != powerSleep)
-					gdisp_lld_init();
+					gdisp_lld_init(g);
 				break;
 			case powerSleep:
 				acquire_bus(g);
