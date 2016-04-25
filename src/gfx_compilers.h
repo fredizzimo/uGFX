@@ -639,6 +639,7 @@
 		#define GFX_COMPILER_VERSION_PATCH			((SDCC)%1000)
 	#elif GFX_COMPILER == GFX_COMPILER_TINYC
 		#define GFX_COMPILER_NAME					"Tiny C"
+		#define GFX_COMPILER_TESTED					TRUE
 	#elif GFX_COMPILER == GFX_COMPILER_TURBOC
 		#define GFX_COMPILER_NAME					"Borland Turbo C/C++"
 		#if __TURBOC__ < 0x295 || __TURBOC__ >= 0x400
