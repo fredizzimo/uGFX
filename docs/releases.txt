@@ -16,6 +16,7 @@ FIX:		Fixing issues where wrong 'progress' color from widget style palette was u
 FEATURE:	Added GWIN_FRAME_KEEPONCLOSE flag to prevent destruction of a frame on close
 FEATURE:	Added support for PNG images
 FEATURE:	Added new module 'GTRANS' which allows handling application translations
+FEATURE:	Added SSD1848 driver
 
 
 *** Release 2.4 ***
