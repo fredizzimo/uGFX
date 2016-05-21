@@ -485,6 +485,7 @@ void gwinListItemDelete(GHandle gh, int item) {
 		if (i == item) {
 			gfxQueueASyncRemove(&gh2obj->list_head, (gfxQueueASyncItem*)qi);
 			gfxFree((void *)qi);
+			gh2obj->cnt--;
 			if (gh2obj->top >= item && gh2obj->top)
 				gh2obj->top--;
 			_gwinUpdate(gh);

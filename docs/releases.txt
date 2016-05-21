@@ -3,6 +3,7 @@
 *****************************************************************************
 
 *** Changes after 2.5 ***
+FIX:		Fixing bug where the list item count wasn't decremented when an item was removed
 
 
 *** Release 2.5 ***
