@@ -265,7 +265,7 @@ static thread		mainthread;				// The main thread context
 		gfxThreadExit(current->fn(current->param));
 	}
 
-#elif GFX_CPU == GFX_CPU == GFX_CPU_CORTEX_M4_FP || GFX_CPU == GFX_CPU_CORTEX_M7_FP
+#elif GFX_CPU == GFX_CPU_CORTEX_M4_FP || GFX_CPU == GFX_CPU_CORTEX_M7_FP
 
 	// Use the EABI calling standard (ARM's AAPCS) - Save r4 - r11 and floating point
 	// The context is saved at the current stack location and a pointer is maintained in the thread structure.
