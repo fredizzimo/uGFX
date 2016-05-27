@@ -7,7 +7,7 @@
 
 #include "../../gfx.h"
 
-#if GFX_USE_GFILE && GFILE_NEED_FATFS && GFX_USE_OS_CHIBIOS
+#if GFX_USE_GFILE && GFILE_NEED_FATFS && GFX_USE_OS_CHIBIOS && !GFILE_FATFS_EXTERNAL_LIB
 
 #include "gfile_fatfs_wrapper.h"
 
@@ -249,6 +249,6 @@ DWORD get_fattime(void) {
 #endif
 }
 
-#endif // GFX_USE_GFILE && GFILE_NEED_FATFS && GFX_USE_OS_CHIBIOS
+#endif // GFX_USE_GFILE && GFILE_NEED_FATFS && GFX_USE_OS_CHIBIOS && !GFILE_FATFS_EXTERNAL_LIB
 
 

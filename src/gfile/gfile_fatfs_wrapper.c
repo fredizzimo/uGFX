@@ -7,7 +7,7 @@
 
 #include "../../gfx.h"
 
-#if GFX_USE_GFILE && GFILE_NEED_FATFS
+#if GFX_USE_GFILE && GFILE_NEED_FATFS && !GFILE_FATFS_EXTERNAL_LIB
 
 #include "gfile_fatfs_wrapper.h"
 
@@ -80,4 +80,4 @@
 	}
 #endif /* _USE_LFN == 3 */
 
-#endif // GFX_USE_GFILE && GFILE_NEED_FATFS
+#endif // GFX_USE_GFILE && GFILE_NEED_FATFS && !GFILE_FATFS_EXTERNAL_LIB
