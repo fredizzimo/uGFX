@@ -1,4 +1,7 @@
 #include "../../../gfx.h"
+#undef Red
+#undef Green
+#undef Blue
 #include "stm32f7xx.h"
 
 #if !defined  (HSE_VALUE)

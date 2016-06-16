@@ -1,4 +1,7 @@
 #include "gfx.h"
+#undef Red
+#undef Green
+#undef Blue
 #include "stm32f7_i2c.h"
 
 /*
