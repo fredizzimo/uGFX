@@ -1,4 +1,7 @@
 #include "../../../gfx.h"
+#undef Red
+#undef Green
+#undef Blue
 #include "stm32f746g_discovery_sdram.h"
 #include "stm32f7xx_hal_rcc.h"
 #include "stm32f7xx_hal_dma.h"
