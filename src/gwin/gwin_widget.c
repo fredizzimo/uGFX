@@ -365,8 +365,9 @@ void _gwidgetInit(void)
 {
 	geventListenerInit(&gl);
 	geventRegisterCallback(&gl, gwidgetEvent, 0);
-	geventAttachSource(&gl, ginputGetMouse(GMOUSE_ALL_INSTANCES), GLISTEN_MOUSEMETA|GLISTEN_MOUSEDOWNMOVES);
-
+	#if GINPUT_NEED_MOUSE
+		geventAttachSource(&gl, ginputGetMouse(GMOUSE_ALL_INSTANCES), GLISTEN_MOUSEMETA|GLISTEN_MOUSEDOWNMOVES);
+	#endif
 	#if GINPUT_NEED_KEYBOARD || GWIN_NEED_KEYBOARD
 		geventAttachSource(&gl, ginputGetKeyboard(GKEYBOARD_ALL_INSTANCES), GLISTEN_KEYUP);
 	#endif
@@ -616,6 +617,29 @@ bool_t gwinAttachListener(GListener *pl) {
 		wvmt->ToggleAssign(gw, role, instance);
 		return geventAttachSource(&gl, gsh, GLISTEN_TOGGLE_ON|GLISTEN_TOGGLE_OFF);
 	}
+
+	bool_t gwinDetachToggle(GHandle gh, uint16_t role) {
+		uint16_t		oi;
+
+		// Is this a widget
+		if (!(gh->flags & GWIN_FLG_WIDGET))
+			return FALSE;
+
+		// Is the role valid
+		if (role >= ((gwidgetVMT *)gh->vmt)->toggleroles)
+			return FALSE;
+
+		oi = ((gwidgetVMT *)gh->vmt)->ToggleGet(gw, role);
+
+		// Remove the instance
+		if (oi != GWIDGET_NO_INSTANCE) {
+			((gwidgetVMT *)gh->vmt)->ToggleAssign(gw, role, GWIDGET_NO_INSTANCE);
+			if (!FindToggleUser(oi))
+				geventDetachSource(&gl, ginputGetToggle(oi));
+		}
+		return TRUE;
+	}
+
 #endif
 
 #if GFX_USE_GINPUT && GINPUT_NEED_DIAL
