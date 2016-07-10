@@ -530,6 +530,44 @@ void gwinSetText(GHandle gh, const char *text, bool_t useAlloc) {
 	_gwinUpdate(gh);
 }
 
+#if GFX_USE_GFILE && GFILE_NEED_PRINTG && GFILE_NEED_STRINGS
+	#include <stdarg.h>
+
+	void gwinPrintg(GHandle gh, const char * fmt, ...) {
+		char *str;
+		va_list va;
+		int size;
+		
+		if (!(gh->flags & GWIN_FLG_WIDGET))
+			return;
+
+		// Dispose of the old string
+		if ((gh->flags & GWIN_FLG_ALLOCTXT)) {
+			gh->flags &= ~GWIN_FLG_ALLOCTXT;
+			if (gw->text) {
+				gfxFree((void *)gw->text);
+				gw->text = "";
+			}
+		}
+
+		// Alloc the new text
+		va_start (va, fmt);
+
+		size = vsnprintg(0, 0, fmt, va) + 1;		//determine the buffer size required
+
+		if ((str = gfxAlloc(size))) {
+			gh->flags |= GWIN_FLG_ALLOCTXT;
+			vsnprintg(str, size, fmt, va);
+			gw->text = (const char *)str;
+		} else
+			gw->text = "";
+		
+		va_end (va);
+
+		_gwinUpdate(gh);
+	}
+#endif
+
 const char *gwinGetText(GHandle gh) {
 	if (!(gh->flags & GWIN_FLG_WIDGET))
 		return 0;

@@ -231,6 +231,24 @@ void gwinSetText(GHandle gh, const char *text, bool_t useAlloc);
  */
 const char *gwinGetText(GHandle gh);
 
+#if (GFX_USE_GFILE && GFILE_NEED_PRINTG && GFILE_NEED_STRINGS) || defined(__DOXYGEN__)
+	/**
+	 * @brief   Set the text of a widget using a printf style format.
+	 * @pre		GFX_USE_GFILE, GFILE_NEED_PRINTG and GFILE_NEED_STRINGS must all be TRUE
+	 *
+	 * @param[in] gh		The widget handle
+	 * @param[in] fmt		The format string using a printf/g syntax. See @p vsnprintg()
+	 * @param[in] ...		The printg paramters.
+	 *
+	 * @note				The widget is automatically redrawn
+	 * @note				Non-widgets will ignore this call.
+	 * @note				The memory for the text is always allocated by this function.
+	 *
+	 * @api
+	 */
+	void gwinPrintg(GHandle gh, const char * fmt,...);
+#endif
+
 /**
  * @brief	Check whether a handles is a widget handle or not
  *
