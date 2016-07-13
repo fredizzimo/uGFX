@@ -9,6 +9,7 @@ FEATURE:	Added FT6x06 driver
 FIX:		Fixing issue in STM32F746G-Discovery board file that resulted in bad color reproduction
 FEATURE:	Added gwinPrintg()
 FIX:		Fix sprintg and related functions handling of NULL pointers.
+FIX:		Fixing width calculation of gdispGDrawString() and gdispGFillString().
 
 
 *** Release 2.5 ***
