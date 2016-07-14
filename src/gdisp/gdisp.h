@@ -117,7 +117,7 @@ typedef struct GDisplay		GDisplay;
 /**
  * @brief   The default screen to use for the gdispXXXX calls.
  * @note	This is set by default to the first display in the system. You can change
- * 			it by calling @p gdispGSetDisplay().
+ * 			it by calling @p gdispSetDisplay().
  */
 extern GDisplay	*GDISP;
 
