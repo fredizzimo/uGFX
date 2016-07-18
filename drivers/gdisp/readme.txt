@@ -29,6 +29,7 @@ ST7565        - Small monochrome LCD
 STM32LTDC     - STM32 ART graphics STM32F4 and STM32F7 series CPU's
 TestStub      - NULL driver just to test compile
 TLS8204       - Small monochrome LCD
+QImage        - Driver that allows rendering into a QImage object (of the Qt framework)
 uGFXnet       - Remote Network display (in drivers/multiple/uGFXnet directory)
 Win32         - Microsoft Windows (in drivers/multiple/Win32 directory)
 X             - X Windows (Xlib) (in drivers/multiple/X directory)

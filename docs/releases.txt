@@ -10,6 +10,7 @@ FIX:		Fixing issue in STM32F746G-Discovery board file that resulted in bad color
 FEATURE:	Added gwinPrintg()
 FIX:		Fix sprintg and related functions handling of NULL pointers.
 FIX:		Fixing width calculation of gdispGDrawString() and gdispGFillString().
+FEATURE:	Added QImage display driver.
 
 
 *** Release 2.5 ***
