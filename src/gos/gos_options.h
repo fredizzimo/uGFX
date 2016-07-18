@@ -104,6 +104,13 @@
 	#ifndef GFX_USE_OS_NIOS
 		#define GFX_USE_OS_NIOS			FALSE
 	#endif
+	/**
+	 * @brief   Use Qt
+	 * @details	Defaults to FALSE
+	 */
+	#ifndef GFX_USE_OS_QT
+		#define GFX_USE_OS_QT			FALSE
+	#endif
 /**
  * @}
  *

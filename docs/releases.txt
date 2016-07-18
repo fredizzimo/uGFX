@@ -11,6 +11,7 @@ FEATURE:	Added gwinPrintg()
 FIX:		Fix sprintg and related functions handling of NULL pointers.
 FIX:		Fixing width calculation of gdispGDrawString() and gdispGFillString().
 FEATURE:	Added QImage display driver.
+FEATURE:	Added support for Qt platform
 
 
 *** Release 2.5 ***
