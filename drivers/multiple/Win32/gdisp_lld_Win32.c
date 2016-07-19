@@ -416,6 +416,7 @@
 static DWORD			winThreadId;
 static volatile bool_t	QReady;
 static HANDLE			drawMutex;
+static HWND				hWndParent = 0;
 
 /*===========================================================================*/
 /* Driver local routines    .                                                */
@@ -438,6 +439,8 @@ typedef struct winPriv {
 		coord_t		mousex, mousey;
 		uint16_t	mousebuttons;
 		GMouse		*mouse;
+		bool_t		mouseenabled;
+		void (*capfn)(HWND hWnd, GDisplay *g, uint16_t buttons, coord_t x, coord_t y);
 	#endif
 	#if GINPUT_NEED_TOGGLE
 		uint8_t		toggles;
@@ -448,6 +451,28 @@ typedef struct winPriv {
 	#endif
 } winPriv;
 
+void gfxEmulatorSetParentWindow(HWND hwnd) {
+	hWndParent = hwnd;
+}
+
+#if GINPUT_NEED_MOUSE
+	void gfxEmulatorMouseInject(GDisplay *g, uint16_t buttons, coord_t x, coord_t y) {
+		winPriv *		priv;
+		
+		priv = (winPriv *)g->priv;
+		priv->mouseubttons = buttons;
+		priv->mousex = x;
+		priv->mousey = y;
+		if ((gmvmt(priv->mouse)->d.flags & GMOUSE_VFLG_NOPOLL))		// For normal setup this is always TRUE
+			_gmouseWakeup(priv->mouse);
+	}
+	void gfxEmulatorMouseEnable(GDisplay *g, bool_t enabled) {
+		((winPriv *)g->priv)->mouseenabled = enabled;
+	}
+	void gfxEmulatorMouseCapture(GDisplay *g, void (*capfn)(HWND hWnd, GDisplay *g, uint16_t buttons, coord_t x, coord_t y)) {
+		((winPriv *)g->priv)->capfn = capfn;
+	}
+#endif
 
 static LRESULT myWindowProc(HWND hWnd,	UINT Msg, WPARAM wParam, LPARAM lParam)
 {
@@ -455,6 +480,9 @@ static LRESULT myWindowProc(HWND hWnd,	UINT Msg, WPARAM wParam, LPARAM lParam)
 	PAINTSTRUCT		ps;
 	GDisplay *		g;
 	winPriv *		priv;
+	#if GINPUT_NEED_MOUSE
+		uint16_t	btns;
+	#endif
 	#if GINPUT_NEED_TOGGLE
 		HBRUSH		hbrOn, hbrOff;
 		HPEN		pen;
@@ -493,7 +521,8 @@ static LRESULT myWindowProc(HWND hWnd,	UINT Msg, WPARAM wParam, LPARAM lParam)
 			// Handle mouse down on the window
 			#if GINPUT_NEED_MOUSE
 				if ((coord_t)HIWORD(lParam) < GDISP_SCREEN_HEIGHT) {
-					priv->mousebuttons |= GINPUT_MOUSE_BTN_LEFT;
+					btns = priv->mousebuttons;
+					btns |= GINPUT_MOUSE_BTN_LEFT;
 					goto mousemove;
 				}
 			#endif
@@ -542,7 +571,8 @@ static LRESULT myWindowProc(HWND hWnd,	UINT Msg, WPARAM wParam, LPARAM lParam)
 			// Handle mouse up on the window
 			#if GINPUT_NEED_MOUSE
 				if ((coord_t)HIWORD(lParam) < GDISP_SCREEN_HEIGHT) {
-					priv->mousebuttons &= ~GINPUT_MOUSE_BTN_LEFT;
+					btns = priv->mousebuttons;
+					btns &= ~GINPUT_MOUSE_BTN_LEFT;
 					goto mousemove;
 				}
 			#endif
@@ -554,7 +584,8 @@ static LRESULT myWindowProc(HWND hWnd,	UINT Msg, WPARAM wParam, LPARAM lParam)
 			g = (GDisplay *)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 			priv = (winPriv *)g->priv;
 			if ((coord_t)HIWORD(lParam) < GDISP_SCREEN_HEIGHT) {
-				priv->mousebuttons |= GINPUT_MOUSE_BTN_MIDDLE;
+				btns = priv->mousebuttons;
+				btns |= GINPUT_MOUSE_BTN_MIDDLE;
 				goto mousemove;
 			}
 			break;
@@ -562,7 +593,8 @@ static LRESULT myWindowProc(HWND hWnd,	UINT Msg, WPARAM wParam, LPARAM lParam)
 			g = (GDisplay *)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 			priv = (winPriv *)g->priv;
 			if ((coord_t)HIWORD(lParam) < GDISP_SCREEN_HEIGHT) {
-				priv->mousebuttons &= ~GINPUT_MOUSE_BTN_MIDDLE;
+				btns = priv->mousebuttons;
+				btns &= ~GINPUT_MOUSE_BTN_MIDDLE;
 				goto mousemove;
 			}
 			break;
@@ -570,7 +602,8 @@ static LRESULT myWindowProc(HWND hWnd,	UINT Msg, WPARAM wParam, LPARAM lParam)
 			g = (GDisplay *)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 			priv = (winPriv *)g->priv;
 			if ((coord_t)HIWORD(lParam) < GDISP_SCREEN_HEIGHT) {
-				priv->mousebuttons |= GINPUT_MOUSE_BTN_RIGHT;
+				btns = priv->mousebuttons;
+				btns |= GINPUT_MOUSE_BTN_RIGHT;
 				goto mousemove;
 			}
 			break;
@@ -578,7 +611,8 @@ static LRESULT myWindowProc(HWND hWnd,	UINT Msg, WPARAM wParam, LPARAM lParam)
 			g = (GDisplay *)GetWindowLongPtr(hWnd, GWLP_USERDATA);
 			priv = (winPriv *)g->priv;
 			if ((coord_t)HIWORD(lParam) < GDISP_SCREEN_HEIGHT) {
-				priv->mousebuttons &= ~GINPUT_MOUSE_BTN_RIGHT;
+				btns = priv->mousebuttons;
+				btns &= ~GINPUT_MOUSE_BTN_RIGHT;
 				goto mousemove;
 			}
 			break;
@@ -587,11 +621,18 @@ static LRESULT myWindowProc(HWND hWnd,	UINT Msg, WPARAM wParam, LPARAM lParam)
 			priv = (winPriv *)g->priv;
 			if ((coord_t)HIWORD(lParam) >= GDISP_SCREEN_HEIGHT)
 				break;
+			btns = priv->mousebuttons;
+
 		mousemove:
-			priv->mousex = (coord_t)LOWORD(lParam);
-			priv->mousey = (coord_t)HIWORD(lParam);
-			if ((gmvmt(priv->mouse)->d.flags & GMOUSE_VFLG_NOPOLL))		// For normal setup this is always TRUE
-				_gmouseWakeup(priv->mouse);
+			if (priv->capfn)
+				priv->capfn(hWnd, g, btns, (coord_t)LOWORD(lParam), (coord_t)HIWORD(lParam))
+			if (priv->mouseenabled) {
+				priv->mousebuttons = btns;
+				priv->mousex = (coord_t)LOWORD(lParam);
+				priv->mousey = (coord_t)HIWORD(lParam);
+				if ((gmvmt(priv->mouse)->d.flags & GMOUSE_VFLG_NOPOLL))		// For normal setup this is always TRUE
+					_gmouseWakeup(priv->mouse);
+			}
 			break;
 	#endif
 
@@ -758,7 +799,8 @@ static DWORD WINAPI WindowThread(void *param) {
 
 				// Create the window
 				msg.hwnd = CreateWindow(APP_NAME, "", WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_BORDER, msg.wParam*DISPLAY_X_OFFSET, msg.wParam*DISPLAY_Y_OFFSET,
-								rect.right-rect.left, rect.bottom-rect.top, 0, 0,
+								rect.right-rect.left, rect.bottom-rect.top,
+								hWndParent, 0,
 								GetModuleHandle(0), g);
 				assert(msg.hwnd != 0);
 
@@ -836,6 +878,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 	// Create the associated mouse
 	#if GINPUT_NEED_MOUSE
+		priv->mouseenabled = hwndParent ? FALSE : TRUE;
 		priv->mouse = (GMouse *)gdriverRegister((const GDriverVMT const *)GMOUSE_DRIVER_VMT, g);
 	#endif
 
