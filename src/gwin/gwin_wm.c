@@ -988,6 +988,35 @@ static void WM_Raise(GHandle gh) {
 	gfxQueueASyncRemove(&_GWINList, &gh->wmq);
 	gfxQueueASyncPut(&_GWINList, &gh->wmq);
 
+	#if GWIN_NEED_CONTAINERS
+		// Any children need to be moved
+		if ((gh->flags & GWIN_FLG_CONTAINER)) {
+			GHandle		child;
+			bool_t		restart;
+
+			// Raise the children too.
+			// Note children can also have their own children so after each move required we have to start again.
+			for(gh = gwinGetNextWindow(0); gh; gh = gwinGetNextWindow(gh)) {
+				if ((gh->flags & GWIN_FLG_CONTAINER)) {
+					restart = FALSE;
+					for(child = gwinGetNextWindow(0); child && child != gh; child = gwinGetNextWindow(child)) {
+						if (child->parent == gh) {
+							// Oops - this child is behind its parent
+							gfxQueueASyncRemove(&_GWINList, &child->wmq);
+							gfxQueueASyncPut(&_GWINList, &child->wmq);
+							// Continue the loop here effectively restarts at the front of the list
+							// for this parent container as we have moved this child to the start of the list.
+							// We also need to restart everything once this container is done.
+							restart = TRUE;
+						}
+					}
+					if (restart)
+						gh = 0;
+				}
+			}
+		}
+	#endif
+	
 	// Redraw the window
 	_gwinUpdate(gh);
 }
