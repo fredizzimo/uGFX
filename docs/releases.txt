@@ -17,7 +17,8 @@ FEATURE:	Add ability to inject mouse events for a Win32 ugfx emulator window
 FEATURE:	Add ability to turn on and off mouse processing for a win32 ugfx emulator window
 FEATURE:	Add ability to capture mouse events on the win32 ugfx emaultor window
 FIX:		Fixing issue where children of (nested) containers were not properly handled when callin gwinRaise()
-
+FEATURE:	Automatically close all open files in gfileDeinit()
+		
 
 *** Release 2.5 ***
 FEATURE:	Added support for numerous compilers
