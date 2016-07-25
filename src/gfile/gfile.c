@@ -69,8 +69,7 @@ void _gfileInit(void) {
 
 void _gfileDeinit(void)
 {
-	GFILE* f;
-
+	GFILE *	f;
 	for (f = gfileArr; f < &gfileArr[GFILE_MAX_GFILES]; f++) {
 		if (f->flags & GFILEFLG_OPEN)
 			gfileClose(f);
