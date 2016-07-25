@@ -460,7 +460,7 @@ void gfxEmulatorSetParentWindow(HWND hwnd) {
 		winPriv *		priv;
 		
 		priv = (winPriv *)g->priv;
-		priv->mouseubttons = buttons;
+		priv->mousebuttons = buttons;
 		priv->mousex = x;
 		priv->mousey = y;
 		if ((gmvmt(priv->mouse)->d.flags & GMOUSE_VFLG_NOPOLL))		// For normal setup this is always TRUE
@@ -625,7 +625,7 @@ static LRESULT myWindowProc(HWND hWnd,	UINT Msg, WPARAM wParam, LPARAM lParam)
 
 		mousemove:
 			if (priv->capfn)
-				priv->capfn(hWnd, g, btns, (coord_t)LOWORD(lParam), (coord_t)HIWORD(lParam))
+				priv->capfn(hWnd, g, btns, (coord_t)LOWORD(lParam), (coord_t)HIWORD(lParam));
 			if (priv->mouseenabled) {
 				priv->mousebuttons = btns;
 				priv->mousex = (coord_t)LOWORD(lParam);
@@ -878,7 +878,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 
 	// Create the associated mouse
 	#if GINPUT_NEED_MOUSE
-		priv->mouseenabled = hwndParent ? FALSE : TRUE;
+		priv->mouseenabled = hWndParent ? FALSE : TRUE;
 		priv->mouse = (GMouse *)gdriverRegister((const GDriverVMT const *)GMOUSE_DRIVER_VMT, g);
 	#endif
 
