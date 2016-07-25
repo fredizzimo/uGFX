@@ -989,29 +989,31 @@ static void WM_Raise(GHandle gh) {
 	gfxQueueASyncPut(&_GWINList, &gh->wmq);
 
 	#if GWIN_NEED_CONTAINERS
-		// Any children need to be moved
+		// Any children need to be raised too
 		if ((gh->flags & GWIN_FLG_CONTAINER)) {
+			GHandle		gx = gh;
 			GHandle		child;
 			bool_t		restart;
 
-			// Raise the children too.
-			// Note children can also have their own children so after each move required we have to start again.
-			for(gh = gwinGetNextWindow(0); gh; gh = gwinGetNextWindow(gh)) {
-				if ((gh->flags & GWIN_FLG_CONTAINER)) {
+			// Raise the children too
+			// Note: Children can also have their own children so after each move we have to start again.
+			for (gx = gwinGetNextWindow(0); gx; gx = gwinGetNextWindow(gx)) {
+				if ((gx->flags & GWIN_FLG_CONTAINER)) {
 					restart = FALSE;
-					for(child = gwinGetNextWindow(0); child && child != gh; child = gwinGetNextWindow(child)) {
-						if (child->parent == gh) {
-							// Oops - this child is behind its parent
+					for (child = gwinGetNextWindow(0); child && child != gx; child = gwinGetNextWindow(child)) {
+						if (child->parent == gx) {
+							// Oops - this child is behind its parent. Move it to the front.
 							gfxQueueASyncRemove(&_GWINList, &child->wmq);
 							gfxQueueASyncPut(&_GWINList, &child->wmq);
-							// Continue the loop here effectively restarts at the front of the list
-							// for this parent container as we have moved this child to the start of the list.
-							// We also need to restart everything once this container is done.
+
+							// Restart at the front of the list for this parent container as we have moved this child
+							// to the end of the list. We also need to restart everything once this container is done.
+							child = 0;
 							restart = TRUE;
 						}
 					}
 					if (restart)
-						gh = 0;
+						gx = 0;
 				}
 			}
 		}
