@@ -19,6 +19,7 @@ FEATURE:	Add ability to turn on and off mouse processing for a win32 ugfx emulat
 FEATURE:	Add ability to capture mouse events on the win32 ugfx emaultor window
 FIX:		Fixing issue where children of (nested) containers were not properly handled when callin gwinRaise()
 FEATURE:	Automatically close all open files in gfileDeinit()
+FEATURE:	Adding support for IAR and EDG compilers
 		
 
 *** Release 2.5 ***
