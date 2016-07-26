@@ -395,7 +395,13 @@
 		#define GFX_COMPILER_TESTED					TRUE
 		#define GFX_COMPILER_VERSION_MAJOR			((__EDG_VERSION__)/100)
 		#define GFX_COMPILER_VERSION_MINOR			((__EDG_VERSION__)%100)
-		#pragma diag_remark=Pe301,Pe083,Pe767,Pe188,Pe186,Pe068,Pa050
+		#pragma diag_remark = Pe301
+		#pragma diag_remark = Pe083
+		#pragma diag_remark = Pe767
+		#pragma diag_remark = Pe188
+		#pragma diag_remark = Pe186
+		#pragma diag_remark = Pe068
+		#pragma diag_remark = Pa050
 	#elif GFX_COMPILER == GFX_COMPILER_EKOPATH
 		#define GFX_COMPILER_NAME					"EKOPath"
 		#define GFX_COMPILER_VERSION_MAJOR			(__PATHCC__)
@@ -436,7 +442,13 @@
 		#define GFX_COMPILER_TESTED					TRUE
 		#define GFX_COMPILER_VERSION_MAJOR			((__VER__)/100)
 		#define GFX_COMPILER_VERSION_MINOR			((__VER__)%100)
-		#pragma diag_remark=Pe301,Pe083,Pe767,Pe188,Pe186,Pe068,Pa050
+		#pragma diag_remark = Pe301
+		#pragma diag_remark = Pe083
+		#pragma diag_remark = Pe767
+		#pragma diag_remark = Pe188
+		#pragma diag_remark = Pe186
+		#pragma diag_remark = Pe068
+		#pragma diag_remark = Pa050
 	#elif GFX_COMPILER == GFX_COMPILER_IBMXL
 		#define GFX_COMPILER_NAME					"IBM XL C/C++"
 		#ifdef __xlC__
