@@ -11,6 +11,7 @@ FEATURE:	Added gwinPrintg()
 FIX:		Fix sprintg and related functions handling of NULL pointers.
 FIX:		Fixing width calculation of gdispGDrawString() and gdispGFillString().
 FEATURE:	Added QImage display driver.
+FEATURE:	Added QWidget touch driver
 FEATURE:	Added support for Qt as a GOS platform
 FEATURE:	Add ability to set a parent for a win32 ugfx emulator window
 FEATURE:	Add ability to inject mouse events for a Win32 ugfx emulator window
