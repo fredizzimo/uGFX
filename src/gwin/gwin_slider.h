@@ -107,7 +107,7 @@ GHandle gwinGSliderCreate(GDisplay *g, GSliderObject *gb, const GWidgetInit *pIn
  * @param[in] min		The minimum value
  * @param[in] max		The maximum value
  * @note				Sets the position to the minimum value.
- * @note				The slider is not automatically drawn. Call gwinSliderDraw() after changing the range.
+ * @note				The slider is not automatically drawn. Call gwinRedraw() after changing the range.
  *
  * @api
  */
@@ -120,7 +120,7 @@ void gwinSliderSetRange(GHandle gh, int min, int max);
  * @param[in] pos		The new position
  * @note				If the new position is outside the slider range then the position
  * 						is set to the closest end of the range.
- * @note				The slider is not automatically drawn. Call gwinSliderDraw() after changing the position.
+ * @note				The slider is not automatically drawn. Call gwinRedraw() after changing the position.
  *
  * @api
  */
