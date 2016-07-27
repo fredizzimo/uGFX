@@ -3,24 +3,24 @@
 *****************************************************************************
 
 *** Changes after 2.5 ***
-FIX:		Fixing bug where the list item count wasn't decremented when an item was removed
-FEATURE:	Add options GFILE_FATFS_EXTERNAL_LIB and GFILE_PETITFSFS_EXTERNAL_LIB
+FIX:		Fixed bug where the list item count wasn't decremented when an item was removed
+FEATURE:	Added options GFILE_FATFS_EXTERNAL_LIB and GFILE_PETITFSFS_EXTERNAL_LIB
 FEATURE:	Added FT6x06 driver
-FIX:		Fixing issue in STM32F746G-Discovery board file that resulted in bad color reproduction
+FIX:		Fixed issue in STM32F746G-Discovery board file that resulted in bad color reproduction
 FEATURE:	Added gwinPrintg()
-FIX:		Fix sprintg and related functions handling of NULL pointers.
-FIX:		Fixing width calculation of gdispGDrawString() and gdispGFillString().
+FIX:		Fixed sprintg and related functions handling of NULL pointers.
+FIX:		Fixed width calculation of gdispGDrawString() and gdispGFillString().
 FEATURE:	Added QImage display driver.
 FEATURE:	Added QWidget touch driver
 FEATURE:	Added support for Qt as a GOS platform
-FEATURE:	Add ability to set a parent for a win32 ugfx emulator window
-FEATURE:	Add ability to inject mouse events for a Win32 ugfx emulator window
-FEATURE:	Add ability to turn on and off mouse processing for a win32 ugfx emulator window
-FEATURE:	Add ability to capture mouse events on the win32 ugfx emaultor window
-FIX:		Fixing issue where children of (nested) containers were not properly handled when callin gwinRaise()
+FEATURE:	Added ability to set a parent for a win32 ugfx emulator window
+FEATURE:	Added ability to inject mouse events for a Win32 ugfx emulator window
+FEATURE:	Added ability to turn on and off mouse processing for a win32 ugfx emulator window
+FEATURE:	Added ability to capture mouse events on the win32 ugfx emaultor window
+FIX:		Fixed issue where children of (nested) containers were not properly handled when callin gwinRaise()
 FEATURE:	Automatically close all open files in gfileDeinit()
-FEATURE:	Adding support for IAR and EDG compilers
-FIX:		Fixing crash when loading GIF image without enough memory available
+FEATURE:	Added support for IAR and EDG compilers
+FIX:		Fixed crash when loading GIF image without enough memory available
 FEATURE:	Added applications/minesweeper demo
 FEATURE:	Added applications/justget10 demo
 		
