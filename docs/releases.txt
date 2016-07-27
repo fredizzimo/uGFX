@@ -21,6 +21,7 @@ FIX:		Fixing issue where children of (nested) containers were not properly handl
 FEATURE:	Automatically close all open files in gfileDeinit()
 FEATURE:	Adding support for IAR and EDG compilers
 FIX:		Fixing crash when loading GIF image without enough memory available
+FEATURE:	Added applications/minesweeper demo
 		
 
 *** Release 2.5 ***
