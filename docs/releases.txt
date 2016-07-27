@@ -22,6 +22,7 @@ FEATURE:	Automatically close all open files in gfileDeinit()
 FEATURE:	Adding support for IAR and EDG compilers
 FIX:		Fixing crash when loading GIF image without enough memory available
 FEATURE:	Added applications/minesweeper demo
+FEATURE:	Added applications/justget10 demo
 		
 
 *** Release 2.5 ***
