@@ -991,7 +991,7 @@ static void WM_Raise(GHandle gh) {
 	#if GWIN_NEED_CONTAINERS
 		// Any children need to be raised too
 		if ((gh->flags & GWIN_FLG_CONTAINER)) {
-			GHandle		gx = gh;
+			GHandle		gx;
 			GHandle		child;
 			bool_t		restart;
 
