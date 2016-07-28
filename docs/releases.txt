@@ -21,8 +21,8 @@ FIX:		Fixed issue where children of (nested) containers were not properly handle
 FEATURE:	Automatically close all open files in gfileDeinit()
 FEATURE:	Added support for IAR and EDG compilers
 FIX:		Fixed crash when loading GIF image without enough memory available
-FEATURE:	Added applications/minesweeper demo
-FEATURE:	Added applications/justget10 demo
+FEATURE:	Added games/minesweeper demo
+FEATURE:	Added games/justget10 demo
 		
 
 *** Release 2.5 ***
@@ -79,7 +79,7 @@ FEATURE:	Support for keyboard layouts for non-english keyboards
 FEATURE:	GDISP now supports pixmaps (in memory drawing)
 FEATURE:	Rename files to improve experience in certain brain-dead IDE's
 FEATURE:	Add a checkbox "Toggle Button" custom draw
-FEATURE:	Add Tetris as an application demo
+FEATURE:	Add Tetris as a game demo
 FEATURE:	Add HY-MiniSTM32V board support
 FEATURE:	Add GWIN feature to flash any window/widget
 FIX:		Lots of GDISP monochrome drivers fixed
