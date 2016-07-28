@@ -2,7 +2,7 @@
 *** Releases                                                              ***
 *****************************************************************************
 
-*** Changes after 2.5 ***
+*** Release 2.6 ***
 FIX:		Fixed bug where the list item count wasn't decremented when an item was removed
 FEATURE:	Added options GFILE_FATFS_EXTERNAL_LIB and GFILE_PETITFSFS_EXTERNAL_LIB
 FEATURE:	Added FT6x06 driver
