@@ -1,4 +1,4 @@
-DEMODIR = $(GFXLIB)/demos/applications/minesweeper
+DEMODIR = $(GFXLIB)/demos/games/minesweeper
 
 GFXINC +=   $(DEMODIR) \
 			$(DEMODIR)/resources/romfs

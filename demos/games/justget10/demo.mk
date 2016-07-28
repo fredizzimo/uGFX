@@ -1,4 +1,4 @@
-DEMODIR = $(GFXLIB)/demos/applications/justget10
+DEMODIR = $(GFXLIB)/demos/games/justget10
 
 GFXINC +=   $(DEMODIR) \
 			$(DEMODIR)/resources/romfs
