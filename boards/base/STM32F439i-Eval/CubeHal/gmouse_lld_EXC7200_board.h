@@ -14,10 +14,13 @@
 #ifndef _GINPUT_LLD_MOUSE_BOARD_H
 #define _GINPUT_LLD_MOUSE_BOARD_H
 
-#include "stm32f4xx_hal_rcc.h"
-#include "stm32f4xx_hal_dma.h"
-#include "stm32f4xx_hal_gpio.h"
-#include "stm32f4xx_hal_i2c.h"
+// Avoid naming collisions with CubeHAL
+#undef Red
+#undef Green
+#undef Blue
+
+// Include CubeHAL
+#include "stm32f4xx_hal.h"
 
 // Resolution and Accuracy Settings
 #define GMOUSE_EXC7200_PEN_CALIBRATE_ERROR		8
