@@ -2,8 +2,9 @@
 *** Releases                                                              ***
 *****************************************************************************
 
-*** Changes after 2.6 ***
 
+*** Changes after 2.6 ***
+FEATURE:	Added EXC7200 driver
 
 
 *** Release 2.6 ***
