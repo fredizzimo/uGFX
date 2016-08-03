@@ -65,7 +65,7 @@
 #define GINPUT_NEED_MOUSE		TRUE
 
 /* One or both of these */
-#define GINPUT_NEED_KEYBOARD	TRUE
+#define GINPUT_NEED_KEYBOARD	FALSE
 #define GWIN_NEED_KEYBOARD      TRUE
 
 /* Features for the GQUEUE subsystem. */
