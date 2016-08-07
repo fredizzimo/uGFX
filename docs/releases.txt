@@ -6,6 +6,7 @@
 *** Changes after 2.6 ***
 FEATURE:	Added EXC7200 driver
 FEATURE:	Added STM32F439i-EVAL board files
+FIX:		Fixed crash when passing NULL to gwinSetStyle()
 
 
 *** Release 2.6 ***

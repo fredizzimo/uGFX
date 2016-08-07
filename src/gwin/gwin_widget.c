@@ -588,8 +588,8 @@ void gwinSetStyle(GHandle gh, const GWidgetStyle *pstyle) {
 		return;
 
 	gw->pstyle = pstyle ? pstyle : defaultStyle;
-	gh->bgcolor = pstyle->background;
-	gh->color = pstyle->enabled.text;
+	gh->bgcolor = gw->pstyle->background;
+	gh->color = gw->pstyle->enabled.text;
 
 	_gwinUpdate(gh);
 }
