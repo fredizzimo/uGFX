@@ -3,5 +3,5 @@ GFXSRC  +=
 GFXDEFS += -DGFX_USE_OS_LINUX=TRUE
 GFXLIBS += rt
 
-include $(GFXLIB)/drivers/multiple/X/driver.mk
+include $(GFXLIB)/drivers/multiple/SDL/driver.mk
 
