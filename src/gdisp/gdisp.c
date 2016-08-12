@@ -3170,7 +3170,10 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 	/* Callback to render string boxes with word wrap. */
 	#if GDISP_NEED_TEXT_WORDWRAP
 		static bool mf_countline_callback(mf_str line, uint16_t count, void *state) {
-			int *linecount = (int*)state;
+			(void) line;
+			(void) count;
+
+			uint16_t *linecount = (uint16_t*)state;
 			(*linecount)++;
 
 			return TRUE;
