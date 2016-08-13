@@ -7,12 +7,12 @@
 
 #include "../../gfx.h"
 
+#if GFX_USE_OS_QT
 #include <QMutex>
 #include <QSemaphore>
 #include <QThread>
 #include <QElapsedTimer>
 
-#if GFX_USE_OS_QT
 
 class Thread : public QThread
 {
