@@ -43,6 +43,7 @@ static bool_t init_board(GMouse* m, unsigned driverinstance)
 	GPIO_InitTypeDef GPIO_InitStruct;
 	
 	(void)m;
+	(void)driverinstance;
 
 	// Enable peripheral clocks
 	__HAL_RCC_I2C1_CLK_ENABLE();

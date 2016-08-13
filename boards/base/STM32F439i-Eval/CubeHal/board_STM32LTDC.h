@@ -18,16 +18,7 @@
 #include "stm324x9i_eval_sdram.h"
 
 // Panel parameters
-#define  AMPIRE640480_WIDTH    ((uint16_t)640)             /* LCD PIXEL WIDTH            */
-#define  AMPIRE640480_HEIGHT   ((uint16_t)480)             /* LCD PIXEL HEIGHT           */
-#define  AMPIRE640480_HSYNC            ((uint16_t)30)      /* Horizontal synchronization */
-#define  AMPIRE640480_HBP              ((uint16_t)114)     /* Horizontal back porch      */
-#define  AMPIRE640480_HFP              ((uint16_t)16)      /* Horizontal front porch     */
-#define  AMPIRE640480_VSYNC            ((uint16_t)3)       /* Vertical synchronization   */
-#define  AMPIRE640480_VBP              ((uint16_t)32)      /* Vertical back porch        */
-#define  AMPIRE640480_VFP              ((uint16_t)10)      /* Vertical front porch       */
-#define  AMPIRE640480_FREQUENCY_DIVIDER     3              /* LCD Frequency divider      */
-
+// This panel is a AMPIRE640480 panel.
 
 static const ltdcConfig driverCfg = {
 	640, 480,								// Width, Height (pixels)
@@ -56,48 +47,36 @@ static const ltdcConfig driverCfg = {
 	LTDC_UNUSED_LAYER_CONFIG				// Foreground layer config
 };
 
-#define LCD_MAX_PCLK ((uint8_t)0x00)
-static LTDC_HandleTypeDef hltdc_eval;
-static uint32_t PCLK_profile = LCD_MAX_PCLK;
+// LCD Clock values
+#define LCD_PLLSAIN_VALUE			192					// 151
+#define LCD_PLLSAIR_VALUE			2					// 3
+#define LCD_PLLSAIDIVR_VALUE		RCC_PLLSAIDIVR_4	// RCC_PLLSAIDIVR_2
+
+static void configureLcdClock(void)
+{
+	#if 1
+		RCC_PeriphCLKInitTypeDef	periph_clk_init_struct;
+		
+		periph_clk_init_struct.PLLSAI.PLLSAIN = LCD_PLLSAIN_VALUE;
+		periph_clk_init_struct.PeriphClockSelection = RCC_PERIPHCLK_LTDC;    
+		periph_clk_init_struct.PLLSAI.PLLSAIR = LCD_PLLSAIR_VALUE;    
+		periph_clk_init_struct.PLLSAIDivR = LCD_PLLSAIDIVR_VALUE;
+		HAL_RCCEx_PeriphCLKConfig(&periph_clk_init_struct);
+	#else
+		#define LCD_PLLSAIQ_VALUE                 7
+
+		/* PLLSAI activation.*/
+		RCC->PLLSAICFGR = (LCD_PLLSAIN_VALUE << 6) | (LCD_PLLSAIR_VALUE << 28) | (LCD_PLLSAIQ_VALUE << 24);
+		RCC->DCKCFGR = (RCC->DCKCFGR & ~RCC_DCKCFGR_PLLSAIDIVR) | LCD_PLLSAIDIVR_VALUE;
+		RCC->CR |= RCC_CR_PLLSAION;
+	#endif
+}
 
 static void configureLcdPins(void)
 {
-	GPIO_InitTypeDef GPIO_Init_Structure;
-
-	PCLK_profile = LCD_MAX_PCLK;
-  
-	// LTDC configuration
-	hltdc_eval.Init.HorizontalSync = (AMPIRE640480_HSYNC - 1);
-	hltdc_eval.Init.VerticalSync = (AMPIRE640480_VSYNC - 1);
-	hltdc_eval.Init.AccumulatedHBP = (AMPIRE640480_HSYNC + AMPIRE640480_HBP - 1);
-	hltdc_eval.Init.AccumulatedVBP = (AMPIRE640480_VSYNC + AMPIRE640480_VBP - 1);  
-	hltdc_eval.Init.AccumulatedActiveH = (AMPIRE640480_HEIGHT + AMPIRE640480_VSYNC + AMPIRE640480_VBP - 1);
-	hltdc_eval.Init.AccumulatedActiveW = (AMPIRE640480_WIDTH + AMPIRE640480_HSYNC + AMPIRE640480_HBP - 1);
-	hltdc_eval.Init.TotalHeigh = (AMPIRE640480_HEIGHT + AMPIRE640480_VSYNC + AMPIRE640480_VBP + AMPIRE640480_VFP - 1);
-	hltdc_eval.Init.TotalWidth = (AMPIRE640480_WIDTH + AMPIRE640480_HSYNC + AMPIRE640480_HBP + AMPIRE640480_HFP - 1);
-	hltdc_eval.LayerCfg->ImageWidth  = AMPIRE640480_WIDTH;
-	hltdc_eval.LayerCfg->ImageHeight = AMPIRE640480_HEIGHT;
-	hltdc_eval.Init.Backcolor.Blue = 0;
-	hltdc_eval.Init.Backcolor.Green = 0;
-	hltdc_eval.Init.Backcolor.Red = 0;
-	hltdc_eval.Init.HSPolarity = LTDC_HSPOLARITY_AL;
-	hltdc_eval.Init.VSPolarity = LTDC_VSPOLARITY_AL; 
-	hltdc_eval.Init.DEPolarity = LTDC_DEPOLARITY_AL;  
-	hltdc_eval.Init.PCPolarity = LTDC_PCPOLARITY_IPC;
-	hltdc_eval.Instance = LTDC;
-	HAL_LTDC_Init(&hltdc_eval);
-
-	// LCD clock configuration
-	static RCC_PeriphCLKInitTypeDef  periph_clk_init_struct;
-	periph_clk_init_struct.PLLSAI.PLLSAIN = 151;
-	periph_clk_init_struct.PeriphClockSelection = RCC_PERIPHCLK_LTDC;    
-	periph_clk_init_struct.PLLSAI.PLLSAIR = 3;    
-	periph_clk_init_struct.PLLSAIDivR = RCC_PLLSAIDIVR_2;
-	HAL_RCCEx_PeriphCLKConfig(&periph_clk_init_struct);
+	GPIO_InitTypeDef			GPIO_Init_Structure;
 
 	// Enable peripheral clocks
-	__LTDC_CLK_ENABLE();
-	__DMA2D_CLK_ENABLE(); 
 	__GPIOI_CLK_ENABLE(); 
 	__GPIOJ_CLK_ENABLE();
 	__GPIOK_CLK_ENABLE(); 
@@ -140,6 +119,9 @@ static GFXINLINE void init_board(GDisplay* g)
 	switch(g->controllerdisplay) {
 		case 0:
 
+		// Set LCD pixel clock rate
+		configureLcdClock();
+		
 		// Set pin directions
 		configureLcdPins();
 
@@ -158,6 +140,7 @@ static GFXINLINE void post_init_board(GDisplay* g)
 static GFXINLINE void set_backlight(GDisplay* g, uint8_t percent)
 {
 	(void) g;
+	(void) percent;
 }
 
 #endif /* _GDISP_LLD_BOARD_H */

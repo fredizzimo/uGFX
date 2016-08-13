@@ -7,7 +7,7 @@
 #include "stm32f4xx_hal.h"
 
 #if GFX_USE_OS_RAW32
-	void _init()
+	void _init(void)
 	{
 	}
 
