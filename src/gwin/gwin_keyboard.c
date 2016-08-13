@@ -114,7 +114,7 @@ static int NumKeyRows(const char **keyset) {
 	return len;
 }
 
-static void SendKeyboardEventToListener(GSourceListener	*psl, GKeyboardObject *gk) {
+static void _SendKeyboardEventToListener(GSourceListener	*psl, GKeyboardObject *gk) {
 	GEventKeyboard		*pe;
 	const GVSpecialKey	*skey;
 	unsigned			i;
@@ -157,18 +157,18 @@ static void SendKeyboardEventToListener(GSourceListener	*psl, GKeyboardObject *g
 	geventSendEvent(psl);
 }
 
-static void SendKeyboardEvent(GKeyboardObject *gk) {
+static void _SendKeyboardEvent(GKeyboardObject *gk) {
 	GSourceListener	*psl;
 
 	// Send to the "All Keyboards" source listeners
 	psl = 0;
 	while ((psl = geventGetSourceListener(AllKeyboards, psl)))
-		SendKeyboardEventToListener(psl, gk);
+		_SendKeyboardEventToListener(psl, gk);
 
 	// Send to the keyboard specific source listeners
 	psl = 0;
 	while ((psl = geventGetSourceListener((GSourceHandle)gk, psl)))
-		SendKeyboardEventToListener(psl, gk);
+		_SendKeyboardEventToListener(psl, gk);
 }
 
 
@@ -257,7 +257,7 @@ static void SendKeyboardEvent(GKeyboardObject *gk) {
 
 			// Send the key if required
 			if (skey->sendkey && skey->sendkey[0])
-				SendKeyboardEvent(gk);
+				_SendKeyboardEvent(gk);
 
 			// Update the display
 			_gwinUpdate((GHandle)gw);
@@ -274,7 +274,7 @@ static void SendKeyboardEvent(GKeyboardObject *gk) {
 		}
 
 		// Send the key
-		SendKeyboardEvent(gk);
+		_SendKeyboardEvent(gk);
 
 		// Update the display
 		_gwinUpdate((GHandle)gw);
