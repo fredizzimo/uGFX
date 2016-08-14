@@ -150,7 +150,7 @@ static const unsigned char
     ST7735_SLPOUT ,   DELAY,  //  2: Out of sleep mode, 0 args, w/delay
       255,                    //     500 ms delay
     ST7735_FRMCTR1, 3      ,  //  3: Frame rate ctrl - normal mode, 3 args:
-      0x01, 0x2C, 0x2D,       //     Rate = fosc/(1x2+40) * (LINE+2C+2D)
+      0x00, 0x0, 0x0,       //     Rate = fosc/(0+40) * (LINE+0+0)
     ST7735_FRMCTR2, 3      ,  //  4: Frame rate control - idle mode, 3 args:
       0x01, 0x2C, 0x2D,       //     Rate = fosc/(1x2+40) * (LINE+2C+2D)
     ST7735_FRMCTR3, 6      ,  //  5: Frame rate ctrl - partial mode, 6 args:
@@ -161,7 +161,7 @@ static const unsigned char
     ST7735_PWCTR1 , 3      ,  //  7: Power control, 3 args, no delay:
       0xA2,
       0x02,                   //     -4.6V
-      0x84,                   //     AUTO mode
+      0x44,                   //     mode 3
     ST7735_PWCTR2 , 1      ,  //  8: Power control, 1 arg, no delay:
       0xC5,                   //     VGH25 = 2.4C VGSEL = -10 VGH = 3 * AVDD
     ST7735_PWCTR3 , 2      ,  //  9: Power control, 2 args, no delay:
