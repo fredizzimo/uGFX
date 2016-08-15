@@ -14,7 +14,7 @@
 # uGFX settings
 	# See $(GFXLIB)/tools/gmake_scripts/library_ugfx.mk for the list of variables
 	GFXLIB					= ../uGFX
-	GFXBOARD				= Linux
+	GFXBOARD				= Linux-X
 	GFXDEMO					= modules/gdisp/basics
 
 # Linux settings

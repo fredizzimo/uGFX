@@ -8,6 +8,7 @@ FEATURE:	Added EXC7200 driver
 FEATURE:	Added STM32F439i-EVAL board files
 FIX:		Fixed crash when passing NULL to gwinSetStyle()
 FIX:		Fixed potential crash when GDISP_NEED_TEXT_WORDWRAP is turned on
+FEATURE:	Added SDL driver
 
 
 *** Release 2.6 ***
