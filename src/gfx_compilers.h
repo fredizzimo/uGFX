@@ -336,7 +336,7 @@
 		#define GFX_COMPILER_VERSION_MAJOR			(__clang_major__)
 		#define GFX_COMPILER_VERSION_MINOR			(__clang_minor__)
 		#define GFX_COMPILER_VERSION_PATCH			(__clang_patchlevel__)
-		#define DEPRECATED(msg)						__attribute__((deprecated(msg)));
+		#define DEPRECATED(msg)						__attribute__((deprecated(msg)))
 	#elif GFX_COMPILER == GFX_COMPILER_COMEAU
 		#define GFX_COMPILER_NAME					"Comeau C++"
 		#define GFX_COMPILER_VERSION_MAJOR			((__COMO_VERSION__)/100)
