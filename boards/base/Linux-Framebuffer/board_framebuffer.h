@@ -96,7 +96,7 @@
 			fb_var.reserved[2] = 0;
 			fb_var.xoffset = 0;
 			fb_var.yoffset = 0;
-			fb_var.bits_per_pixel = sizeof(LLD_COLORTYPE)*8;
+			fb_var.bits_per_pixel = sizeof(LLDCOLOR_TYPE)*8;
 			fb_var.grayscale = 0;
 			fb_var.activate = FB_ACTIVATE_NOW;
 			if (ioctl(fb, FBIOPUT_VSCREENINFO, &fb_var) == -1 || ioctl (fb, FBIOGET_VSCREENINFO, &fb_var) == -1) {
@@ -114,7 +114,7 @@
 			fprintf(stderr, "GDISP Framebuffer: The display is not in TRUECOLOR mode\n");
 			exit(-1);
 		}
-		if (fb_var.bits_per_pixel != sizeof(LLD_COLORTYPE)*8) {
+		if (fb_var.bits_per_pixel != sizeof(LLDCOLOR_TYPE)*8) {
 			fprintf(stderr, "GDISP Framebuffer: The display is %u not %u bits per pixel\n", fb_var.bits_per_pixel, LLDCOLOR_TYPE_BITS);
 			exit(-1);
 		}
