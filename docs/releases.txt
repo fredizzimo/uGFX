@@ -11,6 +11,7 @@ FIX:		Fixed potential crash when GDISP_NEED_TEXT_WORDWRAP is turned on
 FEATURE:	Added SDL driver
 FEATURE:	Added ILI9225 driver
 FEATURE:	Added ST7735 driver
+FEATURE:	Added Linux event input driver
 
 
 *** Release 2.6 ***
