@@ -12,7 +12,7 @@ FEATURE:	Added SDL driver
 FEATURE:	Added ILI9225 driver
 FEATURE:	Added ST7735 driver
 FEATURE:	Added Linux event input driver
-
+FIX:		Fixed an issue with color formats in Linux-Framebuffer board files
 
 *** Release 2.6 ***
 FIX:		Fixed bug where the list item count wasn't decremented when an item was removed
