@@ -56,16 +56,15 @@ static void SendCheckboxEvent(GWidgetObject *gw) {
 	static void CheckboxKeyboard(GWidgetObject* gw, GEventKeyboard* pke)
 	{
 		// Only react on KEYDOWN events. Ignore KEYUP events.
-		if (pke->keystate & GKEYSTATE_KEYUP) {
+		if ((pke->keystate & GKEYSTATE_KEYUP))
 			return;
-		}
 
 		// ENTER and SPACE keys to check/uncheck the checkbox
 		if (pke->c[0] == GKEY_ENTER || pke->c[0] == GKEY_SPACE) {
 			gw->g.flags ^= GCHECKBOX_FLG_CHECKED;
+			_gwinUpdate((GHandle)gw);
+			SendCheckboxEvent(gw);
 		}
-
-		_gwinUpdate((GHandle)gw);
 	}
 #endif
 

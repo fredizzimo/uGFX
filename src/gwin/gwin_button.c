@@ -53,15 +53,15 @@
 		// ENTER and SPACE keys to press the button
 		if (pke->c[0] == GKEY_ENTER || pke->c[0] == GKEY_SPACE) {
 
-			// Press or release event?
-			if (pke->keystate & GKEYSTATE_KEYUP) {
-				gw->g.flags &= ~GBUTTON_FLG_PRESSED;
-			} else {
-				gw->g.flags |= GBUTTON_FLG_PRESSED;
-			}
+			// Some keyboards (eg the virtual keyboard) can't send keyup events.
+			// Even for those that do we may not be listening for them.
+			// We should really process on a keydown and then set a timer to display
+			//	the button release but that requires an extra timer and lots of
+			//	complication. Instead we cheat by not providing user feedback of the keypress.
+			if (!(pke->keystate & GKEYSTATE_KEYUP))
+				_gwinSendEvent(&gw->g, GEVENT_GWIN_BUTTON);
 		}
 
-		_gwinUpdate((GHandle)gw);
 	}
 #endif
 
