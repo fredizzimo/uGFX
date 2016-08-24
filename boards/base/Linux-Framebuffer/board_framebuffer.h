@@ -96,7 +96,11 @@
 			fb_var.reserved[2] = 0;
 			fb_var.xoffset = 0;
 			fb_var.yoffset = 0;
-			fb_var.bits_per_pixel = sizeof(LLDCOLOR_TYPE)*8;
+			#if LLDCOLOR_BITS == 15
+				fb_var.bits_per_pixel = LLDCOLOR_BITS;				// Handle RGB555 & BGR555
+			#else
+				fb_var.bits_per_pixel = sizeof(LLDCOLOR_TYPE)*8;
+			#endif
 			fb_var.grayscale = 0;
 			fb_var.activate = FB_ACTIVATE_NOW;
 			if (ioctl(fb, FBIOPUT_VSCREENINFO, &fb_var) == -1 || ioctl (fb, FBIOGET_VSCREENINFO, &fb_var) == -1) {
