@@ -82,6 +82,9 @@
 LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	// The private area is the display surface.
 	g->priv = gfxAlloc(GDISP_SCREEN_HEIGHT * GDISP_SCREEN_WIDTH / 8);
+	if (!g->priv) {
+		return FALSE;
+	}
 
 	// Initialise the board interface
 	init_board(g);
@@ -127,13 +130,14 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
  	// Release the bus
 	release_bus(g);
 
-	/* Initialise the GDISP structure */
+	// Initialise the GDISP structure
 	g->g.Width = GDISP_SCREEN_WIDTH;
 	g->g.Height = GDISP_SCREEN_HEIGHT;
 	g->g.Orientation = GDISP_ROTATE_0;
 	g->g.Powermode = powerOn;
 	g->g.Backlight = GDISP_INITIAL_BACKLIGHT;
 	g->g.Contrast = GDISP_INITIAL_CONTRAST;
+
 	return TRUE;
 }
 
@@ -247,7 +251,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 			if (g->g.Orientation == (orientation_t)g->p.ptr)
 				return;
 			switch((orientation_t)g->p.ptr) {
-			/* Rotation is handled by the drawing routines */
+			// Rotation is handled by the drawing routines
 			case GDISP_ROTATE_0:
 			case GDISP_ROTATE_180:
 				g->g.Height = GDISP_SCREEN_HEIGHT;
