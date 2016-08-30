@@ -19,7 +19,7 @@ and a touchscreen driver.
 
 2. To your makefile add the following lines:
 	include $(GFXLIB)/gfx.mk
-	include $(GFXLIB)/drivers/multiple/uGFXnet/gdisp_lld.mk
+	include $(GFXLIB)/drivers/multiple/uGFXnet/driver.mk
 
 3. Make sure you have networking libraries included in your Makefile.
 
