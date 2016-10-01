@@ -3202,6 +3202,8 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 	#endif
 
 	void gdispGDrawChar(GDisplay *g, coord_t x, coord_t y, uint16_t c, font_t font, color_t color) {
+		if (!font)
+			return;
 		MUTEX_ENTER(g);
 		g->t.font = font;
 		g->t.clipx0 = x;
@@ -3215,6 +3217,8 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 	}
 
 	void gdispGFillChar(GDisplay *g, coord_t x, coord_t y, uint16_t c, font_t font, color_t color, color_t bgcolor) {
+		if (!font)
+			return;
 		MUTEX_ENTER(g);
 		g->p.cx = mf_character_width(font, c) + font->baseline_x;
 		g->p.cy = font->height;
@@ -3235,6 +3239,8 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 	}
 
 	void gdispGDrawString(GDisplay *g, coord_t x, coord_t y, const char *str, font_t font, color_t color) {
+		if (!font)
+			return;
 		MUTEX_ENTER(g);
 		g->t.font = font;
 		g->t.clipx0 = x;
@@ -3249,6 +3255,8 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 	}
 
 	void gdispGFillString(GDisplay *g, coord_t x, coord_t y, const char *str, font_t font, color_t color, color_t bgcolor) {
+		if (!font)
+			return;
 		MUTEX_ENTER(g);
 		g->p.cx = mf_get_string_width(font, str, 0, 0) + font->baseline_x;
 		g->p.cy = font->height;
@@ -3275,6 +3283,8 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 			uint16_t nbrLines;
 		#endif
 
+		if (!font)
+			return;
 		MUTEX_ENTER(g);
 
 		g->t.font = font;
@@ -3326,6 +3336,8 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 			uint16_t nbrLines;
 		#endif
 
+		if (!font)
+			return;
 		MUTEX_ENTER(g);
 
 		g->p.cx = cx;
@@ -3382,6 +3394,8 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 	}
 
 	coord_t gdispGetFontMetric(font_t font, fontmetric_t metric) {
+		if (!font)
+			return 0;
 		/* No mutex required as we only read static data */
 		switch(metric) {
 		case fontHeight:			return font->height;
@@ -3397,12 +3411,14 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 	}
 
 	coord_t gdispGetCharWidth(char c, font_t font) {
+		if (!font)
+			return 0;
 		/* No mutex required as we only read static data */
 		return mf_character_width(font, c);
 	}
 
 	coord_t gdispGetStringWidthCount(const char* str, font_t font, uint16_t count) {
-		if (!str)
+		if (!str || !font)
 			return 0;
 
 		// No mutex required as we only read static data
