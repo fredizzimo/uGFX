@@ -134,6 +134,8 @@ extern "C" {
 #endif
 
 #if GMISC_NEED_FASTTRIG || defined(__DOXYGEN__)
+		#include <math.h>
+
 		extern const double sintabledouble[];
 
 		/**
