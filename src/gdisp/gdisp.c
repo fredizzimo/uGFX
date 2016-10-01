@@ -1722,11 +1722,11 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 			sedge = NONFIXED(radius * ((sbit & 0x99) ? ffsin(start) : ffcos(start)) + FIXED0_5);
 			eedge = NONFIXED(radius * ((ebit & 0x99) ? ffsin(end) : ffcos(end)) + FIXED0_5);
 		#elif GFX_USE_GMISC && GMISC_NEED_FASTTRIG
-			sedge = round(radius * ((sbit & 0x99) ? fsin(start) : fcos(start)));
-			eedge = round(radius * ((ebit & 0x99) ? fsin(end) : fcos(end)));
+			sedge = floor(radius * ((sbit & 0x99) ? fsin(start) : fcos(start)) + 0.5);
+			eedge = floor(radius * ((ebit & 0x99) ? fsin(end) : fcos(end)) + 0.5);
 		#else
-			sedge = round(radius * ((sbit & 0x99) ? sin(start*GFX_PI/180) : cos(start*GFX_PI/180)));
-			eedge = round(radius * ((ebit & 0x99) ? sin(end*GFX_PI/180) : cos(end*GFX_PI/180)));
+			sedge = floor(radius * ((sbit & 0x99) ? sin(start*GFX_PI/180) : cos(start*GFX_PI/180)) + 0.5);
+			eedge = floor(radius * ((ebit & 0x99) ? sin(end*GFX_PI/180) : cos(end*GFX_PI/180)) + 0.5);
 		#endif
 		if (sbit & 0xB4) sedge = -sedge;
 		if (ebit & 0xB4) eedge = -eedge;
@@ -1843,17 +1843,21 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 
 		MUTEX_ENTER(g);
 
+		// We add a half pixel so that we are drawing from the centre of the pixel
+		//	instead of the left edge of the pixel. This also fixes the implied floor()
+		//	when converting back to a coord_t
+		sxa = exa = FIXED(x) + FIXED0_5;
+
 		// Do the trig to get the formulas for the start and end lines.
-		sxa = exa = FIXED(x)+FIXED0_5;
 		#if GFX_USE_GMISC && GMISC_NEED_FIXEDTRIG
-			sxb = radius*ffcos(start);	sy = -NONFIXED(radius*ffsin(start) + FIXED0_5);
-			exb = radius*ffcos(end);	ey = -NONFIXED(radius*ffsin(end) + FIXED0_5);
+			sxb = radius*ffcos(start);	sy = NONFIXED(FIXED0_5 - radius*ffsin(start));
+			exb = radius*ffcos(end);	ey = NONFIXED(FIXED0_5 - radius*ffsin(end));
 		#elif GFX_USE_GMISC && GMISC_NEED_FASTTRIG
-			sxb = FP2FIXED(radius*fcos(start));	sy = -round(radius*fsin(start));
-			exb = FP2FIXED(radius*fcos(end));	ey = -round(radius*fsin(end));
+			sxb = FP2FIXED(radius*fcos(start));	sy = floor(0.5-radius*fsin(start));
+			exb = FP2FIXED(radius*fcos(end));	ey = floor(0.5-radius*fsin(end));
 		#else
-			sxb = FP2FIXED(radius*cos(start*GFX_PI/180));	sy = -round(radius*sin(start*GFX_PI/180));
-			exb = FP2FIXED(radius*cos(end*GFX_PI/180));	ey = -round(radius*sin(end*GFX_PI/180));
+			sxb = FP2FIXED(radius*cos(start*GFX_PI/180));	sy = floor(0.5-radius*sin(start*GFX_PI/180));
+			exb = FP2FIXED(radius*cos(end*GFX_PI/180));		ey = floor(0.5-radius*sin(end*GFX_PI/180));
 		#endif
 		sxd = sy ? sxb/sy : sxb;
 		exd = ey ? exb/ey : exb;
@@ -1864,7 +1868,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 		if (sy > 0) 	qtr |= 0x02;
 		if (exb > 0)	qtr |= 0x04;		// E1=0100(4), E2=0000(0), E3=1000(8), E4=1100(12)
 		if (ey > 0) 	qtr |= 0x08;
-		if (sy > ey)	qtr |= 0x10;		// order of start and end lines
+		if (sy > ey || (sy == ey && sxb > 0))	qtr |= 0x10;		// order of start and end lines
 
 		// Calculate intermediates
 		a = 1;
@@ -1881,7 +1885,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 		case 0:		// S2E2 sy <= ey
 		case 1:		// S1E2 sy <= ey
 			if (ey && sy) {
-				g->p.x = x; g->p.x1 = x;									// E2S
+				g->p.x = x; g->p.x1 = x;								// E2S
 				sxa -= sxd; exa -= exd;
 			} else if (sy) {
 				g->p.x = x-b; g->p.x1 = x;								// C2S
@@ -1890,7 +1894,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 				g->p.x = x; g->p.x1 = x+b;								// E2C
 				exa -= exd;
 			} else {
-				g->p.x = x-b; g->p.x1 = x+b;								// C2C
+				g->p.x = x-b; g->p.x1 = x+b;							// C2C
 			}
 			g->p.y = y;
 			hline_clip(g);
@@ -1899,7 +1903,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 					g->p.y = y-a; g->p.x = NONFIXED(exa); g->p.x1 = NONFIXED(sxa); hline_clip(g);		// E2S
 					sxa -= sxd; exa -= exd;
 				} else if (-a >= sy) {
-					g->p.y = y-a; g->p.x = x-b; g->p.x1 = NONFIXED(sxa); hline_clip(g);				// C2S
+					g->p.y = y-a; g->p.x = x-b; g->p.x1 = NONFIXED(sxa); hline_clip(g);					// C2S
 					sxa -= sxd;
 				} else if (qtr & 1) {
 					g->p.y = y-a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);							// C2C
@@ -1911,7 +1915,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 						g->p.y = y-b; g->p.x = NONFIXED(exb); g->p.x1 = NONFIXED(sxb); hline_clip(g);	// E2S
 						sxb += sxd; exb += exd;
 					} else if (-b >= sy) {
-						g->p.y = y-b; g->p.x = x-a; g->p.x1 = NONFIXED(sxb); hline_clip(g);			// C2S
+						g->p.y = y-b; g->p.x = x-a; g->p.x1 = NONFIXED(sxb); hline_clip(g);				// C2S
 						sxb += sxd;
 					} else if (qtr & 1) {
 						g->p.y = y-b; g->p.x = x-a; g->p.x1 = x+a; hline_clip(g);						// C2C
@@ -1922,7 +1926,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 			if (-a >= ey) {
 				g->p.y = y-a; g->p.x = NONFIXED(exa); g->p.x1 = NONFIXED(sxa); hline_clip(g);			// E2S
 			} else if (-a >= sy) {
-				g->p.y = y-a; g->p.x = x-b; g->p.x1 = NONFIXED(sxa); hline_clip(g);					// C2S
+				g->p.y = y-a; g->p.x = x-b; g->p.x1 = NONFIXED(sxa); hline_clip(g);						// C2S
 			} else if (qtr & 1) {
 				g->p.y = y-a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);								// C2C
 			}
@@ -1940,13 +1944,13 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 			sxa += sxd; exa -= exd;
 			do {
 				if (-a >= ey) {
-					g->p.y = y-a; g->p.x = NONFIXED(exa); g->p.x1 = x+b; hline_clip(g);		// E2C
+					g->p.y = y-a; g->p.x = NONFIXED(exa); g->p.x1 = x+b; hline_clip(g);			// E2C
 					exa -= exd;
 				} else if (!(qtr & 4)) {
 					g->p.y = y-a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);					// C2C
 				}
 				if (a <= sy) {
-					g->p.y = y+a; g->p.x = NONFIXED(sxa); g->p.x1 = x+b; hline_clip(g);		// S2C
+					g->p.y = y+a; g->p.x = NONFIXED(sxa); g->p.x1 = x+b; hline_clip(g);			// S2C
 					sxa += sxd;
 				} else if (!(qtr & 1)) {
 					g->p.y = y+a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);					// C2C
@@ -1958,7 +1962,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 						g->p.y = y-b; g->p.x = NONFIXED(exb); g->p.x1 = x+a; hline_clip(g);		// E2C
 						exb += exd;
 					} else if (!(qtr & 4)) {
-						g->p.y = y-b; g->p.x = x-a; g->p.x1 = x+a; hline_clip(g);					// C2C
+						g->p.y = y-b; g->p.x = x-a; g->p.x1 = x+a; hline_clip(g);				// C2C
 					}
 					if (b <= sy) {
 						g->p.y = y+b; g->p.x = NONFIXED(sxb); g->p.x1 = x+a; hline_clip(g);		// S2C
@@ -1972,56 +1976,56 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 			if (-a >= ey) {
 				g->p.y = y-a; g->p.x = NONFIXED(exa); g->p.x1 = x+b; hline_clip(g);				// E2C
 			} else if (!(qtr & 4)) {
-				g->p.y = y-a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);							// C2C
+				g->p.y = y-a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);						// C2C
 			}
 			if (a <= sy) {
 				g->p.y = y+a; g->p.x = NONFIXED(sxa); g->p.x1 = x+a; hline_clip(g);				// S2C
 			} else if (!(qtr & 1)) {
-				g->p.y = y+a; g->p.x = x-b; g->p.x1 = x+a; hline_clip(g);							// C2C
+				g->p.y = y+a; g->p.x = x-b; g->p.x1 = x+a; hline_clip(g);						// C2C
 			}
 			break;
 
 		case 4:		// S2E1 sy <= ey
 		case 5:		// S1E1 sy <= ey
-			g->p.y = y; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);									// C2C
+			g->p.y = y; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);								// C2C
 			do {
 				if (-a >= ey) {
-					g->p.y = y-a; g->p.x = x-b; g->p.x1 = NONFIXED(sxa); hline_clip(g);				// C2S
-					g->p.y = y-a; g->p.x = NONFIXED(exa); g->p.x1 = x+b; hline_clip(g);				// E2C
+					g->p.y = y-a; g->p.x = x-b; g->p.x1 = NONFIXED(sxa); hline_clip(g);			// C2S
+					g->p.y = y-a; g->p.x = NONFIXED(exa); g->p.x1 = x+b; hline_clip(g);			// E2C
 					sxa -= sxd; exa -= exd;
 				} else if (-a >= sy) {
-					g->p.y = y-a; g->p.x = x-b; g->p.x1 = NONFIXED(sxa); hline_clip(g);				// C2S
+					g->p.y = y-a; g->p.x = x-b; g->p.x1 = NONFIXED(sxa); hline_clip(g);			// C2S
 					sxa -= sxd;
 				} else if (qtr & 1) {
-					g->p.y = y-a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);							// C2C
+					g->p.y = y-a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);					// C2C
 				}
-				g->p.y = y+a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);								// C2C
+				g->p.y = y+a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);						// C2C
 				if (P < 0) {
 					P += 3 + 2*a++;
 				} else {
 					if (-b >= ey) {
-						g->p.y = y-b; g->p.x = x-a; g->p.x1 = NONFIXED(sxb); hline_clip(g);			// C2S
-						g->p.y = y-b; g->p.x = NONFIXED(exb); g->p.x1 = x+a; hline_clip(g);			// E2C
+						g->p.y = y-b; g->p.x = x-a; g->p.x1 = NONFIXED(sxb); hline_clip(g);		// C2S
+						g->p.y = y-b; g->p.x = NONFIXED(exb); g->p.x1 = x+a; hline_clip(g);		// E2C
 						sxb += sxd; exb += exd;
 					} else if (-b >= sy) {
-						g->p.y = y-b; g->p.x = x-a; g->p.x1 = NONFIXED(sxb); hline_clip(g);			// C2S
+						g->p.y = y-b; g->p.x = x-a; g->p.x1 = NONFIXED(sxb); hline_clip(g);		// C2S
 						sxb += sxd;
 					} else if (qtr & 1) {
-						g->p.y = y-b; g->p.x = x-a; g->p.x1 = x+a; hline_clip(g);						// C2C
+						g->p.y = y-b; g->p.x = x-a; g->p.x1 = x+a; hline_clip(g);				// C2C
 					}
-					g->p.y = y+b; g->p.x = x-a; g->p.x1 = x+a; hline_clip(g);							// C2C
+					g->p.y = y+b; g->p.x = x-a; g->p.x1 = x+a; hline_clip(g);					// C2C
 					P += 5 + 2*(a++ - b--);
 				}
 			} while(a < b);
 			if (-a >= ey) {
-				g->p.y = y-a; g->p.x = x-b; g->p.x1 = NONFIXED(sxa); hline_clip(g);					// C2S
-				g->p.y = y-a; g->p.x = NONFIXED(exa); g->p.x1 = x+b; hline_clip(g);					// E2C
+				g->p.y = y-a; g->p.x = x-b; g->p.x1 = NONFIXED(sxa); hline_clip(g);				// C2S
+				g->p.y = y-a; g->p.x = NONFIXED(exa); g->p.x1 = x+b; hline_clip(g);				// E2C
 			} else if (-a >= sy) {
-				g->p.y = y-a; g->p.x = x-b; g->p.x1 = NONFIXED(sxa); hline_clip(g);					// C2S
+				g->p.y = y-a; g->p.x = x-b; g->p.x1 = NONFIXED(sxa); hline_clip(g);				// C2S
 			} else if (qtr & 1) {
-				g->p.y = y-a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);								// C2C
+				g->p.y = y-a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);						// C2C
 			}
-			g->p.y = y+b; g->p.x = x-a; g->p.x1 = x+a; hline_clip(g);									// C2C
+			g->p.y = y+b; g->p.x = x-a; g->p.x1 = x+a; hline_clip(g);							// C2C
 			break;
 
 		case 8:		// S2E3 sy <= ey
@@ -2036,13 +2040,13 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 			sxa -= sxd; exa += exd;
 			do {
 				if (-a >= sy) {
-					g->p.y = y-a; g->p.x = x-b; g->p.x1 = NONFIXED(sxa); hline_clip(g);		// C2S
+					g->p.y = y-a; g->p.x = x-b; g->p.x1 = NONFIXED(sxa); hline_clip(g);			// C2S
 					sxa -= sxd;
 				} else if (qtr & 1) {
 					g->p.y = y-a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);					// C2C
 				}
 				if (a <= ey) {
-					g->p.y = y+a; g->p.x = x-b; g->p.x1 = NONFIXED(exa); hline_clip(g);		// C2E
+					g->p.y = y+a; g->p.x = x-b; g->p.x1 = NONFIXED(exa); hline_clip(g);			// C2E
 					exa += exd;
 				} else if (qtr & 4) {
 					g->p.y = y+a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);					// C2C
@@ -2054,7 +2058,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 						g->p.y = y-b; g->p.x = x-a; g->p.x1 = NONFIXED(sxb); hline_clip(g);		// C2S
 						sxb += sxd;
 					} else if (qtr & 1) {
-						g->p.y = y-b; g->p.x = x-a; g->p.x1 = x+a; hline_clip(g);					// C2C
+						g->p.y = y-b; g->p.x = x-a; g->p.x1 = x+a; hline_clip(g);				// C2C
 					}
 					if (b <= ey) {
 						g->p.y = y+b; g->p.x = x-a; g->p.x1 = NONFIXED(exb); hline_clip(g);		// C2E
@@ -2068,12 +2072,12 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 			if (-a >= sy) {
 				g->p.y = y-a; g->p.x = x-b; g->p.x1 = NONFIXED(sxa); hline_clip(g);				// C2S
 			} else if (qtr & 1) {
-				g->p.y = y-a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);							// C2C
+				g->p.y = y-a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);						// C2C
 			}
 			if (a <= ey) {
 				g->p.y = y+a; g->p.x = x-b; g->p.x1 = NONFIXED(exa); hline_clip(g);				// C2E
 			} else if (qtr & 4) {
-				g->p.y = y+a; g->p.x = x-b; g->p.x1 = x+a; hline_clip(g);							// C2C
+				g->p.y = y+a; g->p.x = x-b; g->p.x1 = x+a; hline_clip(g);						// C2C
 			}
 			break;
 
@@ -2086,7 +2090,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 					g->p.y = y+a; g->p.x = NONFIXED(sxa); g->p.x1 = NONFIXED(exa); hline_clip(g);		// S2E
 					sxa += sxd; exa += exd;
 				} else if (a <= ey) {
-					g->p.y = y+a; g->p.x = x-b; g->p.x1 = NONFIXED(exa); hline_clip(g);				// C2E
+					g->p.y = y+a; g->p.x = x-b; g->p.x1 = NONFIXED(exa); hline_clip(g);					// C2E
 					exa += exd;
 				} else if (qtr & 4) {
 					g->p.y = y+a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);							// C2C
@@ -2095,23 +2099,23 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 					P += 3 + 2*a++;
 				} else {
 					if (b <= sy) {
-						g->p.y = y+b; g->p.x = NONFIXED(sxb); g->p.x1 = NONFIXED(exb); hline_clip(g);		// S2E
+						g->p.y = y+b; g->p.x = NONFIXED(sxb); g->p.x1 = NONFIXED(exb); hline_clip(g);	// S2E
 						sxb -= sxd; exb -= exd;
 					} else if (b <= ey) {
 						g->p.y = y+b; g->p.x = x-a; g->p.x1 = NONFIXED(exb); hline_clip(g);				// C2E
 						exb -= exd;
 					} else if (qtr & 4) {
-						g->p.y = y+b; g->p.x = x-a; g->p.x1 = x+a; hline_clip(g);							// C2C
+						g->p.y = y+b; g->p.x = x-a; g->p.x1 = x+a; hline_clip(g);						// C2C
 					}
 					P += 5 + 2*(a++ - b--);
 				}
 			} while(a < b);
 			if (a <= sy) {
-				g->p.y = y+a; g->p.x = NONFIXED(sxa); g->p.x1 = NONFIXED(exa); hline_clip(g);		// S2E
+				g->p.y = y+a; g->p.x = NONFIXED(sxa); g->p.x1 = NONFIXED(exa); hline_clip(g);			// S2E
 			} else if (a <= ey) {
-				g->p.y = y+a; g->p.x = x-b; g->p.x1 = NONFIXED(exa); hline_clip(g);				// C2E
+				g->p.y = y+a; g->p.x = x-b; g->p.x1 = NONFIXED(exa); hline_clip(g);						// C2E
 			} else if (qtr & 4) {
-				g->p.y = y+a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);							// C2C
+				g->p.y = y+a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);								// C2C
 			}
 			break;
 
@@ -2119,7 +2123,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 		case 15:	// S4E4 sy <= ey
 			g->p.y = y; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);									// C2C
 			do {
-				g->p.y = y-a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);								// C2C
+				g->p.y = y-a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);							// C2C
 				if (a <= sy) {
 					g->p.y = y+a; g->p.x = x-b; g->p.x1 = NONFIXED(exa); hline_clip(g);				// C2E
 					g->p.y = y+a; g->p.x = NONFIXED(sxa); g->p.x1 = x+b; hline_clip(g);				// S2C
@@ -2128,12 +2132,12 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 					g->p.y = y+a; g->p.x = x-b; g->p.x1 = NONFIXED(exa); hline_clip(g);				// C2E
 					exa += exd;
 				} else if (qtr & 4) {
-					g->p.y = y+a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);							// C2C
+					g->p.y = y+a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);						// C2C
 				}
 				if (P < 0) {
 					P += 3 + 2*a++;
 				} else {
-					g->p.y = y-b; g->p.x = x-a; g->p.x1 = x+a; hline_clip(g);							// C2C
+					g->p.y = y-b; g->p.x = x-a; g->p.x1 = x+a; hline_clip(g);						// C2C
 					if (b <= sy) {
 						g->p.y = y+b; g->p.x = x-a; g->p.x1 = NONFIXED(exb); hline_clip(g);			// C2E
 						g->p.y = y+b; g->p.x = NONFIXED(sxb); g->p.x1 = x+a; hline_clip(g);			// S2C
@@ -2142,19 +2146,19 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 						g->p.y = y+b; g->p.x = x-a; g->p.x1 = NONFIXED(exb); hline_clip(g);			// C2E
 						exb -= exd;
 					} else if (qtr & 4) {
-						g->p.y = y+b; g->p.x = x-a; g->p.x1 = x+a; hline_clip(g);						// C2C
+						g->p.y = y+b; g->p.x = x-a; g->p.x1 = x+a; hline_clip(g);					// C2C
 					}
 					P += 5 + 2*(a++ - b--);
 				}
 			} while(a < b);
-			g->p.y = y-a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);									// C2C
+			g->p.y = y-a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);								// C2C
 			if (a <= sy) {
 				g->p.y = y+a; g->p.x = x-b; g->p.x1 = NONFIXED(exa); hline_clip(g);					// C2E
 				g->p.y = y+a; g->p.x = NONFIXED(sxa); g->p.x1 = x+b; hline_clip(g);					// S2C
 			} else if (a <= ey) {
 				g->p.y = y+a; g->p.x = x-b; g->p.x1 = NONFIXED(exa); hline_clip(g);					// C2E
 			} else if (qtr & 4) {
-				g->p.y = y+a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);								// C2C
+				g->p.y = y+a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);							// C2C
 			}
 			break;
 
@@ -2208,7 +2212,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 				g->p.x = x; g->p.x1 = x;																// E2S
 				sxa -= sxd; exa -= exd;
 			} else {
-				g->p.x = x; g->p.x1 = x+b;															// E2C
+				g->p.x = x; g->p.x1 = x+b;																// E2C
 				exa -= exd;
 			}
 			g->p.y = y;
@@ -2218,7 +2222,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 					g->p.y = y-a; g->p.x = NONFIXED(exa); g->p.x1 = NONFIXED(sxa); hline_clip(g);		// E2S
 					sxa -= sxd; exa -= exd;
 				} else if (-a >= ey) {
-					g->p.y = y-a; g->p.x = NONFIXED(exa); g->p.x1 = x+b; hline_clip(g);				// E2C
+					g->p.y = y-a; g->p.x = NONFIXED(exa); g->p.x1 = x+b; hline_clip(g);					// E2C
 					exa -= exd;
 				} else if (!(qtr & 4)) {
 					g->p.y = y-a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);							// C2C
@@ -2230,7 +2234,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 						g->p.y = y-b; g->p.x = NONFIXED(exb); g->p.x1 = NONFIXED(sxb); hline_clip(g);	// E2S
 						sxb += sxd; exb += exd;
 					} else if (-b >= ey) {
-						g->p.y = y-b; g->p.x = NONFIXED(exb); g->p.x1 = x+a; hline_clip(g);			// E2C
+						g->p.y = y-b; g->p.x = NONFIXED(exb); g->p.x1 = x+a; hline_clip(g);				// E2C
 						exb += exd;
 					} else if (!(qtr & 4)) {
 						g->p.y = y-b; g->p.x = x-a; g->p.x1 = x+a; hline_clip(g);						// C2C
@@ -2241,7 +2245,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 			if (-a >= sy) {
 				g->p.y = y-a; g->p.x = NONFIXED(exa); g->p.x1 = NONFIXED(sxa); hline_clip(g);			// E2S
 			} else if (-a >= ey) {
-				g->p.y = y-a; g->p.x = NONFIXED(exa); g->p.x1 = x+b; hline_clip(g);					// E2C
+				g->p.y = y-a; g->p.x = NONFIXED(exa); g->p.x1 = x+b; hline_clip(g);						// E2C
 			} else if (!(qtr & 4)) {
 				g->p.y = y-a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);								// C2C
 			}
@@ -2251,7 +2255,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 		case 27:	// S4E3 sy > ey
 			g->p.y = y; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);									// C2C
 			do {
-				g->p.y = y-a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);								// C2C
+				g->p.y = y-a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);							// C2C
 				if (a <= ey) {
 					g->p.y = y+a; g->p.x = x-b; g->p.x1 = NONFIXED(exa); hline_clip(g);				// C2E
 					g->p.y = y+a; g->p.x = NONFIXED(sxa); g->p.x1 = x+b; hline_clip(g);				// S2C
@@ -2260,12 +2264,12 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 					g->p.y = y+a; g->p.x = NONFIXED(sxa); g->p.x1 = x+b; hline_clip(g);				// S2C
 					sxa += sxd;
 				} else if (!(qtr & 1)) {
-					g->p.y = y+a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);							// C2C
+					g->p.y = y+a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);						// C2C
 				}
 				if (P < 0) {
 					P += 3 + 2*a++;
 				} else {
-					g->p.y = y-b; g->p.x = x-a; g->p.x1 = x+a; hline_clip(g);							// C2C
+					g->p.y = y-b; g->p.x = x-a; g->p.x1 = x+a; hline_clip(g);						// C2C
 					if (b <= ey) {
 						g->p.y = y+b; g->p.x = x-a; g->p.x1 = NONFIXED(exb); hline_clip(g);			// C2E
 						g->p.y = y+b; g->p.x = NONFIXED(sxb); g->p.x1 = x+a; hline_clip(g);			// S2C
@@ -2274,19 +2278,19 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 						g->p.y = y+b; g->p.x = NONFIXED(sxb); g->p.x1 = x+a; hline_clip(g);			// S2C
 						sxb -= sxd;
 					} else if (!(qtr & 1)) {
-						g->p.y = y+b; g->p.x = x-a; g->p.x1 = x+a; hline_clip(g);						// C2C
+						g->p.y = y+b; g->p.x = x-a; g->p.x1 = x+a; hline_clip(g);					// C2C
 					}
 					P += 5 + 2*(a++ - b--);
 				}
 			} while(a < b);
-			g->p.y = y-a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);									// C2C
+			g->p.y = y-a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);								// C2C
 			if (a <= ey) {
 				g->p.y = y+a; g->p.x = x-b; g->p.x1 = NONFIXED(exa); hline_clip(g);					// C2E
 				g->p.y = y+a; g->p.x = NONFIXED(sxa); g->p.x1 = x+b; hline_clip(g);					// S2C
 			} else if (a <= sy) {
 				g->p.y = y+a; g->p.x = NONFIXED(sxa); g->p.x1 = x+b; hline_clip(g);					// S2C
 			} else if (!(qtr & 4)) {
-				g->p.y = y+a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);								// C2C
+				g->p.y = y+a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);							// C2C
 			}
 			break;
 
@@ -2297,7 +2301,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 					g->p.y = y+a; g->p.x = NONFIXED(sxa); g->p.x1 = NONFIXED(exa); hline_clip(g);		// S2E
 					sxa += sxd; exa += exd;
 				} else if (a <= sy) {
-					g->p.y = y+a; g->p.x = NONFIXED(sxa); g->p.x1 = x+b; hline_clip(g);				// S2C
+					g->p.y = y+a; g->p.x = NONFIXED(sxa); g->p.x1 = x+b; hline_clip(g);					// S2C
 					sxa += sxd;
 				} else if (!(qtr & 1)) {
 					g->p.y = y+a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);							// C2C
@@ -2309,7 +2313,7 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 						g->p.y = y+b; g->p.x = NONFIXED(sxb); g->p.x1 = NONFIXED(exb); hline_clip(g);	// S2E
 						sxb -= sxd; exb -= exd;
 					} else if (b <= sy) {
-						g->p.y = y+b; g->p.x = NONFIXED(sxb); g->p.x1 = x+a; hline_clip(g);			// S2C
+						g->p.y = y+b; g->p.x = NONFIXED(sxb); g->p.x1 = x+a; hline_clip(g);				// S2C
 						sxb -= sxd;
 					} else if (!(qtr & 1)) {
 						g->p.y = y+b; g->p.x = x-a; g->p.x1 = x+a; hline_clip(g);						// C2C
@@ -2318,9 +2322,9 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 				}
 			} while(a < b);
 			if (a <= ey) {
-				g->p.y = y+a; g->p.x = NONFIXED(sxa); g->p.x1 = x+b; hline_clip(g);				// S2C
+				g->p.y = y+a; g->p.x = NONFIXED(sxa); g->p.x1 = NONFIXED(exa); hline_clip(g);			// S2E
 			} else if (a <= sy) {
-				g->p.y = y+a; g->p.x = NONFIXED(sxa); g->p.x1 = x+b; hline_clip(g);					// S2C
+				g->p.y = y+a; g->p.x = NONFIXED(sxa); g->p.x1 = x+b; hline_clip(g);						// S2C
 			} else if (!(qtr & 4)) {
 				g->p.y = y+a; g->p.x = x-b; g->p.x1 = x+b; hline_clip(g);								// C2C
 			}
