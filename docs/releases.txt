@@ -13,6 +13,8 @@ FEATURE:	Added ILI9225 driver
 FEATURE:	Added ST7735 driver
 FEATURE:	Added Linux event input driver
 FIX:		Fixed an issue with color formats in Linux-Framebuffer board files
+FIX:		Fixing and improving arc rendering functions
+FIX:		Preventing possible crash when no valid GWIN default font has been set
 
 
 *** Release 2.6 ***
