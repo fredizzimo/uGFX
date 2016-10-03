@@ -90,7 +90,7 @@ static status_t cmd_import_ttf(const std::vector<std::string> &args)
     int size = std::stoi(args.at(2));
     bool bw = (args.size() == 4 && args.at(3) == "bw");
     std::string dest = strip_extension(src) + std::to_string(size) + (bw ? "bw" : "") + ".dat";
-    std::ifstream infile(src);
+    std::ifstream infile(src, std::ios::binary);
     
     if (!infile.good())
     {
@@ -118,7 +118,7 @@ static status_t cmd_import_bdf(const std::vector<std::string> &args)
     
     std::string src = args.at(1);
     std::string dest = strip_extension(args.at(1)) + ".dat";
-    std::ifstream infile(src);
+    std::ifstream infile(src, std::ios::binary);
     
     if (!infile.good())
     {

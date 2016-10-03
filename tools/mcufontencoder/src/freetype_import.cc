@@ -163,14 +163,22 @@ std::unique_ptr<DataFile> LoadFreetype(std::istream &file, int size, bool bw)
         glyphtable.push_back(glyph);
         
         charcode = FT_Get_Next_Char(face, charcode, &gindex);
+		if (gindex % 1000 == 0)
+			std::cout << ".";
     }
-    
+
+	std::cout << "\nEliminating duplicates (this may take a while)...";
+   
     eliminate_duplicates(glyphtable);
-    crop_glyphs(glyphtable, fontinfo);
-    detect_flags(glyphtable, fontinfo);
+	std::cout << "\nCropping glyphs...";
+	crop_glyphs(glyphtable, fontinfo);
+	std::cout << "\nDetecting flags...";
+	detect_flags(glyphtable, fontinfo);
     
-    std::unique_ptr<DataFile> result(new DataFile(
+	std::cout << "\nGenerating datafile...";
+	std::unique_ptr<DataFile> result(new DataFile(
         dictionary, glyphtable, fontinfo));
+	std::cout << "\n";
     return result;
 }
 
