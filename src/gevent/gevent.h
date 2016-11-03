@@ -92,17 +92,17 @@ extern "C" {
 	
 	How to create events (act as a Source)...
 	1. Provide a funtion to the application that returns a GSourceHandle (which can be a pointer to whatever the source wants)
-	2. Whenever a possible event occurs call geventGetSourceListener to get a pointer to a GSourceListener.
+	2. Whenever a possible event occurs call geventGetSourceListener() to get a pointer to a GSourceListener.
 			This will return NULL when there are no more listeners.
 			For each listener	- check the flags to see if an event should be sent.
-								- use geventGetEvent() to get the event buffer supplied by the listener
-									and then call geventSendEvent to send the event.
-								- Note: geventGetEvent() may return FALSE to indicate the listener is currently not listening and
+								- use geventGetEventBuffer() to get the event buffer supplied by the listener
+									and then call geventSendEvent() to send the event.
+								- Note: geventGetEventBuffer() may return FALSE to indicate the listener is currently not listening and
 									therefore no event should be sent. This situation enables the source to (optionally) flag
 									to the listener on its next wait that there have been missed events.
 								- Note: The GSourceListener pointer (and the GEvent buffer) are only valid between
-									the geventGetSourceListener call and either the geventSendEvent call or the next
-									geventGetSourceListener call.
+									the geventGetSourceListener() call and either the geventSendEvent call or the next
+									geventGetSourceListener() call.
 								- Note: All listeners must be processed for this event before anything else is processed.
 */
 
@@ -211,8 +211,8 @@ GSourceListener *geventGetSourceListener(GSourceHandle gsh, GSourceListener *las
  * @brief	Get the event buffer from the GSourceListener.
  * @details	A NULL return allows the source to record (perhaps in glr->scrflags) that the listener
  *			has missed events. This can then be notified as part of the next event for the listener.
- *			The buffer can only be accessed untill the next call to geventGetSourceListener
- *			or geventSendEvent
+ *			The buffer can only be accessed untill the next call to @p geventGetSourceListener()
+ *			or @p geventSendEvent()
  *
  * @param[in] psl	The source listener
  *
@@ -222,7 +222,7 @@ GEvent *geventGetEventBuffer(GSourceListener *psl);
 
 /** 
  * @brief	Called by a source to indicate the listener's event buffer has been filled.
- * @details	After calling this function the source must not reference in fields in the GSourceListener or the event buffer.
+ * @details	After calling this function the source must not reference in fields in the @p GSourceListener or the event buffer.
  *
  * @param[in] psl	The source listener
  */
