@@ -10,4 +10,4 @@ To use this driver:
 			Olimex SAM7-EX256
 
 2. To your makefile add the following lines:
-	include $(GFXLIB)/drivers/ginput/togglePal/ginput_lld.mk
+	include $(GFXLIB)/drivers/ginput/toggle/Pal/ginput_lld.mk
