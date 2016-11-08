@@ -16,6 +16,7 @@ FIX:		Fixed an issue with color formats in Linux-Framebuffer board files
 FIX:		Fixing and improving arc rendering functions
 FIX:		Preventing possible crash when no valid GWIN default font has been set
 FIX:		Updating Windows binaries of the font encoder to improve compatibility
+FIX:		Fix Progressbar bounds checking and decrementing
 
 
 *** Release 2.6 ***
