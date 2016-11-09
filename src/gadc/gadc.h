@@ -12,7 +12,7 @@
  *
  * @brief	Module to abstract the very variable ADC interfaces of the underlying systems
  *
- * @details	The reason why ChibiOS/GFX has it's own ADC abstraction is because
+ * @details	The reason why uGFX has it's own ADC abstraction is because
  *			the Chibi-OS drivers are very CPU specific and do not
  *			provide a way across all hardware platforms to create periodic
  *			ADC conversions. There are also issues with devices with different
