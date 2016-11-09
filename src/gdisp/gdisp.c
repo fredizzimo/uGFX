@@ -2950,6 +2950,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 
 			/* Replace the appropriate point */
 			if (ymax == lpnt->y) {
+				lx -= FIXED0_5;
 				for (lpnt = lpnt <= pntarray ? epnts : lpnt-1; lpnt->y == y; cnt--) {
 					if (!cnt) {
 						autoflush(g);
@@ -2962,6 +2963,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 				lk = (FIXED(lpnt->x) - lx) / (lpnt->y - y);
 				lx += FIXED0_5;
 			} else {
+				rx -= FIXED0_5;
 				for (rpnt = rpnt >= epnts ? pntarray : rpnt+1; rpnt->y == y; cnt--) {
 					if (!cnt) {
 						autoflush(g);
