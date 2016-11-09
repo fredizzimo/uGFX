@@ -1347,6 +1347,83 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 	}
 #endif
 
+#if GDISP_NEED_DUALCIRCLE
+
+	#define DRAW_DUALLINE(yval, r1, r2) 										\
+		g->p.y = yval;															\
+		g->p.x = x-r1;   g->p.x1 = x-r2+1; hline_clip(g);						\
+		g->p.x = x-r2;   g->p.x1 = x+r2;   g->p.color = color2; hline_clip(g);	\
+		g->p.x = x+r2+1; g->p.x1 = x+r1;   g->p.color = color1; hline_clip(g)
+	#define DRAW_SINGLELINE(yval, r)	g->p.y = yval; g->p.x = x-r; g->p.x1 = x+r; hline_clip(g)
+
+	void gdispGFillDualCircle(GDisplay *g, coord_t x, coord_t y, coord_t radius1, color_t color1, coord_t radius2, color_t color2) {
+		coord_t a, b1, b2, p1, p2;
+
+		MUTEX_ENTER(g);
+
+		// Do the combined circle where the inner circle < 45 deg (and outer circle)
+		g->p.color = color1;
+		a = 0; b1 = radius1; b2 = radius2; p1 = p2 = 1;
+		do {
+			DRAW_DUALLINE(y+a, b1, b2);
+			DRAW_DUALLINE(y-a, b1, b2);
+			if (p1 >= 0) p1 -= b1--;
+			p1 += a;
+			if (p2 >= 0) p2 -= b2--;
+			p2 += a;
+		} while(++a < b2);
+
+		// Do the combined circle where inner circle > 45 deg, outer circle < 45
+		do {
+			DRAW_DUALLINE(y+a, b1, b2);
+			DRAW_DUALLINE(y-a, b1, b2);
+			if (p1 >= 0) p1 -= b1--;
+			p1 += a;
+			do { p2 -= --b2; } while (p2+a >= b2);
+			p2 += a;
+		} while(++a <= radius2 && a < b1);
+		
+		if (a < radius2) {
+			// Do the combined circle where inner circle > 45 deg, outer circle > 45
+			do {
+				DRAW_DUALLINE(y+a, b1, b2);
+				DRAW_DUALLINE(y-a, b1, b2);
+				do { p1 -= --b1; } while (p1+a >= b1);
+				p1 += a;
+				do { p2 -= --b2; } while (p2+a >= b2);
+				p2 += a++;
+			} while(b2 > 0);
+			
+		} else {
+			// Do the outer circle above the inner circle but < 45 deg
+			do {
+				DRAW_SINGLELINE(y+a, b1);
+				DRAW_SINGLELINE(y-a, b1);
+				if (p1 >= 0) p1 -= b1--;
+				p1 += a++;
+			} while(a < b1);
+			DRAW_SINGLELINE(y+a, b1);
+			DRAW_SINGLELINE(y-a, b1);
+		}
+
+		// Do the top and bottom part of the outer circle (outer circle > 45deg and above inner circle)
+		a = 0; b1 = radius1; p1 = 1;
+		do {
+			if (p1 >= 0) {
+				DRAW_SINGLELINE(y+b1, a);
+				DRAW_SINGLELINE(y-b1, a);
+				p1 -= b1--;
+			}
+			p1 += a++;
+		} while(b1 > radius2 && a < b1);
+
+		autoflush(g);
+		MUTEX_EXIT(g);
+	}
+	#undef DRAW_DUALLINE
+	#undef DRAW_SINGLELINE
+#endif
+
 #if GDISP_NEED_ELLIPSE
 	void gdispGDrawEllipse(GDisplay *g, coord_t x, coord_t y, coord_t a, coord_t b, color_t color) {
 		coord_t	dx, dy;

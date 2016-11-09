@@ -17,6 +17,7 @@ FIX:		Fixing and improving arc rendering functions
 FIX:		Preventing possible crash when no valid GWIN default font has been set
 FIX:		Updating Windows binaries of the font encoder to improve compatibility
 FIX:		Fix Progressbar bounds checking and decrementing
+FEATURE:	Added a dual circle with the same center drawing routine to GDISP
 
 
 *** Release 2.6 ***

@@ -94,6 +94,14 @@
 		#define GDISP_NEED_CIRCLE				FALSE
 	#endif
 	/**
+	 * @brief   Are dual circle functions needed (one circle inside another).
+	 * @details	Defaults to FALSE
+	 * @note	Uses integer algorithms only. It does not use any trig or floating point.
+	 */
+	#ifndef GDISP_NEED_DUALCIRCLE
+		#define GDISP_NEED_DUALCIRCLE			FALSE
+	#endif
+	/**
 	 * @brief   Are ellipse functions needed.
 	 * @details	Defaults to FALSE
 	 * @note	Uses integer algorithms only. It does not use any trig or floating point.
