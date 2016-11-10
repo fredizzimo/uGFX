@@ -248,6 +248,10 @@ extern "C" {
 	 */
 	delaytime_t gdispImageNext(gdispImage *img);
 	
+	int gdispImageGetPaletteSize(gdispImage *img);
+	color_t gdispImageGetPalette(gdispImage *img, int index);
+	bool_t gdispImageAdjustPalette(gdispImage *img, int index, color_t newColor);
+	
 #ifdef __cplusplus
 }
 #endif

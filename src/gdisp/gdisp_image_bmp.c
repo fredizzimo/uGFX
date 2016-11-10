@@ -829,4 +829,73 @@ delaytime_t gdispImageNext_BMP(gdispImage *img) {
 	return TIME_INFINITE;
 }
 
+int gdispImageGetPaletteSize_BMP(gdispImage *img) {
+	#if GDISP_NEED_IMAGE_BMP_1 || GDISP_NEED_IMAGE_BMP_4 || GDISP_NEED_IMAGE_BMP_8
+		gdispImagePrivate_BMP *priv;
+	
+		priv = (gdispImagePrivate_BMP *)img->priv;
+		if (!priv) {
+			return 0;
+		}
+	
+		if (!(priv->bmpflags & BMP_PALETTE)) {
+			return 0;
+		}
+	
+		return priv->palsize;
+	#else
+		return 0;
+	#endif
+}
+
+color_t gdispImageGetPalette_BMP(gdispImage *img, int index) {
+	#if GDISP_NEED_IMAGE_BMP_1 || GDISP_NEED_IMAGE_BMP_4 || GDISP_NEED_IMAGE_BMP_8
+		gdispImagePrivate_BMP *priv;
+	
+		priv = (gdispImagePrivate_BMP *)img->priv;
+		if (!priv) {
+			return 0;
+		}
+	
+		if (!(priv->bmpflags & BMP_PALETTE)) {
+			return 0;
+		}
+	
+		if (index < 0 || index >= priv->palsize) {
+			return 0;
+		}
+	
+		return priv->palette[index];
+	
+	#else
+		return 0;
+	#endif
+}
+
+bool_t gdispImageAdjustPalette_BMP(gdispImage *img, int index, color_t newColor) {
+	#if GDISP_NEED_IMAGE_BMP_1 || GDISP_NEED_IMAGE_BMP_4 || GDISP_NEED_IMAGE_BMP_8
+		gdispImagePrivate_BMP *priv;
+	
+		priv = (gdispImagePrivate_BMP *)img->priv;
+		if (!priv) {
+			return FALSE;
+		}
+	
+		if (!(priv->bmpflags & BMP_PALETTE)) {
+			return FALSE;
+		}
+	
+		if (index < 0 || index >= priv->palsize) {
+			return FALSE;
+		}
+
+		priv->palette[index] = newColor;
+
+		return TRUE;
+	
+	#else
+		return 0;
+	#endif
+}
+
 #endif /* GFX_USE_GDISP && GDISP_NEED_IMAGE && GDISP_NEED_IMAGE_BMP */
