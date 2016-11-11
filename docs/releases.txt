@@ -19,6 +19,7 @@ FIX:		Updating Windows binaries of the font encoder to improve compatibility
 FIX:		Fixed progressbar bounds checking and decrementing
 FEATURE:	Added a dual circle with the same center drawing routine to GDISP
 FIX:		Fixed an issue in the filled polygon drawing function which caused irregularities
+FEATURE:	Added high-level functions to modify image color palettes
 
 
 *** Release 2.6 ***

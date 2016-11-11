@@ -33,6 +33,9 @@
 	extern gdispImageError gdispImageCache_BMP(gdispImage *img);
 	extern gdispImageError gdispGImageDraw_BMP(GDisplay *g, gdispImage *img, coord_t x, coord_t y, coord_t cx, coord_t cy, coord_t sx, coord_t sy);
 	extern delaytime_t gdispImageNext_BMP(gdispImage *img);
+	extern uint16_t gdispImageGetPaletteSize_BMP(gdispImage *img);
+	extern color_t gdispImageGetPalette_BMP(gdispImage *img, uint16_t index);
+	extern bool_t gdispImageAdjustPalette_BMP(gdispImage *img, uint16_t index, color_t newColor);
 #endif
 
 #if GDISP_NEED_IMAGE_JPG
@@ -53,41 +56,49 @@
 
 /* The structure defining the routines for image drawing */
 typedef struct gdispImageHandlers {
-	gdispImageError	(*open)(gdispImage *img);			/* The open function */
-	void			(*close)(gdispImage *img);			/* The close function */
-	gdispImageError	(*cache)(gdispImage *img);			/* The cache function */
+	gdispImageError	(*open)(gdispImage *img);					/* The open function */
+	void			(*close)(gdispImage *img);					/* The close function */
+	gdispImageError	(*cache)(gdispImage *img);					/* The cache function */
 	gdispImageError	(*draw)(GDisplay *g,
 							gdispImage *img,
 							coord_t x, coord_t y,
 							coord_t cx, coord_t cy,
-							coord_t sx, coord_t sy);	/* The draw function */
-	delaytime_t		(*next)(gdispImage *img);			/* The next frame function */
+							coord_t sx, coord_t sy);			/* The draw function */
+	delaytime_t		(*next)(gdispImage *img);					/* The next frame function */
+	uint16_t		(*getPaletteSize)(gdispImage *img);			/* Retrieve the size of the palette (number of entries) */
+	color_t			(*getPalette)(gdispImage *img, uint16_t index);							/* Retrieve a specific color value of the palette */
+	bool_t			(*adjustPalette)(gdispImage *img, uint16_t index, color_t newColor);	/* Replace a color value in the palette */
 } gdispImageHandlers;
 
 static gdispImageHandlers ImageHandlers[] = {
 	#if GDISP_NEED_IMAGE_NATIVE
 		{	gdispImageOpen_NATIVE,	gdispImageClose_NATIVE,
 			gdispImageCache_NATIVE,	gdispGImageDraw_NATIVE,	gdispImageNext_NATIVE,
+			0,						0,						0
 		},
 	#endif
 	#if GDISP_NEED_IMAGE_GIF
 		{	gdispImageOpen_GIF,		gdispImageClose_GIF,
 			gdispImageCache_GIF,	gdispGImageDraw_GIF,	gdispImageNext_GIF,
+			0,						0,						0
 		},
 	#endif
 	#if GDISP_NEED_IMAGE_BMP
-		{	gdispImageOpen_BMP,		gdispImageClose_BMP,
-			gdispImageCache_BMP,	gdispGImageDraw_BMP,	gdispImageNext_BMP,
+		{	gdispImageOpen_BMP,				gdispImageClose_BMP,
+			gdispImageCache_BMP,			gdispGImageDraw_BMP,		gdispImageNext_BMP,
+			gdispImageGetPaletteSize_BMP,	gdispImageGetPalette_BMP,	gdispImageAdjustPalette_BMP
 		},
 	#endif
 	#if GDISP_NEED_IMAGE_JPG
 		{	gdispImageOpen_JPG,		gdispImageClose_JPG,
 			gdispImageCache_JPG,	gdispGImageDraw_JPG,	gdispImageNext_JPG,
+			0,						0,						0
 		},
 	#endif
 	#if GDISP_NEED_IMAGE_PNG
 		{	gdispImageOpen_PNG,		gdispImageClose_PNG,
 			gdispImageCache_PNG,	gdispGImageDraw_PNG,	gdispImageNext_PNG,
+			0,						0,						0
 		},
 	#endif
 };
@@ -171,6 +182,25 @@ delaytime_t gdispImageNext(gdispImage *img) {
 	if (!img->fns) return GDISP_IMAGE_ERR_BADFORMAT;
 	return img->fns->next(img);
 }
+
+uint16_t gdispImageGetPaletteSize(gdispImage *img) {
+	if (!img->fns) return 0;
+	if (!img->fns->getPaletteSize) return 0;
+	return img->fns->getPaletteSize(img);
+}
+
+color_t gdispImageGetPalette(gdispImage *img, uint16_t index) {
+	if (!img->fns) return 0;
+	if (!img->fns->getPalette) return 0;
+	return img->fns->getPalette(img, index);
+}
+
+bool_t gdispImageAdjustPalette(gdispImage *img, uint16_t index, color_t newColor) {
+	if (!img->fns) return FALSE;
+	if (!img->fns->adjustPalette) return FALSE;
+	return img->fns->adjustPalette(img, index, newColor);
+}
+
 
 // Helper Routines
 void *gdispImageAlloc(gdispImage *img, size_t sz) {
