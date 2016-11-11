@@ -248,8 +248,40 @@ extern "C" {
 	 */
 	delaytime_t gdispImageNext(gdispImage *img);
 
+	/**
+	 * @brief	Get the number of entries in the color palette.
+	 * @return	The number of entries in the color palette or 0 if the image doesn't use a color palette.
+	 *
+	 * @param[in] img	The image structure
+	 * 
+	 * @pre		gdispImageOpen() must have returned successfully.
+	 */
 	uint16_t gdispImageGetPaletteSize(gdispImage *img);
+	
+	/**
+	 * @brief	Get an entry in the color palette.
+	 * @return	The color value at a given position in the color palette.
+	 *
+	 * @param[in] img	The image structure
+	 * @param[in] index	The index of the color palette entry
+	 * 
+	 * @pre		gdispImageOpen() must have returned successfully.
+	 *
+	 * @note	This function will return 0 if the index is out of bounds or if the image doesn't use a color palette.
+	 */
 	color_t gdispImageGetPalette(gdispImage *img, uint16_t index);
+	
+	/**
+	 * @brief	Modify an entry in the color palette.
+	 * @return	@p TRUE on success, @p FALSE otherwise.
+	 *
+	 * @param[in] img		The image structure
+	 * @param[in] index		The index of the color palette entry
+	 * @param[in] newColor	The new color value of the specified entry
+	 * 
+	 * @pre		gdispImageOpen() must have returned successfully.
+	 * @note	This function will return @p FALSE if the index is out of bounds or if the image doesn't use a color palette.
+	 */
 	bool_t gdispImageAdjustPalette(gdispImage *img, uint16_t index, color_t newColor);
 	
 #ifdef __cplusplus
