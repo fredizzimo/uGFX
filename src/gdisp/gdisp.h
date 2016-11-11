@@ -589,7 +589,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 	 * @api
 	 */
 	void gdispGFillDualCircle(GDisplay *g, coord_t x, coord_t y, coord_t radius1, color_t color1, coord_t radius2, color_t color2);
-	#define gdispFillDualCircle(x,y,r,c)					gdispGFillDualCircle(GDISP,x,y,r1,c1,r2,c2)
+	#define gdispFillDualCircle(x,y,r1,c1,r2,c2)			gdispGFillDualCircle(GDISP,x,y,r1,c1,r2,c2)
 #endif
 
 /* Ellipse Functions */
