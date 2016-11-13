@@ -21,6 +21,7 @@ FEATURE:	Added a dual circle with the same center drawing routine to GDISP
 FIX:		Fixed an issue in the filled polygon drawing function which caused irregularities
 FEATURE:	Added high-level functions to modify image color palettes
 FIX:		Improving gdispDrawThickLine()
+FEATURE:	Added gdispAddFont() for adding a dynamic font to the permanent font list
 
 
 *** Release 2.6 ***

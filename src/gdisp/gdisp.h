@@ -1053,6 +1053,8 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 	 * @details	Allocates memory for new font metadata using gfxAlloc, remember to close font after use!
 	 * @return	A new font or NULL if out of memory.
 	 * @pre		GDISP_NEED_TEXT must be TRUE in your gfxconf.h
+	 * @note	A scaled font should probably not be added to the font list as it will prevent the
+	 *			unscaled font of the same name being found as it will be the scaled version that will be found.
 	 *
 	 * @param[in] font	The base font to use.
 	 * @param[in] scale_x	The scale factor in horizontal direction.
@@ -1070,6 +1072,17 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 	 * @api
 	 */
 	const char *gdispGetFontName(font_t font);
+	
+	/**
+	 * @brief	Add a font permanently to the font list.
+	 * @returns	TRUE on success. Reasons it may fail: out of memory, if it is already on the list, it is not a font loaded in RAM.
+	 * @pre		GDISP_NEED_TEXT must be TRUE in your gfxconf.h
+	 *
+	 * @param[in] font		The font to add to the font list.
+	 *
+	 * @api
+	 */
+	bool_t gdispAddFont(font_t font);
 #endif
 
 /* Extra Arc Functions */
