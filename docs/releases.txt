@@ -22,6 +22,7 @@ FIX:		Fixed an issue in the filled polygon drawing function which caused irregul
 FEATURE:	Added high-level functions to modify image color palettes
 FIX:		Improving gdispDrawThickLine()
 FEATURE:	Added gdispAddFont() for adding a dynamic font to the permanent font list
+FEATURE:	Added gmiscHittestPoly() for checking whether a point is inside of a polygon
 
 
 *** Release 2.6 ***

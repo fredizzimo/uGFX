@@ -48,6 +48,13 @@
 	#ifndef GMISC_NEED_INVSQRT
 		#define GMISC_NEED_INVSQRT		FALSE
 	#endif
+	/**
+	 * @brief   Include polygon hit test functions
+	 * @details	Defaults to FALSE
+	 */
+	#ifndef GMISC_NEED_HITTEST_POLY
+		#define GMISC_NEED_HITTEST_POLY		FALSE
+	#endif
 /**
  * @}
  *

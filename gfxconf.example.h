@@ -335,5 +335,6 @@
 //    #define GMISC_INVSQRT_REAL_SLOW                  FALSE
 //#define GMISC_NEED_MATRIXFLOAT2D                     FALSE
 //#define GMISC_NEED_MATRIXFIXED2D                     FALSE
+//#define GMISC_NEED_HITTEST_POLY                      FALSE
 
 #endif /* _GFXCONF_H */
