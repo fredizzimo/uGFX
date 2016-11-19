@@ -23,6 +23,7 @@ FEATURE:	Added high-level functions to modify image color palettes
 FIX:		Improving gdispDrawThickLine()
 FEATURE:	Added gdispAddFont() for adding a dynamic font to the permanent font list
 FEATURE:	Added gmiscHittestPoly() for checking whether a point is inside of a polygon
+FIX:		Fixed strange multi-thread issues in GEVENT
 
 
 *** Release 2.6 ***
