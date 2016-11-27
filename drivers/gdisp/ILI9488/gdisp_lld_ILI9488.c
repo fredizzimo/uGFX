@@ -92,7 +92,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	/* Get the bus for the following initialisation commands */
 	acquire_bus(g);
 
-	write_index(g, 0XF7);
+	write_index(g, 0xF7);
 	write_data(g, 0xA9);
 	write_data(g, 0x51);
 	write_data(g, 0x2C);
@@ -105,7 +105,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	write_index(g, 0xC1);
 	write_data(g, 0x41);
 
-	write_index(g, 0XC5);
+	write_index(g, 0xC5);
 	write_data(g, 0x00);
 	write_data(g, 0x2A);
 	write_data(g, 0x80);
