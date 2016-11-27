@@ -712,6 +712,31 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 	#define gdispDrawArc(x,y,r,s,e,c)						gdispGDrawArc(GDISP,x,y,r,s,e,c)
 
 	/*
+	 * @brief	Draw a thick arc.
+	 * @pre		GDISP_NEED_ARC must be TRUE in your gfxconf.h
+	 *
+	 * @param[in] g 			The display to use
+	 * @param[in] xc,yc			The center point
+	 * @param[in] startradius	The inner radius of the thick arc
+	 * @param[in] endradius		The outer radius of the thick arc
+	 * @param[in] startangle	The start angle (0 to 360)
+	 * @param[in] endangle		The end angle (0 to 360)
+	 * @param[in] color			The color of the arc
+	 *
+	 * @note		This routine requires trig support. It can either come from your C runtime library
+	 * 				cos() and sin() which requires floating point support (and is slow), or you can define GFX_USE_GMISC
+	 * 				and either GMISC_NEED_FIXEDTRIG or GMISC_NEED_FASTTRIG.
+	 * 				GMISC_NEED_FASTTRIG uses table based floating point trig operations.
+	 * 				GMISC_NEED_FIXEDTRIG uses fixed point integer trig operations.
+	 * 				Note accuracy on both the table based options are more than adequate for the one degree
+	 * 				resolution provided by these arc routines. Both are much faster than your C runtime library.
+	 *
+	 * @api
+	 */
+	void gdispGDrawThickArc(GDisplay *g, coord_t xc, coord_t yc, coord_t startradius, coord_t endradius, coord_t startangle, coord_t endangle, color_t color);
+	#define gdispDrawThickArc(x,y,rs,re,s,e,c)						gdispGDrawThickArc(GDISP,x,y,rs,re,s,e,c)
+	
+	/*
 	 * @brief	Draw a filled arc.
 	 * @pre		GDISP_NEED_ARC must be TRUE in your gfxconf.h
 	 *
