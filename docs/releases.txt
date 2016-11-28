@@ -17,7 +17,7 @@ FIX:		Fixing and improving arc rendering functions
 FIX:		Preventing possible crash when no valid GWIN default font has been set
 FIX:		Updating Windows binaries of the font encoder to improve compatibility
 FIX:		Fixed progressbar bounds checking and decrementing
-FEATURE:	Added a dual circle with the same center drawing routine to GDISP
+FEATURE:	Added gdispFillDualCircle()
 FIX:		Fixed an issue in the filled polygon drawing function which caused irregularities
 FEATURE:	Added high-level functions to modify image color palettes
 FIX:		Improving gdispDrawThickLine()
