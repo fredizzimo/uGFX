@@ -25,6 +25,8 @@ FEATURE:	Added gdispAddFont() for adding a dynamic font to the permanent font li
 FEATURE:	Added gmiscHittestPoly() for checking whether a point is inside of a polygon
 FIX:		Fixed strange multi-thread issues in GEVENT
 FEATURE:	Added ILI9488 driver
+FEATURE:	Added the ability to display the detected compiler
+FIX:		Fixed an illegal instruction in the Cortex M0 task switcher
 
 
 *** Release 2.6 ***
