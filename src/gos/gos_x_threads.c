@@ -122,7 +122,6 @@ void gfxSleepMilliseconds(delaytime_t ms) {
 	case TIME_INFINITE:
 		while(1)
 			gfxYield();
-		return;
 	}
 
 	// Convert our delay to ticks
@@ -144,7 +143,6 @@ void gfxSleepMicroseconds(delaytime_t ms) {
 	case TIME_INFINITE:
 		while(1)
 			gfxYield();
-		return;
 	}
 
 	// Convert our delay to ticks
