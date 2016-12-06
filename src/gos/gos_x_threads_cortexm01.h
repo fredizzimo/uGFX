@@ -60,42 +60,54 @@
 
 #elif GFX_COMPILER == GFX_COMPILER_KEIL || GFX_COMPILER == GFX_COMPILER_ARMCC
 
-	static /*__arm*/ void _gfxTaskSwitch(thread *oldt, thread *newt) {
-/*		push	{r4, r5, r6, r7, lr}
+	static __asm void _gfxTaskSwitch(thread *oldt, thread *newt) {
+		// Save the old context
+		push	{r4, r5, r6, r7, lr}
 		mov     r4, r8
 		mov     r5, r9
 		mov     r6, r10
 		mov     r7, r11
 		push    {r4, r5, r6, r7}
-		str	sp, %[oldtcxt]
-		ldr	sp, %[newtcxt]
+		str	sp, [r0,#__cpp(offsetof(thread,cxt))]		// oldt->cxt
+		
+		// Load the new context
+		ldr	sp, [r1,#__cpp(offsetof(thread,cxt))]		// newt->cxt
 		pop     {r4, r5, r6, r7}
 		mov     r8, r4
 		mov     r9, r5
 		mov     r10, r6
 		mov     r11, r7
 		pop     {r4, r5, r6, r7, pc}
-		: [newtcxt] "=m" (newt->cxt)
-		: [oldtcxt] "m" (oldt->cxt)
-		: "memory");
-*/	}
+	}
 
-	static /* __arm */ void _gfxStartThread(thread *oldt, thread *newt) {
-		newt->cxt = (char *)newt + newt->size;
-/*		push    {r4, r5, r6, r7, lr}
+	static __asm void _gfxStartThread(thread *oldt, thread *newt) {
+		// Calculate where to generate the new context
+		//		newt->cxt = (char *)newt + newt->size;
+        ldr      r2,[r1,#__cpp(offsetof(thread,size))]
+        add      r2,r2,r1
+        str      r2,[r1,#__cpp(offsetof(thread,cxt))]
+		
+		// Save the old context
+		push	{r4, r5, r6, r7, lr}
 		mov     r4, r8
 		mov     r5, r9
 		mov     r6, r10
 		mov     r7, r11
 		push    {r4, r5, r6, r7}
-		str	sp, %[oldtcxt]
-		ldr	sp, %[newtcxt]
-		: [newtcxt] "=m" (newt->cxt)
-		: [oldtcxt] "m" (oldt->cxt)
-		: "memory");
-*/
-		// Run the users function
-		gfxThreadExit(current->fn(current->param));
+		str		sp, [r0,#__cpp(offsetof(thread,cxt))]	// oldt->cxt
+		
+		// Load the new (imcomplete) context
+		ldr		sp, [r1,#__cpp(offsetof(thread,cxt))]	// newt->cxt
+		
+		// Run the users function - we save some code because gfxThreadExit() never returns
+		//		gfxThreadExit(current->fn(current->param));
+        LDR      r2,__cpp(&_gfxCurrentThread)
+        LDR      r2,[r2,#0]
+        LDR      r0,[r2,#__cpp(offsetof(thread,param))]
+        LDR      r1,[r2,#__cpp(offsetof(thread,fn))]
+        BLX      r1
+        MOV      r4,r0
+        BL       gfxThreadExit
 	}
 
 #else

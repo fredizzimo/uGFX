@@ -186,7 +186,7 @@ typedef struct threadQ {
 
 static threadQ		readyQ;					// The list of ready threads
 static threadQ		deadQ;					// Where we put threads waiting to be deallocated
-static thread *		current;				// The current running thread
+thread *			_gfxCurrentThread;		// The current running thread - unfortunately this has to be non-static for the keil compiler
 static thread		mainthread;				// The main thread context
 
 #undef GFX_THREADS_DONE
@@ -399,7 +399,7 @@ static thread		mainthread;				// The main thread context
 				//	as we are on a different stack.
 
 				// Run the users function.
-				gfxThreadExit(current->fn(current->param));
+				gfxThreadExit(_gfxCurrentThread->fn(_gfxCurrentThread->param));
 
 				// We never get here as gfxThreadExit() never returns
 			}
@@ -451,11 +451,11 @@ void _gosThreadsInit(void) {
 
 	_gfxThreadsInit();
 
-	current = &mainthread;
+	_gfxCurrentThread = &mainthread;
 }
 
 gfxThreadHandle gfxThreadMe(void) {
-	return (gfxThreadHandle)current;
+	return (gfxThreadHandle)_gfxCurrentThread;
 }
 
 // Check if there are dead processes to deallocate
@@ -476,9 +476,9 @@ void gfxYield(void) {
 	if (!readyQ.head)
 		return;
 
-	Qadd(&readyQ, me = current);
-	current = Qpop(&readyQ);
-	_gfxTaskSwitch(me, current);
+	Qadd(&readyQ, me = _gfxCurrentThread);
+	_gfxCurrentThread = Qpop(&readyQ);
+	_gfxTaskSwitch(me, _gfxCurrentThread);
 }
 
 // This routine is not currently public - but it could be.
@@ -486,7 +486,7 @@ void gfxThreadExit(threadreturn_t ret) {
 	thread	*me;
 
 	// Save the results in case someone is waiting
-	me = current;
+	me = _gfxCurrentThread;
 	me->param = (void *)ret;
 	me->flags |= FLG_THD_DEAD;
 
@@ -496,11 +496,11 @@ void gfxThreadExit(threadreturn_t ret) {
 		Qadd(&deadQ, me);
 
 	// Set the next thread. Exit if it was the last thread
-	if (!(current = Qpop(&readyQ)))
+	if (!(_gfxCurrentThread = Qpop(&readyQ)))
 		gfxExit();
 
 	// Switch to the new thread
-	_gfxTaskSwitch(me, current);
+	_gfxTaskSwitch(me, _gfxCurrentThread);
 
 	// We never get back here as we didn't re-queue ourselves
 }
@@ -530,9 +530,9 @@ gfxThreadHandle gfxThreadCreate(void *stackarea, size_t stacksz, threadpriority_
 	t->param = param;
 
 	// Add the current thread to the queue because we are starting a new thread.
-	me = current;
+	me = _gfxCurrentThread;
 	Qadd(&readyQ, me);
-	current = t;
+	_gfxCurrentThread = t;
 
 	_gfxStartThread(me, t);
 
@@ -544,7 +544,7 @@ threadreturn_t gfxThreadWait(gfxThreadHandle th) {
 	thread *		t;
 
 	t = th;
-	if (t == current)
+	if (t == _gfxCurrentThread)
 		return -1;
 
 	// Mark that we are waiting
