@@ -55,7 +55,7 @@
 							: "memory");
 
 		// Run the users function
-		gfxThreadExit(current->fn(current->param));
+		gfxThreadExit(_gfxCurrentThread->fn(_gfxCurrentThread->param));
 	}
 
 #elif GFX_COMPILER == GFX_COMPILER_KEIL || GFX_COMPILER == GFX_COMPILER_ARMCC
@@ -100,7 +100,7 @@
 		ldr		sp, [r1,#__cpp(offsetof(thread,cxt))]	// newt->cxt
 		
 		// Run the users function - we save some code because gfxThreadExit() never returns
-		//		gfxThreadExit(current->fn(current->param));
+		//		gfxThreadExit(_gfxCurrentThread->fn(_gfxCurrentThread->param));
         LDR      r2,__cpp(&_gfxCurrentThread)
         LDR      r2,[r2,#0]
         LDR      r0,[r2,#__cpp(offsetof(thread,param))]
