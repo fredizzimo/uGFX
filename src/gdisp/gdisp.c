@@ -1912,6 +1912,125 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 #endif
 
 #if GDISP_NEED_ARC
+	#if (!GMISC_NEED_FIXEDTRIG && !GMISC_NEED_FASTTRIG) || !GFX_USE_GMISC
+		#include <math.h>
+	#endif
+
+	void gdispGDrawThickArc(GDisplay *g, coord_t xc, coord_t yc, coord_t radiusStart, coord_t radiusEnd, coord_t start, coord_t end, color_t color) {
+		coord_t x, y, d, r;
+		coord_t startTan, endTan, curangle;
+		coord_t precision = 512;
+
+		// Normalize the angles
+		if (start < 0)
+			start -= (start/360-1)*360;
+		else if (start >= 360)
+			start %= 360;
+		if (end < 0)
+			end -= (end/360-1)*360;
+		else if (end >= 360)
+			end %= 360;
+
+		#if GFX_USE_GMISC && GMISC_NEED_FIXEDTRIG
+			if((start / 45) % 2 == 0){
+				startTan = ffsin(start % 45) * precision / ffcos(start % 45) + start / 45 * precision;}
+			else{
+				startTan = ffsin(start % 45 - 45) * precision / ffcos(start % 45 - 45) + start / 45 * precision + precision;}
+
+			if((end / 45) % 2 == 0){
+				endTan = ffsin(end % 45) * precision / ffcos(end % 45) + end / 45 * precision;}
+			else{
+				endTan = ffsin(end % 45 - 45) * precision / ffcos(end % 45 - 45) + end / 45 * precision + precision;}
+		#elif GFX_USE_GMISC && GMISC_NEED_FASTTRIG
+			if((start / 45) % 2 == 0){
+				startTan = fsin(start % 45) * precision / fcos(start % 45) + start / 45 * precision;}
+			else{
+				startTan = fsin(start % 45 - 45) * precision / fcos(start % 45 - 45) + start / 45 * precision + precision;}
+
+			if((end / 45) % 2 == 0){
+				endTan = fsin(end % 45) * precision / fcos(end % 45) + end / 45 * precision;}
+			else{
+				endTan = fsin(end % 45 - 45) * precision / fcos(end % 45 - 45) + end / 45 * precision + precision;}
+		#else
+			if((start / 45) % 2 == 0){
+				startTan = (tan((start % 45)*GFX_PI/180) + start / 45)* precision;}
+			else{
+				startTan = (1+tan((start % 45 - 45)*GFX_PI/180) + start / 45)* precision;}
+
+			if((end / 45) % 2 == 0){
+				endTan = (tan((end % 45) *GFX_PI/180) + end / 45) * precision;}
+			else{
+				endTan = (1+tan((end % 45 - 45) *GFX_PI/180) + end / 45) * precision;}
+		#endif
+
+		MUTEX_ENTER(g);
+		g->p.color = color;
+
+		//Draw concentric circles using Andres algorithm
+		for(r = radiusStart; r <= radiusEnd; r++)
+		{
+			x = 0;
+			y = r;
+			d = r - 1;
+
+			while (y >= x){
+				//approximate tan
+				curangle = x*precision/y;
+
+				if(end > start){
+					g->p.color = color;
+					//Draw points by symmetry
+					if(curangle > startTan && curangle < endTan){g->p.y = yc - x; g->p.x = xc + y; drawpixel_clip(g);}
+					if(curangle + 2*precision > startTan && curangle + 2*precision < endTan){g->p.y = yc - y; g->p.x = xc - x; drawpixel_clip(g);}
+					if(curangle + 4*precision > startTan && curangle + 4*precision < endTan){g->p.y = yc + x; g->p.x = xc - y; drawpixel_clip(g);}
+					if(curangle + 6*precision > startTan && curangle + 6*precision < endTan){g->p.y = yc + y; g->p.x = xc + x; drawpixel_clip(g);}
+
+					curangle = precision - curangle;
+
+					if(curangle + precision > startTan && curangle + precision < endTan){g->p.y = yc - y; g->p.x = xc + x; drawpixel_clip(g);}
+					if(curangle + 3*precision > startTan && curangle + 3*precision < endTan){g->p.y = yc - x; g->p.x = xc - y; drawpixel_clip(g);}
+					if(curangle + 5*precision > startTan && curangle + 5*precision < endTan){g->p.y = yc + y; g->p.x = xc - x; drawpixel_clip(g);}
+					if(curangle + 7*precision > startTan && curangle + 7*precision < endTan){g->p.y = yc + x; g->p.x = xc + y; drawpixel_clip(g);}
+						
+				}
+				else{
+					//Draw points by symmetry
+					if(curangle > startTan || curangle < endTan){g->p.y = yc - x; g->p.x = xc + y; drawpixel_clip(g);}
+					if(curangle + 2*precision > startTan || curangle + 2*precision < endTan){g->p.y = yc - y; g->p.x = xc - x; drawpixel_clip(g);}
+					if(curangle + 4*precision > startTan || curangle + 4*precision < endTan){g->p.y = yc + x; g->p.x = xc - y; drawpixel_clip(g);}
+					if(curangle + 6*precision > startTan || curangle + 6*precision < endTan){g->p.y = yc + y; g->p.x = xc + x; drawpixel_clip(g);}
+
+					curangle = precision - curangle;
+
+					if(curangle + precision > startTan || curangle + precision < endTan){g->p.y = yc - y; g->p.x = xc + x; drawpixel_clip(g);}
+					if(curangle + 3*precision > startTan || curangle + 3*precision < endTan){g->p.y = yc - x; g->p.x = xc - y; drawpixel_clip(g);}
+					if(curangle + 5*precision > startTan || curangle + 5*precision < endTan){g->p.y = yc + y; g->p.x = xc - x; drawpixel_clip(g);}
+					if(curangle + 7*precision > startTan || curangle + 7*precision < endTan){g->p.y = yc + x; g->p.x = xc + y; drawpixel_clip(g);}					
+				}
+
+				//Compute next point
+				if (d >= 2 * x){
+					d -= 2 * x + 1;
+					x++;
+				}
+				else if (d < 2 * (r - y)){
+					d += 2 * y - 1;
+					y--;
+				}
+				else{
+					d += 2 * (y - x - 1);
+					y--;
+					x++;
+				}
+			}
+		}
+
+		autoflush(g);
+		MUTEX_EXIT(g);
+	}
+#endif
+
+#if GDISP_NEED_ARC
 	void gdispGFillArc(GDisplay *g, coord_t x, coord_t y, coord_t radius, coord_t start, coord_t end, color_t color) {
 		coord_t a, b, P;
 		coord_t	sy, ey;
