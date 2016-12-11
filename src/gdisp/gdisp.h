@@ -686,16 +686,16 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 #endif
 
 #if GDISP_NEED_ARC || defined(__DOXYGEN__)
-	/*
+	/**
 	 * @brief	Draw an arc.
 	 * @pre		GDISP_NEED_ARC must be TRUE in your gfxconf.h
 	 *
-	 * @param[in] g 		The display to use
-	 * @param[in] x0,y0		The center point
-	 * @param[in] radius	The radius of the arc
-	 * @param[in] start		The start angle (0 to 360)
-	 * @param[in] end		The end angle (0 to 360)
-	 * @param[in] color		The color of the arc
+	 * @param[in] g 			The display to use
+	 * @param[in] x,y			The center point
+	 * @param[in] radius		The radius of the arc
+	 * @param[in] startangle	The start angle (0 to 360)
+	 * @param[in] endangle		The end angle (0 to 360)
+	 * @param[in] color			The color of the arc
 	 *
 	 * @note		If you are just doing 45 degree angles consider using @p gdispDrawArcSectors() instead.
 	 * @note		This routine requires trig support. It can either come from your C runtime library
@@ -711,7 +711,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 	void gdispGDrawArc(GDisplay *g, coord_t x, coord_t y, coord_t radius, coord_t startangle, coord_t endangle, color_t color);
 	#define gdispDrawArc(x,y,r,s,e,c)						gdispGDrawArc(GDISP,x,y,r,s,e,c)
 
-	/*
+	/**
 	 * @brief	Draw a thick arc.
 	 * @pre		GDISP_NEED_ARC must be TRUE in your gfxconf.h
 	 *
@@ -736,16 +736,16 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 	void gdispGDrawThickArc(GDisplay *g, coord_t xc, coord_t yc, coord_t startradius, coord_t endradius, coord_t startangle, coord_t endangle, color_t color);
 	#define gdispDrawThickArc(x,y,rs,re,s,e,c)						gdispGDrawThickArc(GDISP,x,y,rs,re,s,e,c)
 	
-	/*
+	/**
 	 * @brief	Draw a filled arc.
 	 * @pre		GDISP_NEED_ARC must be TRUE in your gfxconf.h
 	 *
-	 * @param[in] g 		The display to use
-	 * @param[in] x0,y0		The center point
-	 * @param[in] radius	The radius of the arc
-	 * @param[in] start		The start angle (0 to 360)
-	 * @param[in] end		The end angle (0 to 360)
-	 * @param[in] color		The color of the arc
+	 * @param[in] g 			The display to use
+	 * @param[in] x,y			The center point
+	 * @param[in] radius		The radius of the arc
+	 * @param[in] startangle	The start angle (0 to 360)
+	 * @param[in] endangle		The end angle (0 to 360)
+	 * @param[in] color			The color of the arc
 	 *
 	 * @note		If you are just doing 45 degree angles consider using @p gdispFillArcSectors() instead.
 	 * @note		This routine requires trig support. It can either come from your C runtime library
