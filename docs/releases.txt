@@ -17,7 +17,7 @@ FIX:		Fixing and improving arc rendering functions
 FIX:		Preventing possible crash when no valid GWIN default font has been set
 FIX:		Updating Windows binaries of the font encoder to improve compatibility
 FIX:		Fixed progressbar bounds checking and decrementing
-FEATURE:	Added a dual circle with the same center drawing routine to GDISP
+FEATURE:	Added gdispFillDualCircle()
 FIX:		Fixed an issue in the filled polygon drawing function which caused irregularities
 FEATURE:	Added high-level functions to modify image color palettes
 FIX:		Improving gdispDrawThickLine()
@@ -25,6 +25,9 @@ FEATURE:	Added gdispAddFont() for adding a dynamic font to the permanent font li
 FEATURE:	Added gmiscHittestPoly() for checking whether a point is inside of a polygon
 FIX:		Fixed strange multi-thread issues in GEVENT
 FEATURE:	Added ILI9488 driver
+FEATURE:	Added the ability to display the detected compiler
+FIX:		Fixed an illegal instruction in the Cortex M0 task switcher
+FEATURE:	Add support for the Keil compiler for RAW32 task switching for Cortex M0,1,3,4,7
 
 
 *** Release 2.6 ***

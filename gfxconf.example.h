@@ -46,6 +46,7 @@
 // Options that (should where relevant) apply to all operating systems
 //    #define GFX_NO_INLINE                            FALSE
 //    #define GFX_COMPILER                             GFX_COMPILER_UNKNOWN
+//    #define GFX_SHOW_COMPILER                        FALSE
 //    #define GFX_CPU                                  GFX_CPU_UNKNOWN
 //    #define GFX_CPU_NO_ALIGNMENT_FAULTS              FALSE
 //    #define GFX_CPU_ENDIAN                           GFX_CPU_ENDIAN_UNKNOWN
