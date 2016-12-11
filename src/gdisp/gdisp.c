@@ -1932,14 +1932,35 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 			end %= 360;
 
 		#if GFX_USE_GMISC && GMISC_NEED_FIXEDTRIG
-			startTan = ffsin(start % 45) * precision / ffcos(start % 45) + start / 45 * precision;
-			endTan = ffsin(end % 45) * precision / ffcos(end % 45) + end / 45 * precision;
+			if((start / 45) % 2 == 0){
+				startTan = ffsin(start % 45) * precision / ffcos(start % 45) + start / 45 * precision;}
+			else{
+				startTan = ffsin(start % 45 - 45) * precision / ffcos(start % 45 - 45) + start / 45 * precision + precision;}
+
+			if((end / 45) % 2 == 0){
+				endTan = ffsin(end % 45) * precision / ffcos(end % 45) + end / 45 * precision;}
+			else{
+				endTan = ffsin(end % 45 - 45) * precision / ffcos(end % 45 - 45) + end / 45 * precision + precision;}
 		#elif GFX_USE_GMISC && GMISC_NEED_FASTTRIG
-			startTan = fsin(start % 45) * precision / fcos(start % 45) + start / 45 * precision;
-			endTan = fsin(end % 45) * precision / fcos(end % 45) + end / 45 * precision;
+			if((start / 45) % 2 == 0){
+				startTan = fsin(start % 45) * precision / fcos(start % 45) + start / 45 * precision;}
+			else{
+				startTan = fsin(start % 45 - 45) * precision / fcos(start % 45 - 45) + start / 45 * precision + precision;}
+
+			if((end / 45) % 2 == 0){
+				endTan = fsin(end % 45) * precision / fcos(end % 45) + end / 45 * precision;}
+			else{
+				endTan = fsin(end % 45 - 45) * precision / fcos(end % 45 - 45) + end / 45 * precision + precision;}
 		#else
-			startTan = (tan((start % 45)*GFX_PI/180) + start / 45)* precision;
-			endTan = (tan((end % 45) *GFX_PI/180) + end / 45) * precision;
+			if((start / 45) % 2 == 0){
+				startTan = (tan((start % 45)*GFX_PI/180) + start / 45)* precision;}
+			else{
+				startTan = (1+tan((start % 45 - 45)*GFX_PI/180) + start / 45)* precision;}
+
+			if((end / 45) % 2 == 0){
+				endTan = (tan((end % 45) *GFX_PI/180) + end / 45) * precision;}
+			else{
+				endTan = (1+tan((end % 45 - 45) *GFX_PI/180) + end / 45) * precision;}
 		#endif
 
 		MUTEX_ENTER(g);
@@ -1953,37 +1974,38 @@ void gdispGBlitArea(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, c
 			d = r - 1;
 
 			while (y >= x){
-
 				//approximate tan
 				curangle = x*precision/y;
 
 				if(end > start){
+					g->p.color = color;
 					//Draw points by symmetry
-					if(curangle > startTan && curangle < endTan){g->p.y = xc - x; g->p.x = yc + y; drawpixel_clip(g);}
-					if(curangle + 2*precision > startTan && curangle + 2*precision < endTan){g->p.y = xc - y; g->p.x = yc - x; drawpixel_clip(g);}
-					if(curangle + 4*precision > startTan && curangle + 4*precision < endTan){g->p.y = xc + x; g->p.x = yc - y; drawpixel_clip(g);}
-					if(curangle + 6*precision > startTan && curangle + 6*precision < endTan){g->p.y = xc + y; g->p.x = yc + x; drawpixel_clip(g);}
+					if(curangle > startTan && curangle < endTan){g->p.y = yc - x; g->p.x = xc + y; drawpixel_clip(g);}
+					if(curangle + 2*precision > startTan && curangle + 2*precision < endTan){g->p.y = yc - y; g->p.x = xc - x; drawpixel_clip(g);}
+					if(curangle + 4*precision > startTan && curangle + 4*precision < endTan){g->p.y = yc + x; g->p.x = xc - y; drawpixel_clip(g);}
+					if(curangle + 6*precision > startTan && curangle + 6*precision < endTan){g->p.y = yc + y; g->p.x = xc + x; drawpixel_clip(g);}
 
 					curangle = precision - curangle;
 
-					if(curangle + precision > startTan && curangle + precision < endTan){g->p.y = xc - y; g->p.x = yc + x; drawpixel_clip(g);}
-					if(curangle + 3*precision > startTan && curangle + 3*precision < endTan){g->p.y = xc - x; g->p.x = yc - y; drawpixel_clip(g);}
-					if(curangle + 5*precision > startTan && curangle + 5*precision < endTan){g->p.y = xc + y; g->p.x = yc - x; drawpixel_clip(g);}
-					if(curangle + 7*precision > startTan && curangle + 7*precision < endTan){g->p.y = xc + x; g->p.x = yc + y; drawpixel_clip(g);}
+					if(curangle + precision > startTan && curangle + precision < endTan){g->p.y = yc - y; g->p.x = xc + x; drawpixel_clip(g);}
+					if(curangle + 3*precision > startTan && curangle + 3*precision < endTan){g->p.y = yc - x; g->p.x = xc - y; drawpixel_clip(g);}
+					if(curangle + 5*precision > startTan && curangle + 5*precision < endTan){g->p.y = yc + y; g->p.x = xc - x; drawpixel_clip(g);}
+					if(curangle + 7*precision > startTan && curangle + 7*precision < endTan){g->p.y = yc + x; g->p.x = xc + y; drawpixel_clip(g);}
+						
 				}
 				else{
 					//Draw points by symmetry
-					if(curangle > startTan || curangle < endTan){g->p.y = xc - x; g->p.x = yc + y; drawpixel_clip(g);}
-					if(curangle + 2*precision > startTan || curangle + 2*precision < endTan){g->p.y = xc - y; g->p.x = yc - x; drawpixel_clip(g);}
-					if(curangle + 4*precision > startTan || curangle + 4*precision < endTan){g->p.y = xc + x; g->p.x = yc - y; drawpixel_clip(g);}
-					if(curangle + 6*precision > startTan || curangle + 6*precision < endTan){g->p.y = xc + y; g->p.x = yc + x; drawpixel_clip(g);}
+					if(curangle > startTan || curangle < endTan){g->p.y = yc - x; g->p.x = xc + y; drawpixel_clip(g);}
+					if(curangle + 2*precision > startTan || curangle + 2*precision < endTan){g->p.y = yc - y; g->p.x = xc - x; drawpixel_clip(g);}
+					if(curangle + 4*precision > startTan || curangle + 4*precision < endTan){g->p.y = yc + x; g->p.x = xc - y; drawpixel_clip(g);}
+					if(curangle + 6*precision > startTan || curangle + 6*precision < endTan){g->p.y = yc + y; g->p.x = xc + x; drawpixel_clip(g);}
 
 					curangle = precision - curangle;
 
-					if(curangle + precision > startTan || curangle + precision < endTan){g->p.y = xc - y; g->p.x = yc + x; drawpixel_clip(g);}
-					if(curangle + 3*precision > startTan || curangle + 3*precision < endTan){g->p.y = xc - x; g->p.x = yc - y; drawpixel_clip(g);}
-					if(curangle + 5*precision > startTan || curangle + 5*precision < endTan){g->p.y = xc + y; g->p.x = yc - x; drawpixel_clip(g);}
-					if(curangle + 7*precision > startTan || curangle + 7*precision < endTan){g->p.y = xc + x; g->p.x = yc + y; drawpixel_clip(g);}
+					if(curangle + precision > startTan || curangle + precision < endTan){g->p.y = yc - y; g->p.x = xc + x; drawpixel_clip(g);}
+					if(curangle + 3*precision > startTan || curangle + 3*precision < endTan){g->p.y = yc - x; g->p.x = xc - y; drawpixel_clip(g);}
+					if(curangle + 5*precision > startTan || curangle + 5*precision < endTan){g->p.y = yc + y; g->p.x = xc - x; drawpixel_clip(g);}
+					if(curangle + 7*precision > startTan || curangle + 7*precision < endTan){g->p.y = yc + x; g->p.x = xc + y; drawpixel_clip(g);}					
 				}
 
 				//Compute next point
