@@ -51,7 +51,7 @@
 // Passing a NULL will reset window creation to creating top level windows.
 // Note: In order to affect any static displays it must be called BEFORE gfxInit().
 // Note: Creating a window under a parent causes the Mouse to be disabled by default (rather than enabled as for a top window)
-void gfxEmulatorSetParentWindow(HWND hwnd);
+void gfxEmulatorSetParentWindow(void *hwnd);
 
 #if GINPUT_NEED_MOUSE
 	// This function allows you to inject mouse events into the ugfx mouse driver

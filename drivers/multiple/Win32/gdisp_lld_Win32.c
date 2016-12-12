@@ -451,8 +451,8 @@ typedef struct winPriv {
 	#endif
 } winPriv;
 
-void gfxEmulatorSetParentWindow(HWND hwnd) {
-	hWndParent = hwnd;
+void gfxEmulatorSetParentWindow(void *hwnd) {
+	hWndParent = (HWND)hwnd;
 }
 
 #if GFX_USE_GINPUT && GINPUT_NEED_MOUSE
