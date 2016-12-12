@@ -34,7 +34,6 @@
 
 	// Slot structure - user memory follows
 	typedef struct memslot {
-		struct memslot *next;		// The next memslot
 		size_t			sz;			// Includes the size of this memslot.
 		} memslot;
 
@@ -48,13 +47,10 @@
 	#define Ptr2Slot(p)			((memslot *)(p) - 1)
 	#define Slot2Ptr(pslot)		((pslot)+1)
 
-	static memslot *			firstSlot;
-	static memslot *			lastSlot;
 	static memslot *			freeSlots;
 	static char					heap[GFX_OS_HEAP_SIZE];
 
 	void _gosHeapInit(void) {
-		lastSlot = 0;
 		gfxAddHeapBlock(heap, GFX_OS_HEAP_SIZE);
 	}
 
@@ -62,18 +58,12 @@
 		if (sz < sizeof(memslot)+sizeof(freeslot))
 			return;
 
-		if (lastSlot)
-			lastSlot->next = (memslot *)ptr;
-		else
-			firstSlot = lastSlot = freeSlots = (memslot *)ptr;
-
-		lastSlot->next = 0;
-		lastSlot->sz = sz;
-		NextFree(lastSlot) = 0;
+		((memslot *)ptr)->sz = sz;
+		gfxFree(Slot2Ptr((memslot *)ptr));
 	}
 
 	void *gfxAlloc(size_t sz) {
-		register memslot *prev, *p, *new;
+		register memslot *prev, *p, *pnew;
 
 		if (!sz) return 0;
 		sz = GetSlotSize(sz);
@@ -81,23 +71,22 @@
 			// Loop till we have a block big enough
 			if (p->sz < sz)
 				continue;
+				
 			// Can we save some memory by splitting this block?
 			if (p->sz >= sz + sizeof(memslot)+sizeof(freeslot)) {
-				new = (memslot *)((char *)p + sz);
-				new->next = p->next;
-				p->next = new;
-				new->sz = p->sz - sz;
+				pnew = (memslot *)((char *)p + sz);
+				pnew->sz = p->sz - sz;
 				p->sz = sz;
-				if (lastSlot == p)
-					lastSlot = new;
-				NextFree(new) = NextFree(p);
-				NextFree(p) = new;
+				NextFree(pnew) = NextFree(p);
+				NextFree(p) = pnew;
 			}
+			
 			// Remove it from the free list
 			if (prev)
 				NextFree(prev) = NextFree(p);
 			else
 				freeSlots = NextFree(p);
+				
 			// Return the result found
 			return Slot2Ptr(p);
 		}
@@ -106,7 +95,7 @@
 	}
 
 	void *gfxRealloc(void *ptr, size_t oldsz, size_t sz) {
-		register memslot *prev, *p, *new;
+		register memslot *prev, *p, *pfree;
 		(void) oldsz;
 
 		if (!ptr)
@@ -120,19 +109,14 @@
 		sz = GetSlotSize(sz);
 
 		// If the next slot is free (and contiguous) merge it into this one
-		if ((char *)p + p->sz == (char *)p->next) {
-			for (prev = 0, new = freeSlots; new != 0; prev = new, new = NextFree(new)) {
-				if (new == p->next) {
-					p->next = new->next;
-					p->sz += new->sz;
-					if (prev)
-						NextFree(prev) = NextFree(new);
-					else
-						freeSlots = NextFree(new);
-					if (lastSlot == new)
-						lastSlot = p;
-					break;
-				}
+		for (prev = 0, pfree = freeSlots; pfree != 0; prev = pfree, pfree = NextFree(pfree)) {
+			if (pfree == (memslot *)((char *)p + p->sz)) {
+				p->sz += pfree->sz;
+				if (prev)
+					NextFree(prev) = NextFree(pfree);
+				else
+					freeSlots = NextFree(pfree);
+				break;
 			}
 		}
 
@@ -140,50 +124,54 @@
 		if (sz < p->sz) {
 			// Can we save some memory by splitting this block?
 			if (p->sz >= sz + sizeof(memslot)+sizeof(freeslot)) {
-				new = (memslot *)((char *)p + sz);
-				new->next = p->next;
-				p->next = new;
-				new->sz = p->sz - sz;
+				pfree = (memslot *)((char *)p + sz);
+				pfree->sz = p->sz - sz;
 				p->sz = sz;
-				if (lastSlot == p)
-					lastSlot = new;
-				NextFree(new) = freeSlots;
-				freeSlots = new;
+				NextFree(pfree) = freeSlots;
+				freeSlots = pfree;
 			}
 			return Slot2Ptr(p);
 		}
 
 		// We need to do this the hard way
-		new = gfxAlloc(sz);
-		if (new)
+		pfree = gfxAlloc(sz);
+		if (pfree)
 			return 0;
-		memcpy(new, ptr, p->sz - sizeof(memslot));
+		memcpy(pfree, ptr, p->sz - sizeof(memslot));
 		gfxFree(ptr);
-		return new;
+		return pfree;
 	}
 
 	void gfxFree(void *ptr) {
-		register memslot *prev, *p, *new;
+		register memslot *prev, *p, *pfree;
 
 		if (!ptr)
 			return;
 
 		p = Ptr2Slot(ptr);
 
-		// If the next slot is free (and contiguous) merge it into this one
-		if ((char *)p + p->sz == (char *)p->next) {
-			for (prev = 0, new = freeSlots; new != 0; prev = new, new = NextFree(new)) {
-				if (new == p->next) {
-					p->next = new->next;
-					p->sz += new->sz;
-					if (prev)
-						NextFree(prev) = NextFree(new);
-					else
-						freeSlots = NextFree(new);
-					if (lastSlot == new)
-						lastSlot = p;
-					break;
-				}
+		// Find a free slot that is contiguous precceding and merge it into us
+		for (prev = 0, pfree = freeSlots; pfree != 0; prev = pfree, pfree = NextFree(pfree)) {
+			if (p == (memslot *)((char *)pfree + pfree->sz)) {
+				pfree->sz += p->sz;
+				if (prev)
+					NextFree(prev) = NextFree(pfree);
+				else
+					freeSlots = NextFree(pfree);
+				p = pfree;
+				break;
+			}
+		}
+		
+		// Find a free slot that is contiguous after and merge it into this one
+		for (prev = 0, pfree = freeSlots; pfree != 0; prev = pfree, pfree = NextFree(pfree)) {
+			if (pfree == (memslot *)((char *)p + p->sz)) {
+				p->sz += pfree->sz;
+				if (prev)
+					NextFree(prev) = NextFree(pfree);
+				else
+					freeSlots = NextFree(pfree);
+				break;
 			}
 		}
 
