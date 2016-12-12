@@ -59,9 +59,9 @@
 	static __asm void _gfxStartThread(thread *oldt, thread *newt) {
 		// Calculate where to generate the new context
 		//		newt->cxt = (char *)newt + newt->size;
-        ldr      r2,[r1,#__cpp(offsetof(thread,size))]
-        add      r2,r2,r1
-        str      r2,[r1,#__cpp(offsetof(thread,cxt))]
+		ldr      r2,[r1,#__cpp(offsetof(thread,size))]
+		add      r2,r2,r1
+		str      r2,[r1,#__cpp(offsetof(thread,cxt))]
 		
 		// Save the old context
 		push	{r4, r5, r6, r7, r8, r9, r10, r11, lr}
@@ -72,13 +72,13 @@
 		
 		// Run the users function - we save some code because gfxThreadExit() never returns
 		//		gfxThreadExit(_gfxCurrentThread->fn(_gfxCurrentThread->param));
-        LDR      r2,__cpp(&_gfxCurrentThread)
-        LDR      r2,[r2,#0]
-        LDR      r0,[r2,#__cpp(offsetof(thread,param))]
-        LDR      r1,[r2,#__cpp(offsetof(thread,fn))]
-        BLX      r1
-        MOV      r4,r0
-        BL       gfxThreadExit
+		ldr      r2,__cpp(&_gfxCurrentThread)
+		ldr      r2,[r2,#0]
+		ldr      r0,[r2,#__cpp(offsetof(thread,param))]
+		ldr      r1,[r2,#__cpp(offsetof(thread,fn))]
+		blx      r1
+		mov      r4,r0
+		bl       gfxThreadExit
 	}
 
 #else
