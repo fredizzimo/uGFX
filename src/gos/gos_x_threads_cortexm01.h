@@ -107,7 +107,7 @@
 		ldr      r1,[r2,#__cpp(offsetof(thread,fn))]
 		blx      r1
 		mov      r4,r0
-		bl       gfxThreadExit
+		bl       __cpp(gfxThreadExit)
 	}
 
 #else
