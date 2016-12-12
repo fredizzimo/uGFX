@@ -90,7 +90,7 @@ extern "C" {
 	threadreturn_t gfxThreadWait(gfxThreadHandle thread);
 	gfxThreadHandle gfxThreadMe(void);
 
-	/** The following is not part of the public ugfx API has some operating systems
+	/** The following is not part of the public ugfx API as some operating systems
 	 * 	simply do not provide this capability.
 	 * 	For RAW32 we need it anyway so we might as well declare it here.
 	 */
