@@ -212,12 +212,12 @@ static thread		mainthread;				// The main thread context
 	 * If they don't exist compile them to be the standard setjmp() function.
 	 * Similarly for longjmp().
 	 */
-	#if (!defined(setjmp) && !defined(_setjmp)) || GFX_COMPILER == GFX_COMPILER_KEIL
+	#if (!defined(setjmp) && !defined(_setjmp)) || GFX_COMPILER == GFX_COMPILER_KEIL || GFX_COMPILER == GFX_COMPILER_MINGW32 || GFX_COMPILER == GFX_COMPILER_MINGW64
 		#define CXT_SAVE 		setjmp
 	#else
 		#define CXT_SAVE 		_setjmp
 	#endif
-	#if (!defined(longjmp) && !defined(_longjmp)) || GFX_COMPILER == GFX_COMPILER_KEIL
+	#if (!defined(longjmp) && !defined(_longjmp)) || GFX_COMPILER == GFX_COMPILER_KEIL || GFX_COMPILER == GFX_COMPILER_MINGW32 || GFX_COMPILER == GFX_COMPILER_MINGW64
 		#define CXT_RESTORE 	longjmp
 	#else
 		#define CXT_RESTORE 	_longjmp
@@ -346,6 +346,7 @@ static thread		mainthread;				// The main thread context
 		uint32_t	i;
 
 		// Copy the stack frame
+		s = 0;
 		#if AUTO_DETECT_STACKFRAME
 			if (STACK_DIR_UP) {					// Stack grows up
 				nf = (char *)(t) + sizeof(thread) + sizeof(jmp_buf) + STACK_BASE;
