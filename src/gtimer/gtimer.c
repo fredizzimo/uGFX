@@ -109,7 +109,7 @@ static DECLARE_THREAD_FUNCTION(GTimerThreadHandler, arg) {
 		lastTime = tm;
 		gfxMutexExit(&mutex);
 	}
-//	THREAD_RETURN(0);
+	THREAD_RETURN(0);
 }
 
 void _gtimerInit(void)
