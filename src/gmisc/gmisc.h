@@ -473,7 +473,7 @@ extern "C" {
 	 * @note	This function works both with convex and concave polygons
 	 *
 	 * @param[in] pntarray		The array of points that form the polygon
-	 * @param[in] cnt			The number of points in the point array @pntarray
+	 * @param[in] cnt			The number of points in the point array @p pntarray
 	 * @param[in] p				The point to test
 	 *
 	 * @return	@p TRUE if the point @p p is inside or on the edge of the polygon @p pntarray, @p FALSE otherwise.
