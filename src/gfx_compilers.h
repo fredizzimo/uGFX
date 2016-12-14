@@ -625,6 +625,7 @@
 		#pragma diag_remark 767						// Turn off warning: conversion from pointer to smaller integer
 		#pragma diag_remark 188						// Turn off warning: enumerated type mixed with another type
 		#pragma diag_remark 68						// Turn off warning: integer conversion resulted in a change of sign
+		#pragma diag_remark 111						// Turn off warning: statement is unreachable
 		#ifndef GFXINLINE							// Get the Keil definition for inline
 			#define GFXINLINE	__inline
 		#endif
