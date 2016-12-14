@@ -13,7 +13,7 @@ FEATURE:	Added ILI9225 driver
 FEATURE:	Added ST7735 driver
 FEATURE:	Added Linux event input driver
 FIX:		Fixed an issue with color formats in Linux-Framebuffer board files
-FIX:		Fixing and improving arc rendering functions
+FIX:		Fixed and improving arc rendering functions
 FIX:		Preventing possible crash when no valid GWIN default font has been set
 FIX:		Updating Windows binaries of the font encoder to improve compatibility
 FIX:		Fixed progressbar bounds checking and decrementing
@@ -29,8 +29,8 @@ FEATURE:	Added the ability to display the detected compiler
 FIX:		Fixed an illegal instruction in the Cortex M0 task switcher
 FEATURE:	Added RAW32 task switching functions which work with ARMCC (the compiler used by Keil) for Cortex M0,M1,M3,M4 and M7
 FEATURE:	Added gdispGDrawThickArc()
-FIX:		Fix a memory merging issue with the RAW32 memory allocator
-FIX:		Update RAW32 CLIB threads support for more recent versions of the MINGW compiler
+FIX:		Fixed a memory merging issue with the RAW32 memory allocator
+FIX:		Update RAW32 libc threads support for more recent versions of the MinGW compiler
 
 
 *** Release 2.6 ***
