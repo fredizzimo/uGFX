@@ -796,6 +796,22 @@ extern "C" {
 		 * @api
 		 */
 		void gwinFillArc(GHandle gh, coord_t x, coord_t y, coord_t radius, coord_t startangle, coord_t endangle);
+
+		/*
+		 * @brief	Draw a thick arc in the window.
+		 * @note	Uses the current foreground color to draw the thick arc
+		 * @note	May leave GDISP clipping to this window's dimensions
+		 *
+		 * @param[in] gh		The window handle
+		 * @param[in] x,y		The center point
+		 * @param[in] startradius	The inner radius of the thick arc
+		 * @param[in] endradius		The outer radius of the thick arc
+		 * @param[in] startangle	The start angle (0 to 360)
+		 * @param[in] endangle		The end angle (0 to 360)
+		 *
+		 * @api
+		 */
+		void gwinDrawThickArc(GHandle gh, coord_t x, coord_t y, coord_t startradius, coord_t endradius, coord_t startangle, coord_t endangle);
 	#endif
 
 	#if GDISP_NEED_ARCSECTORS || defined(__DOXYGEN__)

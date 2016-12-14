@@ -315,6 +315,12 @@ void gwinBlitArea(GHandle gh, coord_t x, coord_t y, coord_t cx, coord_t cy, coor
 		gdispGFillArc(gh->display, gh->x+x, gh->y+y, radius, startangle, endangle, gh->color);
 		_gwinDrawEnd(gh);
 	}
+
+	void gwinDrawThickArc(GHandle gh, coord_t x, coord_t y, coord_t startradius, coord_t endradius, coord_t startangle, coord_t endangle) {
+		if (!_gwinDrawStart(gh)) return;
+		gdispGDrawThickArc(gh->display, gh->x+x, gh->y+y, startradius, endradius, startangle, endangle, gh->color);
+		_gwinDrawEnd(gh);
+	}
 #endif
 
 #if GDISP_NEED_ARCSECTORS
