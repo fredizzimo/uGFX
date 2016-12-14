@@ -281,6 +281,14 @@ void gwinBlitArea(GHandle gh, coord_t x, coord_t y, coord_t cx, coord_t cy, coor
 	}
 #endif
 
+#if GDISP_NEED_DUALCIRCLE
+	void gwinFillDualCircle(GHandle gh, coord_t x, coord_t y, coord_t radius1, color_t color1, coord_t radius2, color_t color2) {
+		if (!_gwinDrawStart(gh)) return;
+		gdispGFillDualCircle(gh->display, gh->x+x, gh->y+y, radius1, gh->bgcolor, radius2, gh->color);
+		_gwinDrawEnd(gh);
+	}
+#endif
+
 #if GDISP_NEED_ELLIPSE
 	void gwinDrawEllipse(GHandle gh, coord_t x, coord_t y, coord_t a, coord_t b) {
 		if (!_gwinDrawStart(gh)) return;

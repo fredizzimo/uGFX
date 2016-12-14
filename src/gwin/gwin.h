@@ -718,6 +718,26 @@ extern "C" {
 		void gwinFillCircle(GHandle gh, coord_t x, coord_t y, coord_t radius);
 	#endif
 
+	#if GDISP_NEED_DUALCIRCLE || defined(__DOXYGEN__)
+		/**
+		 * @brief   Draw two filled circles with the same centre in the window.
+		 * @note	Uses the current foreground color to draw the inner circle
+		 * @note	Uses the current background color to draw the outer circle
+		 * @note	May leave GDISP clipping to this window's dimensions
+		 * @pre		GDISP_NEED_DUALCIRCLE must be TRUE in your gfxconf.h
+		 *
+		 * @param[in] gh		The window handle
+		 * @param[in] x,y		The center of the circle
+		 * @param[in] radius1	The radius of the larger circle
+		 * @param[in] color1	The color to use for the larger circle
+		 * @param[in] radius2	The radius of the smaller circle
+		 * @param[in] color2	The color to use for the smaller circle
+		 *
+		 * @api
+		 */
+		void gwinFillDualCircle(GHandle gh, coord_t x, coord_t y, coord_t radius1, color_t color1, coord_t radius2, color_t color2);
+	#endif
+
 	#if GDISP_NEED_ELLIPSE || defined(__DOXYGEN__)
 		/**
 		 * @brief   Draw an ellipse.
