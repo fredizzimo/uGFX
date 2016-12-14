@@ -109,6 +109,8 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay *g) {
 	write_cmd(g, SSD1306_ROWSCANDEC);
 	#if GDISP_SCREEN_HEIGHT == 64
 		write_cmd2(g, SSD1306_SETCOMPINS, 0x12);
+	#elif GDISP_SCREEN_HEIGHT == 32
+		write_cmd2(g, SSD1306_SETCOMPINS, 0x02);
 	#else
 		write_cmd2(g, SSD1306_SETCOMPINS, 0x22);
 	#endif
