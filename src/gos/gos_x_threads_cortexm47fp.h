@@ -47,8 +47,12 @@
 	}
 
 #elif GFX_COMPILER == GFX_COMPILER_KEIL || GFX_COMPILER == GFX_COMPILER_ARMCC
+	#define GFX_THREADS_DONE
+	#define _gfxThreadsInit()
 
 	static __asm void _gfxTaskSwitch(thread *oldt, thread *newt) {
+		PRESERVE8
+		
 		// Save the old context
 		push	{r4, r5, r6, r7, r8, r9, r10, r11, lr}
 		vpush	{s16-s31}
@@ -61,6 +65,8 @@
 	}
 
 	static __asm void _gfxStartThread(thread *oldt, thread *newt) {
+		PRESERVE8
+
 		// Calculate where to generate the new context
 		//		newt->cxt = (char *)newt + newt->size;
 		ldr      r2,[r1,#__cpp(offsetof(thread,size))]
@@ -77,13 +83,15 @@
 		
 		// Run the users function - we save some code because gfxThreadExit() never returns
 		//		gfxThreadExit(_gfxCurrentThread->fn(_gfxCurrentThread->param));
-		ldr      r2,__cpp(&_gfxCurrentThread)
+		ldr      r2,=__cpp(&_gfxCurrentThread)
 		ldr      r2,[r2,#0]
 		ldr      r0,[r2,#__cpp(offsetof(thread,param))]
 		ldr      r1,[r2,#__cpp(offsetof(thread,fn))]
 		blx      r1
 		mov      r4,r0
 		bl       __cpp(gfxThreadExit)
+		
+		ALIGN
 	}
 
 #else
