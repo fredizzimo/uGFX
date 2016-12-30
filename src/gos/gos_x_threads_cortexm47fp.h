@@ -12,10 +12,6 @@
  * The context is saved at the current stack location and a pointer is maintained in the thread structure.
  */
 
-#if !CORTEX_USE_FPU
-	#warning "GOS Threads: You have specified GFX_CPU=GFX_CPU_CORTX_M?_FP with hardware floating point support but CORTEX_USE_FPU is FALSE. Try using GFX_CPU_GFX_CPU_CORTEX_M? instead"
-#endif
-
 #if GFX_COMPILER == GFX_COMPILER_GCC || GFX_COMPILER == GFX_COMPILER_CYGWIN || GFX_COMPILER == GFX_COMPILER_MINGW32 || GFX_COMPILER == GFX_COMPILER_MINGW64
 	#define GFX_THREADS_DONE
 	#define _gfxThreadsInit()
@@ -33,7 +29,7 @@
 	}
 
 	static __attribute__((pcs("aapcs-vfp"),naked)) void _gfxStartThread(thread *oldt, thread *newt) {
-		newt->cxt = (char *)newt + newt->size;
+		newt->cxt = (void *)(((unsigned)newt + newt->size) & ~7);
 		__asm__ volatile (	"push	{r4, r5, r6, r7, r8, r9, r10, r11, lr}	\n\t"
 							"vpush	{s16-s31}								\n\t"
 							"str	sp, %[oldtcxt]							\n\t"
@@ -68,9 +64,10 @@
 		PRESERVE8
 
 		// Calculate where to generate the new context
-		//		newt->cxt = (char *)newt + newt->size;
+		//		newt->cxt = (void *)(((unsigned)newt + newt->size) & ~7);
 		ldr      r2,[r1,#__cpp(offsetof(thread,size))]
 		add      r2,r2,r1
+		and      r2, r2, #0xFFFFFFF8
 		str      r2,[r1,#__cpp(offsetof(thread,cxt))]
 		
 		// Save the old context

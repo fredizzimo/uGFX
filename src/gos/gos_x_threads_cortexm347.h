@@ -32,7 +32,7 @@
 	}
 
 	static __attribute__((pcs("aapcs"),naked)) void _gfxStartThread(thread *oldt, thread *newt) {
-		newt->cxt = (char *)newt + newt->size;
+		newt->cxt = (void *)(((unsigned)newt + newt->size) & ~7);
 		__asm__ volatile (	"push	{r4, r5, r6, r7, r8, r9, r10, r11, lr}	\n\t"
 							"str	sp, %[oldtcxt]							\n\t"
 							"ldr	sp, %[newtcxt]							\n\t"
@@ -64,9 +64,10 @@
 		PRESERVE8
 
 		// Calculate where to generate the new context
-		//		newt->cxt = (char *)newt + newt->size;
+		//		newt->cxt = (void *)(((unsigned)newt + newt->size) & ~7);
 		ldr      r2,[r1,#__cpp(offsetof(thread,size))]
 		add      r2,r2,r1
+		and      r2, r2, #0xFFFFFFF8
 		str      r2,[r1,#__cpp(offsetof(thread,cxt))]
 		
 		// Save the old context
