@@ -3,6 +3,7 @@
 *****************************************************************************
 
 *** Changes after 2.7 ***
+FEATURE:	Added support for 128x32 SSD1306 based displays
 
 
 *** Release 2.7 ***
