@@ -169,14 +169,26 @@ void gwinListSetScroll(GHandle gh, scroll_t flag);
  * 						reordered.
  *
  * @param[in] gh		The widget handle (must be a list handle)
- * @param[in] item		The string which shall be displayed in the list afterwards
+ * @param[in] text		The string which shall be displayed in the list afterwards
  * @param[in] useAlloc	If set to TRUE, the string will be dynamically allocated. A static buffer must be passed otherwise
  *
  * @return				The current ID of the item. The ID might change if you remove items from the middle of the list
  *
  * @api
  */
-int gwinListAddItem(GHandle gh, const char* item, bool_t useAlloc);
+int gwinListAddItem(GHandle gh, const char* text, bool_t useAlloc);
+
+/**
+ * @brief				Set the custom parameter of an item with a given ID
+ *
+ * @param[in] gh		The widget handle (must be a list handle)
+ * @param[in] item		The item ID
+ * @param[in] text		The text to replace the existing text
+ * @param[in] useAlloc	If set to TRUE, the string will be dynamically allocated. A static buffer must be passed otherwise
+ *
+ * @api
+ */
+void gwinListItemSetText(GHandle gh, int item, const char* text, bool_t useAlloc);
 
 /**
  * @brief				Get the name behind an item with a given ID

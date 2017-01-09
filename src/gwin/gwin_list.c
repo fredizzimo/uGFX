@@ -348,7 +348,7 @@ void gwinListSetScroll(GHandle gh, scroll_t flag) {
 	}
 }
 
-int gwinListAddItem(GHandle gh, const char* item_name, bool_t useAlloc) {
+int gwinListAddItem(GHandle gh, const char* text, bool_t useAlloc) {
 	ListItem	*newItem;
 
 	// is it a valid handle?
@@ -356,12 +356,12 @@ int gwinListAddItem(GHandle gh, const char* item_name, bool_t useAlloc) {
 		return -1;
 
 	if (useAlloc) {
-		size_t len = strlen(item_name)+1;
+		size_t len = strlen(text)+1;
 		if (!(newItem = gfxAlloc(sizeof(ListItem) + len)))
 			return -1;
 
-		memcpy((char *)(newItem+1), item_name, len);
-		item_name = (const char *)(newItem+1);
+		memcpy((char *)(newItem+1), text, len);
+		text = (const char *)(newItem+1);
 	} else {
 		if (!(newItem = gfxAlloc(sizeof(ListItem))))
 			return -1;
@@ -370,7 +370,7 @@ int gwinListAddItem(GHandle gh, const char* item_name, bool_t useAlloc) {
 	// the item is not selected when added
 	newItem->flags = 0;
 	newItem->param = 0;
-	newItem->text = item_name;
+	newItem->text = text;
 	#if GWIN_NEED_LIST_IMAGES
 		newItem->pimg = 0;
 	#endif
@@ -389,6 +389,54 @@ int gwinListAddItem(GHandle gh, const char* item_name, bool_t useAlloc) {
 
 	// return the position in the list (-1 because we start with index 0)
 	return gh2obj->cnt-1;
+}
+
+void gwinListItemSetText(GHandle gh, int item, const char* text, bool_t useAlloc) {
+	const gfxQueueASyncItem		*qi;
+	int							i;
+	ListItem					*newItem;
+
+	// is it a valid handle?
+	if (gh->vmt != (gwinVMT *)&listVMT)
+		return;
+
+	// watch out for an invalid item
+	if (item < 0 || item > (gh2obj->cnt) - 1)
+		return;
+
+	for(qi = gfxQueueASyncPeek(&gh2obj->list_head), i = 0; qi; qi = gfxQueueASyncNext(qi), i++) {
+		if (i == item) {
+		
+			// create the new object
+			if (useAlloc) {
+				size_t len = strlen(text)+1;
+				if (!(newItem = gfxAlloc(sizeof(ListItem) + len)))
+					return;
+		
+				memcpy((char *)(newItem+1), text, len);
+				text = (const char *)(newItem+1);
+			} else {
+				if (!(newItem = gfxAlloc(sizeof(ListItem))))
+					return;
+			}
+		
+			// copy the info from the existing object
+			newItem->flags = qi2li->flags;
+			newItem->param = qi2li->param;
+			newItem->text = text;
+			#if GWIN_NEED_LIST_IMAGES
+				newItem->pimg = qi2li->pimg;
+			#endif
+		
+			// add the new item to the list and remove the old item
+			gfxQueueASyncInsert(&gh2obj->list_head, &newItem->q_item, &qi2li->q_item);
+			gfxQueueASyncRemove(&gh2obj->list_head, &qi2li->q_item);
+			gfxFree(qi2li);
+		
+			_gwinUpdate(gh);
+			break;
+		}
+	}
 }
 
 const char* gwinListItemGetText(GHandle gh, int item) {
