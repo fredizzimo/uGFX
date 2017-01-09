@@ -305,6 +305,7 @@
 //#define GFILE_NEED_FATFS                             FALSE
 //#define GFILE_NEED_NATIVEFS                          FALSE
 //#define GFILE_NEED_CHBIOSFS                          FALSE
+//#define GFILE_NEED_USERFS                            FALSE
 
 //#define GFILE_ALLOW_FLOATS                           FALSE
 //#define GFILE_ALLOW_DEVICESPECIFIC                   FALSE
