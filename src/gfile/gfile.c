@@ -16,6 +16,9 @@
  * Virtual file-systems that have special open() calls do not need to
  * be in this list.
  */
+#if GFILE_NEED_USERFS
+	extern const GFILEVMT FsUSERVMT;
+#endif
 #if GFILE_NEED_ROMFS
 	extern const GFILEVMT FsROMVMT;
 #endif
@@ -35,6 +38,9 @@
  * that they are searched to find a file.
  */
 static const GFILEVMT const * FsArray[] = {
+	#if GFILE_NEED_USERFS
+		&FsUSERVMT,
+	#endif
 	#if GFILE_NEED_ROMFS
 		&FsROMVMT,
 	#endif

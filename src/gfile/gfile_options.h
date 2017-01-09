@@ -76,6 +76,21 @@
 		#define GFILE_NEED_STDIO		FALSE
 	#endif
 	/**
+	 * @brief   Include the USER file system
+	 * @details	Defaults to FALSE
+	 * @note	The User FS vmt strcture 'FsUSERVMT' must be defined and implemented in the user's project.
+	 * @note	If GFILE_ALLOW_DEVICESPECIFIC is on then you can ensure that you are
+	 * 			opening a file on the USER file system by prefixing
+	 * 			its name with "U|" (the letter 'U', followed by a vertical bar).
+	 *			The letter 'U' as described above should be replaced by the actual
+	 *			device specifier letter in the user's FsUSERVMT structure. It is suggested
+	 *			that it is actually the letter 'U' that is used and it is important that the letter
+	 *			used is not one used by the other file systems.
+	 */
+	#ifndef GFILE_NEED_USERFS
+		#define GFILE_NEED_USERFS		FALSE
+	#endif
+	/**
 	 * @brief   Include the ROM file system
 	 * @details	Defaults to FALSE
 	 * @note	If GFILE_ALLOW_DEVICESPECIFIC is on then you can ensure that you are
