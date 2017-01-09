@@ -65,7 +65,11 @@
 	 * @brief	Declare a thread stack
 	 *
 	 * @param[in] name 		The name of the stack
-	 * @param[in] sz 		The size of the stack
+	 * @param[in] sz 		The size of the stack in bytes
+	 *
+	 * @note	The size provided is just a suggestion to the required stack size.
+	 * 			Many platforms will round the size to ensure correct stack alignment.
+	 *			Other platforms may entirely ignore the suggested size.
 	 */
 	#define DECLARE_THREAD_STACK(name, sz)			uint8_t name[sz];
 

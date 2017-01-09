@@ -31,7 +31,7 @@ typedef int				threadreturn_t;
 typedef int				threadpriority_t;
 
 #define DECLARE_THREAD_FUNCTION(fnName, param)	threadreturn_t fnName(void *param)
-#define DECLARE_THREAD_STACK(name, sz)			uint8_t name[sz];
+#define DECLARE_THREAD_STACK(name, sz)			uint8_t name[(sz) & ~3];
 #define THREAD_RETURN(retval)					return retval
 
 #define TIME_IMMEDIATE				0

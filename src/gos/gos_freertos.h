@@ -60,7 +60,7 @@ typedef portBASE_TYPE		threadpriority_t;
 #define HIGH_PRIORITY		configMAX_PRIORITIES-1
 
 /* FreeRTOS will allocate the stack when creating the thread, so pass the size instead of a working area */
-#define DECLARE_THREAD_STACK(name, sz)			size_t *name = (size_t *)sz
+#define DECLARE_THREAD_STACK(name, sz)			size_t *name = (size_t *)(sz)
 #define DECLARE_THREAD_FUNCTION(fnName, param)	threadreturn_t fnName(void *param)
 #define THREAD_RETURN(retval)
 
