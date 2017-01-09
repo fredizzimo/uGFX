@@ -152,12 +152,59 @@
 		#undef gcw
 	}
 
+	/**
+	 * Scroll the history buffer by one line
+	 */
+	static void scrollBuffer(GConsoleObject *gcw) {
+		char	*p, *ep;
+		size_t	dp;
+
+		// Only scroll if we need to
+		if (!gcw->buffer || (gcw->g.flags & GCONSOLE_FLG_NOSTORE))
+			return;
+
+		// If a buffer overrun has been marked don't scroll as we have already
+		if ((gcw->g.flags & GCONSOLE_FLG_OVERRUN)) {
+			gcw->g.flags &= ~GCONSOLE_FLG_OVERRUN;
+			return;
+		}
+
+		// Remove one line from the start
+		ep = gcw->buffer+gcw->bufpos;
+		for(p = gcw->buffer; p < ep && *p != '\n'; p++) {
+			#if GWIN_CONSOLE_ESCSEQ
+				if (*p == 27)
+					ESCtoAttr(p[1], &gcw->startattr);
+			#endif
+		}
+
+		// Was there a newline, if not delete everything.
+		if (*p != '\n') {
+			gcw->bufpos = 0;
+			return;
+		}
+
+		// Delete the data
+		dp = ++p - gcw->buffer;						// Calculate the amount to to be removed
+		gcw->bufpos -= dp;							// Calculate the new size
+		if (gcw->bufpos)
+			memcpy(gcw->buffer, p, gcw->bufpos);	// Move the rest of the data
+	}
+
 	static void HistoryRedraw(GWindowObject *gh) {
 		#define gcw		((GConsoleObject *)gh)
+		coord_t fy;
 
 		// No redrawing if there is no history
 		if (!gcw->buffer)
 			return;
+
+		// Handle vertical size decrease - We have to scroll out first lines of the log 
+		fy = gdispGetFontMetric(gh->font, fontHeight);
+		while (gcw->cy > gh->height) {
+			scrollBuffer(gcw);
+			gcw->cy -= fy;
+		}
 
 		// We are printing the buffer - don't store it again
 		gh->flags |= GCONSOLE_FLG_NOSTORE;
@@ -246,45 +293,6 @@
 
 		// Save the character
 		gcw->buffer[gcw->bufpos++] = c;
-	}
-
-	/**
-	 * Scroll the history buffer by one line
-	 */
-	static void scrollBuffer(GConsoleObject *gcw) {
-		char	*p, *ep;
-		size_t	dp;
-
-		// Only scroll if we need to
-		if (!gcw->buffer || (gcw->g.flags & GCONSOLE_FLG_NOSTORE))
-			return;
-
-		// If a buffer overrun has been marked don't scroll as we have already
-		if ((gcw->g.flags & GCONSOLE_FLG_OVERRUN)) {
-			gcw->g.flags &= ~GCONSOLE_FLG_OVERRUN;
-			return;
-		}
-
-		// Remove one line from the start
-		ep = gcw->buffer+gcw->bufpos;
-		for(p = gcw->buffer; p < ep && *p != '\n'; p++) {
-			#if GWIN_CONSOLE_ESCSEQ
-				if (*p == 27)
-					ESCtoAttr(p[1], &gcw->startattr);
-			#endif
-		}
-
-		// Was there a newline, if not delete everything.
-		if (*p != '\n') {
-			gcw->bufpos = 0;
-			return;
-		}
-
-		// Delete the data
-		dp = ++p - gcw->buffer;						// Calculate the amount to to be removed
-		gcw->bufpos -= dp;							// Calculate the new size
-		if (gcw->bufpos)
-			memcpy(gcw->buffer, p, gcw->bufpos);	// Move the rest of the data
 	}
 
 	/**
@@ -532,6 +540,10 @@ void gwinPutChar(GHandle gh, char c) {
 	if (gcw->cy + fy > gh->height) {
 		#if GWIN_CONSOLE_USE_HISTORY && GWIN_CONSOLE_BUFFER_SCROLLING
 			if (gcw->buffer) {
+				// If flag GCONSOLE_FLG_NOSTORE is set, then do not recursivly call HistoryRedraw - just drop the buffer
+				if (gh->flags & GCONSOLE_FLG_NOSTORE)
+					gcw->bufpos = 0;
+					
 				// Scroll the buffer and then redraw using the buffer
 				scrollBuffer(gcw);
 				if (DrawStart(gh)) {
