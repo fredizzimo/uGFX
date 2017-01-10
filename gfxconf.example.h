@@ -118,6 +118,7 @@
 //        #define GDISP_NEED_IMAGE_BMP_16              TRUE
 //        #define GDISP_NEED_IMAGE_BMP_24              TRUE
 //        #define GDISP_NEED_IMAGE_BMP_32              TRUE
+//        #define GDISP_IMAGE_BMP_BLIT_BUFFER_SIZE    32
 //    #define GDISP_NEED_IMAGE_JPG                     FALSE
 //    #define GDISP_NEED_IMAGE_PNG                     FALSE
 //        #define GDISP_NEED_IMAGE_PNG_INTERLACED      FALSE
