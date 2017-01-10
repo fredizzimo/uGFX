@@ -11,13 +11,6 @@
 
 #include "gdisp_image_support.h"
 
-/**
- * How big a pixel array to allocate for blitting (in pixels)
- * Bigger is faster but uses more RAM.
- * This must be greater than 40 bytes and 32 pixels as we read our headers into this space as well
- */
-#define GDISP_IMAGE_BMP_BLIT_BUFFER_SIZE	32
-
 typedef struct gdispImagePrivate_BMP {
 	uint8_t		bmpflags;
 		#define BMP_V2				0x01		// Version 2 (old) header format
