@@ -518,6 +518,14 @@
 	#ifndef GDISP_NEED_IMAGE_PNG_RGBALPHA_16
 		#define GDISP_NEED_IMAGE_PNG_RGBALPHA_16		TRUE
 	#endif
+	/**
+	 * @brief   The PNG blit buffer size in pixels.
+	 * @details	Defaults to TRUE
+	 * @note 	Bigger is faster but requires more RAM.
+	 */
+	#ifndef GDISP_IMAGE_PNG_BLIT_BUFFER_SIZE
+		#define GDISP_IMAGE_PNG_BLIT_BUFFER_SIZE	32
+	#endif
 /**
  * @}
  *

@@ -12,11 +12,6 @@
 #include "gdisp_image_support.h"
 
 /**
- * How big a pixel array to allocate for blitting the image to the display (in pixels)
- * Bigger is faster but uses more RAM.
- */
-#define PNG_BLIT_BUFFER_SIZE	32
-/**
  * How big a byte array to use for input file buffer
  * Bigger is faster but uses more RAM.
  * Must be more than 8 bytes
@@ -89,7 +84,7 @@ typedef struct PNG_output {
 	coord_t		sx, sy;
 	coord_t		ix, iy;
 	unsigned	cnt;
-	pixel_t		buf[PNG_BLIT_BUFFER_SIZE];
+	pixel_t		buf[GDISP_IMAGE_PNG_BLIT_BUFFER_SIZE];
 	} PNG_output;
 
 // Handle the PNG scan line filter

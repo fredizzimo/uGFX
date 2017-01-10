@@ -10,6 +10,7 @@ FIX:		Ensure valid thread stack sizes on platforms where it matters
 FEATURE:	Add support for a GFILE user provided file system
 FEATURE:	Add gwinListItemSetText() to replace text in a GWIN list item
 FEATURE:	Added GDISP_IMAGE_BMP_BLIT_BUFFER_SIZE configuration option
+FEATURE:	Added GDISP_IMAGE_PNG_BLIT_BUFFER_SIZE configuration option
 
 
 *** Release 2.7 ***
