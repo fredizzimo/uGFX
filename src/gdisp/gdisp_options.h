@@ -390,7 +390,7 @@
 	#endif
 	/**
 	 * @brief   The BMP blit buffer size.
-	 * @details	Defaults to TRUE
+	 * @details	Defaults to 32
 	 * @note 	Bigger is faster but requires more RAM.
 	 * @note 	This must be greater than 40 bytes and 32 pixels as we read our headers into this space as well.
 	 */
@@ -520,11 +520,20 @@
 	#endif
 	/**
 	 * @brief   The PNG blit buffer size in pixels.
-	 * @details	Defaults to TRUE
+	 * @details	Defaults to 32
 	 * @note 	Bigger is faster but requires more RAM.
 	 */
 	#ifndef GDISP_IMAGE_PNG_BLIT_BUFFER_SIZE
 		#define GDISP_IMAGE_PNG_BLIT_BUFFER_SIZE	32
+	#endif
+	/**
+	 * @brief   The PNG input file buffer size in bytes.
+	 * @details	Defaults to 8
+	 * @note 	Bigger is faster but requires more RAM.
+	 * @note 	Must be >= 8
+	 */
+	#ifndef GDISP_IMAGE_PNG_FILE_BUFFER_SIZE
+		#define GDISP_IMAGE_PNG_FILE_BUFFER_SIZE	8
 	#endif
 /**
  * @}

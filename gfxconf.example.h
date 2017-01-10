@@ -137,6 +137,7 @@
 //        #define GDISP_NEED_IMAGE_PNG_RGBALPHA_8      TRUE
 //        #define GDISP_NEED_IMAGE_PNG_RGBALPHA_16     TRUE
 //        #define GDISP_IMAGE_PNG_BLIT_BUFFER_SIZE     32
+//        #define GDISP_IMAGE_PNG_FILE_BUFFER_SIZE     8
 //    #define GDISP_NEED_IMAGE_ACCOUNTING              FALSE
 
 //#define GDISP_NEED_PIXMAP                            FALSE

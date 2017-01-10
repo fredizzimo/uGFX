@@ -12,12 +12,6 @@
 #include "gdisp_image_support.h"
 
 /**
- * How big a byte array to use for input file buffer
- * Bigger is faster but uses more RAM.
- * Must be more than 8 bytes
- */
-#define PNG_FILE_BUFFER_SIZE	8
-/**
  * How big a byte array to use for inflate decompression
  * Bigger is faster but uses more RAM.
  * Must be >= 32768 due to the PNG 32K sliding window
@@ -73,7 +67,7 @@ typedef struct PNG_input {
 	uint8_t		*pbuf;							// The pointer to the next byte
 	uint32_t	chunklen;						// The number of bytes left in the current PNG chunk
 	uint32_t	chunknext;						// The file position of the next PNG chunk
-	uint8_t		buf[PNG_FILE_BUFFER_SIZE];		// Must be a minimum of 8 bytes to hold a chunk header
+	uint8_t		buf[GDISP_IMAGE_PNG_FILE_BUFFER_SIZE];		// Must be a minimum of 8 bytes to hold a chunk header
 	} PNG_input;
 
 // Handle the display output and windowing
@@ -191,8 +185,8 @@ gotchunk:
 
 	// Try to read data some from the chunk
 	sz = d->i.chunklen;
-	if (sz > PNG_FILE_BUFFER_SIZE)
-		sz = PNG_FILE_BUFFER_SIZE;
+	if (sz > GDISP_IMAGE_PNG_FILE_BUFFER_SIZE)
+		sz = GDISP_IMAGE_PNG_FILE_BUFFER_SIZE;
 	if (gfileRead(d->i.f, d->i.buf, sz) != sz)
 		return FALSE;
 	d->i.chunklen -= sz;
