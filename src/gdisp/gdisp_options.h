@@ -400,6 +400,21 @@
 /**
  * @}
  *
+ * @name    GDISP GIF Image Options
+ * @pre		GDISP_NEED_IMAGE and GDISP_NEED_IMAGE_GIF must be TRUE
+ * @{
+ */
+	/**
+	 * @brief   The GIF blit buffer size.
+	 * @details	Defaults to 32
+	 * @note 	Bigger is faster but requires more RAM.
+	 */
+	#ifndef GDISP_IMAGE_GIF_BLIT_BUFFER_SIZE
+		#define GDISP_IMAGE_GIF_BLIT_BUFFER_SIZE	32
+	#endif
+/**
+ * @}
+ *
  * @name    GDISP PNG Image Options
  * @pre		GDISP_NEED_IMAGE and GDISP_NEED_IMAGE_PNG must be TRUE
  * @{

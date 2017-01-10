@@ -11,12 +11,6 @@
 
 #include "gdisp_image_support.h"
 
-/**
- * How big an array to allocate for blitting (in pixels)
- * Bigger is faster but uses more RAM.
- */
-#define BLIT_BUFFER_SIZE_GIF	32
-
 // We need a special error to indicate the end of file (which may not actually be an error)
 #define GDISP_IMAGE_GIF_EOF		((gdispImageError)-1)
 #define GDISP_IMAGE_GIF_LOOP	((gdispImageError)-2)
@@ -50,7 +44,7 @@ typedef struct gifimgdecode {
 	uint16_t	code_last;
 	uint32_t	shiftdata;
 	color_t *	palette;
-	uint8_t		buf[BLIT_BUFFER_SIZE_GIF];					// Buffer for decoded pixels
+	uint8_t		buf[GDISP_IMAGE_GIF_BLIT_BUFFER_SIZE];					// Buffer for decoded pixels
 	uint16_t	prefix[1<<GIF_MAX_CODE_BITS];				// The LZW table
     uint8_t		suffix[1<<GIF_MAX_CODE_BITS]; 				// So we can trace the codes
     uint8_t 	stack[1<<GIF_MAX_CODE_BITS];				// Decoded pixels might be stacked here
@@ -104,7 +98,7 @@ typedef struct gdispImagePrivate_GIF {
 	gifimgdecode *	decode;						// The decode data for the decode in progress
 	gifimgframe		frame;
 	gifimgdispose	dispose;
-	pixel_t			buf[BLIT_BUFFER_SIZE_GIF];	// Buffer for reading and blitting
+	pixel_t			buf[GDISP_IMAGE_GIF_BLIT_BUFFER_SIZE];	// Buffer for reading and blitting
 	} gdispImagePrivate_GIF;
 
 /**
@@ -203,7 +197,7 @@ static uint16_t getPrefixGif(gifimgdecode *decode, uint16_t code) {
  *
  * Pre:		We are ready for decoding.
  *
- * Return:	The number of pixels decoded 0 .. BLIT_BUFFER_SIZE_GIF-1. 0 means EOF
+ * Return:	The number of pixels decoded 0 .. GDISP_IMAGE_GIF_BLIT_BUFFER_SIZE-1. 0 means EOF
  *
  * Note:	The resulting pixels are stored in decode->buf
  */
@@ -839,7 +833,7 @@ gdispImageError gdispGImageDraw_GIF(GDisplay *g, gdispImage *img, coord_t x, coo
 					continue;
 				}
 				priv->buf[gcnt++] = cache->palette[col];
-				if (gcnt >= BLIT_BUFFER_SIZE_GIF) {
+				if (gcnt >= GDISP_IMAGE_GIF_BLIT_BUFFER_SIZE) {
 					// We have run out of buffer - dump it to the display
 					gdispGBlitArea(g, x+mx-sx-gcnt+1, y+my-sy, gcnt, 1, 0, 0, gcnt, priv->buf);
 					gcnt = 0;
@@ -893,7 +887,7 @@ gdispImageError gdispGImageDraw_GIF(GDisplay *g, gdispImage *img, coord_t x, coo
 						continue;
 					}
 					priv->buf[gcnt++] = decode->palette[col];
-					if (gcnt >= BLIT_BUFFER_SIZE_GIF) {
+					if (gcnt >= GDISP_IMAGE_GIF_BLIT_BUFFER_SIZE) {
 						// We have run out of buffer - dump it to the display
 						gdispGBlitArea(g, x+mx-sx-gcnt+1, y+my-sy, gcnt, 1, 0, 0, gcnt, priv->buf);
 						gcnt = 0;
@@ -939,7 +933,7 @@ gdispImageError gdispGImageDraw_GIF(GDisplay *g, gdispImage *img, coord_t x, coo
 						continue;
 					}
 					priv->buf[gcnt++] = decode->palette[col];
-					if (gcnt >= BLIT_BUFFER_SIZE_GIF) {
+					if (gcnt >= GDISP_IMAGE_GIF_BLIT_BUFFER_SIZE) {
 						// We have run out of buffer - dump it to the display
 						gdispGBlitArea(g, x+mx-sx-gcnt+1, y+my-sy, gcnt, 1, 0, 0, gcnt, priv->buf);
 						gcnt = 0;
@@ -985,7 +979,7 @@ gdispImageError gdispGImageDraw_GIF(GDisplay *g, gdispImage *img, coord_t x, coo
 						continue;
 					}
 					priv->buf[gcnt++] = decode->palette[col];
-					if (gcnt >= BLIT_BUFFER_SIZE_GIF) {
+					if (gcnt >= GDISP_IMAGE_GIF_BLIT_BUFFER_SIZE) {
 						// We have run out of buffer - dump it to the display
 						gdispGBlitArea(g, x+mx-sx-gcnt+1, y+my-sy, gcnt, 1, 0, 0, gcnt, priv->buf);
 						gcnt = 0;
@@ -1031,7 +1025,7 @@ gdispImageError gdispGImageDraw_GIF(GDisplay *g, gdispImage *img, coord_t x, coo
 						continue;
 					}
 					priv->buf[gcnt++] = decode->palette[col];
-					if (gcnt >= BLIT_BUFFER_SIZE_GIF) {
+					if (gcnt >= GDISP_IMAGE_GIF_BLIT_BUFFER_SIZE) {
 						// We have run out of buffer - dump it to the display
 						gdispGBlitArea(g, x+mx-sx-gcnt+1, y+my-sy, gcnt, 1, 0, 0, gcnt, priv->buf);
 						gcnt = 0;
@@ -1078,7 +1072,7 @@ gdispImageError gdispGImageDraw_GIF(GDisplay *g, gdispImage *img, coord_t x, coo
 						continue;
 					}
 					priv->buf[gcnt++] = decode->palette[col];
-					if (gcnt >= BLIT_BUFFER_SIZE_GIF) {
+					if (gcnt >= GDISP_IMAGE_GIF_BLIT_BUFFER_SIZE) {
 						// We have run out of buffer - dump it to the display
 						gdispGBlitArea(g, x+mx-sx-gcnt+1, y+my-sy, gcnt, 1, 0, 0, gcnt, priv->buf);
 						gcnt = 0;
