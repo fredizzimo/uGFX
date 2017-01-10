@@ -389,7 +389,7 @@
 		#define GDISP_NEED_IMAGE_BMP_32		TRUE
 	#endif
 	/**
-	 * @brief   The blit buffer size.
+	 * @brief   The BMP blit buffer size.
 	 * @details	Defaults to TRUE
 	 * @note 	Bigger is faster but requires more RAM.
 	 * @note 	This must be greater than 40 bytes and 32 pixels as we read our headers into this space as well.
