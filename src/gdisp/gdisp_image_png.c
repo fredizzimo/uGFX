@@ -11,14 +11,6 @@
 
 #include "gdisp_image_support.h"
 
-/**
- * How big a byte array to use for inflate decompression
- * Bigger is faster but uses more RAM.
- * Must be >= 32768 due to the PNG 32K sliding window
- * More efficient code is generated if it is a power of 2
- */
-#define PNG_Z_BUFFER_SIZE		32768
-
 /*-----------------------------------------------------------------
  * Structure definitions
  *---------------------------------------------------------------*/
@@ -113,7 +105,7 @@ typedef struct PNG_zinflate {
 	PNG_zTree	ltree;					// The dynamic length tree
 	PNG_zTree	dtree;					// The dynamic distance tree
 	uint8_t		tmp[288+32];			// Temporary space for decoding dynamic trees and other temporary uses
-	uint8_t		buf[PNG_Z_BUFFER_SIZE];	// The decoding buffer and sliding window
+	uint8_t		buf[GDISP_IMAGE_PNG_Z_BUFFER_SIZE];	// The decoding buffer and sliding window
 	} PNG_zinflate;
 
 // Put all the decoding structures together.
@@ -272,11 +264,11 @@ static void PNG_oColor(PNG_output *o, color_t c) {
  *---------------------------------------------------------------*/
 
 // Wrap the zInflate buffer position (after increment)
-#if (PNG_Z_BUFFER_SIZE & ~(PNG_Z_BUFFER_SIZE-1)) == PNG_Z_BUFFER_SIZE
-	#define WRAP_ZBUF(x)	{ x &= PNG_Z_BUFFER_SIZE-1; }
+#if (GDISP_IMAGE_PNG_Z_BUFFER_SIZE & ~(GDISP_IMAGE_PNG_Z_BUFFER_SIZE-1)) == GDISP_IMAGE_PNG_Z_BUFFER_SIZE
+	#define WRAP_ZBUF(x)	{ x &= GDISP_IMAGE_PNG_Z_BUFFER_SIZE-1; }
 #else
-	#warning "PNG: PNG_Z_BUFFER_SIZE is more efficient as a power of 2"
-	#define WRAP_ZBUF(x)	{ if (x >= PNG_Z_BUFFER_SIZE) x = 0; }
+	#warning "PNG: GDISP_IMAGE_PNG_Z_BUFFER_SIZE is more efficient as a power of 2"
+	#define WRAP_ZBUF(x)	{ if (x >= GDISP_IMAGE_PNG_Z_BUFFER_SIZE) x = 0; }
 #endif
 
 // Initialize the inflate decompressor
@@ -553,7 +545,7 @@ static bool_t PNG_zInflateBlock(PNG_decode *d) {
 
 		// Get more bits from length code
 		length = PNG_zGetBits(d, lbits[symbol]) + lbase[symbol];
-		if ((d->z.flags & PNG_ZFLG_EOF) || length >= PNG_Z_BUFFER_SIZE)		// Bad length?
+		if ((d->z.flags & PNG_ZFLG_EOF) || length >= GDISP_IMAGE_PNG_Z_BUFFER_SIZE)		// Bad length?
 			goto iserror;
 
 		// Get the distance code
@@ -563,12 +555,12 @@ static bool_t PNG_zInflateBlock(PNG_decode *d) {
 
 		// Get more bits from distance code
 		offset = PNG_zGetBits(d, dbits[dist]) + dbase[dist];
-		if ((d->z.flags & PNG_ZFLG_EOF) || offset >= PNG_Z_BUFFER_SIZE)		// Bad offset?
+		if ((d->z.flags & PNG_ZFLG_EOF) || offset >= GDISP_IMAGE_PNG_Z_BUFFER_SIZE)		// Bad offset?
 			goto iserror;
 
 		// Work out the source buffer position allowing for wrapping
 		if (offset > d->z.bufend)
-			offset -= PNG_Z_BUFFER_SIZE;
+			offset -= GDISP_IMAGE_PNG_Z_BUFFER_SIZE;
 		offset = d->z.bufend - offset;
 
 		// Copy the matching string

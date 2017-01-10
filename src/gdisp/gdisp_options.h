@@ -535,6 +535,16 @@
 	#ifndef GDISP_IMAGE_PNG_FILE_BUFFER_SIZE
 		#define GDISP_IMAGE_PNG_FILE_BUFFER_SIZE	8
 	#endif
+	/**
+	 * @brief   The PNG inflate decompression buffer size in bytes.
+	 * @details	Defaults to 32768
+	 * @note 	Bigger is faster but requires more RAM.
+	 * @note 	Must be >= 32768 due to the PNG 32K sliding window.
+	 * @note 	More efficient code is generated if this value is a power of 2.
+	 */
+	#ifndef GDISP_IMAGE_PNG_Z_BUFFER_SIZE
+		#define GDISP_IMAGE_PNG_Z_BUFFER_SIZE	32768
+	#endif
 /**
  * @}
  *
