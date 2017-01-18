@@ -30,7 +30,7 @@
 #include "gfx.h"
 
 int main(void) {
-	coord_t		width;
+	coord_t		width, y;
 	font_t		font1, font2;
 	coord_t		fheight1, fheight2;
 	const char	*line1, *line2;
@@ -52,19 +52,32 @@ int main(void) {
 	//font2 = gdispOpenFont("PF Ronda*");
 	//font2 = gdispOpenFont("Apple*");
 
-	// Font 1
-	line1 = "a b c d e f h i j k l m n o p q r s t u v w x y z A B C D E F G H I J K L M N O P Q R S T U V W X Y Z";
-	line2 = "0 1 2 3 4 5 6 7 8 9 ~ ! @ # $ % ^ & * _ - + = ( ) { } [ ] < > | / \\ : ; , . ? ' \" `";
+	y = 0;
 	fheight1 = gdispGetFontMetric(font1, fontHeight)+2;
-	gdispFillStringBox(0, 0, width,  fheight1, line1, font1, Black, White, justifyCenter);
-	gdispFillStringBox(0, fheight1+1, width,  fheight1, line2, font1, Black, White, justifyCenter);
+	fheight2 = gdispGetFontMetric(font2, fontHeight)+2;
+
+	line1 = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	line2 = "0123456789~!@#$%^&*_-+=(){}[]<>|/\\:;,.?'\"`";
+
+	// Font 1
+	gdispFillStringBox(0, y, width,  fheight1, line1, font1, Black, White, justifyCenter);
+	y += fheight1+1;
+	gdispFillStringBox(0, y, width,  fheight1, line2, font1, Black, White, justifyCenter);
+	y += fheight1+1;
 
 	// Font 2
-	fheight2 = gdispGetFontMetric(font2, fontHeight)+2;
-	gdispFillStringBox(0, 2*fheight1+2, width,  fheight2, line1, font2, Black, White, justifyCenter);
-	gdispFillStringBox(0, 2*fheight1+fheight2+3, width,  fheight2, line2, font2, Black, White, justifyCenter);
+	gdispFillStringBox(0, y, width,  fheight2, line1, font2, Black, White, justifyCenter);
+	y += fheight2+1;
+	gdispFillStringBox(0, y, width,  fheight2, line2, font2, Black, White, justifyCenter);
+	y += fheight2+1;
 
-	// Show Sizes
+	// Font 1 drawing White on the (black) background
+	gdispDrawStringBox(0, y, width,  fheight1, line1, font1, White, justifyCenter);
+	y += fheight1+1;
+	gdispDrawStringBox(0, y, width,  fheight1, line2, font1, White, justifyCenter);
+	y += fheight1+1;
+
+		// Show Sizes
 	buf[0] = (fheight1-2)/10 + '0';
 	buf[1] = (fheight1-2)%10 + '0';
 	buf[2] = ',';
@@ -72,7 +85,7 @@ int main(void) {
 	buf[4] = (fheight2-2)/10 + '0';
 	buf[5] = (fheight2-2)%10 + '0';
 	buf[6] = 0;
-	gdispFillStringBox(0, 2*fheight1+2*fheight2+4, width,  fheight1, buf, font1, Red, White, justifyCenter);
+	gdispFillStringBox(0, y, width,  fheight1, buf, font1, Red, White, justifyCenter);
 	
 	// Wait forever
     while(TRUE) {
