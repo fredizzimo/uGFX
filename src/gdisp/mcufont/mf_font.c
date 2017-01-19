@@ -33,7 +33,7 @@ uint8_t mf_render_character(const struct mf_font_s *font,
                             void *state)
 {
     uint8_t width;
-    width = font->render_character(font, x0, y0, character, callback, state);
+    width = font->render_character(font, x0, y0, MFCHAR2UINT16(character), callback, state);
     
     if (!width)
     {
