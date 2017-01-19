@@ -14,6 +14,7 @@ FEATURE:	Added GDISP_IMAGE_PNG_BLIT_BUFFER_SIZE configuration option
 FEATURE:	Added GDISP_IMAGE_PNG_FILE_BUFFER_SIZE configuration option
 FEATURE:	Added GDISP_IMAGE_PNG_Z_BUFFER_SIZE configuration option
 FEATURE:	Added GDISP_IMAGE_GIF_BLIT_BUFFER_SIZE configuration option
+FIX:		Fixed extra dots when drawing anti-aliased fonts with wordwrap
 
 
 *** Release 2.7 ***
