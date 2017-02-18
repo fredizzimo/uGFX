@@ -18,6 +18,7 @@ FIX:		Fixed extra dots when drawing anti-aliased fonts with wordwrap
 FEATURE:	Increase non-UTF8 font support to 0 to 255 rather than just the true ascii set
 FEATURE:	Added Fb24bpp driver for RGB888 and BGR888 packed framebuffer displays
 FEATURE:	Added UC8173 driver
+FEATURE:	Added complete support for Altera Terasic MAX10 NEEK board
 
 
 *** Release 2.7 ***
