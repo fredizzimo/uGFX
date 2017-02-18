@@ -2,6 +2,7 @@ A list of current display drivers:
 
 ED060SC4      - E-Ink display
 framebuffer   - Supports any non-palletized, non-bitpacked color display with a framebuffer
+Fb24bpp       - Same as 'framebuffer' driver but supports RGB888 and BGR888 packed framebuffer formats.
 HX8347D       - Mid-sized color LCD displays eg RGB565 320x240
 ILI9320       - Mid-sized color LCD displays eg RGB565 320x240
 ILI9325       - Mid-sized color LCD displays eg RGB565 320x240
@@ -29,6 +30,7 @@ ST7565        - Small monochrome LCD
 STM32LTDC     - STM32 ART graphics STM32F4 and STM32F7 series CPU's
 TestStub      - NULL driver just to test compile
 TLS8204       - Small monochrome LCD
+UC8173        - E-Ink display driver
 QImage        - Driver that allows rendering into a QImage object (of the Qt framework)
 uGFXnet       - Remote Network display (in drivers/multiple/uGFXnet directory)
 Win32         - Microsoft Windows (in drivers/multiple/Win32 directory)
