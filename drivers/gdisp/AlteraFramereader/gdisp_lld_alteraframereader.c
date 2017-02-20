@@ -27,14 +27,9 @@
 	#error "Screen height (SCREEN_HEIGHT) not set in board file."
 #endif
 
-// ToDo: Merge this into fbPriv
-typedef struct fbInfo {
+typedef struct fbPriv {
 	void* pixels;			// The pixel buffer
 	coord_t linelen;		// The number of bytes per display line
-} fbInfo;
-
-typedef struct fbPriv {
-	fbInfo fbi;				// Display information
 	void* frame0;
 	void* frame1;
 } fbPriv;
@@ -43,8 +38,8 @@ typedef struct fbPriv {
 /* Driver local routines    .                                                */
 /*===========================================================================*/
 
-#define PIXIL_POS(g, x, y)      ((y) * ((fbPriv *)(g)->priv)->fbi.linelen + (x) * sizeof(LLDCOLOR_TYPE))
-#define PIXEL_ADDR(g, pos)      ((LLDCOLOR_TYPE *)(((char *)((fbPriv *)(g)->priv)->fbi.pixels)+pos))
+#define PIXIL_POS(g, x, y)      ((y) * ((fbPriv *)(g)->priv)->linelen + (x) * sizeof(LLDCOLOR_TYPE))
+#define PIXEL_ADDR(g, pos)      ((LLDCOLOR_TYPE *)(((char *)((fbPriv *)(g)->priv)->pixels)+pos))
 #define PRIV(g)                 ((fbPriv *)g->priv)
 
 /*===========================================================================*/
@@ -68,11 +63,11 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay* g)
 	g->g.Orientation = GDISP_ROTATE_0;
 	g->g.Powermode = powerOn;
 	g->board = 0;
-	PRIV(g)->fbi.linelen = g->g.Width * sizeof(LLDCOLOR_TYPE);	// bytes per line
-	PRIV(g)->fbi.pixels = PRIV(g)->frame0;
+	PRIV(g)->linelen = g->g.Width * sizeof(LLDCOLOR_TYPE);	// bytes per line
+	PRIV(g)->pixels = PRIV(g)->frame0;
 	
 	// Make sure the MSB is set so we bypass the data cache of the NIOS-II soft core
-	PRIV(g)->fbi.pixels = (void*)((char*)PRIV(g)->fbi.pixels + 0x80000000);
+	PRIV(g)->pixels = (void*)((char*)PRIV(g)->pixels + 0x80000000);
 	
 	// Stop the framereader to allow for configuration
 	IOWR(ALT_VIP_VFR_0_BASE, 0x00, 0x00); // stop for config
@@ -218,24 +213,24 @@ LLDSPEC	color_t gdisp_lld_get_pixel_color(GDisplay* g)
 			return;
 
 		case GDISP_CONTROL_BUFFERS_SWAP:
-			if (PRIV(g)->fbi.pixels == PRIV(g)->frame0) {
-				PRIV(g)->fbi.pixels = PRIV(g)->frame1;
+			if (PRIV(g)->pixels == PRIV(g)->frame0) {
+				PRIV(g)->pixels = PRIV(g)->frame1;
 				IOWR(ALT_VIP_VFR_0_BASE, 0x03, 0x00);
 			} else {
-				PRIV(g)->fbi.pixels = PRIV(g)->frame0;
+				PRIV(g)->pixels = PRIV(g)->frame0;
 				IOWR(ALT_VIP_VFR_0_BASE, 0x03, 0x01);
 			}
 			return;
 			
 		case GDISP_CONTROL_BUFFERS_ENABLE:
 			// Display frame0, draw to frame1
-			PRIV(g)->fbi.pixels = PRIV(g)->frame1;
+			PRIV(g)->pixels = PRIV(g)->frame1;
 			IOWR(ALT_VIP_VFR_0_BASE, 0x03, 0x00);
 			return;
 
 		case GDISP_CONTROL_BUFFERS_DISABLE:
 			// Display frame0, draw to frame0
-			PRIV(g)->fbi.pixels = PRIV(g)->frame0;
+			PRIV(g)->pixels = PRIV(g)->frame0;
 			IOWR(ALT_VIP_VFR_0_BASE, 0x03, 0x00);
 			return;
 		}
@@ -252,8 +247,8 @@ LLDSPEC	color_t gdisp_lld_get_pixel_color(GDisplay* g)
 		uint8_t* line;
 	
 		// Calculate some values required for further calculations
-		bytes_per_pixel = ((fbPriv*)g->priv)->fbi.linelen/g->g.Width; // must be 4
-		bytes_per_line = ((fbPriv*)g->priv)->fbi.linelen;
+		bytes_per_pixel = ((fbPriv*)g->priv)->linelen/g->g.Width; // must be 4
+		bytes_per_line = ((fbPriv*)g->priv)->linelen;
 	
 		// Allocate line buffer
 		line = gfxAlloc(bytes_per_pixel * g->p.cx);
@@ -264,7 +259,7 @@ LLDSPEC	color_t gdisp_lld_get_pixel_color(GDisplay* g)
 		}
 	  
 		// Calculate the address of the first pixel of the rectangle (top left corner)
-		addr = (int)((char *)((fbPriv *)g->priv)->fbi.pixels + (g->p.y * bytes_per_line) + (g->p.x * bytes_per_pixel));
+		addr = (int)((char *)((fbPriv *)g->priv)->pixels + (g->p.y * bytes_per_line) + (g->p.x * bytes_per_pixel));
 	
 		// Copy filled line buffer to create rectangle
 		for (i = 0; i < g->p.cy; i++) {
