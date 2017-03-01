@@ -32,7 +32,7 @@
 #endif
 
 #define PRIV(g)						((UC8173_Private*)((g)->priv))
-#define FRAMEBUFFER(g)				(PRIV(g)->framebuffer)
+#define FRAMEBUFFER(g)				((uint8_t *)(PRIV(g)+1))
 #define GDISP_FLG_NEEDFLUSH			(GDISP_FLG_DRIVER << 0)
 
 #if GDISP_LLD_PIXELFORMAT == GDISP_PIXELFORMAT_MONO
@@ -56,7 +56,6 @@ typedef struct UC8173_Private {
 	coord_t flushWindowY;
 	coord_t flushWindowWidth;
 	coord_t flushWindowHeight;
-	uint8_t* framebuffer;
 } UC8173_Private;
 
 // This function rounds a given integer up to a specified multiple. Note, multiple must be a power of 2!
@@ -149,7 +148,6 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay* g)
 	PRIV(g)->flushWindowY = 0;
 	PRIV(g)->flushWindowWidth = GDISP_SCREEN_WIDTH;
 	PRIV(g)->flushWindowHeight = GDISP_SCREEN_HEIGHT;
-	PRIV(g)->framebuffer = (uint8_t*)(PRIV(g) + offsetof(UC8173_Private, framebuffer));
 
 	// Initialise the board interface
 	if (!init_board(g)) {
