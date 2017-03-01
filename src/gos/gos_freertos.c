@@ -49,7 +49,7 @@ void* gfxRealloc(void *ptr, size_t oldsz, size_t newsz)
 
 	if (oldsz) {
 		memcpy(np, ptr, oldsz);
-		vPortFree(ptr);
+		gfxFree(ptr);
 	}
 
 	return np;
@@ -57,31 +57,22 @@ void* gfxRealloc(void *ptr, size_t oldsz, size_t newsz)
 
 void gfxSleepMilliseconds(delaytime_t ms)
 {
-	const portTickType ticks = ms / portTICK_PERIOD_MS;
-	vTaskDelay(ticks);
+	vTaskDelay(gfxMillisecondsToTicks(ms));
 }
 
 void gfxSleepMicroseconds(delaytime_t ms)
 {
-	const portTickType ticks = (ms / 1000) / portTICK_PERIOD_MS;
 
-	// delay milli seconds
-	vTaskDelay(ticks);
-
-	// microsecond resolution delay is not supported in FreeRTOS
+	// delay milli seconds - microsecond resolution delay is not supported in FreeRTOS
+	vTaskDelay(gfxMillisecondsToTicks(ms/1000));
 	// vUsDelay(ms%1000);
 }
 
-portTickType MS2ST(portTickType ms)
+void gfxMutexInit(gfxMutex *pmutex)
 {
-	return (ms / portTICK_PERIOD_MS);
-}
-
-void gfxMutexInit(xSemaphoreHandle *s)
-{
-	*s = xSemaphoreCreateMutex();
+	*pmutex = xSemaphoreCreateMutex();
 	#if GFX_FREERTOS_USE_TRACE
-		vTraceSetMutexName(*s,"uGFXMutex"); // for FreeRTOS+Trace debug
+		vTraceSetMutexName(*pmutex,"uGFXMutex");
 	#endif
 }
 
@@ -90,29 +81,16 @@ void gfxSemInit(gfxSem* psem, semcount_t val, semcount_t limit)
 	if (val > limit)
 		val = limit;
 
-	psem->counter = val;
-	psem->limit = limit;
-	psem->sem = xSemaphoreCreateCounting(limit,val);
-
+	*psem = xSemaphoreCreateCounting(limit,val);
 	#if GFX_FREERTOS_USE_TRACE
-		vTraceSetSemaphoreName(psem->sem, "uGFXSema"); // for FreeRTOS+Trace debug
+		vTraceSetSemaphoreName(*psem, "uGFXSema");
 	#endif
-}
-
-void gfxSemDestroy(gfxSem* psem)
-{
-	vSemaphoreDelete(psem->sem);
 }
 
 bool_t gfxSemWait(gfxSem* psem, delaytime_t ms)
 {
-	psem->counter--;
-
-	if (xSemaphoreTake(psem->sem, MS2ST(ms)) == pdPASS)
+	if (xSemaphoreTake(*psem, gfxMillisecondsToTicks(ms)) == pdPASS)
 		return TRUE;
-
-	psem->counter++;
-
 	return FALSE;
 }
 
@@ -120,50 +98,35 @@ bool_t gfxSemWaitI(gfxSem* psem)
 {
 	portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;
 
-	psem->counter--;
-
-	if (xSemaphoreTakeFromISR(psem->sem,&xHigherPriorityTaskWoken) == pdTRUE)
+	if (xSemaphoreTakeFromISR(*psem, &xHigherPriorityTaskWoken) == pdTRUE)
 		return TRUE;
-
-	psem->counter++;
-
 	return FALSE;
 }
 
 void gfxSemSignal(gfxSem* psem)
 {
-	taskENTER_CRITICAL();
-
-	if (psem->counter < psem->limit) {
-		psem->counter++;
-		xSemaphoreGive(psem->sem);
-	}
-
+	xSemaphoreGive(*psem);
 	taskYIELD();
-	taskEXIT_CRITICAL();
 }
 
 void gfxSemSignalI(gfxSem* psem)
 {
 	portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;
 
-	if (psem->counter < psem->limit) {
-		psem->counter++;
-		xSemaphoreGiveFromISR(psem->sem,&xHigherPriorityTaskWoken);
-	}
+	xSemaphoreGiveFromISR(*psem,&xHigherPriorityTaskWoken);
 }
 
 gfxThreadHandle gfxThreadCreate(void *stackarea, size_t stacksz, threadpriority_t prio, DECLARE_THREAD_FUNCTION((*fn),p), void *param)
 {
-	xTaskHandle task = NULL;
-	stacksz = (size_t)stackarea;
+	gfxThreadHandle task;
+	(void) stackarea;
 
 	if (stacksz < configMINIMAL_STACK_SIZE)
 		stacksz = configMINIMAL_STACK_SIZE;
 
-	if (xTaskCreate(fn, "uGFX_TASK", stacksz, param, prio, &task )!= pdPASS) {
-		for (;;);
-	}
+	task = 0;
+	if (xTaskCreate(fn, "uGFX_TASK", stacksz, param, prio, &task) != pdPASS)
+		return 0;
 
 	return task;
 }
