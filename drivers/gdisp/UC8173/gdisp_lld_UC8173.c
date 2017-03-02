@@ -32,7 +32,7 @@
 #endif
 
 #define PRIV(g)						((UC8173_Private*)((g)->priv))
-#define FRAMEBUFFER(g)				((uint8_t *)(PRIV(g)+1))
+#define FRAMEBUFFER(g)				(((uint8_t*)(PRIV(g)))+1)
 #define GDISP_FLG_NEEDFLUSH			(GDISP_FLG_DRIVER << 0)
 
 #if GDISP_LLD_PIXELFORMAT == GDISP_PIXELFORMAT_MONO
@@ -74,41 +74,22 @@ static GFXINLINE void _wait_for_busy_low(GDisplay* g)
 	while (getpin_busy(g));
 }
 
-static void _load_lut(GDisplay* g, uint32_t LUT, uint8_t* LUT_Value)
-{
-	int i,counter;
-	int MODE = 2;
-
-	if(MODE == 0)
-		counter = 512;  //512
-	else
-		counter = 42; 
-	if(LUT == 0x26)
-		counter = 128;
-
-	write_cmd(g, LUT);
-	for(i = 0; i < counter; i++) {
-		write_data(g, *LUT_Value);
-		LUT_Value++;
-	}
-}
-
-void _load_lut2(GDisplay* g, uint32_t LUT, uint8_t* LUT_Value, uint32_t LUT_Counter)
+void _load_lut(GDisplay* g, uint32_t lutRegister, const uint8_t* lut, uint32_t lutCounter)
 {
 	uint32_t i;
 
-	write_cmd(g, LUT);
-	for (i = 0; i < LUT_Counter; i++) {
-		write_data(g, *LUT_Value);
-		LUT_Value++;
+	write_cmd(g, lutRegister);
+	for (i = 0; i < lutCounter; i++) {
+		write_data(g, *lut);
+		lut++;
 	}
 }
 
-static void _upload_Temperature_LUT(GDisplay* g)
-{  
-	_load_lut2(g, LUT_KWVCOM, &_lut_temperature[0], 32);
-	_load_lut2(g, LUT_KW, &_lut_temperature[32], 512);
-	_load_lut2(g, LUT_FT, &_lut_temperature[544], 128);
+static void _upload_lut(GDisplay* g)
+{
+	_load_lut(g, LUT_KWVCOM, _lut_KWvcom_DC_A2_240ms, 32);
+	_load_lut(g, LUT_KW, _lut_kw_A2_240ms, 512);
+	_load_lut(g, LUT_FT, _lut_ft, 128);
 }
 
 static void _clear_lut(GDisplay* g)
@@ -116,24 +97,26 @@ static void _clear_lut(GDisplay* g)
 	write_cmd(g, PON);
 	_wait_for_busy_high(g);
 
-	_load_lut(g, LUT_KW, _lut_none);
-	_load_lut(g, LUT_KWVCOM, _lut_none);
+	_load_lut(g, LUT_KW, _lut_None, 42);
+	_load_lut(g, LUT_KWVCOM, _lut_None, 42);
 
     write_cmd(g, POF); 
     _wait_for_busy_low(g);
 }
 
-static void _invertFramebuffer(GDisplay* g)
-{
-	uint32_t i;
+#if GDISP_NEED_CONTROL && GDISP_HARDWARE_CONTROL
+	static void _invertFramebuffer(GDisplay* g)
+	{
+		uint32_t i;
 
-	for (i = 0; i < LINE_BYTES*GDISP_SCREEN_HEIGHT; i++) {
-		FRAMEBUFFER(g)[i] = ~(FRAMEBUFFER(g)[i]);
+		for (i = 0; i < LINE_BYTES*GDISP_SCREEN_HEIGHT; i++) {
+			FRAMEBUFFER(g)[i] = ~(FRAMEBUFFER(g)[i]);
+		}
+		
+		// We should flush these changes to the display controller framebuffer at some point
+		g->flags |= GDISP_FLG_NEEDFLUSH;
 	}
-	
-	// We should flush these changes to the display controller framebuffer at some point
-	g->flags |= GDISP_FLG_NEEDFLUSH;
-}
+#endif
 
 LLDSPEC bool_t gdisp_lld_init(GDisplay* g)
 {
@@ -221,7 +204,6 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay* g)
 	// Auto measure VCOM
 	write_cmd(g, AMV);
 	write_data(g, 0x11);		// 5 seconds, enabled
-
 	_wait_for_busy_high(g);
 
 	// Get current VCOM value
@@ -294,7 +276,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay* g)
 		acquire_bus(g);
 		
 		// Upload the new temperature LUT
-		_upload_Temperature_LUT(g);
+		_upload_lut(g);
 
 		// Setup the window
 		write_cmd(g, DTMW);
@@ -319,7 +301,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay* g)
 
 		// Refresh the panel contents
 		write_cmd(g, DRF);
-		write_data(g, 0x08);	// Enable REGAL function
+		write_data(g, 0x00);	// Enable REGAL function
 		write_data(g, 0x00);
 		write_data(g, 0x00);
 		write_data(g, 0x00);
@@ -366,7 +348,7 @@ LLDSPEC bool_t gdisp_lld_init(GDisplay* g)
 			y = g->p.x;
 			break;
 		}
-
+		
 		// Modify the framebuffer content
 		p = &FRAMEBUFFER(g)[xyaddr(x,y)];
 		*p &=~ xybit(x, LLDCOLOR_MASK());
