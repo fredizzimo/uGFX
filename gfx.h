@@ -229,6 +229,7 @@ extern "C" {
 	 * @note	If you define GFX_OS_EXTRA_DEINIT_FUNCTION in your gfxconf.h file the macro is the
 	 * 			name of a void function with no parameters that is called immediately before
 	 * 			operating system de-initialisation (as ugfx is exiting).
+	 * @note	If GFX_OS_CALL_UGFXMAIN is set uGFXMain() is called after all initialisation is complete.
 	 *
 	 * @api
 	 */
@@ -243,6 +244,17 @@ extern "C" {
 	 */
 	void gfxDeinit(void);
 
+	#if GFX_OS_CALL_UGFXMAIN || defined(__DOXYGEN__)
+		/**
+		 * @brief	The function containing all the user uGFX application code.
+		 *
+		 * @note	This is called by gfxInit() and is expected to never return.
+		 * 			It is defined by the user.
+		 *
+		 * @pre		GFX_OS_CALL_UGFXMAIN is GFXON
+		 */
+		void uGFXMain(void);
+	#endif
 #ifdef __cplusplus
 }
 #endif

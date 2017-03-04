@@ -38,8 +38,6 @@ void _gosInit(void)
 }
 
 #if !GFX_OS_NO_INIT && GFX_OS_CALL_UGFXMAIN
-	extern void uGFXMain(void);
-	
 	static DECLARE_THREAD_FUNCTION(startUGFX_FreeRTOS, p) {
 		(void) p;
 		uGFXMain();

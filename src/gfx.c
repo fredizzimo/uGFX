@@ -78,9 +78,6 @@ extern void _gosDeinit(void);
 	extern void _gtransInit(void);
 	extern void _gtransDeinit(void);
 #endif
-#if GFX_OS_CALL_UGFXMAIN
-	extern void uGFXMain(void);
-#endif
 
 void gfxInit(void)
 {
