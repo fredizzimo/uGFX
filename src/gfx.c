@@ -79,7 +79,7 @@ extern void _gosDeinit(void);
 	extern void _gtransDeinit(void);
 #endif
 #if GFX_OS_CALL_UGFXMAIN
-	extern threadreturn_t uGFXMain(void *param);
+	extern void uGFXMain(void);
 #endif
 
 void gfxInit(void)

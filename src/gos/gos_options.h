@@ -189,8 +189,7 @@
 	 *			operating systems whose main thread never returns after starting the
 	 * 			scheduler.<br>
 	 *			Its prototype is:<br>
-	 *				threadreturn_t uGFXMain(void *param);<br>
-	 * @note	uGFXMain() will always be called with a NULL paramter.
+	 *				void uGFXMain(void);<br>
  	 */
 	#ifndef GFX_OS_CALL_UGFXMAIN
 		#define GFX_OS_CALL_UGFXMAIN		FALSE
