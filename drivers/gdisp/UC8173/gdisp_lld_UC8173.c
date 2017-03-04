@@ -32,7 +32,7 @@
 #endif
 
 #define PRIV(g)						((UC8173_Private*)((g)->priv))
-#define FRAMEBUFFER(g)				(((uint8_t*)(PRIV(g)))+1)
+#define FRAMEBUFFER(g)				((uint8_t *)(PRIV(g)+1))
 #define GDISP_FLG_NEEDFLUSH			(GDISP_FLG_DRIVER << 0)
 
 #if GDISP_LLD_PIXELFORMAT == GDISP_PIXELFORMAT_MONO
