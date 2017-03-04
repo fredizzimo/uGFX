@@ -33,6 +33,10 @@ void _gosInit(void)
 	gfxMutexInit(&SystemMutex);
 }
 
+void _gosPostInit(void)
+{
+}
+
 void _gosDeinit(void)
 {
 	/* ToDo */

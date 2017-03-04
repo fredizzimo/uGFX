@@ -21,6 +21,10 @@ void _gosInit(void)
 	/* No initialization of the operating system itself is needed */
 }
 
+void _gosPostInit(void)
+{
+}
+
 void _gosDeinit(void)
 {
 
@@ -102,7 +106,7 @@ gfxThreadHandle gfxThreadCreate(void *stackarea, size_t stacksz, threadpriority_
 	HANDLE	thd;
 
 	if (!(thd = CreateThread(0, stacksz, fn, param, CREATE_SUSPENDED, 0)))
-		return FALSE;
+		return 0;
 
 	SetThreadPriority(thd, prio);
 	ResumeThread(thd);

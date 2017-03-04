@@ -53,6 +53,10 @@ void _gosInit(void)
     _systickTimer.start();
 }
 
+void _gosPostInit(void)
+{
+}
+
 void _gosDeinit(void)
 {
 }

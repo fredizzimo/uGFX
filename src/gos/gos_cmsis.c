@@ -26,6 +26,10 @@ void _gosInit(void)
 	_gosHeapInit();
 }
 
+void _gosPostInit(void)
+{
+}
+
 void _gosDeinit(void)
 {
 }

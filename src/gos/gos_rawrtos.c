@@ -32,6 +32,10 @@ void _gosInit(void)
 	#endif
 }
 
+void _gosPostInit(void)
+{
+}
+
 void _gosDeinit(void)
 {
 }

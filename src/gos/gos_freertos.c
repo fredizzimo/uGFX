@@ -22,18 +22,41 @@
 	#error "GOS: configUSE_COUNTING_SEMAPHORES must be defined in FreeRTOSConfig.h"
 #endif
 
+#if !GFX_OS_NO_INIT && INCLUDE_xTaskGetSchedulerState != 1 && configUSE_TIMERS != 1
+	#error "GOS: Either INCLUDE_xTaskGetSchedulerState or configUSE_TIMERS must be defined in FreeRTOSConfig.h"
+#endif
+
+#if !GFX_OS_NO_INIT && !GFX_OS_CALL_UGFXMAIN
+	#error "GOS: Either GFX_OS_NO_INIT or GFX_OS_CALL_UGFXMAIN must be defined for FreeRTOS"
+#endif
+
 void _gosInit(void)
 {
-	#if !GFX_OS_NO_INIT
-		#error "GOS: Operating System initialization for FreeRTOS is not yet implemented in uGFX. Please set GFX_OS_NO_INIT to TRUE in your gfxconf.h"
+	#if GFX_OS_NO_INIT && !GFX_OS_INIT_NO_WARNING
+		#warning "GOS: Operating System initialization has been turned off. Make sure you call vTaskStartScheduler()."
 	#endif
-	#if !GFX_OS_INIT_NO_WARNING
-		#warning "GOS: Operating System initialization has been turned off. Make sure you call vTaskStartScheduler() before gfxInit() in your application!"
+}
+
+#if !GFX_OS_NO_INIT && GFX_OS_CALL_UGFXMAIN
+	extern threadreturn_t uGFXMain(void *param);
+#endif
+
+void _gosPostInit(void)
+{
+	#if !GFX_OS_NO_INIT && GFX_OS_CALL_UGFXMAIN
+		if (xTaskGetSchedulerState() == taskSCHEDULER_NOT_STARTED) {
+			gfxThreadCreate(0, GFX_OS_UGFXMAIN_STACKSIZE, NORMAL_PRIORITY, uGFXMain, 0);
+			vTaskStartScheduler();
+			gfxHalt("Unable to start FreeRTOS scheduler. Out of memory?");
+		}
 	#endif
 }
 
 void _gosDeinit(void)
 {
+	#if !GFX_OS_NO_INIT
+		vTaskDelete(0);
+	#endif
 }
 
 void* gfxRealloc(void *ptr, size_t oldsz, size_t newsz)
@@ -131,4 +154,11 @@ gfxThreadHandle gfxThreadCreate(void *stackarea, size_t stacksz, threadpriority_
 	return task;
 }
 
+#if INCLUDE_eTaskGetState == 1
+	threadreturn_t gfxThreadWait(gfxThreadHandle thread) {
+		while (eTaskGetState(thread) != eDeleted)
+			gfxYield();
+	}
+#endif
+ 
 #endif /* GFX_USE_OS_FREERTOS */

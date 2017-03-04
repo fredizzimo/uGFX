@@ -60,7 +60,7 @@ typedef portBASE_TYPE		threadpriority_t;
 #define HIGH_PRIORITY		configMAX_PRIORITIES-1
 
 /* FreeRTOS will allocate the stack when creating the thread */
-#define DECLARE_THREAD_STACK(name, sz)
+#define DECLARE_THREAD_STACK(name, sz)	uint8_t name[1]
 #define DECLARE_THREAD_FUNCTION(fnName, param)	threadreturn_t fnName(void *param)
 #define THREAD_RETURN(retval)
 
@@ -103,9 +103,11 @@ void gfxSemSignal(gfxSem* psem);
 void gfxSemSignalI(gfxSem* psem);
 gfxThreadHandle gfxThreadCreate(void *stackarea, size_t stacksz, threadpriority_t prio, DECLARE_THREAD_FUNCTION((*fn),p), void *param);
 
-#define gfxThreadWait(thread)		{} // never used, not imlpemented
-#define gfxThreadMe()				{} // never used, not implemented
-#define gfxThreadClose(thread)		{}
+#define gfxThreadMe()				xTaskGetCurrentTaskHandle()
+#if INCLUDE_eTaskGetState == 1
+	threadreturn_t gfxThreadWait(gfxThreadHandle thread);
+#endif
+#define gfxThreadClose(thread)
 
 #ifdef __cplusplus
 }

@@ -19,6 +19,10 @@ FEATURE:	Increase non-UTF8 font support to 0 to 255 rather than just the true as
 FEATURE:	Added Fb24bpp driver for RGB888 and BGR888 packed framebuffer displays
 FEATURE:	Added UC8173 driver
 FEATURE:	Added complete support for Altera Terasic MAX10 NEEK board
+FEATURE:	Significantly improved the FreeRTOS port
+FEATURE:	Added support for operating system initialisation in FreeRTOS
+FEATURE:	Added GFX_OS_CALL_UGFXMAIN configuration option to allow uGFXMain() to be automatically called
+FEATURE:	Added GFX_OS_UGFXMAIN_STACKSIZE configuration option to control uGFXMain() stack size
 
 
 *** Release 2.7 ***

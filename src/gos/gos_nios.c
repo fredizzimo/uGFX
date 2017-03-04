@@ -25,6 +25,10 @@ void _gosInit(void)
 	_gosThreadsInit();
 }
 
+void _gosPostInit(void)
+{
+}
+
 void _gosDeinit(void)
 {
 }

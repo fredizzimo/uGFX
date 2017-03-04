@@ -19,6 +19,7 @@ static bool_t gfxInitDone = FALSE;
 
 /* These init functions are defined by each module but not published */
 extern void _gosInit(void);
+extern void _gosPostInit(void);
 extern void _gosDeinit(void);
 #ifdef GFX_OS_PRE_INIT_FUNCTION
 		extern void GFX_OS_PRE_INIT_FUNCTION(void);
@@ -77,6 +78,9 @@ extern void _gosDeinit(void);
 	extern void _gtransInit(void);
 	extern void _gtransDeinit(void);
 #endif
+#if GFX_OS_CALL_UGFXMAIN
+	extern threadreturn_t uGFXMain(void *param);
+#endif
 
 void gfxInit(void)
 {
@@ -129,6 +133,10 @@ void gfxInit(void)
 	#endif
 	#if GFX_USE_GWIN
 		_gwinInit();
+	#endif
+	_gosPostInit();
+	#if GFX_OS_CALL_UGFXMAIN
+		uGFXMain(0);
 	#endif
 }
 
