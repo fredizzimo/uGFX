@@ -60,7 +60,7 @@ struct mf_rlefont_s
     const uint8_t dict_entry_count;
     
     /* Number of discontinuous character ranges */
-    const uint8_t char_range_count;
+    const uint16_t char_range_count;
     
     /* Array of the character ranges */
     const struct mf_rlefont_char_range_s *char_ranges;

@@ -63,7 +63,7 @@ struct mf_bwfont_s
     const uint8_t version;
     
     /* Number of character ranges. */
-    const uint8_t char_range_count;
+    const uint16_t char_range_count;
     
     /* Array of the character ranges */
     const struct mf_bwfont_char_range_s *char_ranges;

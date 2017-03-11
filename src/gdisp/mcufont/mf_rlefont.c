@@ -46,7 +46,7 @@ static const uint8_t *find_glyph(const struct mf_rlefont_s *font,
        index = character - range->first_char;
        if (character >= range->first_char && index < range->char_count)
        {
-           uint16_t offset = range->glyph_offsets[index];
+           unsigned offset = range->glyph_offsets[index];
            return &range->glyph_data[offset];
        }
    }
