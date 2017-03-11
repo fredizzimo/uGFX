@@ -23,6 +23,13 @@ FEATURE:	Significantly improved the FreeRTOS port
 FEATURE:	Added support for operating system initialisation in FreeRTOS
 FEATURE:	Added GFX_OS_CALL_UGFXMAIN configuration option to allow uGFXMain() to be automatically called
 FEATURE:	Added GFX_OS_UGFXMAIN_STACKSIZE configuration option to control uGFXMain() stack size
+FIX:		Fixed where a font with more than 255 glyphs could fail to display some glyphs
+FIX:		Fixed where a font with a large x baseline could be incorrectly clipped or word-wrapped
+IMPROVE:	Significantly decrease the stack usage required for word-wrapping
+FEATURE:	Added justifyTop, justifyMiddle & justifyBottom text justification to GDISP
+FEATURE:	Added justifyWordWrap, justifyNoWordWrap text justification to GDISP (requires GDISP_NEED_TEXT_WORDWRAP)
+FEATURE:	Added justifyPad, justifyNoPad text justification to GDISP
+FEATURE:	Added GDISP_NEED_TEXT_BOXPADLR and GDISP_NEED_TEXT_BOXPADTB configuration options
 
 
 *** Release 2.7 ***

@@ -20,17 +20,6 @@
 	#define GDISP_STARTUP_LOGO_TIMEOUT		0
 #endif
 
-// For internal use only.
-#if GDISP_NEED_TEXT_WORDWRAP
-	typedef struct wrapParameters {
-		GDisplay* g;
-		coord_t x;
-		coord_t y;
-		font_t font;
-		justify_t justify;
-	} wrapParameters_t;
-#endif
-
 /*===========================================================================*/
 /* Driver local variables.                                                   */
 /*===========================================================================*/
@@ -3340,29 +3329,24 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 	/* Callback to render string boxes with word wrap. */
 	#if GDISP_NEED_TEXT_WORDWRAP
 		static bool mf_countline_callback(mf_str line, uint16_t count, void *state) {
-			uint16_t *linecount;
 			(void) line;
 			(void) count;
 
-			linecount = (uint16_t*)state;
-			(*linecount)++;
-
+			((coord_t*)state)[0]++;
 			return TRUE;
 		}
 		static bool mf_drawline_callback(mf_str line, uint16_t count, void *state) {
-			wrapParameters_t* wrapParameters = (wrapParameters_t*)state;
-
-			mf_render_aligned(wrapParameters->font, wrapParameters->x, wrapParameters->y, wrapParameters->justify, line, count, drawcharglyph, wrapParameters->g);
-
-			wrapParameters->y += wrapParameters->font->line_height;
+			#define GD	((GDisplay *)state)
+				mf_render_aligned(GD->t.font, GD->t.wrapx, GD->t.wrapy, GD->t.lrj, line, count, drawcharglyph, state);
+				GD->t.wrapy += GD->t.font->line_height;
+			#undef GD
 			return TRUE;
 		}
 		static bool mf_fillline_callback(mf_str line, uint16_t count, void *state) {
-			wrapParameters_t* wrapParameters = (wrapParameters_t*)state;
-
-			mf_render_aligned(wrapParameters->font, wrapParameters->x, wrapParameters->y, wrapParameters->justify, line, count, fillcharglyph, wrapParameters->g);
-
-			wrapParameters->y += wrapParameters->font->line_height;
+			#define GD	((GDisplay *)state)
+				mf_render_aligned(GD->t.font, GD->t.wrapx, GD->t.wrapy, GD->t.lrj, line, count, fillcharglyph, state);
+				GD->t.wrapy += GD->t.font->line_height;
+			#undef GD
 			return TRUE;
 		}	
 	#endif
@@ -3411,7 +3395,7 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 		g->t.font = font;
 		g->t.clipx0 = x;
 		g->t.clipy0 = y;
-		g->t.clipx1 = x + mf_get_string_width(font, str, 0, 0) + font->baseline_x;
+		g->t.clipx1 = 32768;	//x + mf_get_string_width(font, str, 0, 0) + font->baseline_x;
 		g->t.clipy1 = y + font->height;
 		g->t.color = color;
 
@@ -3444,24 +3428,55 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 	}
 
 	void gdispGDrawStringBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, const char* str, font_t font, color_t color, justify_t justify) {
-		#if GDISP_NEED_TEXT_WORDWRAP
-			wrapParameters_t wrapParameters;
-			uint16_t nbrLines;
-		#endif
+		coord_t		totalHeight;
 
 		if (!font)
 			return;
 		MUTEX_ENTER(g);
 
-		g->t.font = font;
+		// Apply padding
+		#if GDISP_NEED_TEXT_BOXPADLR != 0 || GDISP_NEED_TEXT_BOXPADTB != 0
+			if (!(justify & justifyNoPad)) {
+				#if GDISP_NEED_TEXT_BOXPADLR != 0
+					x += GDISP_NEED_TEXT_BOXPADLR;
+					cx -= 2*GDISP_NEED_TEXT_BOXPADLR;
+				#endif
+				#if GDISP_NEED_TEXT_BOXPADTB != 0
+					y += GDISP_NEED_TEXT_BOXPADTB;
+					cy -= 2*GDISP_NEED_TEXT_BOXPADTB;
+				#endif
+			}
+		#endif
+			
+		// Save the clipping area
 		g->t.clipx0 = x;
 		g->t.clipy0 = y;
 		g->t.clipx1 = x+cx;
 		g->t.clipy1 = y+cy;
-		g->t.color = color;
 
-		/* Select the anchor position */
-		switch(justify) {
+		// Calculate the total text height
+		#if GDISP_NEED_TEXT_WORDWRAP
+			if (!(justify & justifyNoWordWrap)) {
+				// Count the number of lines
+				totalHeight = 0;
+				mf_wordwrap(font, cx, str, mf_countline_callback, &totalHeight);
+				totalHeight *= font->height;
+			} else
+		#endif
+		totalHeight = font->height;
+
+		// Select the anchor position
+		switch((justify & JUSTIFYMASK_TOPBOTTOM)) {
+		case justifyTop:
+			break;
+		case justifyBottom:
+			y += cy - totalHeight;
+			break;
+		default:	// justifyMiddle
+			y += (cy+1 - totalHeight)/2;
+			break;
+		}
+		switch((justify & JUSTIFYMASK_LEFTRIGHT)) {
 		case justifyCenter:
 			x += (cx + 1) / 2;
 			break;
@@ -3469,60 +3484,88 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 			x += cx;
 			break;
 		default:	// justifyLeft
-			x += font->baseline_x;
 			break;
 		}
 
 		/* Render */
+		g->t.font = font;
+		g->t.color = color;
 		#if GDISP_NEED_TEXT_WORDWRAP
-			wrapParameters.x = x;
-			wrapParameters.y = y;
-			wrapParameters.font = font;
-			wrapParameters.justify = justify;
-			wrapParameters.g = g;
-
-			// Count the number of lines
-			nbrLines = 0;
-			mf_wordwrap(font, cx, str, mf_countline_callback, &nbrLines);
-			wrapParameters.y += (cy+1 - nbrLines*font->height)/2;
-			
-			mf_wordwrap(font, cx, str, mf_drawline_callback, &wrapParameters);
-		#else
-			y += (cy+1 - font->height)/2;
-			mf_render_aligned(font, x, y, justify, str, 0, drawcharglyph, g);
+			if (!(justify & justifyNoWordWrap)) {
+				g->t.lrj = (justify & JUSTIFYMASK_LEFTRIGHT);
+				g->t.wrapx = x;
+				g->t.wrapy = y;
+				
+				mf_wordwrap(font, cx, str, mf_drawline_callback, g);
+			} else
 		#endif
+		mf_render_aligned(font, x, y, (justify & JUSTIFYMASK_LEFTRIGHT), str, 0, drawcharglyph, g);
 
 		autoflush(g);
 		MUTEX_EXIT(g);
 	}
 
 	void gdispGFillStringBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, const char* str, font_t font, color_t color, color_t bgcolor, justify_t justify) {
-		#if GDISP_NEED_TEXT_WORDWRAP
-			wrapParameters_t wrapParameters;
-			uint16_t nbrLines;
-		#endif
+		coord_t		totalHeight;
 
 		if (!font)
 			return;
 		MUTEX_ENTER(g);
 
+		g->p.x = x;
+		g->p.y = y;
 		g->p.cx = cx;
 		g->p.cy = cy;
-		g->t.font = font;
-		g->t.clipx0 = g->p.x = x;
-		g->t.clipy0 = g->p.y = y;
-		g->t.clipx1 = x+cx;
-		g->t.clipy1 = y+cy;
-		g->t.color = color;
-		g->t.bgcolor = g->p.color = bgcolor;
 
 		TEST_CLIP_AREA(g) {
 
 			// background fill
+			g->p.color = bgcolor;
 			fillarea(g);
 
-			/* Select the anchor position */
-			switch(justify) {
+			// Apply padding
+			#if GDISP_NEED_TEXT_BOXPADLR != 0 || GDISP_NEED_TEXT_BOXPADTB != 0
+				if (!(justify & justifyNoPad)) {
+					#if GDISP_NEED_TEXT_BOXPADLR != 0
+						x += GDISP_NEED_TEXT_BOXPADLR;
+						cx -= 2*GDISP_NEED_TEXT_BOXPADLR;
+					#endif
+					#if GDISP_NEED_TEXT_BOXPADTB != 0
+						y += GDISP_NEED_TEXT_BOXPADTB;
+						cy -= 2*GDISP_NEED_TEXT_BOXPADTB;
+					#endif
+				}
+			#endif
+			
+			// Save the clipping area
+			g->t.clipx0 = x;
+			g->t.clipy0 = y;
+			g->t.clipx1 = x+cx;
+			g->t.clipy1 = y+cy;
+
+			// Calculate the total text height
+			#if GDISP_NEED_TEXT_WORDWRAP
+				if (!(justify & justifyNoWordWrap)) {
+					// Count the number of lines
+					totalHeight = 0;
+					mf_wordwrap(font, cx, str, mf_countline_callback, &totalHeight);
+					totalHeight *= font->height;
+				} else
+			#endif
+			totalHeight = font->height;
+	
+			// Select the anchor position
+			switch((justify & JUSTIFYMASK_TOPBOTTOM)) {
+			case justifyTop:
+				break;
+			case justifyBottom:
+				y += cy - totalHeight;
+				break;
+			default:	// justifyMiddle
+				y += (cy+1 - totalHeight)/2;
+				break;
+			}
+			switch((justify & JUSTIFYMASK_LEFTRIGHT)) {
 			case justifyCenter:
 				x += (cx + 1) / 2;
 				break;
@@ -3530,29 +3573,23 @@ void gdispGDrawBox(GDisplay *g, coord_t x, coord_t y, coord_t cx, coord_t cy, co
 				x += cx;
 				break;
 			default:	// justifyLeft
-				x += font->baseline_x;
 				break;
 			}
 
 			/* Render */
+			g->t.font = font;
+			g->t.color = color;
+			g->t.bgcolor = bgcolor;
 			#if GDISP_NEED_TEXT_WORDWRAP
-				wrapParameters.x = x;
-				wrapParameters.y = y;
-				wrapParameters.font = font;
-				wrapParameters.justify = justify;
-				wrapParameters.g = g;
-
-
-				// Count the number of lines
-				nbrLines = 0;
-				mf_wordwrap(font, cx, str, mf_countline_callback, &nbrLines);
-				wrapParameters.y += (cy+1 - nbrLines*font->height)/2;
-
-				mf_wordwrap(font, cx, str, mf_fillline_callback, &wrapParameters);
-			#else
-				y += (cy+1 - font->height)/2;
-				mf_render_aligned(font, x, y, justify, str, 0, fillcharglyph, g);
+				if (!(justify & justifyNoWordWrap)) {
+					g->t.lrj = (justify & JUSTIFYMASK_LEFTRIGHT);
+					g->t.wrapx = x;
+					g->t.wrapy = y;
+					
+					mf_wordwrap(font, cx, str, mf_fillline_callback, g);
+				} else
 			#endif
+			mf_render_aligned(font, x, y, (justify & JUSTIFYMASK_LEFTRIGHT), str, 0, fillcharglyph, g);
 		}
 
 		autoflush(g);

@@ -84,6 +84,8 @@
 //#define GDISP_NEED_STREAMING                         FALSE
 //#define GDISP_NEED_TEXT                              FALSE
 //    #define GDISP_NEED_TEXT_WORDWRAP                 FALSE
+//    #define GDISP_NEED_TEXT_BOXPADLR                 1
+//    #define GDISP_NEED_TEXT_BOXPADTB                 1
 //    #define GDISP_NEED_ANTIALIAS                     FALSE
 //    #define GDISP_NEED_UTF8                          FALSE
 //    #define GDISP_NEED_TEXT_KERNING                  FALSE

@@ -367,6 +367,10 @@ struct GDisplay {
 			color_t		bgcolor;
 			coord_t		clipx0, clipy0;
 			coord_t		clipx1, clipy1;
+			#if GDISP_NEED_TEXT_WORDWRAP
+				coord_t		wrapx, wrapy;
+				justify_t	lrj;
+			#endif
 		} t;
 	#endif
 	#if GDISP_LINEBUF_SIZE != 0 && ((GDISP_NEED_SCROLL && !GDISP_HARDWARE_SCROLL) || (!GDISP_HARDWARE_STREAM_WRITE && GDISP_HARDWARE_BITFILLS))

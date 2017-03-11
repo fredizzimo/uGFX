@@ -58,10 +58,19 @@ typedef struct point {
  * @brief   Type for the text justification.
  */
 typedef enum justify {
-	justifyLeft = 0,		/**< Justify Left */
-	justifyCenter = 1,		/**< Justify Center */
-	justifyRight = 2		/**< Justify Right */
+	justifyLeft = 0x00,			/**< Justify Left (the default) */
+	justifyCenter = 0x01,		/**< Justify Center */
+	justifyRight = 0x02,		/**< Justify Right */
+	justifyTop = 0x10,			/**< Justify Top */
+	justifyMiddle = 0x00,		/**< Justify Middle (the default) */
+	justifyBottom = 0x20,		/**< Justify Bottom */
+	justifyWordWrap = 0x00,		/**< Word wrap (the default if GDISP_NEED_TEXT_WORDWRAP is on) */
+	justifyNoWordWrap = 0x40,	/**< No word wrap */
+	justifyPad = 0x00,			/**< Pad the text box (the default) */
+	justifyNoPad = 0x04			/**< No padding the text box */
 } justify_t;
+#define JUSTIFYMASK_LEFTRIGHT	(justifyLeft|justifyCenter|justifyRight)
+#define JUSTIFYMASK_TOPBOTTOM	(justifyTop|justifyMiddle|justifyBottom)
 
 /**
  * @enum fontmetric

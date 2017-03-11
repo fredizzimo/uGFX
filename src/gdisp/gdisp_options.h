@@ -575,6 +575,24 @@
 		#define GDISP_NEED_TEXT_WORDWRAP		FALSE
 	#endif
 	/**
+	 * @brief	Adding pixels to the left and right side of the box to pad text.
+	 * @details	Only has an effect with @p gdispGDrawStringBox() and @p gdispGFillStringBox()
+	 * @note	Can be turned off by using justifyNoPad
+	 * @details Defaults to 1
+	 */
+	#ifndef GDISP_NEED_TEXT_BOXPADLR
+		#define GDISP_NEED_TEXT_BOXPADLR		1
+	#endif
+	/**
+	 * @brief	Adding pixels to the top and bottom side of the box to pad text.
+	 * @details	Only has an effect with @p gdispGDrawStringBox() and @p gdispGFillStringBox()
+	 * @note	Can be turned off by using justifyNoPad
+	 * @details Defaults to 1
+	 */
+	#ifndef GDISP_NEED_TEXT_BOXPADTB
+		#define GDISP_NEED_TEXT_BOXPADTB		1
+	#endif
+	/**
 	 * @brief	Enable UTF-8 support for text rendering.
 	 * @details Defaults to FALSE
 	 */
