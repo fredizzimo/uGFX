@@ -986,6 +986,8 @@ static void WM_Raise(GHandle gh) {
 	// Take it off the list and then put it back on top
 	// The order of the list then reflects the z-order.
 
+	gfxSemWait(&gwinsem, TIME_INFINITE);
+	
 	gfxQueueASyncRemove(&_GWINList, &gh->wmq);
 	gfxQueueASyncPut(&_GWINList, &gh->wmq);
 
@@ -1019,7 +1021,9 @@ static void WM_Raise(GHandle gh) {
 			}
 		}
 	#endif
-	
+
+	gfxSemSignal(&gwinsem);
+		
 	// Redraw the window
 	_gwinUpdate(gh);
 }
