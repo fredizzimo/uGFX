@@ -742,7 +742,9 @@ static bool_t WM_Add(GHandle gh, const GWindowInit *pInit) {
 
 static void WM_Delete(GHandle gh) {
 	// Remove it from the window list
+	gfxSemWait(&gwinsem, TIME_INFINITE);
 	gfxQueueASyncRemove(&_GWINList, &gh->wmq);
+	gfxSemSignal(&gwinsem);
 }
 
 static void WM_Redraw(GHandle gh) {
