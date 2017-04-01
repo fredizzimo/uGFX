@@ -440,7 +440,7 @@ typedef struct winPriv {
 		uint16_t	mousebuttons;
 		GMouse		*mouse;
 		bool_t		mouseenabled;
-		void (*capfn)(HWND hWnd, GDisplay *g, uint16_t buttons, coord_t x, coord_t y);
+		void (*capfn)(void * hWnd, GDisplay *g, uint16_t buttons, coord_t x, coord_t y);
 	#endif
 	#if GFX_USE_GINPUT && GINPUT_NEED_TOGGLE
 		uint8_t		toggles;
@@ -469,7 +469,7 @@ void gfxEmulatorSetParentWindow(void *hwnd) {
 	void gfxEmulatorMouseEnable(GDisplay *g, bool_t enabled) {
 		((winPriv *)g->priv)->mouseenabled = enabled;
 	}
-	void gfxEmulatorMouseCapture(GDisplay *g, void (*capfn)(HWND hWnd, GDisplay *g, uint16_t buttons, coord_t x, coord_t y)) {
+	void gfxEmulatorMouseCapture(GDisplay *g, void (*capfn)(void * hWnd, GDisplay *g, uint16_t buttons, coord_t x, coord_t y)) {
 		((winPriv *)g->priv)->capfn = capfn;
 	}
 #endif
