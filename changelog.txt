@@ -30,6 +30,7 @@ FEATURE:	Added justifyTop, justifyMiddle & justifyBottom text justification to G
 FEATURE:	Added justifyWordWrap, justifyNoWordWrap text justification to GDISP (requires GDISP_NEED_TEXT_WORDWRAP)
 FEATURE:	Added justifyPad, justifyNoPad text justification to GDISP
 FEATURE:	Added GDISP_NEED_TEXT_BOXPADLR and GDISP_NEED_TEXT_BOXPADTB configuration options
+FIX:		Fixed an issue on FreeRTOS where thread stacks were being created too large
 
 
 *** Release 2.7 ***

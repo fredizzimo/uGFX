@@ -147,6 +147,9 @@ gfxThreadHandle gfxThreadCreate(void *stackarea, size_t stacksz, threadpriority_
 	gfxThreadHandle task;
 	(void) stackarea;
 
+	// uGFX expresses stack size in bytes - FreeRTOS in "Stack Words"
+	stacksz /= sizeof(StackType_t);
+	
 	if (stacksz < configMINIMAL_STACK_SIZE)
 		stacksz = configMINIMAL_STACK_SIZE;
 
