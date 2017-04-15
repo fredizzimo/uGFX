@@ -20,7 +20,7 @@
 
 #include "gdisp.c"
 #include "gdisp_fonts.c"
-#include "gdisp_pixmap.c"
+//#include "gdisp_pixmap.c"
 #include "gdisp_image.c"
 #include "gdisp_image_native.c"
 #include "gdisp_image_gif.c"
