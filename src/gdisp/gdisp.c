@@ -560,7 +560,7 @@ void _gdispInit(void)
 	#if defined(GDISP_DRIVER_LIST)
 		{
 			unsigned	i;
-			typedef const GDISPVMT const GDISPVMTLIST[1];
+			typedef const GDISPVMT GDISPVMTLIST[1];
 
 			extern GDISPVMTLIST						  GDISP_DRIVER_LIST;
 			static const GDISPVMT * const dclist[] = {GDISP_DRIVER_LIST};
@@ -573,7 +573,7 @@ void _gdispInit(void)
 	#elif GDISP_TOTAL_DISPLAYS > 1
 		{
 			unsigned	i;
-			extern const GDISPVMT const		GDISPVMT_OnlyOne[1];
+			extern const GDISPVMT GDISPVMT_OnlyOne[1];
 
 			if (!(GDISPVMT_OnlyOne->d.flags & GDISP_VFLG_DYNAMICONLY)) {
 				for(i = 0; i < GDISP_TOTAL_DISPLAYS; i++)
@@ -582,7 +582,7 @@ void _gdispInit(void)
 		}
 	#else
 		{
-			extern const GDISPVMT const		GDISPVMT_OnlyOne[1];
+			extern const GDISPVMT GDISPVMT_OnlyOne[1];
 
 			if (!(GDISPVMT_OnlyOne->d.flags & GDISP_VFLG_DYNAMICONLY))
 				gdriverRegister(&GDISPVMT_OnlyOne->d, 0);
